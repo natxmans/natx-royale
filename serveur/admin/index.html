@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>NATX ROYALE — Administration</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<!-- Connexion -->
+<main id="ecranConnexion" class="connexion cache">
+  <form id="formConnexion" class="carte-connexion" autocomplete="on">
+    <div class="logo">NATX<span>ROYALE</span></div>
+    <p class="sous">Espace administrateur</p>
+    <label>Identifiant<input id="identifiant" name="username" autocomplete="username" required maxlength="60"></label>
+    <label>Mot de passe<input id="motDePasse" name="password" type="password" autocomplete="current-password" required maxlength="200"></label>
+    <button class="bouton principal" type="submit">Se connecter</button>
+    <p id="erreurConnexion" class="erreur" role="alert"></p>
+  </form>
+</main>
+
+<!-- Espace admin -->
+<div id="ecranAdmin" class="admin cache">
+  <aside class="menu">
+    <div class="logo petit">NATX<span>ROYALE</span></div>
+    <nav id="navigation">
+      <button data-vue="tableau" class="actif">📊 Tableau de bord</button>
+      <button data-vue="retours" data-groupe="">🗂️ Tous les retours</button>
+      <button data-vue="retours" data-groupe="bugs">🐞 Bugs</button>
+      <button data-vue="retours" data-groupe="idees">💡 Idées et avis</button>
+      <button data-vue="retours" data-groupe="spam">🚫 Spams</button>
+    </nav>
+    <div class="moi"><span id="nomAdmin"></span><button id="btnDeconnexion" class="bouton discret">Se déconnecter</button></div>
+  </aside>
+
+  <main class="contenu">
+    <!-- Tableau de bord -->
+    <section id="vueTableau">
+      <header class="titre"><h1>Tableau de bord</h1><button id="btnActualiser" class="bouton discret">↻ Actualiser</button></header>
+      <div id="cartesStats" class="cartes-stats"></div>
+      <div class="grille-2">
+        <div class="panneau"><h2>Retours par catégorie</h2><div id="parCategorie" class="barres"></div></div>
+        <div class="panneau"><h2>Retours des 14 derniers jours</h2><div id="parJour" class="histo"></div></div>
+      </div>
+      <div class="panneau"><h2>Suggestions les plus populaires</h2><ol id="populaires" class="populaires"></ol></div>
+    </section>
+
+    <!-- Liste des retours -->
+    <section id="vueRetours" class="cache">
+      <header class="titre"><h1 id="titreRetours">Retours</h1><span id="totalRetours" class="compte"></span></header>
+      <div class="filtres">
+        <input id="recherche" type="search" placeholder="Rechercher un mot ou un numéro…" maxlength="80">
+        <select id="filtreCategorie"><option value="">Toutes les catégories</option></select>
+        <select id="filtreStatut"><option value="">Tous les statuts</option></select>
+        <select id="filtrePublic"><option value="">Publiés et non publiés</option><option value="1">Publiés</option><option value="0">Non publiés</option></select>
+        <select id="filtreTri"><option value="recent">Plus récents</option><option value="ancien">Plus anciens</option><option value="votes">Plus de votes</option><option value="note">Meilleure note</option></select>
+        <button id="btnPurger" class="bouton danger cache">Supprimer tous les spams</button>
+      </div>
+      <div class="table-cadre">
+        <table class="table">
+          <thead><tr><th>N°</th><th>Date</th><th>Catégorie</th><th>Note</th><th>Message</th><th>Statut</th><th>Votes</th><th>Public</th></tr></thead>
+          <tbody id="lignes"></tbody>
+        </table>
+        <p id="vide" class="vide cache">Aucun retour ici pour l'instant.</p>
+      </div>
+      <div class="pages"><button id="pagePrec" class="bouton discret">← Précédents</button><span id="infoPage"></span><button id="pageSuiv" class="bouton discret">Suivants →</button></div>
+    </section>
+  </main>
+
+  <!-- Détail d'un retour -->
+  <aside id="detail" class="detail cache" aria-label="Détail du retour">
+    <header><h2 id="detailTitre"></h2><button id="fermerDetail" class="bouton discret" aria-label="Fermer">✕</button></header>
+    <div class="detail-corps">
+      <div id="detailMeta" class="meta"></div>
+      <blockquote id="detailTexte" class="texte"></blockquote>
+      <div class="bloc">
+        <label>Statut<select id="detailStatut"></select></label>
+        <label class="ligne"><input id="detailPublic" type="checkbox"> Publier pour que les joueurs votent</label>
+        <label>Texte affiché aux joueurs (facultatif, 300 caractères)<textarea id="detailTextePublic" maxlength="300" rows="3" placeholder="Laisser vide pour afficher le message d'origine"></textarea></label>
+        <div class="actions">
+          <button id="btnEnregistrer" class="bouton principal">Enregistrer</button>
+          <button id="btnSpam" class="bouton discret">Marquer comme spam</button>
+          <button id="btnSupprimer" class="bouton danger">Supprimer</button>
+        </div>
+      </div>
+      <div class="bloc">
+        <h3>Notes internes <small>(jamais visibles par les joueurs)</small></h3>
+        <ul id="detailNotes" class="notes"></ul>
+        <textarea id="nouvelleNote" rows="3" maxlength="2000" placeholder="Ajouter une note pour l'équipe…"></textarea>
+        <button id="btnNote" class="bouton">Ajouter la note</button>
+      </div>
+      <div class="bloc"><h3>Historique</h3><ul id="detailJournal" class="journal"></ul></div>
+    </div>
+  </aside>
+</div>
+<div id="toast" class="toast cache" role="status"></div>
+<script type="module" src="admin.js"></script>
+</body>
+</html>

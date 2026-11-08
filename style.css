@@ -534,3 +534,66 @@ body.tactile #bas { left: 42%; }
 body.tb-petit #tactile .tb { scale: .82; }
 body.tb-grand #tactile .tb { scale: 1.2; }
 body.tb-grand .t-menu, body.tb-grand .t-constr { gap: 14px; }
+
+/* ===================== Retours des joueurs : « TON AVIS COMPTE ! » et idées ===================== */
+#fin .boite { max-height: 94vh; overflow-y: auto; }
+.avis { text-align: left; margin: 14px 0 12px; padding: 14px 16px; border-radius: 18px; background: linear-gradient(160deg, rgba(79, 209, 255, .12), rgba(181, 82, 255, .08)); border: 2px solid rgba(79, 209, 255, .35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); transition: padding .2s; }
+.avis-tete { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.avis-tete h3 { margin: 0; color: var(--jaune); font-size: 21px; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+.lien { background: none; border: none; color: var(--doux); font-weight: 800; padding: 4px 6px; border-radius: 8px; cursor: pointer; }
+.lien:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+.avis.replie { padding: 8px 14px; }
+.avis.replie #avisFormulaire, .avis.replie #avisMerci { display: none; }
+.avis.replie .avis-tete h3 { font-size: 16px; opacity: .8; }
+.avis-sous { color: var(--doux); margin: 4px 0 10px; font-weight: 700; font-size: 14px; }
+.avis-ligne { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.avis-etoiles { display: flex; gap: 2px; }
+.etoile { background: none; border: none; padding: 0 2px; font-size: 30px; line-height: 1; color: rgba(255, 255, 255, .22); cursor: pointer; transition: transform .1s, color .12s; }
+.etoile:hover { transform: scale(1.15); color: rgba(255, 210, 63, .6); }
+.etoile.pleine { color: var(--jaune); text-shadow: 0 0 10px rgba(255, 210, 63, .5); }
+#avisCategorie { background: #1d2a4a; color: #fff; border-radius: 12px; padding: 8px 10px; border: 1.5px solid rgba(255, 255, 255, .2); font-weight: 800; min-width: 0; max-width: 100%; }
+#avisTexte { width: 100%; resize: vertical; min-height: 70px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid rgba(255, 255, 255, .2); background: rgba(8, 14, 32, .6); color: #fff; font: inherit; font-weight: 700; outline: none; user-select: text; }
+#avisTexte:focus, #avisCategorie:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(79, 209, 255, .15); }
+.piege { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.avis-bas { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.avis-compteur { color: var(--doux); font-size: 12px; font-weight: 800; }
+#avisEnvoyer { width: auto; font-size: 18px; padding: 10px 16px; }
+.avis-message { min-height: 1.1em; margin: 8px 0 0; font-weight: 800; font-size: 14px; color: #9fe0ff; }
+.avis-message.erreur { color: #ff9a9a; }
+.avis-merci { padding: 12px 4px 4px; font-weight: 900; color: #7dff9a; animation: arrive .35s; }
+#fenetreIdee { z-index: 30; }
+#fenetreIdee .avis { margin-top: 6px; }
+
+/* Page des idées */
+#pageIdees { justify-content: center; overflow-y: auto; }
+.idees { width: min(820px, 96vw) !important; height: fit-content; }
+.idees-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.idees-tete h2 { margin-bottom: 4px; }
+.idees-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.idees-actions .gros { width: auto; font-size: 17px; padding: 10px 14px; }
+.choix-tri { display: flex; background: rgba(255, 255, 255, .06); border-radius: 12px; padding: 3px; }
+.choix-tri button { background: none; padding: 7px 11px; border-radius: 9px; font-weight: 900; color: var(--doux); }
+.choix-tri button.actif { background: linear-gradient(#4aa8ff, #2063d6); color: #fff; }
+.liste-idees { display: flex; flex-direction: column; gap: 10px; }
+.idees-info { color: var(--doux); font-weight: 800; text-align: center; padding: 18px; margin: 0; }
+.idees-info.erreur { color: #ff9a9a; }
+.idee { display: flex; gap: 14px; align-items: flex-start; background: rgba(255, 255, 255, .05); border: 1.5px solid rgba(255, 255, 255, .1); border-radius: 16px; padding: 12px 14px; animation: arrive .3s both; }
+.vote { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 56px; padding: 8px 6px; border-radius: 13px; background: rgba(255, 255, 255, .08); border: 2px solid rgba(255, 255, 255, .18); font-weight: 900; font-size: 16px; color: var(--doux); transition: transform .1s, background .15s; }
+.vote b { font-family: 'Lilita One', system-ui; font-weight: 400; font-size: 22px; color: #fff; }
+.vote:hover { transform: translateY(-2px); background: rgba(255, 210, 63, .14); }
+.vote.vote-fait { background: linear-gradient(#ffd75a, #f39a12); color: #3b2300; border-color: #ffe08a; }
+.vote.vote-fait b { color: #3b2300; }
+.idee-corps { flex: 1; min-width: 0; }
+.idee-corps p { margin: 2px 0 8px; font-weight: 800; white-space: pre-wrap; word-break: break-word; }
+.idee-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge-idee { font-size: 12px; font-weight: 900; padding: 3px 9px; border-radius: 20px; background: rgba(255, 255, 255, .1); color: var(--doux); }
+.badge-idee.st-en_cours { background: rgba(255, 162, 40, .22); color: #ffd09a; }
+.badge-idee.st-accepte { background: rgba(91, 220, 122, .2); color: #a8f0bb; }
+.badge-idee.st-corrige { background: rgba(91, 220, 122, .32); color: #c8ffd5; }
+.badge-idee.st-refuse { background: rgba(255, 107, 107, .18); color: #ffb3b3; }
+@media (max-width: 820px), (max-height: 520px) {
+  .avis { padding: 12px; }
+  .etoile { font-size: 26px; }
+  .avis-bas { flex-direction: column; align-items: stretch; }
+  #avisEnvoyer { width: 100%; }
+}

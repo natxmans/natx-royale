@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
@@ -32,6 +32,7 @@
       <button data-page="boutique">🛒 Boutique <span id="pastilleBoutique" class="pastille-new cache">NOUVEAU</span></button>
       <button data-page="casier">🧳 Casier</button>
       <button data-page="nouveautes">📰 Nouveautés</button>
+      <button data-page="idees">💡 Idées</button>
     </nav>
     <div class="droite-entete">
       <div class="niveau-pastille" id="niveauEntete" title="Ton niveau">⭐ 1</div>
@@ -104,11 +105,28 @@
     <aside class="fiche boite"><div class="scene3d" id="sceneCasier"></div><div id="casierInfos" class="fiche-infos"></div></aside>
   </section>
 
+  <section class="page cache" id="pageIdees">
+    <div class="boite large idees">
+      <div class="idees-tete">
+        <div><h2>💡 Les idées des joueurs</h2><p class="petit-texte">NATX ROYALE est un prototype : vote pour les idées que tu veux voir dans le jeu. Un vote par idée.</p></div>
+        <div class="idees-actions">
+          <div class="choix-tri" role="tablist"><button data-tri="populaires" class="actif">🔥 Populaires</button><button data-tri="recentes">🕘 Récentes</button></div>
+          <button class="gros jaune" id="btnProposer">✍️ Proposer une idée</button>
+        </div>
+      </div>
+      <div id="listeIdees" class="liste-idees"></div>
+    </div>
+  </section>
+
   <section class="page cache" id="pageNouveautes">
     <div class="boite large nouveautes">
       <h2>📰 Nouveautés : la grosse mise à jour</h2>
       <p class="petit-texte">100 améliorations, des petits détails aux gros changements.</p>
       <div id="listeNouveautes"></div>
+      <p class="petit-texte credits">Crédits : arme futuriste d'après « Futuristic Weapon Concept High-poly » de 3DHaupt
+        (<a href="https://blendswap.com/blend/11979" target="_blank" rel="noopener">BlendSwap</a>),
+        licence <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr" target="_blank" rel="noopener">CC BY-NC-SA</a>,
+        convertie et adaptée pour le jeu. Moteur 3D three.js et multijoueur PeerJS (licences MIT).</p>
     </div>
   </section>
 </div>
@@ -262,6 +280,27 @@
       <div id="finPieces" class="gain"></div>
       <div id="finClassement" class="fin-classement"></div>
     </div>
+    <section id="avis" class="avis" aria-labelledby="avisTitre">
+      <header class="avis-tete">
+        <h3 id="avisTitre">💬 TON AVIS COMPTE !</h3>
+        <button type="button" class="lien" id="avisPasser">Passer ✕</button>
+      </header>
+      <div id="avisFormulaire">
+        <p class="avis-sous">NATX ROYALE est encore un prototype : dis-nous ce qu'il faut améliorer (facultatif).</p>
+        <div class="avis-ligne">
+          <div class="avis-etoiles" id="avisEtoiles" role="radiogroup" aria-label="Ta note pour cette partie (facultatif)"></div>
+          <select id="avisCategorie" aria-label="Catégorie"></select>
+        </div>
+        <textarea id="avisTexte" maxlength="1000" rows="3" placeholder="Une idée, un bug, ce que tu as aimé ou pas…"></textarea>
+        <input id="avisSite" class="piege" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="avis-bas">
+          <span id="avisCompteur" class="avis-compteur">0 / 1000</span>
+          <button type="button" class="gros jaune" id="avisEnvoyer">📨 Envoyer mon avis</button>
+        </div>
+        <p id="avisMessage" class="avis-message" role="status"></p>
+      </div>
+      <div id="avisMerci" class="avis-merci cache">✅ Merci ! Ton avis a bien été envoyé. <span id="avisNumero"></span></div>
+    </section>
     <button id="btnRejouer" class="gros vert">🔁 Nouvelle partie</button>
     <p id="finAttente" class="cache attente">⏳ L'hôte va relancer une partie…</p>
     <button id="btnQuitterFin" class="petit rouge">Retour au menu</button>
@@ -279,9 +318,17 @@
   </div>
 </div>
 
+<div id="fenetreIdee" class="ecran cache">
+  <div class="boite large">
+    <h2>✍️ Proposer une idée</h2>
+    <div id="emplacementAvis"></div>
+    <button class="petit" id="fermerIdee">Fermer</button>
+  </div>
+</div>
+
 <div id="chargement" class="ecran cache"><div class="boite"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=6"></script>
+<script type="module" src="js/jeu.js?v=7"></script>
 </body>
 </html>
