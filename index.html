@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b1430">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Natx Royale — bataille royale entre potes</title>
+<meta name="description" content="Bataille royale en 3D dans le navigateur : saute du dirigeable, ramasse des armes, construis des murs et des rampes, sois le dernier debout. Entre potes avec un code, ou en solo contre des bots.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏝️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=5">
+<script type="importmap">{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }</script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+<canvas id="jeu"></canvas>
+
+<!-- ===== MENU ===== -->
+<div id="menu" class="ecran menu">
+  <header class="entete">
+    <div class="logo-petit">NATX<span>ROYALE</span></div>
+    <nav class="onglets">
+      <button data-page="jouer" class="actif">🎮 Jouer</button>
+      <button data-page="boutique">🛒 Boutique <span id="pastilleBoutique" class="pastille-new cache">NOUVEAU</span></button>
+      <button data-page="casier">🧳 Casier</button>
+      <button data-page="nouveautes">📰 Nouveautés</button>
+    </nav>
+    <div class="droite-entete">
+      <div class="niveau-pastille" id="niveauEntete" title="Ton niveau">⭐ 1</div>
+      <div class="pieces" title="Tes pièces Natx">🪙 <b>0</b></div>
+      <button class="petit" id="btnParametres" title="Paramètres">⚙️</button>
+      <button class="petit" id="btnPleinEcran" title="Plein écran">⛶</button>
+    </div>
+  </header>
+
+  <section class="page" id="pageJouer">
+    <div class="colonne">
+      <div class="boite">
+        <h1 class="logo">NATX<span>ROYALE</span></h1>
+        <p class="sous-titre">Saute, ramasse, construis… et sois le <b>dernier debout</b> !</p>
+        <label class="champ">Ton pseudo
+          <input id="pseudo" maxlength="16" placeholder="Ton pseudo" autocomplete="off">
+        </label>
+        <div class="champ">Ta couleur
+          <div id="couleurs" class="couleurs"></div>
+        </div>
+        <div class="boutons">
+          <button id="btnSolo" class="gros vert">🎮 Jouer en solo <small>contre des bots</small></button>
+          <button id="btnCreer" class="gros bleu">👥 Créer une partie <small>entre potes</small></button>
+          <div class="rejoindre">
+            <input id="codeRejoindre" maxlength="4" placeholder="CODE" autocomplete="off">
+            <button id="btnRejoindre" class="gros jaune">🔑 Rejoindre</button>
+          </div>
+        </div>
+        <p id="erreurMenu" class="erreur"></p>
+        <button class="gros gris" id="btnParametresMenu">⚙️ Paramètres</button>
+      </div>
+    </div>
+    <div class="scene3d" id="sceneJouer">
+      <button class="bandeau-collab" id="bandeauCollab"><span class="collab-logo">NATX <i>×</i> <b>2K27</b></span><span>Collab avec le festival gaming 2K27 : l'Arène 2K27 est sur l'île + objets exclusifs en boutique !</span></button>
+      <div class="nom-podium" id="nomPodium"></div>
+      <button class="petit" id="btnVersCasier">✏️ Changer de style</button>
+    </div>
+    <div class="colonne">
+      <div class="boite" id="niveauProfil"></div>
+      <div class="boite" id="defisJour"></div>
+      <div class="boite" id="statsProfil"></div>
+      <details class="boite aide" id="blocAide"><summary>🎮 Commandes</summary><div id="aideMenu"></div></details>
+    </div>
+  </section>
+
+  <section class="page cache" id="pageBoutique">
+    <div class="boutique-liste">
+      <div class="titre-boutique"><h2>🛒 Boutique du jour</h2><span id="compteBoutique"></span></div>
+      <div class="collab-entete"><span class="collab-logo">NATX <i>×</i> <b>2K27</b></span><span>Événement collab : les objets exclusifs du festival gaming 2K27</span></div>
+      <div class="grille collab" id="grilleCollab"></div>
+      <h3>⭐ À la une</h3>
+      <div class="grille vedettes" id="grilleVedettes"></div>
+      <h3>🗓️ Les objets du jour</h3>
+      <div class="grille" id="grilleJour"></div>
+      <p class="astuce">💡 Gagne des 🪙 en jouant : +40 par partie, +25 par élimination, +200 pour un TOP 1, +150 chaque jour !</p>
+    </div>
+    <aside class="fiche boite"><div class="scene3d" id="sceneBoutique"></div><div id="ficheInfos" class="fiche-infos"></div></aside>
+  </section>
+
+  <section class="page cache" id="pageCasier">
+    <nav class="categories" id="categoriesCasier"></nav>
+    <div class="casier-liste">
+      <div class="barre-casier">
+        <button class="petit" id="btnHasard">🎲 Style au hasard</button>
+        <span>Mes styles :</span><div id="presets" class="presets"></div>
+      </div>
+      <h2 id="titreCasier">Casier</h2>
+      <div class="grille" id="grilleCasier"></div>
+    </div>
+    <aside class="fiche boite"><div class="scene3d" id="sceneCasier"></div><div id="casierInfos" class="fiche-infos"></div></aside>
+  </section>
+
+  <section class="page cache" id="pageNouveautes">
+    <div class="boite large nouveautes">
+      <h2>📰 Nouveautés : la grosse mise à jour</h2>
+      <p class="petit-texte">100 améliorations, des petits détails aux gros changements.</p>
+      <div id="listeNouveautes"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== SALON ===== -->
+<div id="salon" class="ecran cache">
+  <div class="boite large">
+    <h2>🏝️ Salon</h2>
+    <div id="blocCode" class="bloc-code">
+      <div>Code de la partie</div>
+      <div id="codePartie" class="code">----</div>
+      <button id="btnCopier" class="petit">📋 Copier le lien pour tes potes</button>
+    </div>
+    <h3>Joueurs <span id="nbJoueurs"></span></h3>
+    <ul id="listeJoueurs" class="liste"></ul>
+    <div id="optionsHote">
+      <label>Bots : <b id="nbBotsTxt">12</b>
+        <input id="nbBots" type="range" min="0" max="30" value="12"></label>
+      <label>Niveau des bots
+        <select id="difficulte"><option value="0">Facile</option><option value="1" selected>Normal</option><option value="2">Difficile</option></select>
+      </label>
+      <label>Mode
+        <select id="modeJeu"><option value="solo">👤 Chacun pour soi</option><option value="duo">👥 Duos (équipes de 2)</option></select>
+      </label>
+      <label>Vitesse de la zone
+        <select id="vitesseZone"><option value="lente">Lente</option><option value="normale" selected>Normale</option><option value="rapide">Rapide</option></select>
+      </label>
+      <label>Matériaux au départ
+        <select id="matsDepart"><option value="0">0</option><option value="100">100</option><option value="300">300</option></select>
+      </label>
+      <label class="case-cocher"><input type="checkbox" id="optFete"> 🎉 Butin de fête (plein d'objets rares)</label>
+      <label class="case-cocher"><input type="checkbox" id="optEntrainement"> 🎯 Entraînement (pas de zone, 999 matériaux)</label>
+      <button id="btnLancer" class="gros vert">🚀 Lancer la partie</button>
+    </div>
+    <p id="resumeOptions" class="resume-options"></p>
+    <p id="attenteHote" class="cache attente">⏳ En attente que l'hôte lance la partie…</p>
+    <p id="infoSalon" class="info"></p>
+    <div id="chatSalon" class="chat-salon cache">
+      <div id="chatSalonFil" class="fil-chat"></div>
+      <input id="chatSalonSaisie" maxlength="80" placeholder="💬 Écris un message puis Entrée" autocomplete="off">
+    </div>
+    <button id="btnQuitterSalon" class="petit rouge">Quitter</button>
+  </div>
+</div>
+
+<!-- ===== JEU ===== -->
+<div id="hud" class="cache">
+  <div id="vignette"></div>
+  <div id="flash"></div>
+  <div id="coeur"></div>
+  <div id="lunette"><div class="trou"></div></div>
+  <div id="directions"></div>
+  <div id="viseur"><i class="h g"></i><i class="h d"></i><i class="v h1"></i><i class="v b"></i><b></b></div>
+  <svg id="anneau" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16"></circle></svg>
+  <div id="barresVie"></div>
+  <div id="repere3d"><i>📍</i><span></span></div>
+  <div id="marqueur"><i></i><i></i><i></i><i></i></div>
+  <div id="fil"></div>
+  <div id="haut">
+    <canvas id="boussole" width="360" height="30"></canvas>
+    <div id="flecheZone"><i>⬆</i><span></span></div>
+    <div id="infoDirigeable" class="cache"></div>
+  </div>
+  <div id="astuceTuto" class="cache"></div>
+  <div id="tableau" class="cache"></div>
+  <div id="fps" class="cache"></div>
+  <div id="chatFil" class="fil-chat"></div>
+  <input id="chatSaisie" class="cache" maxlength="80" placeholder="💬 Message (Entrée pour envoyer, Échap pour annuler)" autocomplete="off">
+  <div id="coinCarte">
+    <div class="cadre-carte"><canvas id="carte" width="200" height="200"></canvas><span class="nord">N</span></div>
+    <div id="infoZone"></div>
+    <div id="compteurs"><span id="nbVivants">👤 0</span><span id="nbKills">💀 0</span><span id="chrono">⏱️ 0:00</span></div>
+    <div id="ping"></div>
+  </div>
+  <div id="annonce"></div>
+  <div id="banniere"></div>
+  <div id="invite"></div>
+  <div id="progression"><div></div><span></span></div>
+  <div id="vie">
+    <div class="ligne-barre"><span class="ico">🛡️</span><div class="barre bouclier"><div id="barreBouclier"></div><span id="txtBouclier">0</span></div></div>
+    <div class="ligne-barre"><span class="ico">❤️</span><div class="barre pv"><div id="barrePv"></div><span id="txtPv">100</span></div></div>
+  </div>
+  <div id="bas">
+    <div id="nomObjet"></div>
+    <div id="objets"></div>
+  </div>
+  <div id="droite">
+    <div id="munitions"></div>
+    <div id="mats">🪵 <b>0</b></div>
+    <div id="aideConstr"></div>
+  </div>
+  <div id="mortPanneau" class="cache"></div>
+  <div id="spectateur" class="cache"></div>
+  <div id="degats"></div>
+
+  <!-- Commandes tactiles (téléphone, tablette) -->
+  <div id="tactile">
+    <div id="zoneJoy"></div>
+    <div id="zoneVue"></div>
+    <div id="joy"><i></i></div>
+    <div class="t-menu">
+      <button class="tb petit-tb" data-t="pause" title="Pause">⏸️</button>
+      <button class="tb petit-tb" data-t="parametres" title="Paramètres">⚙️</button>
+      <button class="tb petit-tb" data-t="carte" title="Carte">🗺️</button>
+      <button class="tb petit-tb" data-t="classement" title="Classement">🏆</button>
+      <button class="tb petit-tb" data-t="chat" title="Discuter">💬</button>
+      <button class="tb petit-tb t-sol" data-t="emote" title="Émote">💃</button>
+      <button class="tb petit-tb t-sol" data-t="jeter" title="Jeter l'objet">🗑️</button>
+    </div>
+    <div class="t-constr t-sol">
+      <button class="tb moyen-tb" data-t="mur" title="Mur">🧱</button>
+      <button class="tb moyen-tb" data-t="rampe" title="Rampe">📐</button>
+      <button class="tb moyen-tb" data-t="sol" title="Sol">⬛</button>
+    </div>
+    <button class="tb gros-tb" id="tTir" data-t="tir">🔫</button>
+    <button class="tb" id="tSaut" data-t="saut">⤴</button>
+    <button class="tb t-sol" id="tViser" data-t="viser">🎯</button>
+    <button class="tb moyen-tb t-sol" id="tAccroupi" data-t="accroupi">🧎</button>
+    <button class="tb moyen-tb t-sol" id="tRecharger" data-t="recharger">🔄</button>
+  </div>
+  <div id="chatRapides" class="cache"></div>
+</div>
+<div id="tournez"><div>📱↻</div>Tourne ton téléphone en mode paysage pour jouer</div>
+
+<div id="grandeCarte" class="cache"><canvas width="640" height="640"></canvas>
+  <p class="pc-seul">Clic : poser un repère · clic droit : l'enlever · M pour fermer</p>
+  <p class="tactile-seul">Touche la carte pour poser un repère (touche-le encore pour l'enlever)</p>
+  <button class="gros bleu tactile-seul" id="fermerCarte">✖ Fermer la carte</button></div>
+
+<div id="pause" class="ecran cache">
+  <div class="boite large">
+    <h2 class="pc-seul">⏸️ Clique pour jouer</h2>
+    <p class="pc-seul">La souris sert à viser. Appuie sur <b>Échap</b> pour la libérer.</p>
+    <h2 class="tactile-seul">⏸️ Pause</h2>
+    <p class="tactile-seul">Attention : la partie continue pendant que tu es ici !</p>
+    <button id="btnReprendre" class="gros vert">▶️ Reprendre</button>
+    <button id="btnParametresPause" class="gros gris">⚙️ Paramètres</button>
+    <details class="reglages"><summary>🎮 Commandes</summary><div id="aidePause" class="aide"></div></details>
+    <button id="btnQuitter" class="petit rouge">Quitter la partie</button>
+  </div>
+</div>
+
+<div id="fin" class="ecran cache">
+  <canvas id="confettis"></canvas>
+  <div class="boite large">
+    <h1 id="finTitre" class="logo"></h1>
+    <p id="finTexte"></p>
+    <div id="finStats" class="stats"></div>
+    <div id="finDetails" class="fin-details"></div>
+    <div class="fin-colonnes">
+      <div id="finPieces" class="gain"></div>
+      <div id="finClassement" class="fin-classement"></div>
+    </div>
+    <button id="btnRejouer" class="gros vert">🔁 Nouvelle partie</button>
+    <p id="finAttente" class="cache attente">⏳ L'hôte va relancer une partie…</p>
+    <button id="btnQuitterFin" class="petit rouge">Retour au menu</button>
+  </div>
+</div>
+
+<div id="parametres" class="ecran cache">
+  <div class="boite large">
+    <h2>⚙️ Paramètres</h2>
+    <div class="onglets-param">
+      <button data-p="image" class="actif">🖼️ Image</button><button data-p="controles">🎮 Contrôles</button><button data-p="son">🔊 Son</button><button data-p="interface">🧭 Écran</button>
+    </div>
+    <div id="reglagesModal" class="reglages"></div>
+    <button class="gros vert" id="fermerParametres">✔ C'est bon</button>
+  </div>
+</div>
+
+<div id="chargement" class="ecran cache"><div class="boite"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
+<div id="toasts"></div>
+
+<script type="module" src="js/jeu.js?v=6"></script>
+</body>
+</html>

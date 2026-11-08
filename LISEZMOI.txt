@@ -1,0 +1,195 @@
+NATX ROYALE — MODÈLES 3D (faits dans Blender 5.2)
+==================================================
+
+Règles communes à tous les fichiers .glb de ce dossier
+- 1 unité = 1 m. Dans Blender : Z en haut, l'avant (canon, visage) vers +Y, la droite vers +X.
+  Les .glb sont exportés en « +Y Up » : dans three.js, le haut = +Y et l'avant = -Z, la droite = +X.
+- Modificateurs appliqués, pas de caméra ni de lumière, pas de textures (couleur + rugosité).
+- Chaque objet à la racine du fichier porte exactement son nom (voir les listes ci-dessous).
+- Matériaux spéciaux (à reconnaître par leur nom, material.name) :
+    rarete          -> à remplacer par la couleur de rareté
+    lueur           -> petite bande lumineuse (à rendre brillante / couleur de rareté)
+    couleur_joueur  -> à remplacer par la couleur choisie par le joueur
+    perso : peau, haut, bas, pieds, mains, cheveux, yeux, pupille
+- Sources : modeles/sources/*.blend (à ouvrir dans Blender) et les scripts construire_*.py
+  qui refont tout : blender.exe -b --factory-startup --python modeles/sources/construire_xxx.py
+- Rendus de contrôle : modeles/sources/rendus/*.png
+
+
+1) personnage.glb — héros cartoon de 2,00 m, en 16 morceaux (pas d'armature)
+---------------------------------------------------------------------------
+Pose de repos : debout, jambes droites, bras tout droits le long du corps.
+L'origine de chaque morceau est sur son articulation (positions en mètres, Blender X ; Z) :
+
+  bassin        origine 0,0,0      hanches, avec la ceinture (matériaux bas, ceinture, boucle)
+  torse         origine 0,0,0      torse en V + cou (haut, peau) ; épaules à 1,56 m
+  cuisse_G      hanche (-0,11 ; 1,00)        cuisse_D   hanche (+0,11 ; 1,00)        (bas)
+  tibia_G       genou  (-0,11 ; 0,52)        tibia_D    genou  (+0,11 ; 0,52)        (bas, pieds, semelle)
+                -> avec la chaussure : 0,32 m de long, 0,12 m de haut, semelle posée au sol (z = 0)
+  bras_G        épaule (-0,25 ; 1,56)        bras_D     épaule (+0,25 ; 1,56)        (haut)
+  avantbras_G   coude  (-0,25 ; 1,24)        avantbras_D coude (+0,25 ; 1,24)        (haut, mains)
+                -> avec la main : poignet vers 0,98 m, bout des doigts à 0,80 m,
+                   paume tournée vers le corps, pouce vers l'avant
+  tete          centre (0 ; 1,86)  sans cheveux : yeux, pupilles, sourcils (matériau cheveux),
+                nez, bouche, oreilles (peau, yeux, pupille, cheveux, bouche). Haut du crâne à 2,01 m.
+  cheveux_0     centre de la tête : courts en pointes
+  cheveux_1     centre de la tête : grande mèche sur le côté
+  cheveux_2     centre de la tête : queue de cheval (l'élastique est en matériau « haut »)
+  cheveux_3     centre de la tête : frisés volumineux
+  cheveux_4     centre de la tête : crête
+
+Mesures : épaules 0,63 m d'un bord à l'autre, taille 0,34 m, entrejambe vers 0,92 m,
+tête 0,28 m (environ 1/7 de la hauteur).
+Matériaux en plus (couleur fixe) : semelle (blanc), bouche, ceinture, boucle.
+
+UV « dépliées en cylindre » sur bassin, torse, bras, avant-bras, cuisses et tibias
+(chaque morceau a ses propres UV de 0 à 1) :
+  - U fait le tour du membre. L'avant (+Y) est au milieu, à U = 0,5. La couture est dans le dos
+    (U = 0 et U = 1).
+  - U augmente vers la gauche du perso (-X). Donc une image vue de face s'affiche à l'endroit :
+    la moitié gauche de l'image va sur le côté droit du perso (à gauche quand on le regarde).
+  - V va de 0 en bas du morceau à 1 en haut du morceau.
+  Vérifié avec le rendu sources/rendus/personnage_uv.png.
+
+Triangles : corps + tête = 5 954 ; avec la coiffure la plus lourde (cheveux_1) = 7 158 (< 8 000).
+
+
+2) objets.glb — armes, soins, coffre, ravitaillement (16 objets racines)
+-----------------------------------------------------------------------
+Armes : origine = au milieu de la poignée (là où se ferme la main du perso), canon vers +Y,
+haut vers +Z. Dans three.js : canon vers -Z, haut vers +Y. À l'échelle du perso de 2 m.
+Chaque arme a « rarete » sur une grosse partie bien visible et « lueur » sur une petite bande.
+
+  pistolet    0,40 m   rarete = la glissière (le dessus)                       768 tri
+  smg         0,80 m   rarete = le corps                                     1 260 tri
+  fusil       1,37 m   rarete = garde-main + crosse ; lunette courte         1 308 tri
+  pompe       1,22 m   rarete = la boîte de culasse ; crosse en bois         1 512 tri
+  sniper      1,61 m   rarete = la crosse + la molette de lunette             1 884 tri
+  roquettes   1,50 m   lance-roquettes (NOUVEAU) : rarete = le gros tube,
+                       « lueur » = un anneau autour du tube, roquette rouge au bout   1 912 tri
+  grenade     0,17 m   (NOUVEAU) origine au centre de la grenade ; rarete = le corps,
+                       « lueur » = un anneau vertical                         1 408 tri
+
+Soins et autres (origine au centre de l'objet, sauf la pioche) :
+  minigourde  (NOUVEAU) petite gourde ronde de bouclier, 0,14 m de haut          768 tri
+  pansements  (NOUVEAU) rouleau de bande avec un bout déroulé, 0,17 m            528 tri
+  soin        trousse de soin blanche à croix rouge, 0,47 m                     732 tri
+  bouclier    grande gourde au liquide bleu lumineux, 0,44 m                  1 120 tri
+  munitions   caisse verte avec balles devant (+Y), 0,50 m                     676 tri
+  materiaux   3 planches attachées, 0,65 m                                     540 tri
+  pioche      origine à la poignée comme les armes : manche vers +Y,
+              tête au bout (y = 0,74 m), pointes vers le haut et le bas        580 tri
+
+  coffre      origine au sol (au centre du dessous), 1,14 x 0,79 m, 0,83 m de haut.
+              Enfant « couvercle » : son origine est sur la charnière, à l'arrière
+              (y = -0,36 ; z = 0,555). Pour ouvrir : rotation X positive (1,9 rad = grand ouvert).
+              Matériaux : or_coffre (bandes dorées, un peu lumineuses), tresor (le trésor
+              lumineux à l'intérieur), bois_coffre, bois_coffre_fonce, fer_coffre.   1 584 tri
+  ravitaillement  caisse bleue et jaune de 1,2 m, origine au sol, bandes « lueur » sur les côtés.
+              Enfant « parachute » : origine au point d'accroche (centre du dessus de la caisse,
+              z = 1,0) ; dôme rouge et blanc de 3,4 m de large, 8 cordes. On peut le cacher ou
+              le balancer à part.                                              2 196 tri
+
+
+3) decor.glb — arbres, rochers, objets du décor, dirigeable (19 objets racines)
+-----------------------------------------------------------------------------
+Origine au pied de chaque objet (au sol, au centre), avant vers +Y. Exceptions :
+dirigeable = centre du ballon ; bateau = ligne de flottaison (la coque descend à -0,66 m).
+
+Arbres : UN SEUL objet chacun, 2 matériaux au plus, partagés par tous les arbres :
+« tronc » et « feuillage ». Le fichier ne peut pas avoir deux matériaux du même nom, donc
+le feuillage est le même vert partout : au jeu de choisir la couleur selon l'arbre.
+Couleurs conseillées (utilisées dans le rendu sources/rendus/decor_nature.png) :
+sapin #3fae4a, sapin_neige #e9f5ff (blanc neige), feuillu #3fae4a, palmier #3fae4a, cactus #5cb84a.
+  sapin        5,2 m, 4 étages pointus                                   500 tri
+  sapin_neige  5,5 m, étages gonflés et arrondis + boule au sommet         764 tri
+  feuillu      5,9 m, boules de feuillage bosselées, 2 branches          1 164 tri
+  palmier      5,7 m, tronc courbé à anneaux, 7 palmes, noix de coco (en « tronc »)  1 108 tri
+  cactus       2,6 m, côtelé avec 2 bras (seulement « feuillage »)         536 tri
+
+  rocher_1     rocher rond 1,5 m                                         320 tri   (matériau rocher)
+  rocher_2     rocher plat en 2 blocs, 2,7 m de long                     640 tri
+  rocher_3     grand rocher debout, 2,7 m de haut                        640 tri
+  buisson      1,8 m, boules + baies rouges (buisson, baies)            1 040 tri
+  voiture      4,2 m de long. Carrosserie en « couleur_joueur ». Phares avant (+Y) lumineux,
+               feux arrière rouges, vitres, roues.                       1 532 tri
+  caisse       caisse en bois de 1 m                                    1 012 tri
+  tonneau      1,1 m de haut, cerclé de fer                               780 tri
+  lampadaire   4,3 m, lampe lumineuse (matériau « lumiere ») au bout du bras, vers +X   588 tri
+  barriere     4,0 m de long le long de X, 1,2 m de haut, origine au milieu   244 tri
+  bateau       4,8 m de long, coque orange avec bande blanche, 2 bancs, moteur à l'arrière (-Y)   950 tri
+  panneau      2,3 m, planche vierge (matériau « panneau_face » pour y mettre un texte)   204 tri
+  dirigeable   30 m de long, ballon violet avec 3 anneaux cyan, 4 ailerons à l'arrière (-Y),
+               « NATX » en lettres blanches sur les deux flancs, nacelle sous le ballon
+               (bas de la nacelle à z = -6,75) avec fenêtres et 2 hélices.   4 672 tri
+  trampoline   champignon rebondissant de 2,0 m de large, 1,5 m de haut, chapeau rose,
+               taches lumineuses (matériau « taches_lumineuses »)        1 014 tri
+  fontaine     fontaine de soin de 3,1 m de large, 3 m de haut : eau verte lumineuse
+               (matériau « eau_soin ») et croix de soin qui flotte en haut   1 454 tri
+
+
+4) constructions.glb — pièces de construction aux tailles EXACTES (9 objets racines)
+----------------------------------------------------------------------------------
+Origine au centre de chaque pièce. Tailles vérifiées par le script (au millimètre) :
+  mur_bois, mur_pierre, mur_metal       4,00 (X) x 0,30 (Y) x 4,00 (Z, hauteur)
+  sol_bois, sol_pierre, sol_metal       4,00 (X) x 4,00 (Y) x 0,30 (Z, épaisseur)
+  rampe_bois, rampe_pierre, rampe_metal 4,00 (X) x 5,66 (Y) x 0,30 (Z) — À PLAT, le jeu l'incline
+                                        (5,66 = 4 x racine de 2 : penchée à 45°, elle monte de 4 m sur 4 m)
+Tous les détails (planches, briques, rivets, coins jaunes) restent à l'intérieur de ces
+dimensions : la boîte de collision = la boîte du modèle.
+Pour le sol et la rampe, la face décorée est le DESSUS (+Z dans Blender, +Y dans three.js).
+Matériaux : bois_construction, bois_construction_fonce, bois_cadre / pierre_construction,
+pierre_construction_fonce, mortier / metal_construction, metal_construction_fonce, metal_jaune.
+Triangles : bois 828, pierre 1 420 (rampe 1 948), métal 1 872.
+
+
+5) cosmetiques.glb — un objet par cosmétique, nommé categorie_id (51 objets racines)
+-----------------------------------------------------------------------------------
+Tous à la taille du perso de 2 m. Chaque objet est placé à l'origine du fichier : son origine
+est le point d'accroche ci-dessous (il suffit de l'accrocher au bon morceau du perso).
+
+chapeau_*  (18) origine = centre de la tête (le point à 1,86 m du perso, origine de « tete »).
+           Ils se posent sur la coque de cheveux (le crâne monte à +0,15 ; les chapeaux
+           commencent vers +0,06). Les cheveux en pointes (cheveux_0, cheveux_4) peuvent
+           dépasser : on peut les cacher quand un chapeau est porté.
+  casquette (rouge, visière vers l'avant)   bonnet (pompon)        cowboy (bords relevés)
+  toque (de chef)                           bandeau (nœud derrière) hautdeforme (ruban violet)
+  viking (cornes)                           chat (oreilles)        tricorne
+  helice (casquette 4 couleurs + hélice)    cornes (de diablotin)  heaume (cache le visage)
+  couronne (pierres rouges et bleues)       aureole (anneau lumineux qui flotte à +0,27)
+  bocal (bulle de verre transparente « verre_bocal », alpha 0,25, avec un petit poisson)
+  casque2k27 (casque audio noir, anneaux néon cyan / rose, « 2K27 » sur les deux écouteurs, micro)
+  sorcier (pointe tordue vers l'arrière, étoiles)   casquepompier (insigne doré + étoile)
+  Triangles : de 332 (chat) à 1 444 (toque) ; casque2k27 = 2 272.
+
+dos_*  (10) origine = au milieu du dos, SUR la surface du dos : dans le repère du perso
+       (x = 0 ; y = -0,13 ; z = 1,35). L'objet part vers l'arrière (-Y dans Blender, +Z dans three.js).
+  sac (avec bretelles sur les épaules)   cape (jusqu'aux genoux, attaches dorées)
+  carquois (en biais, 4 flèches)         guitare (rose, en biais)
+  bouclier (rond, étoile)                poisson (géant, tête en haut)
+  ailes (blanches et dorées, 1,8 m d'envergure)   fusee (2 réacteurs, flammes lumineuses « flamme »)
+  manette (géante, boutons de couleur)   ballons (5 ballons qui montent jusqu'à +1,54 au-dessus du point d'accroche)
+  Triangles : de 340 (cape) à 1 592 (ailes).
+
+pioche_*  (13) origine = à la poignée, comme les armes : manche vers +Y, tête au bout (y ≈ 0,75),
+          lames vers le haut et le bas (Z). Longueur ≈ 0,9 à 1,3 m.
+  classique   pelle (poignée en D au bout)   cle (clé plate géante)   baguette (de pain !)
+  marteau     hache (lame vers le haut)      os                       trident (doré)
+  pinceau (pointe trempée dans la peinture)  doree (rubis)            cristal (lumineux, transparent)
+  clavier (collab 2K27 : touches, bandes néon, « 2K27 » sur les deux côtés)   spatule
+  Triangles : de 364 (baguette) à 1 720 (clavier).
+
+deltaplane_*  (10) origine = aux pieds du perso. Voile vers 3,0 à 3,5 m de haut, barre à saisir
+              à 2,3 m devant le perso (y = 0,45). Envergure ≈ 3 à 4,2 m. Avant vers +Y.
+  classique (bleu et blanc, bord d'attaque jaune)   papier (avion en papier)
+  feuille (nervures)          arcenciel (6 bandes)          parapluie (tenu par sa poignée à 2,3 m)
+  tapis (volant, avec franges, suspendu par 4 cordes)       pizza (part avec pepperoni)
+  chauvesouris (yeux rouges lumineux)   dragon (tête, cornes, queue)
+  ecran2k27 (collab : écran noir à bords néon cyan / rose, « 2K27 » lisible au-dessus quand on
+             regarde depuis derrière le joueur, et en dessous quand on le regarde d'en bas)
+  Triangles : de 228 (papier) à 2 232 (ecran2k27).
+
+Collab 2K27 : uniquement le texte « 2K27 » (aucun nom, aucune date, aucun lieu), couleurs
+néon (matériaux neon_cyan, neon_rose, neon_violet, noir_2k27).
+Matériaux lumineux à faire briller (bloom) : neon_*, aureole, flamme, yeux_rouges, yeux_dragon,
+cristal, bouton_* (un peu).
