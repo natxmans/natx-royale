@@ -1,0 +1,48 @@
+NATX ROYALE — CE QUE LE CODE ATTEND POUR LES NOUVEAUX MODÈLES
+================================================================
+Écrit par la session Codage. Pour la session Modélisation : ce fichier ne remplace pas
+modeles/LISEZMOI.txt (qui reste la référence des conventions), il précise seulement comment
+la maison « Cottage » et l'arme futuriste seront branchées.
+
+Le code lit modeles/integration.json. Une entrée « actif: false » n'est pas utilisée.
+La session Codage passe une entrée à « actif: true » seulement après avoir vérifié l'export
+dans le jeu (échelle, orientation, matériaux, collisions). Les anciens modèles restent en
+place tant que ce n'est pas validé.
+
+Rappel des conventions (LISEZMOI) : 1 unité = 1 m ; dans Blender Z en haut et l'avant vers +Y
+(= -Z dans three.js) ; export .glb « +Y Up », modificateurs appliqués, sans caméra ni lumière ;
+textures intégrées au .glb.
+
+
+1) MAISON « COTTAGE »  →  modeles/house_cottage_v001.glb
+---------------------------------------------------------
+- Origine au sol, au centre de la maison. La porte d'entrée sur la face AVANT (+Y dans Blender).
+- Taille conseillée : 7 à 12 m de côté, 4,5 à 7 m de haut (le perso fait 2 m).
+- Porte : ouverture d'au moins 1,6 m de large et 2,4 m de haut, SANS battant qui bloque
+  (porte ouverte ou retirée). Le joueur fait 0,8 m de large et 1,8 m de haut.
+- Collisions : ajouter des boîtes simples nommées COL_… (COL_mur_gauche, COL_toit…), alignées
+  sur les axes, qui couvrent les murs, le toit, et les gros meubles. Ne PAS mettre de boîte
+  COL_ dans l'ouverture de la porte. Ces boîtes ne sont jamais affichées par le jeu.
+  Un étage ? Une boîte COL_ pour le plancher + décrire l'escalier (de / à / largeur) dans le
+  message de livraison : le code le transforme en rampe.
+- Matériaux et textures : intégrés au .glb ; textures en 1024 px au plus (jeu web, téléphone).
+- Poids : viser moins de 15 000 triangles et moins de 4 Mo pour le fichier.
+- LICENCE : « Cottage_FREE » vient d'un site de modèles gratuits ? Noter la licence exacte et
+  le crédit demandé dans le message de livraison. Le jeu ne sera pas publié avec ce modèle
+  tant que ce n'est pas clair.
+
+
+2) ARME FUTURISTE  →  modeles/weapon_futuriste_v001.glb
+--------------------------------------------------------
+- Un seul objet racine (ou indiquer son nom). Canon vers +Y dans Blender, haut vers +Z.
+- Origine à la poignée (là où la main se ferme), comme les armes de objets.glb.
+- Longueur réelle : 1,1 à 1,4 m (elle remplacera le modèle du fusil d'assaut).
+- Rareté : un matériau nommé « rarete » sur une grosse partie bien visible (le jeu le recolore
+  en gris / vert / bleu / violet / or), et si possible « lueur » sur une petite bande.
+- Poids : « High-Poly » ne passe pas dans un jeu web → décimer à moins de 8 000 triangles,
+  textures en 1024 px au plus, fichier de moins de 3 Mo.
+- LICENCE : même remarque que pour la maison.
+
+Si une règle ne peut pas être respectée (par ex. l'origine), le dire dans le message de
+livraison : le code sait aussi tourner l'arme (« avant »), la mettre à l'échelle (« longueur »)
+et placer la poignée (« poignee », en fractions de sa boîte).
