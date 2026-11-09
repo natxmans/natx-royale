@@ -10,9 +10,11 @@ import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPre
 import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele } from './modeles.js';
 import { signalerPartie } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
+import { initCadeaux, bonusActif, texteMultiplicateur } from './cadeaux.js';
+import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR } from './esprits.js';
 import { Reseau } from './reseau.js';
 import { Hote } from './hote.js';
-import { etatZone, posDirigeable, cibleConstruction, COUT_CONSTR, posRavito, simulerGrenade } from './partage.js';
+import { etatZone, posDirigeable, cibleConstruction, COUT_CONSTR, posRavito, simulerGrenade, MODES, modeValide, DEFIS_ENTRAINEMENT } from './partage.js';
 import { initSons, son, sonLoin, reglerVolume, reglerMusique, jouerMusique, arreterMusique, reglerVent } from './sons.js';
 import { borner, codeAleatoire, arrondi, echapper, angleVers } from './outils.js';
 import { creerCiel, creerMer, materiauZone, Particules, SOLEIL, COULEURS_CIEL } from './effets.js';
@@ -30,9 +32,11 @@ reglages.pseudo ??= '';
 reglages.couleur ??= COULEURS[Math.floor(Math.random() * COULEURS.length)];
 reglages.sensi ??= 1.2; reglages.volume ??= 0.6;
 // Téléphone / tablette : écran tactile sans souris
-reglages.tactile ??= 'auto'; reglages.sensiTactile ??= 1; reglages.tailleBoutons ??= 'normal'; reglages.opaciteBoutons ??= 0.85; reglages.vibrations ??= true;
+reglages.tactile ??= 'auto'; reglages.ramassageAuto ??= 'tactile'; reglages.sensiTactile ??= 1; reglages.tailleBoutons ??= 'normal'; reglages.opaciteBoutons ??= 0.85; reglages.vibrations ??= true;
 const tactileAuto = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
 let tactile = reglages.tactile === 'oui' || (reglages.tactile === 'auto' && tactileAuto);
+// mode choisi la dernière fois ; la première fois : Solo sur téléphone (plus léger), Battle Royale sur ordinateur
+reglages.mode = modeValide(reglages.mode || (tactile ? 'solo' : 'br'));
 document.body.classList.toggle('tactile', tactile);
 if (tactile) { reglages.qualite ??= 'basse'; reglages.distance ??= 'courte'; }
 reglages.qualite ??= reglages.ombres === false ? 'basse' : 'haute';
@@ -269,6 +273,7 @@ const etat = {
   fini: false, mondeNeuf: false, angleMenu: 0, interaction: null, salon: null,
   options: {}, ravitos: new Map(), projectiles: [], kills: new Map(), classement: [], premierSang: false, repere: null,
   secousse: 0, stats: {}, ping: 0, pingT: 0, barres: new Map(), tableau: false, mesCoffres: new Set(), tuto: null, exclu: false,
+  sanctuaires: new Map(), orbes: new Map(),
 };
 const monEquipe = () => (etat.infos.get(reseau.monId) || {}).equipe || 0;
 const coequipier = id => { const e = monEquipe(), i = etat.infos.get(id); return !!(e && i && i.equipe === e && id !== reseau.monId); };
@@ -369,6 +374,10 @@ function viderJoueursEtButin() {
   etat.projectiles.length = 0;
   for (const b of etat.barres.values()) b.el.remove();
   etat.barres.clear();
+  for (const sa of etat.sanctuaires.values()) scene.remove(sa.mesh);
+  etat.sanctuaires.clear();
+  for (const o of etat.orbes.values()) scene.remove(o.mesh);
+  etat.orbes.clear();
   for (const m of impacts) m.visible = false;
 }
 
@@ -479,6 +488,182 @@ function retirerButin(id) {
   return b;
 }
 
+// ---------- Esprits élémentaires : sanctuaires, esprits qui suivent les joueurs, pouvoirs ----------
+function ajouterSanctuaire(s) {
+  const g = creerSanctuaire();
+  g.position.set(s.x, s.y, s.z);
+  scene.add(g);
+  const sa = { id: s.id, x: s.x, y: s.y, z: s.z, type: s.type, dispo: false, mesh: g, esprit: null };
+  etat.sanctuaires.set(s.id, sa);
+  majSanctuaire(sa, s.type, s.dispo !== false);
+}
+function majSanctuaire(sa, type, dispo) {
+  sa.type = type; sa.dispo = dispo;
+  colorerSanctuaire(sa.mesh, type, dispo);
+  if (sa.esprit) { sa.mesh.remove(sa.esprit); sa.esprit = null; }
+  if (dispo) { sa.esprit = creerEsprit(type, 1.5); sa.esprit.position.y = sa.mesh.userData.hauteur; sa.mesh.add(sa.esprit); jouerEsprit(sa.esprit, 'apparaitre'); }
+}
+function donnerEsprit(id, type) {
+  retirerEsprit(id);
+  const mesh = creerEsprit(type, 0.9);
+  scene.add(mesh);
+  jouerEsprit(mesh, 'apparaitre');
+  etat.orbes.set(id, { type, mesh, a: Math.random() * 6, place: false });
+}
+function retirerEsprit(id) {
+  const o = etat.orbes.get(id);
+  if (o) { scene.remove(o.mesh); etat.orbes.delete(id); }
+}
+function etincellesEsprit(x, y, z, type, n = 20, force = 4) {
+  const d = ESPRITS[type];
+  if (!d) return;
+  for (let i = 0; i < n; i++) particules.ajouter({ x, y, z, vx: (Math.random() - 0.5) * force, vy: Math.random() * force * 0.8, vz: (Math.random() - 0.5) * force, couleur: i % 2 ? d.couleur : d.clair, forme: 2, taille: 0.3, tailleFin: 0.05, vie: 0.9, additif: true, gravite: 2 });
+}
+function majEsprits(dt) {
+  for (const sa of etat.sanctuaires.values()) {
+    const u = sa.mesh.userData;
+    u.rond.rotation.z += dt * 0.6;
+    const proche = distCam(sa.x, sa.y, sa.z) < 120;
+    if (u.mixer && proche) u.mixer.update(dt);
+    if (!sa.esprit) continue;
+    if (proche) animerEsprit(sa.esprit, dt);
+    sa.esprit.rotation.y += dt * 0.7;
+    if (Math.random() < dt * 3 && distCam(sa.x, sa.y, sa.z) < 60) etincellesEsprit(sa.x, sa.y + u.hauteur, sa.z, sa.type, 1, 1.2);
+  }
+  const moi = etat.moi;
+  for (const [id, o] of etat.orbes) {
+    const p = moi && id === moi.id ? moi : etat.autres.get(id);
+    const cache = !p || (p === moi ? moi.ph === 'mort' || moi.ph === 'dirigeable' || moi.visee : !p.vivant || !p.modele.visible);
+    o.mesh.visible = !cache;
+    if (cache) continue;
+    o.a += dt * 1.6;
+    const ry = p.ry || 0;
+    // au-dessus de l'épaule gauche, un peu en arrière (repère du joueur : -0,55 ; 1,85 ; 0,15), suivi en douceur
+    const lx = -0.62, lz = 0.2, c = Math.cos(ry), s = Math.sin(ry);
+    const vx = p.x + lx * c + lz * s, vy = p.y + 2.15 + Math.sin(o.a) * 0.05, vz = p.z - lx * s + lz * c;
+    const k = o.place ? Math.min(1, dt * 8) : 1;
+    o.mesh.position.x += (vx - o.mesh.position.x) * k; o.mesh.position.y += (vy - o.mesh.position.y) * k; o.mesh.position.z += (vz - o.mesh.position.z) * k;
+    o.place = true;
+    o.mesh.rotation.y = angleVers(o.mesh.rotation.y, ry, Math.min(1, dt * 8));
+    animerEsprit(o.mesh, dt);
+    if (Math.random() < dt * 4 && distCam(p.x, p.y, p.z) < 40) {
+      const q = o.mesh.position;
+      particules.ajouter({ x: q.x, y: q.y, z: q.z, vy: 0.4, couleur: ESPRITS[o.type].couleur, forme: 2, taille: 0.18, tailleFin: 0.02, vie: 0.6, additif: true });
+    }
+  }
+  majVision();
+  majHudEsprit();
+}
+// Zyeuto (vision) : repères roses au-dessus des ennemis, visibles à travers les murs, pendant le pouvoir
+const texVision = (() => {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#ff6ef0'; g.strokeStyle = '#3a0636'; g.lineWidth = 5;
+  g.beginPath(); g.ellipse(32, 32, 26, 16, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.fillStyle = '#3a0636'; g.beginPath(); g.arc(32, 32, 8, 0, Math.PI * 2); g.fill();
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+function majVision() {
+  const moi = etat.moi;
+  const actif = moi && moi.esprit && moi.esprit.type === 'vision' && etat.temps < (etat.visionJusqua || 0) && moi.ph !== 'mort';
+  for (const a of etat.autres.values()) {
+    const voir = actif && a.vivant && a.cible && a.modele.visible && !coequipier(a.id) && Math.hypot(a.x - moi.x, a.z - moi.z) < VISION.pouvoir;
+    if (voir && !a.repereVision) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texVision, depthTest: false, transparent: true, fog: false }));
+      s.position.y = 3.4; s.scale.set(0.9, 0.9, 1); s.renderOrder = 13;
+      a.modele.add(s); a.repereVision = s;
+    }
+    if (a.repereVision) a.repereVision.visible = !!voir;
+  }
+}
+let signatureEsprit = '';
+function majHudEsprit() {
+  const moi = etat.moi, el = $('#espritHud');
+  const e = moi && moi.ph !== 'mort' ? moi.esprit : null;
+  const sig = e ? e.type : '';
+  if (sig !== signatureEsprit) {
+    signatureEsprit = sig;
+    el.classList.toggle('cache', !e);
+    if (e) {
+      const d = ESPRITS[e.type];
+      el.style.setProperty('--couleur-esprit', d.couleur);
+      el.querySelector('.esprit-ico').textContent = d.icone;
+      el.querySelector('b').textContent = d.nom + ' (' + d.role + ') · ' + d.pouvoir;
+      el.querySelector('small').textContent = d.passif;
+      $('#tPouvoir').firstChild.textContent = d.icone;
+    }
+    if (tactile) $('#tPouvoir').classList.toggle('cache', !e);
+  }
+  if (!e) return;
+  const d = ESPRITS[e.type];
+  const k = borner(1 - (e.pret - etat.temps) / d.recharge, 0, 1);
+  el.querySelector('.esprit-recharge i').style.width = Math.round(k * 100) + '%';
+  el.classList.toggle('pret', k >= 1);
+  if (tactile) { const b = $('#tPouvoir'); b.style.setProperty('--recharge', k); b.classList.toggle('pret', k >= 1); }
+}
+// Briquet (bâtisseur) : construire coûte moins cher
+const coutConstr = () => (etat.moi && etat.moi.esprit && etat.moi.esprit.type === 'batisseur' ? COUT_BATISSEUR : COUT_CONSTR);
+function utiliserPouvoir() {
+  const moi = etat.moi;
+  if (!moi || !moi.esprit || moi.ph === 'mort' || moi.ph === 'dirigeable') return;
+  const d = ESPRITS[moi.esprit.type];
+  const reste = moi.esprit.pret - etat.temps;
+  if (reste > 0) { annonceObjet(`${d.icone} ${d.pouvoir} : encore ${Math.ceil(reste)} s`); return; }
+  if (moi.esprit.type === 'mobilite') {
+    if (moi.ph !== 'sol') return;
+    // Envol : le bond est fait tout de suite ici (c'est mon déplacement), l'hôte compte la recharge
+    const fx = -Math.sin(moi.ry), fz = -Math.cos(moi.ry);
+    moi.vy = ENVOL.haut; moi.vx = fx * ENVOL.avant; moi.vz = fz * ENVOL.avant;
+    moi.auSol = false; moi.sansChute = true; moi.accroupi = false; moi.emote = null;
+  }
+  moi.esprit.pret = etat.temps + d.recharge;
+  reseau.versHote({ t: 'pouvoir', ry: arrondi(moi.ry) });
+  vibrer(30);
+}
+// Ce que tout le monde voit quand quelqu'un utilise son pouvoir
+function effetPouvoir(m) {
+  const d = ESPRITS[m.type];
+  if (!d) return;
+  const moi = etat.moi;
+  if (moi && m.par === moi.id && moi.esprit) {
+    moi.esprit.pret = +m.pret || moi.esprit.pret;
+    if (m.type === 'vision') { etat.visionJusqua = etat.temps + VISION.duree; annonceObjet(`👁️ ${d.pouvoir} : les ennemis proches sont marqués en rose`); }
+  }
+  const o = etat.orbes.get(m.par);
+  if (o) jouerEsprit(o.mesh, 'activer');
+  const x = +m.x, y = +m.y, z = +m.z, dc = distCam(x, y, z);
+  if (dc > 160) return;
+  if (m.type === 'soin') {
+    for (let i = 0; i < 40; i++) {
+      const a = Math.random() * Math.PI * 2, r = Math.random() * BOURGEON.rayon * 0.5;
+      particules.ajouter({ x: x + Math.cos(a) * r, y: y + 0.2, z: z + Math.sin(a) * r, vy: 2 + Math.random() * 2, couleur: i % 2 ? d.couleur : d.clair, forme: 2, taille: 0.35, tailleFin: 0.05, vie: 1.1, additif: true });
+    }
+    sonLoin('soin', dc * 2);
+  } else if (m.type === 'mobilite') {
+    for (let i = 0; i < 36; i++) {
+      const a = i / 36 * Math.PI * 2;
+      particules.ajouter({ x: x + Math.cos(a) * 0.6, y: y + 0.2, z: z + Math.sin(a) * 0.6, vx: Math.cos(a) * 6, vy: 1 + Math.random(), vz: Math.sin(a) * 6, couleur: i % 2 ? d.clair : d.couleur, forme: 2, taille: 0.35, tailleFin: 0.05, vie: 0.5, additif: true });
+    }
+    sonLoin('rebond', dc * 2);
+  } else if (m.type === 'protection') {
+    for (let i = 0; i < 36; i++) {
+      const a = Math.random() * Math.PI * 2, h = Math.random() * 2.1;
+      particules.ajouter({ x: x + Math.cos(a) * 1.1, y: y + h, z: z + Math.sin(a) * 1.1, vx: Math.cos(a) * 0.4, vy: 0.2, vz: Math.sin(a) * 0.4, couleur: i % 3 ? d.couleur : '#ffffff', forme: 3, taille: 0.4, tailleFin: 0.15, vie: 0.8, additif: true });
+    }
+    sonLoin('bouclierCasse', dc * 3);
+  } else if (m.type === 'vision') {
+    for (let i = 0; i < 48; i++) {
+      const a = i / 48 * Math.PI * 2;
+      particules.ajouter({ x: x + Math.cos(a), y: y + 1.6, z: z + Math.sin(a), vx: Math.cos(a) * 14, vy: 0, vz: Math.sin(a) * 14, couleur: i % 2 ? d.couleur : d.clair, forme: 2, taille: 0.4, tailleFin: 0.05, vie: 0.6, additif: true, frein: 1.5 });
+    }
+  } else if (m.type === 'batisseur') {
+    for (let i = 0; i < 24; i++) {
+      const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 2;
+      particules.ajouter({ x: x + Math.cos(a) * r, y: y + 1 + Math.random() * 2, z: z + Math.sin(a) * r, vx: -Math.cos(a) * 5, vy: 0.5, vz: -Math.sin(a) * 5, couleur: ['#a0703c', '#9a9ea6', '#c9ced8'][i % 3], forme: 3, taille: 0.35, tailleFin: 0.1, vie: 0.6, gravite: 1 });
+    }
+  }
+}
+
 // ---------- Messages venant de l'hôte ----------
 function recevoir(m) {
   if (!m || typeof m !== 'object') return;
@@ -529,7 +714,7 @@ function recevoir(m) {
       break;
     }
     case 'refusConstr':
-      if (etat.enAttente.has(m.cle)) { etat.enAttente.delete(m.cle); if (moi) moi.mats += COUT_CONSTR; }
+      if (etat.enAttente.has(m.cle)) { const cout = etat.enAttente.get(m.cle); etat.enAttente.delete(m.cle); if (moi) moi.mats += typeof cout === 'number' ? cout : COUT_CONSTR; }
       break;
     case 'constrPV': { const c = etat.monde.abimerConstruction(m.cle, m.pv); if (c) { const p = c.mesh.position; for (let i = 0; i < 3; i++) particules.ajouter({ x: p.x + (Math.random() - 0.5) * 2, y: p.y + (Math.random() - 0.5) * 2, z: p.z + (Math.random() - 0.5) * 2, vy: 0.5, couleur: '#d9c2a0', taille: 0.6, tailleFin: 1.2, vie: 0.7, alpha: 0.6 }); } break; }
     case 'constrX': {
@@ -559,6 +744,58 @@ function recevoir(m) {
     case 'butin-': {
       retirerButin(m.id);
       if (moi && m.par === moi.id && m.b) recevoirObjet(m.b);
+      break;
+    }
+    case 'refusRamasser': {
+      const b = etat.butins.get(m.id);
+      if (b) b.demande = 0;
+      if (m.raison === 'loin') annonceObjet('Approche-toi encore un peu');
+      break;
+    }
+    case 'esprit': {
+      const sa = etat.sanctuaires.get(m.s);
+      const d = ESPRITS[m.type];
+      if (!d) break;
+      if (sa) { etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 30, 6); majSanctuaire(sa, m.type, false); sonLoin('coffreDore', distCam(sa.x, sa.y, sa.z) * 2); }
+      donnerEsprit(m.par, m.type);
+      if (moi && m.par === moi.id) {
+        moi.esprit = { type: m.type, pret: +m.pret || etat.temps + 3 };
+        son('niveau');
+        banniere(`${d.icone} ${d.nom.toUpperCase()} · ${d.role.toUpperCase()}`, `${d.passif} · Pouvoir (${tactile ? '✨' : L('KeyQ')}) : ${d.pouvoir}`);
+        ajouterFil(`${d.icone} Tu as capturé <b style="color:${d.couleur}">${d.nom}</b>, l'esprit de ${d.role.toLowerCase()}`, true);
+      } else if (sa && distCam(sa.x, sa.y, sa.z) < 90) ajouterFil(`${d.icone} <b>${echapper(nomDe(m.par))}</b> a capturé ${d.nom}`);
+      break;
+    }
+    case 'sanctuaire': {
+      const sa = etat.sanctuaires.get(m.s);
+      if (sa && ESPRITS[m.type]) { majSanctuaire(sa, m.type, true); etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 24, 5); }
+      break;
+    }
+    case 'espritLibre': {
+      const o = etat.orbes.get(m.id);
+      if (o && o.mesh.visible) { const q = o.mesh.position; etincellesEsprit(q.x, q.y, q.z, o.type, 24, 5); }
+      retirerEsprit(m.id);
+      if (moi && m.id === moi.id) moi.esprit = null;
+      break;
+    }
+    case 'pouvoir': effetPouvoir(m); break;
+    case 'defis': {
+      const avant = etat.defis ? DEFIS_ENTRAINEMENT.filter(x => etat.defis[x.id] >= x.n).length : 0;
+      etat.defis = m.d && typeof m.d === 'object' ? m.d : etat.defis;
+      majDefisEntrainement();
+      const apres = DEFIS_ENTRAINEMENT.filter(x => etat.defis[x.id] >= x.n).length;
+      if (apres > avant) { son('niveau'); annonce(`✅ Défi réussi (${apres}/${DEFIS_ENTRAINEMENT.length})`, 2.5, '#7dff9a'); }
+      break;
+    }
+    case 'mannequin': {
+      explosionElimination(+m.x, +m.y, +m.z, '#ffd23f');
+      if (moi && m.par === moi.id && etat.defis) { const d = DEFIS_ENTRAINEMENT[0]; annonceObjet(`🎯 Mannequin abattu ! (${Math.min(d.n, etat.defis.mannequins)}/${d.n})`); son('elimination', 0.6); }
+      break;
+    }
+    case 'reapparition': {
+      if (!moi) break;
+      moi.x = +m.x; moi.y = +m.y; moi.z = +m.z; moi.vx = moi.vy = moi.vz = 0; moi.conso = null;
+      annonce('💫 Tu réapparais !', 2, '#9fe0ff');
       break;
     }
     case 'coffreX': {
@@ -632,6 +869,7 @@ function debutPartie(m) {
   for (const j of m.joueurs) if (j.id !== reseau.monId) creerAutre(j);
   etat.vivants = m.joueurs.length;
   for (const b of m.butins) ajouterButin(b);
+  for (const sa of m.esprits || []) ajouterSanctuaire(sa);
   const info = etat.infos.get(reseau.monId);
   etat.moi = nouveauMoi(info || { id: reseau.monId, nom: '?', couleur: '#fff' });
   if (!info) { etat.moi.ph = 'mort'; etat.moi.spectateurSeulement = true; }
@@ -648,8 +886,12 @@ function debutPartie(m) {
   afficherEcran('jeu');
   construireBarreObjets();
   annonce(tactile ? 'Touche ⤴ pour sauter !' : 'Appuie sur ESPACE pour sauter !', 4);
-  if (etat.options.mode === 'duo') setTimeout(() => banniere('👥 MODE DUOS', 'Ton coéquipier a un losange vert au-dessus de la tête'), 1500);
-  if (etat.options.entrainement) setTimeout(() => banniere('🎯 ENTRAÎNEMENT', 'Pas de zone · 999 matériaux'), 1500);
+  const regles = MODES[modeValide(etat.options.mode)];
+  const equipe = regles.taille > 1 ? ' · tes coéquipiers ont un losange vert ◆' : '';
+  const centre = etat.options.entrainement ? ' · mannequins et esprits au centre de l\'île' : '';
+  setTimeout(() => banniere(`${regles.icone} ${regles.nom.toUpperCase()}`, regles.regle + equipe + centre), 1500);
+  etat.defis = etat.options.entrainement ? Object.fromEntries(DEFIS_ENTRAINEMENT.map(x => [x.id, 0])) : null;
+  majDefisEntrainement();
 }
 
 function recevoirSnap(m) {
@@ -769,9 +1011,11 @@ function recevoirFin(m) {
   const gainHtml = moi && !moi.recompense ? donnerRecompense(gagne ? 1 : moi.place || etat.vivants, gagne) : (moi && moi.gainHtml) || '';
   setTimeout(() => {
     document.exitPointerLock?.();
-    $('#finTitre').innerHTML = gagne ? 'TOP 1 !<span>CHAMPION</span>' : (m.nom ? 'PARTIE<span>TERMINÉE</span>' : 'MATCH<span>NUL</span>');
+    $('#finTitre').innerHTML = m.entrainement ? (gagne ? 'ENTRAÎNEMENT<span>RÉUSSI</span>' : 'ENTRAÎNEMENT<span>TERMINÉ</span>')
+      : gagne ? 'TOP 1 !<span>CHAMPION</span>' : (m.nom ? 'PARTIE<span>TERMINÉE</span>' : 'MATCH<span>NUL</span>');
     const duo = m.equipe && gagnants.length > 1;
-    $('#finTexte').innerHTML = gagne ? (duo ? 'Ton équipe est la dernière debout. Bravo ! 🎉' : 'Tu es le dernier debout sur l\'île. Bravo ! 🎉')
+    $('#finTexte').innerHTML = m.entrainement ? (gagne ? 'Tu as réussi les 3 défis. Prêt pour une vraie partie ! 🎉' : `<b>${echapper(m.nom || '?')}</b> a fini les défis en premier.`)
+      : gagne ? (duo ? 'Ton équipe est la dernière debout. Bravo ! 🎉' : 'Tu es le dernier debout sur l\'île. Bravo ! 🎉')
       : m.nom ? `<b>${echapper(m.nom)}</b> remporte la partie avec ${m.kills} élimination${m.kills > 1 ? 's' : ''}.` : 'Personne n\'a survécu…';
     const place = gagne ? 1 : (moi ? moi.place || '?' : '?');
     $('#finStats').innerHTML = moi ? `<div><b>#${place}</b>place</div><div><b>${moi.kills}</b>élimination${moi.kills > 1 ? 's' : ''}</div><div><b>${Math.round(moi.degats)}</b>dégâts</div>` : '';
@@ -794,7 +1038,14 @@ function donnerRecompense(place, gagne) {
   const moi = etat.moi;
   if (!moi || moi.recompense || moi.spectateurSeulement) return (moi && moi.gainHtml) || '';
   moi.recompense = true;
-  const r = recompense({ kills: moi.kills, place, nbJoueurs: etat.infos.size, gagne, degats: moi.degats });
+  const r = etat.options.entrainement ? { details: [[gagne ? '🎯 Entraînement réussi' : '🎯 Entraînement', gagne ? 60 : 20]], total: gagne ? 60 : 20 }
+    : recompense({ kills: moi.kills, place, nbJoueurs: etat.infos.size, gagne, degats: moi.degats });
+  // bonus de pièces lancé depuis l'espace admin (ex. week-end double pièces)
+  const bonusAdmin = bonusActif();
+  if (bonusAdmin) {
+    const extra = Math.round(r.total * (bonusAdmin.multiplicateur - 1));
+    if (extra > 0) { r.details.push([`⚡ ${bonusAdmin.texte} (${texteMultiplicateur(bonusAdmin.multiplicateur)})`, extra]); r.total += extra; }
+  }
   profil.pieces += r.total;
   const survie = Math.round(etat.temps);
   const st = etat.stats;
@@ -931,7 +1182,7 @@ function recevoirObjet(b) {
       const s = moi.inv.indexOf(null, 1);
       if (s > 0) { moi.inv[s] = { objet: b.objet, rarete: b.rarete, qte }; qte = 0; }
     }
-    if (qte > 0) reseau.versHote({ t: 'jeter', objets: [{ objet: b.objet, rarete: b.rarete, qte }], x: moi.x, y: moi.y, z: moi.z });
+    if (qte > 0) { etat.jeteT = performance.now(); reseau.versHote({ t: 'jeter', objets: [{ objet: b.objet, rarete: b.rarete, qte }], x: moi.x, y: moi.y, z: moi.z }); }
     construireBarreObjets();
     return;
   }
@@ -953,6 +1204,7 @@ function jeterSlot(s) {
   if (!it || s === 0) return;
   const fx = -Math.sin(moi.ry), fz = -Math.cos(moi.ry);
   reseau.versHote({ t: 'jeter', objets: [{ objet: it.objet, rarete: it.rarete, qte: it.qte || 0, mun: it.mun || 0 }], x: moi.x + fx * 1.2, y: moi.y, z: moi.z + fz * 1.2 });
+  etat.jeteT = performance.now();
   moi.inv[s] = null;
   if (moi.conso && moi.conso.slot === s) moi.conso = null;
   if (s === moi.slot) moi.rechargeT = 0;
@@ -979,7 +1231,7 @@ function modeConstruction(type) {
 }
 
 // ---------- Contrôles ----------
-const LABELS = { KeyW: 'Z', KeyA: 'Q', KeyS: 'S', KeyD: 'D', KeyF: 'F', KeyC: 'C', KeyV: 'V', KeyE: 'E', KeyR: 'R', KeyG: 'G', KeyH: 'H', KeyB: 'B', KeyX: 'X' };
+const LABELS = { KeyQ: 'A', KeyW: 'Z', KeyA: 'Q', KeyS: 'S', KeyD: 'D', KeyF: 'F', KeyC: 'C', KeyV: 'V', KeyE: 'E', KeyR: 'R', KeyG: 'G', KeyH: 'H', KeyB: 'B', KeyX: 'X' };
 const L = c => LABELS[c] || c;
 if (navigator.keyboard && navigator.keyboard.getLayoutMap) {
   navigator.keyboard.getLayoutMap().then(map => {
@@ -996,7 +1248,8 @@ function aideHTML() {
   <tr><td>🎯 🧎 🔄</td><td>Viser · s'accroupir · recharger</td></tr>
   <tr><td>🧱 📐 ⬛</td><td>Construire un mur, une rampe, un sol (10 🪵)</td></tr>
   <tr><td>Barre d'objets</td><td>Touche une case pour prendre l'objet</td></tr>
-  <tr><td>👆 « Ramasser »</td><td>Touche le texte pour ramasser ou ouvrir</td></tr>
+  <tr><td>👆 « Ramasser »</td><td>Touche le texte pour ramasser, ouvrir ou capturer un esprit</td></tr>
+  <tr><td>✨</td><td>Pouvoir de ton esprit élémentaire (sanctuaires ◆ sur la carte)</td></tr>
   <tr><td>⏸️ 🗺️ 🏆 💬 💃 🗑️</td><td>Pause · carte · classement · discussion · émote · jeter</td></tr>
   </table><p>📱 Joue en mode paysage. Si ça rame : Réglages → Qualité basse.</p>`;
   const k = c => `<kbd>${L(c)}</kbd>`;
@@ -1008,7 +1261,8 @@ function aideHTML() {
   <tr><td>🖱️ Clic droit</td><td>Viser (lunette avec le fusil de précision)</td></tr>
   <tr><td><kbd>1</kbd>…<kbd>6</kbd> / molette</td><td>Changer d'objet (1 = pioche)</td></tr>
   <tr><td>${k('KeyF')} ${k('KeyC')} ${k('KeyV')}</td><td>Construire un <b>mur</b>, une <b>rampe</b>, un <b>sol</b> (10 🪵)</td></tr>
-  <tr><td>${k('KeyE')}</td><td>Ramasser · ouvrir un coffre</td></tr>
+  <tr><td>${k('KeyE')}</td><td>Ramasser · ouvrir un coffre · capturer un esprit</td></tr>
+  <tr><td>${k('KeyQ')}</td><td>Pouvoir de ton esprit élémentaire (sanctuaires ◆ sur la carte)</td></tr>
   <tr><td>${k('KeyR')} · ${k('KeyG')}</td><td>Recharger · jeter l'objet</td></tr>
   <tr><td>${k('KeyB')} · ${k('KeyX')}</td><td>Émote (danse) 💃 · s'accroupir</td></tr>
   <tr><td><kbd>M</kbd></td><td>Grande carte (clique dessus pour poser un repère)</td></tr>
@@ -1053,6 +1307,7 @@ function actionTouche(c, e = { key: '', preventDefault() {} }) {
   else if (c === 'KeyV') modeConstruction('sol');
   else if (c === 'KeyR') recharger();
   else if (c === 'KeyE') interagir();
+  else if (c === 'KeyQ') utiliserPouvoir();
   else if (c === 'KeyG') { if (moi.ph === 'sol') jeterSlot(moi.slot); }
   else if (c === 'KeyM' || c === 'Semicolon' || e.key === 'm' || e.key === 'M') {
     etat.grandeCarte = !etat.grandeCarte;
@@ -1159,6 +1414,7 @@ function interagir() {
   if (!it) return;
   if (it.type === 'coffre') { etat.mesCoffres.add('c' + it.c.id); reseau.versHote({ t: 'ouvrir', id: it.c.id }); }
   else if (it.type === 'ravito') { etat.mesCoffres.add('r' + it.r.id); reseau.versHote({ t: 'ouvrirRavito', id: it.r.id }); }
+  else if (it.type === 'esprit') reseau.versHote({ t: 'esprit', id: it.s.id, x: arrondi(moi.x), y: arrondi(moi.y), z: arrondi(moi.z) });
   else if (it.type === 'butin') {
     const b = it.b;
     const def = OBJETS[b.objet];
@@ -1170,8 +1426,21 @@ function interagir() {
       annonceObjet('Inventaire plein');
       return;
     }
-    reseau.versHote({ t: 'ramasser', id: b.id });
+    demanderRamassage(b);
   }
+}
+// Demande à l'hôte : avec la position du joueur au moment du geste (l'hôte peut avoir un petit retard)
+function demanderRamassage(b) {
+  const moi = etat.moi;
+  b.demande = performance.now();
+  reseau.versHote({ t: 'ramasser', id: b.id, x: arrondi(moi.x), y: arrondi(moi.y), z: arrondi(moi.z) });
+}
+const ramassageAuto = () => reglages.ramassageAuto === 'oui' || (reglages.ramassageAuto === 'tactile' && tactile);
+// Peut-on prendre cet objet sans rien jeter ? (pour le ramassage automatique)
+function placeLibrePour(b) {
+  const moi = etat.moi, def = OBJETS[b.objet];
+  if (moi.inv.indexOf(null, 1) >= 0) return true;
+  return (def.type === 'conso' || def.type === 'lancer') && moi.inv.some(x => x && x.objet === b.objet && x.qte < def.max);
 }
 
 const vTmp = new THREE.Vector3(), vTmp2 = new THREE.Vector3();
@@ -1388,7 +1657,7 @@ function majFantome() {
   const monde = etat.monde;
   if (!moi.construction || moi.ph !== 'sol') { if (fantome) fantome.visible = false; cibleConstr = null; return; }
   const c = cibleConstruction(monde, moi.construction, moi.x, moi.y, moi.z, moi.ry, moi.rx);
-  const valide = !monde.constructions.has(c.cle) && !etat.enAttente.has(c.cle) && moi.mats >= COUT_CONSTR;
+  const valide = !monde.constructions.has(c.cle) && !etat.enAttente.has(c.cle) && moi.mats >= coutConstr();
   const cle = c.cle + (valide ? '+' : '-');
   if (cle !== cleFantome) {
     if (fantome) scene.remove(fantome);
@@ -1406,12 +1675,13 @@ function poserConstruction() {
   const moi = etat.moi;
   if (!cibleConstr || moi.construitT > 0) return;
   if (!fantomeValide) {
-    if (moi.mats < COUT_CONSTR && !moi.alerteMats) { annonceObjet('Pas assez de matériaux : frappe des arbres avec la pioche !'); moi.alerteMats = 1.5; }
+    if (moi.mats < coutConstr() && !moi.alerteMats) { annonceObjet('Pas assez de matériaux : frappe des arbres avec la pioche !'); moi.alerteMats = 1.5; }
     return;
   }
-  moi.mats -= COUT_CONSTR;
+  const cout = coutConstr();
+  moi.mats -= cout;
   moi.construitT = 0.07;
-  etat.enAttente.set(cibleConstr.cle, true);
+  etat.enAttente.set(cibleConstr.cle, cout);
   reseau.versHote({ t: 'construire', ...cibleConstr });
   son('construire');
   cleFantome = null;
@@ -1421,6 +1691,7 @@ function poserConstruction() {
 function majMoi(dt) {
   const moi = etat.moi;
   const monde = etat.monde;
+  if (etat.options.entrainement) { if (moi.munitions < 300) moi.munitions = 999; if (moi.mats < 300) moi.mats = 999; }
   moi.tirT = Math.max(0, moi.tirT - dt);
   moi.coup = Math.max(0, moi.coup - dt);
   moi.construitT = Math.max(0, moi.construitT - dt);
@@ -1491,17 +1762,26 @@ function majMoi(dt) {
       if (moi.visee) vit = Math.min(vit, 4.4);
       if (moi.conso) vit = 3.2;
       if (moi.dansEau) vit *= 0.55;
+      if (moi.esprit && moi.esprit.type === 'mobilite') vit *= VITESSE_MOBILITE;
       const k = moi.auSol ? Math.min(1, dt * 14) : Math.min(1, dt * 3);
       moi.vx += (dx * vit - moi.vx) * k;
       moi.vz += (dz * vit - moi.vz) * k;
       if (touches.has('Space') && moi.auSol) { moi.vy = 9.2; moi.auSol = false; moi.accroupi = false; }
+      // Filou (mobilité) : double saut (appuyer encore une fois en l'air)
+      const espace = touches.has('Space');
+      if (espace && !moi.espacePrec && !moi.auSol && !moi.sansChute && moi.esprit && moi.esprit.type === 'mobilite' && !moi.doubleSaut && moi.vy < 7) {
+        moi.vy = 9.5; moi.doubleSaut = true; son('saut', 0.5);
+        for (let i = 0; i < 12; i++) particules.ajouter({ x: moi.x, y: moi.y + 0.1, z: moi.z, vx: (Math.random() - 0.5) * 4, vy: -0.5, vz: (Math.random() - 0.5) * 4, couleur: '#eaffe0', forme: 2, taille: 0.3, tailleFin: 0.05, vie: 0.5, additif: true });
+      }
+      if (moi.auSol) moi.doubleSaut = false;
+      moi.espacePrec = espace;
       const etaitEnLair = !moi.auSol, vyAvant = moi.vy;
       moi.vy -= 25 * dt;
       monde.deplacer(moi, dt);
       if (etaitEnLair && moi.auSol) {
         if (vyAvant < -9) poussiere(moi.x, moi.y, moi.z, 8);
         // dégâts de chute (sauf après un champignon)
-        if (vyAvant < -17 && !moi.sansChute && !moi.dansEau && !etat.options.entrainement) { reseau.versHote({ t: 'chute', deg: Math.round((-vyAvant - 17) * 5) }); son('chute'); etat.secousse = Math.max(etat.secousse, 0.4); }
+        if (vyAvant < -17 && !moi.sansChute && !moi.dansEau && !etat.options.entrainement && !(moi.esprit && moi.esprit.type === 'mobilite')) { reseau.versHote({ t: 'chute', deg: Math.round((-vyAvant - 17) * 5) }); son('chute'); etat.secousse = Math.max(etat.secousse, 0.4); }
         moi.sansChute = false;
       }
       // champignons rebondissants
@@ -1613,8 +1893,12 @@ function chercherInteraction() {
     const def = OBJETS[b.objet];
     if (!aPortee(moi, b.x, b.y + 0.5, b.z)) continue;
     if ((def.type === 'munitions' || def.type === 'materiaux') && d < 1.8) {
-      if (!b.demande || performance.now() - b.demande > 1500) { b.demande = performance.now(); reseau.versHote({ t: 'ramasser', id: b.id }); }
+      if (!b.demande || performance.now() - b.demande > 1500) demanderRamassage(b);
       continue;
+    }
+    // ramassage automatique (réglage) : seulement dans une case libre, et pas ce qu'on vient de jeter
+    if (d < 1.6 && ramassageAuto() && performance.now() - (etat.jeteT || -1e9) > 4000 && placeLibrePour(b)) {
+      if (!b.demande || performance.now() - b.demande > 1500) demanderRamassage(b);
     }
     if (d < bd) { bd = d; best = { type: 'butin', b }; }
   }
@@ -1627,6 +1911,11 @@ function chercherInteraction() {
     if (r.ouvert || !r.pose) continue;
     const d = Math.hypot(r.x - moi.x, r.sol - moi.y, r.z - moi.z);
     if (d < 3.2 && d < bd + 0.6 && aPortee(moi, r.x, r.sol + 0.8, r.z)) { bd = d; best = { type: 'ravito', r }; }
+  }
+  for (const sa of etat.sanctuaires.values()) {
+    if (!sa.dispo) continue;
+    const d = Math.hypot(sa.x - moi.x, sa.z - moi.z);
+    if (d < PORTEE_CAPTURE && Math.abs(sa.y - moi.y) < 3 && d < bd + 0.6) { bd = d; best = { type: 'esprit', s: sa }; }
   }
   etat.interaction = best;
 }
@@ -1828,10 +2117,26 @@ function dessinerCarte(cv, centreX, centreZ, vue, grand) {
     const [x, y] = P(r.x, r.z), k = grand ? 7 : 5;
     g.fillStyle = '#c44dff'; g.strokeStyle = '#fff'; g.lineWidth = 2; g.fillRect(x - k, y - k, k * 2, k * 2); g.strokeRect(x - k, y - k, k * 2, k * 2);
   }
+  for (const sa of etat.sanctuaires.values()) {
+    const [x, y] = P(sa.x, sa.z), k = grand ? 9 : 5.5;
+    if (x < -12 || y < -12 || x > T + 12 || y > T + 12) continue;
+    const d = ESPRITS[sa.type];
+    g.fillStyle = sa.dispo ? d.couleur : 'rgba(95,95,110,.85)'; g.strokeStyle = '#fff'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(x, y - k); g.lineTo(x + k, y); g.lineTo(x, y + k); g.lineTo(x - k, y); g.closePath(); g.fill(); g.stroke();
+    if (grand && sa.dispo) { g.font = '15px system-ui'; g.textAlign = 'center'; g.fillText(d.icone, x, y - k - 4); }
+  }
   if (etat.repere) {
     const [x, y] = P(etat.repere.x, etat.repere.z), k = grand ? 1.4 : 1;
     g.fillStyle = '#ffd23f'; g.strokeStyle = '#000'; g.lineWidth = 2;
     g.beginPath(); g.moveTo(x, y); g.lineTo(x - 6 * k, y - 11 * k); g.arc(x, y - 13 * k, 6.5 * k, Math.PI * 0.85, Math.PI * 2.15); g.closePath(); g.fill(); g.stroke();
+  }
+  if (moi && moi.esprit && moi.esprit.type === 'vision' && moi.ph !== 'mort') {
+    const loin = etat.temps < (etat.visionJusqua || 0) ? VISION.pouvoir : VISION.passif;
+    for (const a of etat.autres.values()) {
+      if (!a.vivant || !a.cible || a.marqueur || Math.hypot(a.x - moi.x, a.z - moi.z) > loin) continue;
+      const [x, y] = P(a.x, a.z);
+      g.fillStyle = '#ff6ef0'; g.strokeStyle = '#3a0636'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, grand ? 5 : 3.5, 0, 7); g.fill(); g.stroke();
+    }
   }
   for (const a of etat.autres.values()) {
     if (!a.vivant || !a.marqueur || !a.cible) continue;
@@ -2004,6 +2309,7 @@ function majHUD(dt) {
     inv.style.display = 'block';
     if (ia.type === 'coffre') inv.innerHTML = `${kE} Ouvrir le coffre${ia.c.dore ? ' <b style="color:#ffd23f">doré</b> 🌟' : ' ✨'}`;
     else if (ia.type === 'ravito') inv.innerHTML = `${kE} Ouvrir le <b style="color:#d18bff">ravitaillement</b> 📦`;
+    else if (ia.type === 'esprit') { const d = ESPRITS[ia.s.type]; inv.innerHTML = `${kE} Capturer <b style="color:${d.couleur}">${d.icone} ${d.nom}</b> <small>(esprit de ${d.role.toLowerCase()})</small>`; }
     else {
       const def = OBJETS[ia.b.objet];
       const r = RARETES[ia.b.rarete || 0];
@@ -2358,6 +2664,7 @@ function construireReglages(el) {
   <label class="tactile-seul">Taille des boutons <select data-r="tailleBoutons"><option value="petit">Petits</option><option value="normal">Normaux</option><option value="grand">Grands</option></select></label>
   <label class="tactile-seul">Transparence des boutons <span class="valeur" data-v="opaciteBoutons"></span><input data-r="opaciteBoutons" type="range" min="0.3" max="1" step="0.05"></label>
   <label class="tactile-seul">Vibrations <input data-r="vibrations" type="checkbox"></label>
+  <label>Ramasser tout seul (si une case est libre) <select data-r="ramassageAuto"><option value="tactile">Sur téléphone</option><option value="oui">Toujours</option><option value="non">Jamais</option></select></label>
   </div>
   <div class="groupe-param" data-g="son">
   <label>Volume <span class="valeur" data-v="volume"></span><input data-r="volume" type="range" min="0" max="1" step="0.05"></label>
@@ -2477,6 +2784,7 @@ function initTactile() {
         tirAppuye = true; moi.emote = null; debutRegard(b, e);
       } else if (t === 'saut') { touches.add('Space'); actionTouche('Space'); }
       else if (t === 'viser') viseeAppuye = !viseeAppuye;
+      else if (t === 'pouvoir') utiliserPouvoir();
       else if (t === 'classement') { etat.tableau = !etat.tableau; if (etat.tableau) majTableau(); $('#tableau').classList.toggle('cache', !etat.tableau); }
       else if (t === 'chat') ouvrirChat();
       else if (t === 'pause') { etat.pauseTactile = true; majPause(); }
@@ -2609,6 +2917,7 @@ function miseAJour(dt) {
     majMoi(dt);
     majAutres(dt);
     majButins(dt);
+    majEsprits(dt);
     majCamera(dt);
     majZone(dt);
     majHUD(dt);
@@ -2677,8 +2986,9 @@ function chargement(texte) {
 }
 
 function texteOptions(o) {
-  return [o.mode === 'duo' ? '👥 Duos' : '👤 Chacun pour soi', `🤖 ${o.bots} bots (${['facile', 'normal', 'difficile'][o.difficulte] || 'normal'})`,
-    `🌀 Zone ${o.vitesseZone || 'normale'}`, o.matsDepart ? `🪵 ${o.matsDepart} au départ` : null, o.fete ? '🎉 Butin de fête' : null, o.entrainement ? '🎯 Entraînement' : null].filter(Boolean).join(' · ');
+  const r = MODES[modeValide(o.mode)];
+  return [`${r.icone} ${r.nom}`, `🤖 ${o.bots} ${o.mode === 'entrainement' ? 'mannequins' : 'bots'}${o.mode === 'entrainement' ? '' : ` (${['facile', 'normal', 'difficile'][o.difficulte] || 'normal'})`}`,
+    o.mode === 'entrainement' ? null : `🌀 Zone ${o.vitesseZone || 'normale'}`, o.matsDepart && o.mode !== 'entrainement' ? `🪵 ${o.matsDepart} au départ` : null, o.fete ? '🎉 Butin de fête' : null].filter(Boolean).join(' · ');
 }
 function majSalon(m) {
   // quelqu'un arrive dans le salon
@@ -2716,6 +3026,26 @@ function majSalon(m) {
   if (etat.ecran === 'chargement' || etat.ecran === 'menu') afficherEcran('salon');
 }
 
+function majChoixModes() {
+  const mode = modeValide(reglages.mode);
+  for (const b of document.querySelectorAll('#choixModes [data-mode]')) b.classList.toggle('choisi', b.dataset.mode === mode);
+  const r = MODES[mode];
+  $('#descMode').textContent = r.regle;
+  $('#btnSolo').firstChild.textContent = `${r.icone} Jouer en ${r.nom} `;
+}
+function majDefisEntrainement() {
+  const el = $('#defisEntrainement');
+  el.classList.toggle('cache', !etat.defis);
+  if (!etat.defis) return;
+  el.replaceChildren(...DEFIS_ENTRAINEMENT.map(d => {
+    const n = Math.min(d.n, etat.defis[d.id] || 0), fait = n >= d.n;
+    const li = document.createElement('div');
+    li.className = 'defi' + (fait ? ' fait' : '');
+    li.textContent = `${fait ? '✅' : d.icone} ${d.texte} ${n}/${d.n}`;
+    return li;
+  }));
+}
+
 function quitter() {
   try { reseau.fermer(); } catch (e) { /* rien */ }
   location.href = location.pathname;
@@ -2725,11 +3055,23 @@ function lireOptionsSalon() {
   if (!hote) return;
   const o = hote.options;
   o.bots = +$('#nbBots').value; o.difficulte = +$('#difficulte').value;
-  o.mode = $('#modeJeu').value; o.vitesseZone = $('#vitesseZone').value; o.matsDepart = +$('#matsDepart').value;
-  o.fete = $('#optFete').checked; o.entrainement = $('#optEntrainement').checked;
+  o.mode = modeValide($('#modeJeu').value); o.vitesseZone = $('#vitesseZone').value; o.matsDepart = +$('#matsDepart').value;
+  o.fete = $('#optFete').checked; o.entrainement = o.mode === 'entrainement';
+}
+// Choisir un mode remet ses réglages conseillés (nombre de bots, vitesse de la zone)
+function appliquerMode(mode) {
+  const r = MODES[modeValide(mode)];
+  $('#modeJeu').value = modeValide(mode);
+  const nb = $('#nbBots');
+  nb.max = r.botsMax; nb.value = r.bots; $('#nbBotsTxt').textContent = r.bots;
+  $('#vitesseZone').value = r.zone;
+  $('#vitesseZone').disabled = mode === 'entrainement';
+  $('#matsDepart').disabled = mode === 'entrainement';
+  $('#regleMode').textContent = r.icone + ' ' + r.regle;
 }
 function demarrerHote() {
   hote = new Hote(reseau, { preparerMonde });
+  appliquerMode(reglages.mode);
   lireOptionsSalon();
   reseau.surMessageClient = recevoir;
   reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: profil.equipe });
@@ -2819,7 +3161,11 @@ function initMenu() {
     $('#nbBotsTxt').textContent = e.target.value;
     if (hote) { lireOptionsSalon(); hote.diffuserSalon(); }
   };
-  for (const id of ['#difficulte', '#modeJeu', '#vitesseZone', '#matsDepart', '#optFete', '#optEntrainement']) $(id).onchange = () => { if (hote) { lireOptionsSalon(); hote.diffuserSalon(); } };
+  for (const id of ['#difficulte', '#vitesseZone', '#matsDepart', '#optFete']) $(id).onchange = () => { if (hote) { lireOptionsSalon(); hote.diffuserSalon(); } };
+  $('#modeJeu').onchange = e => { appliquerMode(e.target.value); reglages.mode = modeValide(e.target.value); sauverReglages(); majChoixModes(); if (hote) { lireOptionsSalon(); hote.diffuserSalon(); } };
+  // Menu principal : choix du mode
+  for (const b of document.querySelectorAll('#choixModes [data-mode]')) b.onclick = () => { reglages.mode = b.dataset.mode; sauverReglages(); son('clic'); majChoixModes(); };
+  majChoixModes();
   // discussion dans le salon
   $('#chatSalonSaisie').addEventListener('keydown', e => { if (e.key === 'Enter') { envoyerChat(e.target.value); e.target.value = ''; } });
   // discussion en jeu
@@ -2890,6 +3236,7 @@ initMenu();
 afficherEcran('menu');
 const bonus = bonusDuJour(profil);
 if (bonus) setTimeout(() => { toast(`🎁 Bonus du jour : +${bonus} 🪙 !`, 4000); menus.majPieces(true); }, 900);
+initCadeaux({ profil, menus, son: n => { initSons(); son(n); } });
 preparerMonde(Math.floor(Math.random() * 1e9));
 requestAnimationFrame(boucle);
 

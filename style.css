@@ -430,7 +430,12 @@ body.tactile #mats { font-size: 15px; }
 body.tactile #aideConstr { display: none; }
 body.tactile #annonce { font-size: 24px; top: 20%; }
 body.tactile #banniere { font-size: 18px; bottom: 96px; padding: 6px 40px; }
-body.tactile #invite { pointer-events: auto; top: 58%; font-size: 15px; padding: 10px 16px; border-color: rgba(255, 255, 255, .4); background: rgba(8, 14, 32, .78); }
+body.tactile #invite { pointer-events: auto; top: 58%; font-size: 15px; padding: 13px 22px; min-width: 190px; text-align: center; border-color: rgba(255, 210, 63, .75); background: rgba(8, 14, 32, .86); animation: invite-pulse 1.3s ease-in-out infinite; cursor: pointer; }
+body.tactile #invite:active { background: rgba(255, 210, 63, .35); }
+@keyframes invite-pulse { 50% { box-shadow: 0 0 0 6px rgba(255, 210, 63, .18); } }
+/* Téléphone : ce qu'on touche du doigt passe AU-DESSUS des zones invisibles du joystick (gauche) et de la caméra (droite),
+   sinon le doigt bouge la caméra au lieu de ramasser ou de changer d'objet */
+body.tactile #invite, body.tactile #bas { z-index: 4; }
 body.tactile #progression { top: 66%; }
 body.tactile #astuceTuto { top: 26%; font-size: 13px; }
 body.tactile #mortPanneau { top: 8%; font-size: 13px; padding: 10px 16px; max-width: 70vw; }
@@ -597,3 +602,58 @@ body.tb-grand .t-menu, body.tb-grand .t-constr { gap: 14px; }
   .avis-bas { flex-direction: column; align-items: stretch; }
   #avisEnvoyer { width: 100%; }
 }
+
+/* ---------- Annonce de l'admin, bonus, codes et cadeaux ---------- */
+.annonce-jeu { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 18px; padding: 9px 18px; font-weight: 900; font-size: 14px; text-align: center; border-bottom: 2px solid; animation: arrivee-annonce .4s ease; }
+.annonce-jeu.info { background: linear-gradient(90deg, rgba(79, 209, 255, .22), rgba(61, 141, 255, .22)); border-color: rgba(79, 209, 255, .55); color: #d4f4ff; }
+.annonce-jeu.evenement { background: linear-gradient(90deg, rgba(176, 38, 255, .28), rgba(255, 46, 136, .26)); border-color: rgba(255, 46, 136, .6); color: #f6dcff; }
+.annonce-jeu.alerte { background: linear-gradient(90deg, rgba(255, 162, 40, .3), rgba(255, 107, 107, .22)); border-color: rgba(255, 162, 40, .7); color: #ffe6c4; }
+.bonus-jeu { color: var(--jaune); text-shadow: 0 0 10px rgba(255, 210, 63, .5); }
+@keyframes arrivee-annonce { from { opacity: 0; transform: translateY(-8px); } }
+.code-cadeau { margin-top: 16px; background: rgba(255, 255, 255, .05); border: 2px dashed rgba(255, 210, 63, .35); border-radius: 16px; padding: 14px 16px; }
+.code-cadeau h3 { margin: 0 0 10px; }
+.code-cadeau .rejoindre input { width: 100%; max-width: 260px; letter-spacing: 3px; font-size: 16px; }
+.msg-code { min-height: 1.2em; margin: 8px 0 4px; font-weight: 800; color: var(--doux, #a9b6dd); }
+.msg-code.ok { color: #5bdc7a; } .msg-code.erreur { color: #ff8a8a; }
+.code-joueur { font-family: ui-monospace, Consolas, monospace; letter-spacing: 1px; color: var(--jaune); user-select: all; }
+#fenetreCadeau { z-index: 40; background: rgba(4, 8, 22, .72); }
+.boite.cadeau { text-align: center; max-width: 560px; animation: cadeau-pop .45s cubic-bezier(.2, 1.6, .4, 1); }
+.cadeau-icone { font-size: 64px; line-height: 1; filter: drop-shadow(0 6px 18px rgba(255, 210, 63, .5)); animation: cadeau-saut 1.2s ease-in-out infinite; }
+.boite.cadeau h2 { margin: 4px 0 6px; }
+.cadeau-message { font-weight: 800; font-style: italic; margin: 0 0 8px; }
+.cadeau-contenu { list-style: none; margin: 10px 0 16px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 7px; max-height: 46vh; overflow-y: auto; }
+.cadeau-contenu li { display: flex; gap: 10px; align-items: center; justify-content: center; background: rgba(255, 255, 255, .06); border-radius: 12px; padding: 8px 12px; font-size: 16px; }
+.boutons-cadeau { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+@keyframes cadeau-pop { from { transform: scale(.6); opacity: 0; } }
+@keyframes cadeau-saut { 50% { transform: translateY(-6px) rotate(-4deg); } }
+
+/* ---------- Esprits élémentaires ---------- */
+#espritHud { position: absolute; left: 20px; bottom: 112px; display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border-radius: 16px; background: rgba(8, 14, 32, .72); border: 2px solid var(--couleur-esprit, #fff); box-shadow: 0 0 16px color-mix(in srgb, var(--couleur-esprit, #fff) 45%, transparent); max-width: 330px; }
+#espritHud .esprit-ico { font-size: 28px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: color-mix(in srgb, var(--couleur-esprit, #fff) 30%, transparent); }
+#espritHud .esprit-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#espritHud b { font-size: 13px; color: var(--couleur-esprit, #fff); }
+#espritHud small { font-size: 11px; opacity: .85; font-weight: 700; }
+#espritHud .esprit-recharge { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .15); overflow: hidden; margin-top: 3px; }
+#espritHud .esprit-recharge i { display: block; height: 100%; width: 0; background: var(--couleur-esprit, #fff); }
+#espritHud kbd { opacity: .45; }
+#espritHud.pret kbd { opacity: 1; animation: invite-pulse 1.3s ease-in-out infinite; }
+#tPouvoir { right: 196px; bottom: 102px; width: 56px; height: 56px; overflow: hidden; }
+#tPouvoir .anneau-recharge { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(255, 255, 255, .55) calc(var(--recharge, 1) * 360deg), rgba(0, 0, 0, .55) 0); opacity: .45; pointer-events: none; }
+#tPouvoir.pret { border-color: #ffd23f; box-shadow: 0 0 14px rgba(255, 210, 63, .6); }
+#tPouvoir.pret .anneau-recharge { opacity: 0; }
+body.tactile #espritHud { left: 8px; bottom: 64px; padding: 4px 8px 4px 4px; max-width: 220px; }
+body.tactile #espritHud .esprit-ico { font-size: 20px; width: 30px; height: 30px; }
+body.tactile #espritHud small { display: none; }
+
+/* ---------- Modes de jeu ---------- */
+.choix-modes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 6px; }
+.choix-modes button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px; border: 2px solid rgba(255, 255, 255, .15); background: rgba(255, 255, 255, .06); color: #fff; font-weight: 900; font-size: 11px; cursor: pointer; transition: transform .08s, border-color .12s, background .12s; }
+.choix-modes button span { font-size: 22px; }
+.choix-modes button:hover { background: rgba(255, 255, 255, .12); }
+.choix-modes button.choisi { border-color: var(--jaune); background: rgba(255, 210, 63, .18); box-shadow: 0 0 12px rgba(255, 210, 63, .35); transform: translateY(-2px); }
+.desc-mode, .regle-mode { margin: 6px 0 0; font-size: 12px; font-weight: 700; color: var(--doux); min-height: 2.4em; }
+.regle-mode { min-height: 0; color: #ffe48a; }
+#defisEntrainement { position: absolute; left: 14px; top: 130px; display: flex; flex-direction: column; gap: 4px; background: rgba(8, 14, 32, .7); border: 2px solid rgba(125, 255, 154, .4); border-radius: 12px; padding: 8px 12px; font-size: 13px; }
+#defisEntrainement .defi.fait { color: #7dff9a; text-decoration: line-through; opacity: .85; }
+body.tactile #defisEntrainement { top: 120px; left: 8px; font-size: 11px; padding: 5px 8px; }
+@media (max-width: 760px) { .choix-modes { grid-template-columns: repeat(3, 1fr); } }

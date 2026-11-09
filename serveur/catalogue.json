@@ -1,0 +1,776 @@
+{
+ "source": "js/boutique.js",
+ "categories": [
+  {
+   "id": "tenue",
+   "nom": "Tenues",
+   "icone": "👕"
+  },
+  {
+   "id": "chapeau",
+   "nom": "Chapeaux",
+   "icone": "🎩"
+  },
+  {
+   "id": "dos",
+   "nom": "Dos",
+   "icone": "🎒"
+  },
+  {
+   "id": "pioche",
+   "nom": "Pioches",
+   "icone": "⛏️"
+  },
+  {
+   "id": "deltaplane",
+   "nom": "Deltaplanes",
+   "icone": "🪁"
+  },
+  {
+   "id": "trainee",
+   "nom": "Traînées",
+   "icone": "✨"
+  },
+  {
+   "id": "emote",
+   "nom": "Émotes",
+   "icone": "💃"
+  }
+ ],
+ "raretes": {
+  "commun": {
+   "nom": "Commun",
+   "couleur": "#8fa3b8"
+  },
+  "rare": {
+   "nom": "Rare",
+   "couleur": "#3d8dff"
+  },
+  "epique": {
+   "nom": "Épique",
+   "couleur": "#b552ff"
+  },
+  "legendaire": {
+   "nom": "Légendaire",
+   "couleur": "#ffad1f"
+  },
+  "collab": {
+   "nom": "Collab 2K27",
+   "couleur": "#ff2e88"
+  }
+ },
+ "objets": [
+  {
+   "cle": "tenue:classique",
+   "cat": "tenue",
+   "id": "classique",
+   "nom": "Classique",
+   "rarete": "commun",
+   "gratuit": true
+  },
+  {
+   "cle": "tenue:mariniere",
+   "cat": "tenue",
+   "id": "mariniere",
+   "nom": "Marinière",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:sportif",
+   "cat": "tenue",
+   "id": "sportif",
+   "nom": "Numéro 10",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:cuisinier",
+   "cat": "tenue",
+   "id": "cuisinier",
+   "nom": "Grand Chef",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:fermier",
+   "cat": "tenue",
+   "id": "fermier",
+   "nom": "Salopette",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:camouflage",
+   "cat": "tenue",
+   "id": "camouflage",
+   "nom": "Camouflage",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:pyjama",
+   "cat": "tenue",
+   "id": "pyjama",
+   "nom": "Pyjama Étoilé",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:pirate",
+   "cat": "tenue",
+   "id": "pirate",
+   "nom": "Corsaire",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:ninja",
+   "cat": "tenue",
+   "id": "ninja",
+   "nom": "Ombre",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:smoking",
+   "cat": "tenue",
+   "id": "smoking",
+   "nom": "Agent Secret",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:chevalier",
+   "cat": "tenue",
+   "id": "chevalier",
+   "nom": "Chevalier",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:robot",
+   "cat": "tenue",
+   "id": "robot",
+   "nom": "Robot X-9",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:astronaute",
+   "cat": "tenue",
+   "id": "astronaute",
+   "nom": "Astronaute",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:lave",
+   "cat": "tenue",
+   "id": "lave",
+   "nom": "Cœur de Lave",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:neon",
+   "cat": "tenue",
+   "id": "neon",
+   "nom": "Néon",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:statue",
+   "cat": "tenue",
+   "id": "statue",
+   "nom": "Statue d'Or",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:pompier",
+   "cat": "tenue",
+   "id": "pompier",
+   "nom": "Pompier",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:sorcier",
+   "cat": "tenue",
+   "id": "sorcier",
+   "nom": "Sorcier",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "tenue:tee2k27",
+   "cat": "tenue",
+   "id": "tee2k27",
+   "nom": "Tee-shirt 2K27",
+   "rarete": "collab",
+   "gratuit": true
+  },
+  {
+   "cle": "tenue:sweat2k27",
+   "cat": "tenue",
+   "id": "sweat2k27",
+   "nom": "Sweat Néon 2K27",
+   "rarete": "collab",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:casque2k27",
+   "cat": "chapeau",
+   "id": "casque2k27",
+   "nom": "Casque Gamer 2K27",
+   "rarete": "collab",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:manette",
+   "cat": "dos",
+   "id": "manette",
+   "nom": "Manette Géante",
+   "rarete": "collab",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:clavier",
+   "cat": "pioche",
+   "id": "clavier",
+   "nom": "Clavier-Pioche",
+   "rarete": "collab",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:ecran2k27",
+   "cat": "deltaplane",
+   "id": "ecran2k27",
+   "nom": "Écran Volant 2K27",
+   "rarete": "collab",
+   "gratuit": false
+  },
+  {
+   "cle": "trainee:neon2k27",
+   "cat": "trainee",
+   "id": "neon2k27",
+   "nom": "Néons 2K27",
+   "rarete": "collab",
+   "gratuit": false
+  },
+  {
+   "cle": "emote:dj",
+   "cat": "emote",
+   "id": "dj",
+   "nom": "DJ 2K27",
+   "rarete": "collab",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:aucun",
+   "cat": "chapeau",
+   "id": "aucun",
+   "nom": "Rien du tout",
+   "rarete": "commun",
+   "gratuit": true
+  },
+  {
+   "cle": "chapeau:casquette",
+   "cat": "chapeau",
+   "id": "casquette",
+   "nom": "Casquette",
+   "rarete": "commun",
+   "gratuit": true
+  },
+  {
+   "cle": "chapeau:bonnet",
+   "cat": "chapeau",
+   "id": "bonnet",
+   "nom": "Bonnet à Pompon",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:cowboy",
+   "cat": "chapeau",
+   "id": "cowboy",
+   "nom": "Chapeau de Cowboy",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:toque",
+   "cat": "chapeau",
+   "id": "toque",
+   "nom": "Toque",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:bandeau",
+   "cat": "chapeau",
+   "id": "bandeau",
+   "nom": "Bandeau",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:hautdeforme",
+   "cat": "chapeau",
+   "id": "hautdeforme",
+   "nom": "Haut-de-forme",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:viking",
+   "cat": "chapeau",
+   "id": "viking",
+   "nom": "Casque Viking",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:chat",
+   "cat": "chapeau",
+   "id": "chat",
+   "nom": "Oreilles de Chat",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:tricorne",
+   "cat": "chapeau",
+   "id": "tricorne",
+   "nom": "Tricorne",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:helice",
+   "cat": "chapeau",
+   "id": "helice",
+   "nom": "Casquette à Hélice",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:cornes",
+   "cat": "chapeau",
+   "id": "cornes",
+   "nom": "Petites Cornes",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:heaume",
+   "cat": "chapeau",
+   "id": "heaume",
+   "nom": "Heaume",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:couronne",
+   "cat": "chapeau",
+   "id": "couronne",
+   "nom": "Couronne",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:aureole",
+   "cat": "chapeau",
+   "id": "aureole",
+   "nom": "Auréole",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:bocal",
+   "cat": "chapeau",
+   "id": "bocal",
+   "nom": "Casque Spatial",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:sorcier",
+   "cat": "chapeau",
+   "id": "sorcier",
+   "nom": "Chapeau de Sorcier",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "chapeau:casquepompier",
+   "cat": "chapeau",
+   "id": "casquepompier",
+   "nom": "Casque de Pompier",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:rien",
+   "cat": "dos",
+   "id": "rien",
+   "nom": "Rien",
+   "rarete": "commun",
+   "gratuit": true
+  },
+  {
+   "cle": "dos:sac",
+   "cat": "dos",
+   "id": "sac",
+   "nom": "Sac à Dos",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:cape",
+   "cat": "dos",
+   "id": "cape",
+   "nom": "Cape de Héros",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:carquois",
+   "cat": "dos",
+   "id": "carquois",
+   "nom": "Carquois",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:guitare",
+   "cat": "dos",
+   "id": "guitare",
+   "nom": "Guitare",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:bouclier",
+   "cat": "dos",
+   "id": "bouclier",
+   "nom": "Bouclier Rond",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:poisson",
+   "cat": "dos",
+   "id": "poisson",
+   "nom": "Poisson Géant",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:ailes",
+   "cat": "dos",
+   "id": "ailes",
+   "nom": "Ailes d'Ange",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:fusee",
+   "cat": "dos",
+   "id": "fusee",
+   "nom": "Réacteur",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "dos:ballons",
+   "cat": "dos",
+   "id": "ballons",
+   "nom": "Ballons",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:classique",
+   "cat": "pioche",
+   "id": "classique",
+   "nom": "Pioche",
+   "rarete": "commun",
+   "gratuit": true
+  },
+  {
+   "cle": "pioche:pelle",
+   "cat": "pioche",
+   "id": "pelle",
+   "nom": "Pelle",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:cle",
+   "cat": "pioche",
+   "id": "cle",
+   "nom": "Clé à Molette",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:baguette",
+   "cat": "pioche",
+   "id": "baguette",
+   "nom": "Baguette de Pain",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:marteau",
+   "cat": "pioche",
+   "id": "marteau",
+   "nom": "Gros Marteau",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:hache",
+   "cat": "pioche",
+   "id": "hache",
+   "nom": "Hache de Bûcheron",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:os",
+   "cat": "pioche",
+   "id": "os",
+   "nom": "Os Géant",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:trident",
+   "cat": "pioche",
+   "id": "trident",
+   "nom": "Trident",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:pinceau",
+   "cat": "pioche",
+   "id": "pinceau",
+   "nom": "Pinceau Géant",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:doree",
+   "cat": "pioche",
+   "id": "doree",
+   "nom": "Pioche Dorée",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:cristal",
+   "cat": "pioche",
+   "id": "cristal",
+   "nom": "Cristal",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "pioche:spatule",
+   "cat": "pioche",
+   "id": "spatule",
+   "nom": "Spatule",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:classique",
+   "cat": "deltaplane",
+   "id": "classique",
+   "nom": "Deltaplane",
+   "rarete": "commun",
+   "gratuit": true
+  },
+  {
+   "cle": "deltaplane:papier",
+   "cat": "deltaplane",
+   "id": "papier",
+   "nom": "Avion en Papier",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:feuille",
+   "cat": "deltaplane",
+   "id": "feuille",
+   "nom": "Feuille Géante",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:arcenciel",
+   "cat": "deltaplane",
+   "id": "arcenciel",
+   "nom": "Arc-en-ciel",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:parapluie",
+   "cat": "deltaplane",
+   "id": "parapluie",
+   "nom": "Parapluie",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:tapis",
+   "cat": "deltaplane",
+   "id": "tapis",
+   "nom": "Tapis Volant",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:pizza",
+   "cat": "deltaplane",
+   "id": "pizza",
+   "nom": "Part de Pizza",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:chauvesouris",
+   "cat": "deltaplane",
+   "id": "chauvesouris",
+   "nom": "Chauve-souris",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "deltaplane:dragon",
+   "cat": "deltaplane",
+   "id": "dragon",
+   "nom": "Ailes de Dragon",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "trainee:aucune",
+   "cat": "trainee",
+   "id": "aucune",
+   "nom": "Aucune",
+   "rarete": "commun",
+   "gratuit": true
+  },
+  {
+   "cle": "trainee:fumee",
+   "cat": "trainee",
+   "id": "fumee",
+   "nom": "Fumée",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "trainee:etincelles",
+   "cat": "trainee",
+   "id": "etincelles",
+   "nom": "Étincelles",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "trainee:coeurs",
+   "cat": "trainee",
+   "id": "coeurs",
+   "nom": "Cœurs",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "trainee:etoiles",
+   "cat": "trainee",
+   "id": "etoiles",
+   "nom": "Étoiles",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "trainee:arcenciel",
+   "cat": "trainee",
+   "id": "arcenciel",
+   "nom": "Arc-en-ciel",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "emote:salut",
+   "cat": "emote",
+   "id": "salut",
+   "nom": "Coucou",
+   "rarete": "commun",
+   "gratuit": true
+  },
+  {
+   "cle": "emote:applaudir",
+   "cat": "emote",
+   "id": "applaudir",
+   "nom": "Bravo",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "emote:sautjoie",
+   "cat": "emote",
+   "id": "sautjoie",
+   "nom": "Saut de Joie",
+   "rarete": "commun",
+   "gratuit": false
+  },
+  {
+   "cle": "emote:robot",
+   "cat": "emote",
+   "id": "robot",
+   "nom": "Danse du Robot",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "emote:toupie",
+   "cat": "emote",
+   "id": "toupie",
+   "nom": "Toupie",
+   "rarete": "rare",
+   "gratuit": false
+  },
+  {
+   "cle": "emote:victoire",
+   "cat": "emote",
+   "id": "victoire",
+   "nom": "Champion",
+   "rarete": "epique",
+   "gratuit": false
+  },
+  {
+   "cle": "emote:zen",
+   "cat": "emote",
+   "id": "zen",
+   "nom": "Zen",
+   "rarete": "legendaire",
+   "gratuit": false
+  },
+  {
+   "cle": "emote:pompes",
+   "cat": "emote",
+   "id": "pompes",
+   "nom": "Pompes",
+   "rarete": "commun",
+   "gratuit": false
+  }
+ ]
+}

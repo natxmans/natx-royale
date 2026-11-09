@@ -13,14 +13,15 @@ COMPTE="chrysalide@ssh-chrysalide.alwaysdata.net"
 DOSSIER="natx-serveur"
 ADRESSE="https://chrysalide.alwaysdata.net/natx"
 
-# 1. pas de mise en ligne d'un fichier cassé
+# 1. pas de mise en ligne d'un fichier cassé ; catalogue des objets à jour (pour les cadeaux de l'espace admin)
 python -c "import ast; [ast.parse(open(f, encoding='utf-8').read()) for f in ('api.py', 'wsgi.py')]"
-for f in admin/index.html admin/admin.js admin/admin.css reglages-alwaysdata.env; do
+python -X utf8 extraire_catalogue.py
+for f in admin/index.html admin/admin.js admin/admin.css reglages-alwaysdata.env catalogue.json; do
   [ -f "$f" ] || { echo "Fichier manquant : $f"; exit 1; }
 done
 
 # 2. envoi des fichiers (sans donnees/ ni __pycache__/) et redémarrage de l'appli
-tar -cf - --exclude=donnees --exclude=__pycache__ api.py wsgi.py reglages-alwaysdata.env LISEZMOI.md admin |
+tar -cf - --exclude=donnees --exclude=__pycache__ api.py wsgi.py reglages-alwaysdata.env LISEZMOI.md catalogue.json admin |
   ssh -i "$CLE" -o BatchMode=yes "$COMPTE" "
     set -e
     mkdir -p ~/$DOSSIER/donnees

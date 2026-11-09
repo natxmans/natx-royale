@@ -46,14 +46,19 @@ export async function serveurDispo() {
 }
 
 // Identité anonyme (id au hasard signé par le serveur) : jamais le pseudo ni d'info personnelle
+let identiteEnCours = null; // une seule demande à la fois (sinon deux identités au premier lancement)
 async function jetonJoueur() {
   try {
     const j = JSON.parse(localStorage.getItem(CLE_JOUEUR) || 'null');
     if (j && typeof j.jeton === 'string') return j.jeton;
   } catch (e) { /* rien */ }
-  const d = await appel('POST', '/joueurs');
-  try { localStorage.setItem(CLE_JOUEUR, JSON.stringify({ id: d.id, jeton: d.jeton })); } catch (e) { /* stockage bloqué */ }
-  return d.jeton;
+  if (!identiteEnCours) {
+    identiteEnCours = appel('POST', '/joueurs').then(d => {
+      try { localStorage.setItem(CLE_JOUEUR, JSON.stringify({ id: d.id, jeton: d.jeton })); } catch (e) { /* stockage bloqué */ }
+      return d.jeton;
+    }).finally(() => { identiteEnCours = null; });
+  }
+  return identiteEnCours;
 }
 // si le serveur ne reconnaît plus l'identité (nouvelle base, clé changée), on en redemande une
 async function avecJeton(f) {
@@ -79,6 +84,17 @@ export async function chargerSuggestions(tri = 'populaires') {
   try { jeton = await jetonJoueur(); } catch (e) { jeton = null; }
   const d = await appel('GET', '/suggestions?tri=' + encodeURIComponent(tri), null, jeton);
   return d.suggestions;
+}
+
+// ---------- Cadeaux de l'admin, annonce, bonus de pièces ----------
+export const chargerEtatJeu = () => appel('GET', '/jeu');
+export const recupererCadeaux = () => avecJeton(jeton => appel('POST', '/cadeaux', { jeton }));
+export const utiliserCodeCadeau = code => avecJeton(jeton => appel('POST', '/cadeaux/code', { jeton, code }));
+// Code joueur à donner à l'admin pour recevoir un cadeau perso (8 premiers caractères de l'identité anonyme)
+export async function codeJoueur() {
+  await jetonJoueur();
+  const j = JSON.parse(localStorage.getItem(CLE_JOUEUR) || 'null');
+  return j && /^[0-9a-f]{24}$/.test(j.id) ? (j.id.slice(0, 4) + '-' + j.id.slice(4, 8)).toUpperCase() : null;
 }
 
 export function voter(id, oui) {

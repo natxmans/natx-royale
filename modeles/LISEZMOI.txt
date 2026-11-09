@@ -1,0 +1,503 @@
+NATX ROYALE — MODÈLES 3D (faits dans Blender 5.2)
+==================================================
+
+Règles communes à tous les fichiers .glb de ce dossier
+- 1 unité = 1 m. Dans Blender : Z en haut, l'avant (canon, visage) vers +Y, la droite vers +X.
+  Les .glb sont exportés en « +Y Up » : dans three.js, le haut = +Y et l'avant = -Z, la droite = +X.
+- Modificateurs appliqués, pas de caméra ni de lumière, pas de textures (couleur + rugosité).
+- Chaque objet à la racine du fichier porte exactement son nom (voir les listes ci-dessous).
+- Matériaux spéciaux (à reconnaître par leur nom, material.name) :
+    rarete          -> à remplacer par la couleur de rareté
+    lueur           -> petite bande lumineuse (à rendre brillante / couleur de rareté)
+    couleur_joueur  -> à remplacer par la couleur choisie par le joueur
+    perso : peau, haut, bas, pieds, mains, cheveux, yeux, pupille
+- Sources : modeles/sources/*.blend (à ouvrir dans Blender) et les scripts construire_*.py
+  qui refont tout : blender.exe -b --factory-startup --python modeles/sources/construire_xxx.py
+- Rendus de contrôle : modeles/sources/rendus/*.png
+
+
+1) personnage.glb — héros cartoon de 2,00 m, en 16 morceaux (pas d'armature)
+---------------------------------------------------------------------------
+Pose de repos : debout, jambes droites, bras tout droits le long du corps.
+L'origine de chaque morceau est sur son articulation (positions en mètres, Blender X ; Z) :
+
+  bassin        origine 0,0,0      hanches, avec la ceinture (matériaux bas, ceinture, boucle)
+  torse         origine 0,0,0      torse en V + cou (haut, peau) ; épaules à 1,56 m
+  cuisse_G      hanche (-0,11 ; 1,00)        cuisse_D   hanche (+0,11 ; 1,00)        (bas)
+  tibia_G       genou  (-0,11 ; 0,52)        tibia_D    genou  (+0,11 ; 0,52)        (bas, pieds, semelle)
+                -> avec la chaussure : 0,32 m de long, 0,12 m de haut, semelle posée au sol (z = 0)
+  bras_G        épaule (-0,25 ; 1,56)        bras_D     épaule (+0,25 ; 1,56)        (haut)
+  avantbras_G   coude  (-0,25 ; 1,24)        avantbras_D coude (+0,25 ; 1,24)        (haut, mains)
+                -> avec la main : poignet vers 0,98 m, bout des doigts à 0,80 m,
+                   paume tournée vers le corps, pouce vers l'avant
+  tete          centre (0 ; 1,86)  sans cheveux : yeux, pupilles, sourcils (matériau cheveux),
+                nez, bouche, oreilles (peau, yeux, pupille, cheveux, bouche). Haut du crâne à 2,01 m.
+  cheveux_0     centre de la tête : courts en pointes
+  cheveux_1     centre de la tête : grande mèche sur le côté
+  cheveux_2     centre de la tête : queue de cheval (l'élastique est en matériau « haut »)
+  cheveux_3     centre de la tête : frisés volumineux
+  cheveux_4     centre de la tête : crête
+
+Mesures : épaules 0,63 m d'un bord à l'autre, taille 0,34 m, entrejambe vers 0,92 m,
+tête 0,28 m (environ 1/7 de la hauteur).
+Matériaux en plus (couleur fixe) : semelle (blanc), bouche, ceinture, boucle.
+
+UV « dépliées en cylindre » sur bassin, torse, bras, avant-bras, cuisses et tibias
+(chaque morceau a ses propres UV de 0 à 1) :
+  - U fait le tour du membre. L'avant (+Y) est au milieu, à U = 0,5. La couture est dans le dos
+    (U = 0 et U = 1).
+  - U augmente vers la gauche du perso (-X). Donc une image vue de face s'affiche à l'endroit :
+    la moitié gauche de l'image va sur le côté droit du perso (à gauche quand on le regarde).
+  - V va de 0 en bas du morceau à 1 en haut du morceau.
+  Vérifié avec le rendu sources/rendus/personnage_uv.png.
+
+Triangles : corps + tête = 5 954 ; avec la coiffure la plus lourde (cheveux_1) = 7 158 (< 8 000).
+
+
+2) objets.glb — armes, soins, coffre, ravitaillement (16 objets racines)
+-----------------------------------------------------------------------
+Armes : origine = au milieu de la poignée (là où se ferme la main du perso), canon vers +Y,
+haut vers +Z. Dans three.js : canon vers -Z, haut vers +Y. À l'échelle du perso de 2 m.
+Chaque arme a « rarete » sur une grosse partie bien visible et « lueur » sur une petite bande.
+
+  pistolet    0,40 m   rarete = la glissière (le dessus)                       768 tri
+  smg         0,80 m   rarete = le corps                                     1 260 tri
+  fusil       1,37 m   rarete = garde-main + crosse ; lunette courte         1 308 tri
+  pompe       1,22 m   rarete = la boîte de culasse ; crosse en bois         1 512 tri
+  sniper      1,61 m   rarete = la crosse + la molette de lunette             1 884 tri
+  roquettes   1,50 m   lance-roquettes (NOUVEAU) : rarete = le gros tube,
+                       « lueur » = un anneau autour du tube, roquette rouge au bout   1 912 tri
+  grenade     0,17 m   (NOUVEAU) origine au centre de la grenade ; rarete = le corps,
+                       « lueur » = un anneau vertical                         1 408 tri
+
+Soins et autres (origine au centre de l'objet, sauf la pioche) :
+  minigourde  (NOUVEAU) petite gourde ronde de bouclier, 0,14 m de haut          768 tri
+  pansements  (NOUVEAU) rouleau de bande avec un bout déroulé, 0,17 m            528 tri
+  soin        trousse de soin blanche à croix rouge, 0,47 m                     732 tri
+  bouclier    grande gourde au liquide bleu lumineux, 0,44 m                  1 120 tri
+  munitions   caisse verte avec balles devant (+Y), 0,50 m                     676 tri
+  materiaux   3 planches attachées, 0,65 m                                     540 tri
+  pioche      origine à la poignée comme les armes : manche vers +Y,
+              tête au bout (y = 0,74 m), pointes vers le haut et le bas        580 tri
+
+  coffre      origine au sol (au centre du dessous), 1,14 x 0,79 m, 0,83 m de haut.
+              Enfant « couvercle » : son origine est sur la charnière, à l'arrière
+              (y = -0,36 ; z = 0,555). Pour ouvrir : rotation X positive (1,9 rad = grand ouvert).
+              Matériaux : or_coffre (bandes dorées, un peu lumineuses), tresor (le trésor
+              lumineux à l'intérieur), bois_coffre, bois_coffre_fonce, fer_coffre.   1 584 tri
+  ravitaillement  caisse bleue et jaune de 1,2 m, origine au sol, bandes « lueur » sur les côtés.
+              Enfant « parachute » : origine au point d'accroche (centre du dessus de la caisse,
+              z = 1,0) ; dôme rouge et blanc de 3,4 m de large, 8 cordes. On peut le cacher ou
+              le balancer à part.                                              2 196 tri
+
+
+3) decor.glb — arbres, rochers, objets du décor, dirigeable (19 objets racines)
+-----------------------------------------------------------------------------
+Origine au pied de chaque objet (au sol, au centre), avant vers +Y. Exceptions :
+dirigeable = centre du ballon ; bateau = ligne de flottaison (la coque descend à -0,66 m).
+
+Arbres : UN SEUL objet chacun, 2 matériaux au plus, partagés par tous les arbres :
+« tronc » et « feuillage ». Le fichier ne peut pas avoir deux matériaux du même nom, donc
+le feuillage est le même vert partout : au jeu de choisir la couleur selon l'arbre.
+Couleurs conseillées (utilisées dans le rendu sources/rendus/decor_nature.png) :
+sapin #3fae4a, sapin_neige #e9f5ff (blanc neige), feuillu #3fae4a, palmier #3fae4a, cactus #5cb84a.
+  sapin        5,2 m, 4 étages pointus                                   500 tri
+  sapin_neige  5,5 m, étages gonflés et arrondis + boule au sommet         764 tri
+  feuillu      5,9 m, boules de feuillage bosselées, 2 branches          1 164 tri
+  palmier      5,7 m, tronc courbé à anneaux, 7 palmes, noix de coco (en « tronc »)  1 108 tri
+  cactus       2,6 m, côtelé avec 2 bras (seulement « feuillage »)         536 tri
+
+  rocher_1     rocher rond 1,5 m                                         320 tri   (matériau rocher)
+  rocher_2     rocher plat en 2 blocs, 2,7 m de long                     640 tri
+  rocher_3     grand rocher debout, 2,7 m de haut                        640 tri
+  buisson      1,8 m, boules + baies rouges (buisson, baies)            1 040 tri
+  voiture      4,2 m de long. Carrosserie en « couleur_joueur ». Phares avant (+Y) lumineux,
+               feux arrière rouges, vitres, roues.                       1 532 tri
+  caisse       caisse en bois de 1 m                                    1 012 tri
+  tonneau      1,1 m de haut, cerclé de fer                               780 tri
+  lampadaire   4,3 m, lampe lumineuse (matériau « lumiere ») au bout du bras, vers +X   588 tri
+  barriere     4,0 m de long le long de X, 1,2 m de haut, origine au milieu   244 tri
+  bateau       4,8 m de long, coque orange avec bande blanche, 2 bancs, moteur à l'arrière (-Y)   950 tri
+  panneau      2,3 m, planche vierge (matériau « panneau_face » pour y mettre un texte)   204 tri
+  dirigeable   30 m de long, ballon violet avec 3 anneaux cyan, 4 ailerons à l'arrière (-Y),
+               « NATX » en lettres blanches sur les deux flancs, nacelle sous le ballon
+               (bas de la nacelle à z = -6,75) avec fenêtres et 2 hélices.   4 672 tri
+  trampoline   champignon rebondissant de 2,0 m de large, 1,5 m de haut, chapeau rose,
+               taches lumineuses (matériau « taches_lumineuses »)        1 014 tri
+  fontaine     fontaine de soin de 3,1 m de large, 3 m de haut : eau verte lumineuse
+               (matériau « eau_soin ») et croix de soin qui flotte en haut   1 454 tri
+
+
+4) constructions.glb — pièces de construction aux tailles EXACTES (9 objets racines)
+----------------------------------------------------------------------------------
+Origine au centre de chaque pièce. Tailles vérifiées par le script (au millimètre) :
+  mur_bois, mur_pierre, mur_metal       4,00 (X) x 0,30 (Y) x 4,00 (Z, hauteur)
+  sol_bois, sol_pierre, sol_metal       4,00 (X) x 4,00 (Y) x 0,30 (Z, épaisseur)
+  rampe_bois, rampe_pierre, rampe_metal 4,00 (X) x 5,66 (Y) x 0,30 (Z) — À PLAT, le jeu l'incline
+                                        (5,66 = 4 x racine de 2 : penchée à 45°, elle monte de 4 m sur 4 m)
+Tous les détails (planches, briques, rivets, coins jaunes) restent à l'intérieur de ces
+dimensions : la boîte de collision = la boîte du modèle.
+Pour le sol et la rampe, la face décorée est le DESSUS (+Z dans Blender, +Y dans three.js).
+Matériaux : bois_construction, bois_construction_fonce, bois_cadre / pierre_construction,
+pierre_construction_fonce, mortier / metal_construction, metal_construction_fonce, metal_jaune.
+Triangles : bois 828, pierre 1 420 (rampe 1 948), métal 1 872.
+
+
+5) cosmetiques.glb — un objet par cosmétique, nommé categorie_id (51 objets racines)
+-----------------------------------------------------------------------------------
+Tous à la taille du perso de 2 m. Chaque objet est placé à l'origine du fichier : son origine
+est le point d'accroche ci-dessous (il suffit de l'accrocher au bon morceau du perso).
+
+chapeau_*  (18) origine = centre de la tête (le point à 1,86 m du perso, origine de « tete »).
+           Ils se posent sur la coque de cheveux (le crâne monte à +0,15 ; les chapeaux
+           commencent vers +0,06). Les cheveux en pointes (cheveux_0, cheveux_4) peuvent
+           dépasser : on peut les cacher quand un chapeau est porté.
+  casquette (rouge, visière vers l'avant)   bonnet (pompon)        cowboy (bords relevés)
+  toque (de chef)                           bandeau (nœud derrière) hautdeforme (ruban violet)
+  viking (cornes)                           chat (oreilles)        tricorne
+  helice (casquette 4 couleurs + hélice)    cornes (de diablotin)  heaume (cache le visage)
+  couronne (pierres rouges et bleues)       aureole (anneau lumineux qui flotte à +0,27)
+  bocal (bulle de verre transparente « verre_bocal », alpha 0,25, avec un petit poisson)
+  casque2k27 (casque audio noir, anneaux néon cyan / rose, « 2K27 » sur les deux écouteurs, micro)
+  sorcier (pointe tordue vers l'arrière, étoiles)   casquepompier (insigne doré + étoile)
+  Triangles : de 332 (chat) à 1 444 (toque) ; casque2k27 = 2 272.
+
+dos_*  (10) origine = au milieu du dos, SUR la surface du dos : dans le repère du perso
+       (x = 0 ; y = -0,13 ; z = 1,35). L'objet part vers l'arrière (-Y dans Blender, +Z dans three.js).
+  sac (avec bretelles sur les épaules)   cape (jusqu'aux genoux, attaches dorées)
+  carquois (en biais, 4 flèches)         guitare (rose, en biais)
+  bouclier (rond, étoile)                poisson (géant, tête en haut)
+  ailes (blanches et dorées, 1,8 m d'envergure)   fusee (2 réacteurs, flammes lumineuses « flamme »)
+  manette (géante, boutons de couleur)   ballons (5 ballons qui montent jusqu'à +1,54 au-dessus du point d'accroche)
+  Triangles : de 340 (cape) à 1 592 (ailes).
+
+pioche_*  (13) origine = à la poignée, comme les armes : manche vers +Y, tête au bout (y ≈ 0,75),
+          lames vers le haut et le bas (Z). Longueur ≈ 0,9 à 1,3 m.
+  classique   pelle (poignée en D au bout)   cle (clé plate géante)   baguette (de pain !)
+  marteau     hache (lame vers le haut)      os                       trident (doré)
+  pinceau (pointe trempée dans la peinture)  doree (rubis)            cristal (lumineux, transparent)
+  clavier (collab 2K27 : touches, bandes néon, « 2K27 » sur les deux côtés)   spatule
+  Triangles : de 364 (baguette) à 1 720 (clavier).
+
+deltaplane_*  (10) origine = aux pieds du perso. Voile vers 3,0 à 3,5 m de haut, barre à saisir
+              à 2,3 m devant le perso (y = 0,45). Envergure ≈ 3 à 4,2 m. Avant vers +Y.
+  classique (bleu et blanc, bord d'attaque jaune)   papier (avion en papier)
+  feuille (nervures)          arcenciel (6 bandes)          parapluie (tenu par sa poignée à 2,3 m)
+  tapis (volant, avec franges, suspendu par 4 cordes)       pizza (part avec pepperoni)
+  chauvesouris (yeux rouges lumineux)   dragon (tête, cornes, queue)
+  ecran2k27 (collab : écran noir à bords néon cyan / rose, « 2K27 » lisible au-dessus quand on
+             regarde depuis derrière le joueur, et en dessous quand on le regarde d'en bas)
+  Triangles : de 228 (papier) à 2 232 (ecran2k27).
+
+Collab 2K27 : uniquement le texte « 2K27 » (aucun nom, aucune date, aucun lieu), couleurs
+néon (matériaux neon_cyan, neon_rose, neon_violet, noir_2k27).
+Matériaux lumineux à faire briller (bloom) : neon_*, aureole, flamme, yeux_rouges, yeux_dragon,
+cristal, bouton_* (un peu).
+
+
+6) NOUVEAUX MODÈLES (livrés à part, à activer par la session codage)
+=====================================================================
+Les fichiers 1 à 5 ne changent pas. Chaque nouveau modèle ou nouvelle version a son propre .glb.
+modeles/integration.json est le manifeste de la session codage (format décrit dans
+modeles/INTEGRATION-CODE.txt) : la session modélisation y remplit les champs de ses livraisons,
+mais laisse toujours "actif": false — c'est la session codage qui l'active après ses tests.
+Page de test (n'est pas utilisée par le jeu) : modeles/sources/apercu.html, avec le serveur local
+(ex. http://localhost:8798/modeles/sources/apercu.html?f=weapon_futuriste_v001.glb) : taille,
+triangles, matériaux, boîtes COL_, couleur de rareté, perso de 2 m pour l'échelle.
+Fichiers fournis par Nathan (originaux, intacts) : modeles/sources/fournis/<nom>/.
+
+6a) weapon_futuriste_v001.glb — fusil futuriste à tambour (adapté du modèle fourni)
+---------------------------------------------------------------------------------
+  Chemin      : natx-royale/modeles/weapon_futuriste_v001.glb (327 Ko, aucune texture, 1 nœud)
+  Objet       : fusil_futuriste (un seul objet, pas d'enfant)
+  Taille      : 1,35 m de long, 0,34 m de haut, 0,22 m de large ; 6 324 triangles
+                (original : 582 951 triangles, 144 pièces, 21,7 m, matériaux non exportables)
+  Échelle     : 1 unité = 1 m, déjà à la bonne taille (prévu pour remplacer le fusil d'assaut, 1,37 m)
+  Orientation : comme les autres armes. Blender : canon +Y, haut +Z. three.js : canon -Z, haut +Y,
+                droite +X. Le tambour dépasse sur la droite (+X).
+  Pivot       : origine = milieu de la poignée = point d'attache recommandé (la main du perso),
+                comme les armes de objets.glb. En fractions de la boîte (x, y, z three.js) :
+                [0,259 ; 0,247 ; 0,616] (champ « poignee » du manifeste).
+  Boîte three.js : min (-0,057 ; -0,084 ; -0,832)  max (0,161 ; 0,255 ; 0,518)
+  Bout du canon (three.js) : (0 ; 0,133 ; -0,832) -> départ conseillé des tirs / flammes.
+  Matériaux   : rarete (grande coque), lueur (anneaux du tambour + petit voyant : à faire briller),
+                arme_sombre, acier, metal_clair, caoutchouc (poignées), verre (viseur, lumineux).
+  Ce qui a été fait :
+    - 126 petites pièces (vis, boulons de moins de 3 cm à l'arrivée) retirées ;
+    - faces plates fusionnées puis réduction (collapse) : silhouette d'origine conservée
+      (crosse ajourée, canon perforé, tambour, bande de munitions, poignée avant nervurée) ;
+    - matériaux « Glossy/Diffuse » d'origine remplacés par ceux du jeu, choisis d'après la surface
+      que couvrait chaque matériau d'origine (grande coque -> rarete, tambour -> sombre, etc.) ;
+    - normales recalculées pièce par pièce, maillage validé, ombrage lisse + arêtes vives à 30° ;
+    - le concept d'origine n'avait PAS de poignée : poignée + pontet + détente (style des autres
+      armes) ajoutés derrière le tambour, sous la bande de munitions.
+  Faces visibles des deux côtés (doubleSided) : le modèle d'origine a des pièces non fermées.
+  Pas de géométrie de collision (arme tenue en main).
+  Sources : sources/construire_arme_futuriste.py (refait tout depuis l'original),
+            sources/weapon_futuriste_v001.blend, original dans sources/fournis/arme_futuriste/
+            (copie de la sauvegarde automatique de Blender : le fichier téléchargé n'existe plus).
+  Rendus  : sources/rendus/weapon_futuriste_v001_cote / _3quarts / _dessous / _echelle.png
+            (couleur Épique) et arme_futuriste_original_*.png (le modèle d'origine).
+  ⚠ Licence : modèle téléchargé par Nathan, licence NON vérifiée (le zip n'est plus sur le PC).
+    À vérifier sur la page de téléchargement avant de publier le jeu en ligne.
+
+6b) decor_v2.glb — décor avec végétation améliorée (VERSION 2 de decor.glb)
+--------------------------------------------------------------------------
+  Chemin : natx-royale/modeles/decor_v2.glb (664 Ko). decor.glb est inchangé.
+  Mêmes 19 objets, mêmes noms, mêmes origines, mêmes matériaux que decor.glb : il suffit de
+  charger decor_v2.glb à la place de decor.glb pour l'essayer.
+  Ce qui change (seulement les arbres, toujours en style cartoon, toujours « tronc » + « feuillage ») :
+    sapin        étages à bords festonnés qui retombent, tronc évasé au pied        600 tri
+    sapin_neige  étages gonflés aux lobes doux + boule au sommet                    856 tri
+    feuillu      couronne bosselée au dessous aplati, 3 branches visibles, 4 racines ;
+                 normales adoucies (moitié « en boule ») pour un ombrage plus doux  1 164 tri
+    palmier      tronc plus courbé, 8 palmes dentelées en arc, noix de coco          1 134 tri
+    cactus, rochers, buisson, objets, dirigeable… : identiques à decor.glb.
+  Tailles proches de la version 1 (sapin 3,5 m de large au lieu de 3,2 : les lobes dépassent).
+  Source : sources/construire_decor_v2.py ; rendus : sources/rendus/decor_v2_*.png
+
+6c) house_cottage_v001.glb — maison « Cottage » (adaptée du modèle fourni), on peut y entrer
+------------------------------------------------------------------------------------------
+  Chemin      : natx-royale/modeles/house_cottage_v001.glb (1,36 Mo, 2 textures 1024 px intégrées)
+  Objet racine: maison_cottage (vide), origine AU SOL, au centre ; porte d'entrée sur la face AVANT
+                (Blender +Y = three.js -Z). Échelle réelle (1 unité = 1 m) : le perso de 2 m passe la porte.
+  Taille      : 12,44 m (X) x 14,65 m (profondeur) x 6,76 m de haut ; 10 781 triangles visibles.
+                Plan en L : pièce principale + aile à l'arrière gauche ; porche avec 4 poteaux,
+                rambardes et 2 marches devant ; perron + 2 marches derrière (porte arrière FERMÉE).
+  Morceaux (enfants de maison_cottage) :
+     murs, toit (+ toit du porche, bords de toit), cheminees, fenetres (cadres + vitres en retrait),
+     portes (porte arrière fermée), porche (sol, marches, poteaux, rambardes), deco (gouttières,
+     descentes), echelle (échelle sur le mur ouest, du sol au toit : décor, ou grimpable si le code
+     le veut ; three.js x -5,45 ; z -0,46..1,18 ; y 0..5,5), cadre_porte (encadrement + seuil),
+     portes_ouvertes (2 battants ouverts vers l'intérieur, plaqués sur les côtés : ne bloquent pas),
+     interieur (sol en bois, murs intérieurs, plinthes, fenêtres vues de l'intérieur), plafond,
+     meubles (canapé, table, 2 chaises, étagère avec livres, lit dans l'aile, tapis).
+  Porte d'entrée (traversable) : three.js x -0,20..1,45 ; y 0,50..2,95 (1,65 x 2,45 m) ;
+     le mur va de z -3,73 (face extérieure) à z -3,48 (face intérieure). Aucune boîte COL_ dedans.
+  Sols : porche et intérieur à y = 0,50 (même niveau, pas de marche à la porte).
+     Plafond à 3,55 m (2,95 m dans l'aile, dont le toit est plus bas).
+  Collisions : 36 boîtes COL_… alignées sur les axes (enfants de maison_cottage, jamais à afficher) :
+     COL_sol_principal, COL_sol_aile, COL_porche, COL_marche_haute, COL_marche_basse, COL_perron_arriere,
+     COL_mur_ouest / est / avant_gauche / avant_droite / avant_dessus_porte / arriere / aile_est /
+     aile_arriere (murs de 0,25 m entre la face extérieure et la face intérieure),
+     COL_toit_bas / milieu / haut (toit principal en 3 marches), COL_toit_aile, COL_toit_porche
+     (dessous à 2,50 m : on passe dessous), COL_cheminee_avant / arriere, COL_poteau_1..4,
+     COL_poteau_arriere, COL_rambarde_* (6), COL_canape, COL_table, COL_etagere, COL_lit.
+     Zones qui bloquent : murs, toit, cheminées, poteaux, rambardes, gros meubles.
+     Zones traversables : la porte d'entrée, le porche, les marches (avant et arrière).
+  Marches (rampes, three.js, depuis l'origine) :
+     avant   de (0,18 ; 0 ; -7,03) à (0,18 ; 0,50 ; -6,43), largeur 3,16 m
+     arrière de (-0,16 ; 0 ; 5,62) à (-0,76 ; 0,50 ; 5,62), largeur 2,30 m
+  Coffre conseillé : three.js (x 3,2 ; z 3,4), posé à y 0,50 (contre le mur du fond, sous les fenêtres).
+  Matériaux : cottage_exterieur (texture couleur + relief 1024 px, rugosité 0,85, pas de métal ;
+     faces visibles des deux côtés) ; intérieur et meubles en couleurs unies du jeu (interieur_sol a une
+     petite texture de bois) ; vitre_interieure un peu lumineuse.
+  Ce qui a été fait sur le modèle d'origine (4 281 triangles, textures 4096 px) :
+     - textures réduites à 1024 px, ombrage (AO) intégré à la couleur, couleurs un peu plus vives,
+       toit recoloré en tuiles orangées (couleurs franches du jeu, relief des tuiles conservé) ;
+       cartes métal, rugosité, AO et transparence supprimées (inutiles) ;
+     - plan d'ombre, caméra et ciel HDR d'origine retirés ;
+     - façade ouverte à la place de l'ancienne porte (0,8 m), normales recalculées sur les pièces fermées,
+       maillage nettoyé (doublons fusionnés), découpé en morceaux logiques ;
+     - intérieur, meubles, encadrement, battants et collisions ajoutés (le modèle d'origine était vide).
+  Sources : sources/construire_maison_cottage.py (refait tout depuis l'original),
+            sources/house_cottage_v001.blend, original dans sources/fournis/cottage/Cottage_FREE.blend,
+            textures sources/textures/cottage_couleur.jpg et cottage_normal.jpg.
+  Rendus  : sources/rendus/house_cottage_v001_avant / _arriere / _interieur (vue en coupe) /
+            _collisions / _porte_echelle.png (le perso dans l'entrée) et cottage_original_*.png.
+  Licence : « Free GameReady Cottage » par Gerhald3D (TurboSquid). Son fichier LISEZ-MOI dit :
+     « Feel free to use for any purposes, except re-sale ». Usage dans le jeu OK. À faire : créditer
+     l'auteur (ex. « Maison : Gerhald3D ») et NE PAS publier le fichier d'origine
+     (modeles/sources/fournis/ ne doit pas aller en ligne).
+
+
+7) VERSIONS RÉALISTES (même style que la maison cottage) — à essayer à la place des versions cartoon
+=====================================================================================================
+Demandé par Nathan : « fais tout le reste en utilisant ce type réaliste ». Les fichiers 1 à 5 (cartoon)
+ne changent pas ; chaque version réaliste a son propre fichier, à charger À LA PLACE de l'ancien :
+  personnage.glb    -> personnage_v2.glb      (16 morceaux, 7 862 tri avec la coiffure la plus lourde, 1,2 Mo)
+  objets.glb        -> objets_v2.glb          (16 objets, 1,6 Mo)
+  decor.glb         -> decor_v3.glb           (19 objets, 3,1 Mo)  [decor_v2.glb = version cartoon améliorée]
+  constructions.glb -> constructions_v2.glb   (9 pièces, tailles toujours EXACTES, 1,35 Mo)
+  cosmetiques.glb   -> cosmetiques_v2.glb     (51 objets, 4,2 Mo)
+TOUT le reste est identique : mêmes noms d'objets, mêmes origines / articulations / pivots, mêmes tailles,
+mêmes enfants (couvercle, parachute), mêmes matériaux spéciaux (rarete, lueur, couleur_joueur, peau, haut,
+bas, pieds, mains, cheveux, yeux, pupille, neon_*, …). Vérifié dans three.js : chargement sans erreur.
+
+Ce qui change :
+  - Textures (faites par calcul, aucune image copiée) : bois veiné, écorce, pierre, métal brossé, peinture
+    écaillée, plastique grainé, caoutchouc, pneu, tissu, tricot, cuir, peau, mèches de cheveux, papier,
+    écailles, membrane, tapis, pizza… en 512 px (1024 px au plus pour l'atlas des feuillages).
+    Chaque texture est en gris et MULTIPLIÉE par la couleur du matériau (baseColorFactor) : le jeu peut
+    toujours changer la couleur (rareté, couleur du joueur, peau, cheveux…) comme avant.
+    Chaque matériau texturé a aussi une carte de relief (normalMap).
+  - Arêtes moins arrondies (biseaux 2,5 fois plus fins) : formes plus nettes.
+  - decor_v3 : arbres, cactus et buisson refaits en « vrais » feuillages : petits panneaux croisés portant
+    l'atlas des feuilles, AVEC DÉCOUPE (alphaMode MASK : alphaTest 0,5, faces des deux côtés) ; troncs
+    avec écorce. Toujours 2 matériaux « tronc » et « feuillage », mais les couleurs sont DANS LA TEXTURE :
+    NE PAS recolorer le feuillage (laisser la couleur blanche), sinon les feuilles s'assombrissent.
+    Le sapin enneigé a déjà sa neige dans la texture. Le buisson utilise aussi « feuillage ».
+    Rochers plus détaillés (1 280 à 2 560 tri) avec texture de pierre.
+    Triangles des arbres : sapin 708, sapin_neige 708, feuillu 464, palmier 680, cactus 584, buisson 72.
+  - personnage_v2 : visage plus réaliste (yeux plus petits avec iris et paupières, sourcils fins, nez avec
+    narines, lèvres — matériau en plus : « levres ») ; peau, cheveux, vêtements (tissu), chaussures (cuir)
+    texturés. Les UV « en cylindre » de haut/bas sont gardées : les tenues du jeu s'y plaquent toujours
+    (elles remplacent la texture de tissu ; le relief du tissu reste).
+  - objets_v2 / cosmetiques_v2 : mêmes formes, matières réalistes (les armes gardent leurs proportions).
+  - constructions_v2 : planches veinées, blocs de pierre, tôles peintes ; tailles toujours exactes.
+Sources : sources/construire_realiste.py (lance chaque script en « mode réaliste » : tables des textures),
+          sources/arbres_realistes.py (arbres en panneaux), sources/textures.py (les textures),
+          sources/*_v2.blend / decor_v3.blend ; rendus : sources/rendus/*_v2_*.png et decor_v3_*.png.
+
+
+
+8) esprits_v001.glb — LES ESPRITS ÉLÉMENTAIRES (compagnons qui flottent près du joueur) + leur socle
+=======================================================================================================
+Designs 100 % originaux NATX (formes, couleurs et noms inventés ; rien de copié d'un autre jeu). Style cartoon
+comme objets.glb. Pas de texture (couleurs unies), pas d'UV : 585 Ko pour tout le fichier, 16 animations.
+
+  objet racine        nom      pouvoir       triangles  taille three.js (x · haut · z)   couleur de lueur
+  esprit_soin         Pousse   soin            3 700    0,40 · 0,50 · 0,37 m            #a8ff7a (vert)
+  esprit_mobilite     Filou    mobilité        3 528    0,31 · 0,26 · 0,54 m            #5ff2ff (cyan)
+  esprit_protection   Gardien  protection      3 090    0,55 · 0,41 · 0,48 m            #9ff0ff (bleu glace)
+  esprit_vision       Zyeuto   vision          2 456    0,58 · 0,39 · 0,28 m            #ff6ef0 (rose)
+  esprit_batisseur    Briquet  bâtisseur       3 622    0,58 · 0,30 · 0,48 m            #fff0a8 (jaune)
+  socle_esprit        —        autel           1 120    0,94 · 0,67 · 0,94 m            #7af7ff
+  (Pousse = graine qui pousse avec 2 feuilles et une fleur ; Filou = petit nuage pilote avec lunettes
+   d'aviateur, plumes et queue en tourbillon ; Gardien = cristal hexagonal casqué, gantelets et 3 boucliers
+   en orbite ; Zyeuto = boule de poils à un œil, ailes de chauve-souris, antenne lumineuse ; Briquet = caisse
+   en bois avec casque de chantier, lampe, marteau, et bois / pierre / métal en orbite.)
+
+ÉCHELLE, ORIENTATION, PIVOT
+  - 1 unité = 1 m, déjà à la bonne taille (le perso fait 2 m ; un esprit fait 0,3 à 0,6 m).
+  - Avant de l'esprit (son visage) vers -Z dans three.js, comme le perso. Haut = +Y.
+  - Pivot = la racine « esprit_<id> » (un objet VIDE) au CENTRE du corps. Elle n'est JAMAIS animée :
+    le jeu peut la placer / tourner librement (modeleGlb remet sa position à 0, c'est parfait).
+  - Placement conseillé : au-dessus de l'épaule gauche, un peu en arrière, dans le repère du joueur :
+    (-0,55 ; 1,85 ; 0,15). Vu de la caméra (derrière le joueur) on voit le dos de l'esprit : les dos ont des
+    détails (couture de graine, queue en tourbillon, crête, ailes…). Suivi doux conseillé (lerp ~8/s) et
+    l'esprit regarde dans la direction du joueur. Échelle conseillée 0,8 à 1 (1 = taille livrée).
+  - Hiérarchie d'un esprit : esprit_<id> (vide) > <id>_corps (animé) > <id>_yeux, et les morceaux animés
+    (soin_feuille_g/_d, soin_fleur, soin_gouttes ; mobilite_plume_g/_d, mobilite_queue, mobilite_anneaux ;
+    protection_main_g/_d, protection_boucliers ; vision_aile_g/_d, vision_antenne ;
+    batisseur_marteau, batisseur_main_g, batisseur_materiaux). Les noms sont tous différents d'un esprit à
+    l'autre : les animations se branchent par nom, même sur une copie (clone()).
+
+ANIMATIONS (gltf.animations, 30 images/s ; ATTENTION : chargerFichier() de js/modeles.js ne garde pas
+gltf.animations aujourd'hui — il faudra les conserver pour les esprits)
+  <id>_flotter     2,0 s   EN BOUCLE (LoopRepeat) : flotte, se balance, cligne des yeux, morceaux qui bougent
+  <id>_activer     une fois (LoopOnce), quand le pouvoir se déclenche ; finit sur la pose de départ :
+                     soin 1,2 s (tour + feuilles qui battent + gouttes qui s'écartent),
+                     mobilite 1,0 s (élan vers l'avant + salto + anneaux de vent),
+                     protection 1,2 s (boucliers qui s'agrandissent en tournant + mains qui se rejoignent),
+                     vision 1,5 s (regarde à gauche puis à droite, œil et antenne qui grossissent),
+                     batisseur 1,2 s (deux coups de marteau + matériaux qui tournent)
+  <id>_apparaitre  0,8 s une fois : grandit de 0 à 1 en tournant (pour l'apparition / la prise de l'esprit ;
+                   jouée à l'envers avec timeScale = -1 elle sert de disparition)
+  socle_tourner    2,0 s en boucle : l'anneau lumineux du socle tourne et monte / descend
+  Code conseillé : mixer = new AnimationMixer(racineCopiée) ; flotter en boucle ; pour activer :
+  action.reset().setLoop(LoopOnce, 1).crossFadeFrom(flotter, 0.2).play(), puis à l'événement « finished »
+  du mixer, relancer flotter avec un fondu de 0,2 s. Testé : sources/apercu_esprits.html (page de test).
+
+MATÉRIAUX
+  - Les parties qui brillent s'appellent « lumiere_soin », « lumiere_mobilite », « cristal_protection »,
+    « lumiere_vision », « lumiere_batisseur », « lumiere_socle » : elles passent déjà dans la règle
+    LUMINEUX de js/modeles.js (préfixes lumiere / cristal) => elles brillent sans rien changer.
+  - Communs à tous : esprit_oeil, esprit_pupille, esprit_bouche, esprit_joue.
+  - Infos dans userData (extras glTF) de chaque racine : esprit (id), nom, couleur (#hex de la lueur) ;
+    socle_esprit : hauteur_esprit = 1,0 (l'esprit flotte 1 m au-dessus de l'origine du socle).
+
+SOCLE (socle_esprit)
+  Origine au sol, au centre. Pierre octogonale de 0,94 m, dessus lumineux à 0,31 m, anneau lumineux à 0,62 m.
+  Collision : une boîte COL_socle (0,92 x 0,31 x 0,92 m) dans le .glb, enfant de socle_esprit.
+
+EFFETS À PROGRAMMER (idées ; le code décide)
+  - Une petite lumière (PointLight ou sprite additif) de la couleur « couleur » de l'esprit, et/ou une
+    traînée de particules de cette couleur quand il suit le joueur.
+  - À l'activation : soin = particules vertes qui montent sur le joueur ; mobilité = traînée cyan + lignes de
+    vitesse ; protection = bulle / hexagones bleu glace autour du joueur ; vision = contour ou repère rose
+    sur les ennemis proches ; bâtisseur = petits cubes de bois / pierre / métal qui volent vers le joueur.
+  - Esprit posé sur la carte : socle_esprit + l'esprit à 1,0 m au-dessus (flotter + socle_tourner).
+Sources : sources/construire_esprits.py (tout est fait par ce script ; « -- --rendu » refait les images),
+          sources/esprits_v001.blend (esprits côte à côte : le .glb, lui, a toutes les racines à l'origine),
+          rendus : sources/rendus/esprits_face.png, esprits_troisquarts.png, esprits_dos.png,
+          esprits_socle.png, esprits_echelle_face.png, esprits_echelle_dos.png.
+
+
+9) weapon_futuriste_v002.glb — fusil futuriste AMÉLIORÉ (la v001 reste en place)
+=================================================================================
+  - Plus lisible en jeu : bandes d'énergie « lueur » sur les deux flancs, cœur d'énergie rond sur le tambour,
+    anneau « lueur » ovale au bout du canon (on voit la couleur de rareté de loin).
+  - EXACTEMENT la même boîte que la v001 (vérifié dans three.js : min -0,057 ; -0,084 ; -0,832 / max 0,161 ;
+    0,255 ; 0,518), même origine (poignée), même orientation, mêmes matériaux => dans integration.json il
+    suffit de changer « fichier » en "weapon_futuriste_v002.glb" (objet, longueur, poignee, avant : inchangés).
+  - fusil_futuriste : 6 972 triangles. EN PLUS : « fusil_futuriste_loin » (1 711 triangles, même boîte,
+    mêmes matériaux) pour l'arme posée au sol ou tenue par un joueur lointain (THREE.LOD conseillé ~15 m).
+  - 374 Ko, pas de texture. Sources : sources/construire_arme_futuriste_v002.py (part de
+    weapon_futuriste_v001.blend), sources/weapon_futuriste_v002.blend ; rendus weapon_futuriste_v002_*.png.
+
+
+10) house_cottage_v002.glb — maison cottage AMÉLIORÉE et ALLÉGÉE pour le téléphone (la v001 reste en place)
+==========================================================================================================
+  - Même racine « maison_cottage », même origine, même orientation, même taille (12,44 x 6,76 x 14,65 m),
+    mêmes rampes, même coffre, porte au même endroit => dans integration.json il suffit de changer
+    « fichier » en "house_cottage_v002.glb".
+  - Porche plus vivant : banc sous la fenêtre de droite, tas de bûches au bout gauche, jardinières de fleurs
+    sous les 2 fenêtres de façade, 2 pots de fleurs en haut des marches, paillasson, 2 lanternes sur les
+    poteaux (matériau « lumiere_lanterne » : brille grâce à la règle LUMINEUX).
+    4 boîtes de collision en plus : COL_banc, COL_buches, COL_pot_gauche, COL_pot_droite (40 boîtes COL_).
+    Les pots laissent 2,2 m de passage en haut des marches.
+  - Pour le téléphone : tous les morceaux sont fusionnés en UN maillage « maison_cottage_maillage » avec
+    5 matériaux seulement => 5 appels de dessin au lieu d'une trentaine (et autant pour les ombres) :
+      cottage_exterieur (texture 1024 px + relief 512 px), interieur_sol (bois), vitre_interieure,
+      lumiere_lanterne, maison_couleurs (= les 18 couleurs unies : meubles, livres, cadres, murs intérieurs,
+      porte… rangées en COULEURS PAR SOMMET (COLOR_0) ; GLTFLoader active vertexColors tout seul).
+    Livres et cadres de fenêtres sans arrondis (invisibles en jeu). 12 007 triangles visibles, 1,43 Mo.
+  - EN PLUS : racine « maison_cottage_loin » (1 823 triangles, extérieur seul, sans les petits détails ni
+    les rambardes, sans collisions) pour les maisons vues de loin (THREE.LOD conseillé ~45 m).
+    BIBLIO : 'maison:cottage:maison_cottage_loin'.
+  - Si un jour le jeu doit cacher le toit quand on entre : la v001 garde les morceaux séparés (toit, plafond…).
+Sources : sources/construire_maison_cottage_v002.py (part de house_cottage_v001.blend),
+          sources/house_cottage_v002.blend ; rendus house_cottage_v002_avant.png, _porche.png, _loin.png.
+
+
+11) DEMANDES DE LA SESSION CODAGE DU 9 NOV. (INTEGRATION-CODE.txt, 3.B) — livrées, PAS activées
+=================================================================================================
+11a) personnage_loin_v001.glb — le héros pour les joueurs LOINTAINS (> 60 m)
+  - Objet racine « personnage_loin » = UN SEUL maillage (pas de squelette, pas d'enfant), debout bras le long
+    du corps. 670 triangles, 2 matériaux => 2 appels de dessin. 22 Ko.
+  - Mêmes proportions que personnage.glb : taille mesurée dans three.js 0,615 (x) · 2,031 (haut) · 0,325 (z) m,
+    origine au sol entre les pieds, avant -Z (les chaussures dépassent vers -Z jusqu'à -0,19).
+  - Matériaux :
+      « tenue »                     haut, manches, pantalon. Couleur de départ #327cff ; LE JEU LE RECOLORE.
+                                    Il a des couleurs par sommet (COLOR_0) : blanc sur le haut, gris 0,2 (linéaire)
+                                    sur le pantalon => pantalon = la même couleur, plus foncée.
+                                    GLTFLoader met vertexColors: true tout seul ; si le code remplace ce matériau,
+                                    garder vertexColors: true (sinon le pantalon a la couleur du haut).
+      « personnage_loin_couleurs »  peau, cheveux, chaussures orange à semelle blanche, ceinture : couleurs par
+                                    sommet (couleur du matériau = blanc).
+  - Source : sources/construire_personnage_loin.py, sources/personnage_loin_v001.blend ;
+    rendus : sources/rendus/personnage_loin_comparaison.png, personnage_loin_dos.png (à côté du vrai héros).
+
+11b) entrainement_v001.glb — mannequin d'entraînement (design original NATX)
+  - Sac de toile bourré de paille, attaché par des cordes, sur un RESSORT au-dessus d'un poteau à pieds en
+    croix ; bras en bâton avec manches de toile ; tête-sac avec yeux-boutons cousus, bouche cousue, touffe de
+    paille ; cible rouge et blanche sur la poitrine.
+  - Taille mesurée dans three.js : 1,12 (x, d'un bout de bras à l'autre) · 2,04 (haut) · 0,74 (z) m.
+    Origine au sol au centre, avant -Z (la cible regarde vers -Z). 2 968 triangles, 174 Ko.
+  - Hiérarchie : mannequin_entrainement (racine VIDE, immobile)
+                   > mannequin_base (pieds + poteau, immobile)
+                   > mannequin_corps (ressort + corps + bras + cible ; pivot en bas du ressort, à 0,80 m)
+                       > mannequin_tete (pivot au cou, à 1,64 m)
+  - Animation « mannequin_touche » : 0,50 s, à jouer une fois (LoopOnce) quand on le touche. Il part en
+    arrière (vers +Z, donc touché de face), se balance sur son ressort, la tête suit avec un petit retard,
+    puis il revient EXACTEMENT à sa pose de départ (vérifié dans three.js). On peut la relancer à chaque
+    touche (action.reset().play()).
+  - Matériaux : « cible » (texture 256 px des anneaux rouges et blancs, faite par calcul :
+    sources/textures/cible_rouge_blanc.png) — le code peut la faire clignoter (emissive) quand on la touche ;
+    « mannequin_couleurs » (toile, paille, corde, bois, ressort, boutons : couleurs par sommet).
+    4 appels de dessin.
+  - Pas de boîte COL_ dans ce fichier : pour les tirs, un cylindre de 0,30 m de rayon de 0,95 à 2,0 m de haut
+    (corps + tête) ; pour les collisions, le poteau (rayon 0,12) et les pieds (croix de 0,95 m).
+  - Source : sources/construire_entrainement.py, sources/entrainement_v001.blend ;
+    rendus : sources/rendus/entrainement_face.png, entrainement_dos.png, entrainement_echelle.png.

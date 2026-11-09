@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
@@ -41,6 +41,7 @@
       <button class="petit" id="btnPleinEcran" title="Plein écran">⛶</button>
     </div>
   </header>
+  <div id="annonceJeu" class="annonce-jeu cache" role="status"><span id="annonceTexte"></span><span id="bonusTexte" class="bonus-jeu cache"></span></div>
 
   <section class="page" id="pageJouer">
     <div class="colonne">
@@ -53,9 +54,19 @@
         <div class="champ">Ta couleur
           <div id="couleurs" class="couleurs"></div>
         </div>
+        <div class="champ">Mode de jeu
+          <div id="choixModes" class="choix-modes">
+            <button data-mode="br"><span>👑</span>Battle Royale</button>
+            <button data-mode="solo"><span>👤</span>Solo</button>
+            <button data-mode="duo"><span>👥</span>Duo</button>
+            <button data-mode="escouade"><span>🛡️</span>Escouade</button>
+            <button data-mode="entrainement"><span>🎯</span>Entraînement</button>
+          </div>
+          <p id="descMode" class="desc-mode"></p>
+        </div>
         <div class="boutons">
-          <button id="btnSolo" class="gros vert">🎮 Jouer en solo <small>contre des bots</small></button>
-          <button id="btnCreer" class="gros bleu">👥 Créer une partie <small>entre potes</small></button>
+          <button id="btnSolo" class="gros vert">🎮 Jouer <small>avec des bots</small></button>
+          <button id="btnCreer" class="gros bleu">👥 Créer une partie <small>entre potes, dans ce mode</small></button>
           <div class="rejoindre">
             <input id="codeRejoindre" maxlength="4" placeholder="CODE" autocomplete="off">
             <button id="btnRejoindre" class="gros jaune">🔑 Rejoindre</button>
@@ -88,6 +99,12 @@
       <h3>🗓️ Les objets du jour</h3>
       <div class="grille" id="grilleJour"></div>
       <p class="astuce">💡 Gagne des 🪙 en jouant : +40 par partie, +25 par élimination, +200 pour un TOP 1, +150 chaque jour !</p>
+      <div class="code-cadeau" id="blocCodeCadeau">
+        <h3>🎁 Code cadeau</h3>
+        <div class="rejoindre"><input id="codeCadeau" maxlength="24" placeholder="CODE" autocomplete="off" spellcheck="false"><button id="btnCodeCadeau" class="gros jaune">Utiliser</button></div>
+        <p id="msgCodeCadeau" class="msg-code" role="status"></p>
+        <p class="petit-texte">Ton code joueur : <b id="codeJoueur" class="code-joueur">…</b> — donne-le à l'admin pour recevoir un cadeau rien que pour toi.</p>
+      </div>
     </div>
     <aside class="fiche boite"><div class="scene3d" id="sceneBoutique"></div><div id="ficheInfos" class="fiche-infos"></div></aside>
   </section>
@@ -144,13 +161,14 @@
     <ul id="listeJoueurs" class="liste"></ul>
     <div id="optionsHote">
       <label>Bots : <b id="nbBotsTxt">12</b>
-        <input id="nbBots" type="range" min="0" max="30" value="12"></label>
+        <input id="nbBots" type="range" min="0" max="59" value="39"></label>
       <label>Niveau des bots
         <select id="difficulte"><option value="0">Facile</option><option value="1" selected>Normal</option><option value="2">Difficile</option></select>
       </label>
       <label>Mode
-        <select id="modeJeu"><option value="solo">👤 Chacun pour soi</option><option value="duo">👥 Duos (équipes de 2)</option></select>
+        <select id="modeJeu"><option value="br">👑 Battle Royale (chacun pour soi)</option><option value="solo">👤 Solo (partie rapide)</option><option value="duo">👥 Duo (équipes de 2)</option><option value="escouade">🛡️ Escouade (équipes de 4)</option><option value="entrainement">🎯 Entraînement</option></select>
       </label>
+      <p id="regleMode" class="regle-mode"></p>
       <label>Vitesse de la zone
         <select id="vitesseZone"><option value="lente">Lente</option><option value="normale" selected>Normale</option><option value="rapide">Rapide</option></select>
       </label>
@@ -158,7 +176,6 @@
         <select id="matsDepart"><option value="0">0</option><option value="100">100</option><option value="300">300</option></select>
       </label>
       <label class="case-cocher"><input type="checkbox" id="optFete"> 🎉 Butin de fête (plein d'objets rares)</label>
-      <label class="case-cocher"><input type="checkbox" id="optEntrainement"> 🎯 Entraînement (pas de zone, 999 matériaux)</label>
       <button id="btnLancer" class="gros vert">🚀 Lancer la partie</button>
     </div>
     <p id="resumeOptions" class="resume-options"></p>
@@ -218,6 +235,8 @@
     <div id="mats">🪵 <b>0</b></div>
     <div id="aideConstr"></div>
   </div>
+  <div id="defisEntrainement" class="cache"></div>
+  <div id="espritHud" class="cache"><span class="esprit-ico"></span><div class="esprit-txt"><b></b><small></small><div class="esprit-recharge"><i></i></div></div><kbd class="pc-seul">A</kbd></div>
   <div id="mortPanneau" class="cache"></div>
   <div id="spectateur" class="cache"></div>
   <div id="degats"></div>
@@ -246,6 +265,7 @@
     <button class="tb t-sol" id="tViser" data-t="viser">🎯</button>
     <button class="tb moyen-tb t-sol" id="tAccroupi" data-t="accroupi">🧎</button>
     <button class="tb moyen-tb t-sol" id="tRecharger" data-t="recharger">🔄</button>
+    <button class="tb t-sol cache" id="tPouvoir" data-t="pouvoir" title="Pouvoir de l'esprit">✨<i class="anneau-recharge"></i></button>
   </div>
   <div id="chatRapides" class="cache"></div>
 </div>
@@ -326,9 +346,20 @@
   </div>
 </div>
 
+<div id="fenetreCadeau" class="ecran cache" role="dialog" aria-labelledby="cadeauTitre">
+  <div class="boite cadeau">
+    <div class="cadeau-icone">🎁</div>
+    <p class="petit-texte">Tu as reçu un cadeau !</p>
+    <h2 id="cadeauTitre"></h2>
+    <p id="cadeauMessage" class="cadeau-message cache"></p>
+    <ul id="cadeauContenu" class="cadeau-contenu"></ul>
+    <div class="boutons-cadeau"><button class="gros vert" id="fermerCadeau">Super !</button><button class="gros bleu cache" id="voirCasier">🧳 Voir dans le casier</button></div>
+  </div>
+</div>
+
 <div id="chargement" class="ecran cache"><div class="boite"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=7"></script>
+<script type="module" src="js/jeu.js?v=8"></script>
 </body>
 </html>

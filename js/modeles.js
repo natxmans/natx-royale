@@ -7,18 +7,26 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const VERSION = 2; // à augmenter quand un .glb change (évite le vieux cache du navigateur)
 const BIBLIO = {};           // nom de l'objet → Object3D (modèle d'origine, jamais affiché)
-export const INTEGRATION = { maisons: [], armes: [] };
+const ANIMATIONS = {};       // nom de l'animation → AnimationClip (ex. soin_flotter, socle_tourner)
+export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [] };
 const chargeur = new GLTFLoader();
+const dejaCharges = new Map(); // un fichier partagé (ex. esprits_v001.glb) n'est chargé qu'une fois
 
 function chargerFichier(fichier, prefixe = '') {
-  return new Promise(resolve => {
+  const cle = prefixe + '|' + fichier;
+  if (dejaCharges.has(cle)) return dejaCharges.get(cle);
+  const p = new Promise(resolve => {
     chargeur.load(`modeles/${fichier}?v=${VERSION}`, gltf => {
       gltf.scene.updateMatrixWorld(true);
       for (const o of [...gltf.scene.children]) BIBLIO[prefixe + (o.userData.name || o.name)] = o;
+      for (const a of gltf.animations || []) ANIMATIONS[a.name] = a;
       resolve(gltf.scene);
     }, undefined, err => { console.warn(`Modèle ${fichier} pas chargé, on garde les modèles en code`, err?.message || err); resolve(null); });
   });
+  dejaCharges.set(cle, p);
+  return p;
 }
+export const clipAnimation = nom => ANIMATIONS[nom] || null;
 
 // Le manifeste dit quels nouveaux modèles sont validés et comment les placer
 async function chargerIntegration() {
@@ -37,6 +45,14 @@ async function chargerIntegration() {
     if (!a.actif || !a.fichier) continue;
     const scene = await chargerFichier(a.fichier, 'arme:' + a.id + ':');
     if (scene) INTEGRATION.armes.push({ ...a, scene });
+  }
+  // Esprits et autels : les objets gardent leur nom (esprit_soin, socle_esprit…) pour modeleGlb()
+  for (const cle of ['esprits', 'socles']) {
+    for (const e of man[cle] || []) {
+      if (!e.actif || !e.fichier) continue;
+      const scene = await chargerFichier(e.fichier);
+      if (scene && BIBLIO[e.objet]) INTEGRATION[cle].push(e);
+    }
   }
 }
 

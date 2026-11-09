@@ -142,6 +142,13 @@ le changer plus tard.
 | POST | `/api/retours` | un avis (note, catégorie, texte, id de partie) |
 | GET | `/api/suggestions?tri=populaires\|recentes` | idées publiées + votes |
 | POST / DELETE | `/api/suggestions/<id>/vote` | voter / retirer son vote |
+| GET | `/api/jeu` | annonce et bonus de pièces en cours (affichés dans le menu du jeu) |
+| POST | `/api/cadeaux` | cadeaux qui attendent ce joueur (pour tous ou rien que pour lui), donnés une seule fois |
+| POST | `/api/cadeaux/code` | utiliser un code cadeau (8 essais / 10 min par joueur, 20 par connexion) |
 | — | `/api/admin/…` | connexion, tableau de bord, liste filtrée, détail, statut, publication, notes, spams |
+| — | `/api/admin/cadeaux…` | créer (tous / un joueur / code), arrêter, réactiver, supprimer des cadeaux (skins + pièces) |
+| GET / POST | `/api/admin/jeu` | annonce du menu (texte, style, affichée ou non) et bonus de pièces (× 1,5 / 2 / 3, durée) |
+| GET | `/api/admin/joueurs` · POST `/api/admin/joueurs/bloquer` | joueurs anonymes (code joueur), bloquer / débloquer |
+| GET | `/api/admin/catalogue` | objets offrables, lus dans `catalogue.json` (fait par `extraire_catalogue.py` depuis `js/boutique.js`) |
 
-Tests automatiques (serveur lancé) : `python -X utf8 .claude/tests/test_api.py`.
+Tests automatiques (serveur lancé) : `python -X utf8 .claude/tests/test_api.py` puis `.claude/tests/test_cadeaux.py`.

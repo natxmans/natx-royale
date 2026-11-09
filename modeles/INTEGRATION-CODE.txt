@@ -46,3 +46,38 @@ textures intégrées au .glb.
 Si une règle ne peut pas être respectée (par ex. l'origine), le dire dans le message de
 livraison : le code sait aussi tourner l'arme (« avant »), la mettre à l'échelle (« longueur »)
 et placer la poignée (« poignee », en fractions de sa boîte).
+
+
+=====================================================================================
+3) 9 NOVEMBRE 2026 — ESPRITS, MODES DE JEU, 100 JOUEURS : ce que le code utilise et attend
+=====================================================================================
+(écrit par la session Codage ; la session Modélisation ne touche pas aux .js/.html/.css)
+
+A. INTÉGRÉ ET ACTIF (integration.json « esprits » et « socles » : actif = true)
+   - modeles/esprits_v001.glb : esprit_soin (Pousse), esprit_mobilite (Filou), esprit_protection (Gardien),
+     esprit_vision (Zyeuto), esprit_batisseur (Briquet), socle_esprit. Les règles du jeu suivent ces 5 rôles
+     (js/esprits.js). Les animations sont gardées par js/modeles.js (clipAnimation) :
+     <id>_flotter en boucle, <id>_apparaitre à la capture, <id>_activer au pouvoir, socle_tourner.
+   - Échelles utilisées : esprit qui suit le joueur × 0,9, placé à (-0,62 ; 2,15 ; 0,2) dans le repère du joueur
+     (un peu plus haut que conseillé : à 1,85 m il cachait la tête vue de la caméra) ; esprit sur l'autel × 1,5 ;
+     autel × 1,6 (ECHELLE_AUTEL) ; hauteur de l'esprit = hauteur_esprit × 1,6 − 0,1.
+     Les parties « lumiere_* » de l'autel prennent la couleur de l'esprit qui l'habite (gris quand il est vide).
+     La boîte COL_socle est cachée ; l'autel n'a pas (encore) de collision dans le jeu.
+   - weapon_futuriste_v002.glb : « fichier » changé dans integration.json (même boîte, rien d'autre changé).
+   - house_cottage_v002.glb : PAS activé (la maison cottage n'est pas encore validée dans le jeu).
+
+B. DEMANDES (par ordre d'importance) — même règles qu'avant : .glb, 1 unité = 1 m, haut +Y, avant -Z dans
+   three.js, origine indiquée, textures ≤ 1024 px, nouveaux fichiers versionnés, rien d'écrasé.
+   1) PERSONNAGE LOINTAIN (pour les grosses parties et les téléphones)
+      Fichier : modeles/personnage_loin_v001.glb, objet racine « personnage_loin ».
+      Mêmes proportions que personnage.glb (2 m, origine entre les pieds au sol, avant -Z), debout bras le long
+      du corps, SANS squelette. Un seul maillage, ≤ 700 triangles, 1 ou 2 matériaux ; la couleur de la tenue
+      dans un matériau nommé « tenue » (le code le recolore), peau/cheveux en couleurs par sommet.
+      But : un personnage loin (> 60 m) = 1 ou 2 appels de dessin au lieu d'environ 40 (mesure du 9 nov. :
+      99 personnages visibles = 3 984 appels de dessin, 54 ms par image sur PC).
+   2) MANNEQUIN D'ENTRAÎNEMENT (mode Entraînement)
+      Fichier : modeles/entrainement_v001.glb, objet racine « mannequin_entrainement ».
+      Mannequin de paille / bois sur un pied, 2 m, origine au sol au centre, avant -Z, ≤ 3 000 triangles,
+      une cible rouge et blanche sur la poitrine (matériau « cible »). Animation facultative
+      « mannequin_touche » (0,5 s, il vacille quand on le touche). Design original.
+   Livraison : prévenir la session Codage (noms, taille mesurée, triangles, animations) ; ne rien activer.

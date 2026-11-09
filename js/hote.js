@@ -3,8 +3,9 @@
 import { hasard, angleVers, arrondi, borner } from './outils.js';
 import { OBJETS, RARETES, tirerButin, LISTE_ARMES, butinRavitaillement } from './armes.js';
 import { rayonBoite, DEMI } from './monde.js';
-import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito } from './partage.js';
+import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, REGAIN_SOLO, DEFIS_ENTRAINEMENT } from './partage.js';
 import { nettoyerLook, lookAuHasard } from './boutique.js';
+import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE } from './esprits.js';
 
 const NOMS_BOTS = ['Patate', 'Croquette', 'Tartiflette', 'Grumeau', 'Moustache', 'Biscotte', 'Pépito', 'Cornichon',
   'Raclette', 'Chaussette', 'Gaufrette', 'Nougat', 'Saucisson', 'Crumble', 'Pistache', 'Bretzel', 'Kiwi', 'Radis',
@@ -20,7 +21,7 @@ export class Hote {
     this.reseau = reseau;
     this.jeu = jeu;
     this.salon = new Map();
-    this.options = { bots: 12, difficulte: 1, mode: 'solo', vitesseZone: 'normale', matsDepart: 0, fete: false, entrainement: false };
+    this.options = { bots: 39, difficulte: 1, mode: 'br', vitesseZone: 'normale', matsDepart: 0, fete: false, entrainement: false };
     this.chatT = new Map();
     this.enCours = false;
     this.joueurs = new Map();
@@ -111,14 +112,30 @@ export class Hote {
         if (j && j.vivant) this.blesser(de, borner(+m.deg || 0, 0, 100), null, 'chute');
         break;
       case 'ouvrirRavito': this.ouvrirRavito(de, m.id | 0); break;
+      case 'esprit': {
+        const sa = this.sanctuaires && this.sanctuaires[m.id | 0];
+        if (!j || !j.vivant || !sa || !sa.dispo) break;
+        // même règle que pour ramasser : près du sanctuaire (position de l'hôte, ou celle envoyée si elle est crédible)
+        const pres = (x, y, z) => Math.hypot(sa.x - x, sa.z - z) <= PORTEE_CAPTURE + 1.5 && Math.abs(sa.y - y) <= 3;
+        const mx = +m.x, my = +m.y, mz = +m.z;
+        const credible = Number.isFinite(mx) && Number.isFinite(mz) && Math.hypot(mx - j.x, mz - j.z) <= 6 && Math.abs(my - j.y) <= 4;
+        if (pres(j.x, j.y, j.z) || (credible && pres(mx, my, mz))) this.capturer(j, sa);
+        break;
+      }
+      case 'pouvoir': this.pouvoir(j, m); break;
       case 'degatsConstr': this.abimer(m.cle, borner(+m.deg || 0, 0, 300)); break;
       case 'construire': if (j && j.vivant) this.construire(de, m); break;
       case 'recolte': this.recolter(m.type, m.id | 0, +m.deg || 0); break;
       case 'ramasser': {
         const b = this.butins.get(m.id);
-        if (!b || !j || !j.vivant) break;
-        // l'hôte vérifie que le joueur est vraiment à côté (anti-triche)
-        if (Math.hypot(b.x - j.x, b.z - j.z) > 4.5 || Math.abs(b.y - j.y) > 3.5) break;
+        if (!j || !j.vivant) break;
+        if (!b) { this.reseau.envoyerA(de, { t: 'refusRamasser', id: m.id, raison: 'parti' }); break; }
+        // l'hôte vérifie que le joueur est vraiment à côté (anti-triche). La position envoyée avec la demande
+        // compte aussi (l'hôte a un peu de retard sur un téléphone ou une connexion lente), si elle est crédible.
+        const pres = (x, y, z) => Math.hypot(b.x - x, b.z - z) <= 4.5 && Math.abs(b.y - y) <= 3.5;
+        const mx = +m.x, my = +m.y, mz = +m.z;
+        const credible = Number.isFinite(mx) && Number.isFinite(my) && Number.isFinite(mz) && Math.hypot(mx - j.x, mz - j.z) <= 6 && Math.abs(my - j.y) <= 4;
+        if (!pres(j.x, j.y, j.z) && !(credible && pres(mx, my, mz))) { this.reseau.envoyerA(de, { t: 'refusRamasser', id: m.id, raison: 'loin' }); break; }
         this.butins.delete(m.id);
         this.reseau.diffuser({ t: 'butin-', id: m.id, par: de, b });
         break;
@@ -160,16 +177,21 @@ export class Hote {
     this.r = r;
     this.joueurs.clear();
     let n = 0;
-    const duo = this.options.mode === 'duo';
-    const equipeDe = k => (duo ? 1 + Math.floor(k / 2) : 0);
+    this.options.mode = modeValide(this.options.mode);
+    this.options.entrainement = this.options.mode === 'entrainement';
+    const taille = MODES[this.options.mode].taille;
+    // équipes : les joueurs du salon d'abord (les potes ensemble), puis les bots complètent
+    const equipeDe = k => (taille > 1 ? 1 + Math.floor(k / taille) : 0);
     for (const p of this.salon.values()) {
       const j = this.nouveauJoueur(p.id, p.nom, p.couleur, false, n); j.look = p.look; j.equipe = equipeDe(n); n++; this.joueurs.set(p.id, j);
     }
     const noms = NOMS_BOTS.slice().sort(() => Math.random() - 0.5);
     for (let k = 0; k < this.options.bots; k++) {
       const id = 'bot' + k;
-      const b = this.nouveauJoueur(id, 'Bot ' + noms[k % noms.length], COULEURS_BOTS[k % COULEURS_BOTS.length], true, n);
+      const nomBot = this.options.entrainement ? 'Mannequin ' + (k + 1) : 'Bot ' + noms[k % noms.length];
+      const b = this.nouveauJoueur(id, nomBot, COULEURS_BOTS[k % COULEURS_BOTS.length], true, n);
       b.look = lookAuHasard(); b.equipe = equipeDe(n); n++;
+      b.mannequin = this.options.entrainement;
       this.joueurs.set(id, b);
     }
     this.nbUnites = new Set([...this.joueurs.values()].map(j => (j.equipe ? 'e' + j.equipe : j.id))).size;
@@ -187,6 +209,11 @@ export class Hote {
     this.constrPV = new Map();
     this.arbresPV = new Map(); this.rochersPV = new Map();
     this.coffresOuverts = new Set();
+    // Sanctuaires des esprits élémentaires
+    const nbSanct = this.options.entrainement ? 4 : Math.max(5, Math.min(9, 4 + Math.ceil(this.joueurs.size / 8)));
+    this.sanctuaires = placerSanctuaires(monde, r, nbSanct, this.options.entrainement ? { x: 0, z: 0 } : null)
+      .map(sa => ({ ...sa, dispo: true, retour: 0 }));
+    this.espritT = 0;
     this.temps = 0; this.envoiT = 0; this.zoneT = 0;
     this.enCours = true; this.fini = false;
     // Les bots : où et quand ils sautent, et leur arme
@@ -195,7 +222,7 @@ export class Hote {
       if (!b.bot) continue;
       b.sautT = 3 + r() * (this.dirigeable.duree - 6);
       const l = lieux.length && r() < 0.6 ? lieux[Math.floor(r() * lieux.length)] : null;
-      b.dest = l ? { x: l.x + (r() - 0.5) * 40, z: l.z + (r() - 0.5) * 40 } : this.pointTerre(r, 0, 0, DEMI * 0.7);
+      b.dest = b.mannequin ? this.pointTerre(r, 0, 0, 40) : l ? { x: l.x + (r() - 0.5) * 40, z: l.z + (r() - 0.5) * 40 } : this.pointTerre(r, 0, 0, DEMI * 0.7);
       const objet = LISTE_ARMES[Math.floor(r() * LISTE_ARMES.length)];
       b.arme = { objet, rarete: Math.floor(r() * 3) };
       b.mun = OBJETS[objet].chargeur; b.mats = 120 + this.options.difficulte * 60;
@@ -207,7 +234,18 @@ export class Hote {
       options: { mode: o.mode, entrainement: !!o.entrainement, matsDepart: o.entrainement ? 999 : o.matsDepart | 0, fete: !!o.fete, vitesseZone: o.vitesseZone },
       joueurs: [...this.joueurs.values()].map(j => ({ id: j.id, nom: j.nom, couleur: j.couleur, bot: j.bot, n: j.n, look: j.look, equipe: j.equipe })),
       butins: listeButins,
+      esprits: this.sanctuaires.map(sa => ({ id: sa.id, x: sa.x, y: sa.y, z: sa.z, type: sa.type, dispo: true })),
     });
+    // Entraînement : les défis de chaque joueur
+    this.defis = new Map();
+    if (this.options.entrainement) {
+      for (const j of this.joueurs.values()) {
+        if (j.bot) continue;
+        const d = Object.fromEntries(DEFIS_ENTRAINEMENT.map(x => [x.id, 0]));
+        this.defis.set(j.id, d);
+        this.reseau.envoyerA(j.id, { t: 'defis', d });
+      }
+    }
     this.diffuserSalon();
   }
 
@@ -328,6 +366,7 @@ export class Hote {
     const pv = PV_CONSTR[m.type];
     this.constrPV.set(m.cle, pv);
     this.reseau.diffuser({ t: 'constr', c: { cle: m.cle, type: m.type, axe: m.axe, i: m.i | 0, j: m.j | 0, k: m.k | 0, d: m.d | 0, pv }, par: de });
+    this.avancerDefi(de, 'constr');
     return true;
   }
 
@@ -354,6 +393,7 @@ export class Hote {
       t: 'pv', id, pv: Math.max(0, j.pv), b: j.bouclier, de: auteur, deg, tete: !!tete,
       x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), casse: avaitBouclier && j.bouclier <= 0,
     });
+    if (j.pv <= 0 && this.options.entrainement) { this.reapparaitre(j, auteur); return; }
     if (j.bot && auteur && auteur !== id) this.reactionBot(j, auteur);
     if (j.pv <= 0) this.eliminer(id, auteur, arme);
   }
@@ -362,11 +402,17 @@ export class Hote {
     const j = this.joueurs.get(id);
     if (!j || !j.vivant) return;
     j.vivant = false; j.pv = 0;
+    if (j.esprit) { j.esprit = null; this.reseau.diffuser({ t: 'espritLibre', id }); }
     let vivants = 0;
     for (const p of this.joueurs.values()) if (p.vivant) vivants++;
     const k = auteur && auteur !== id ? this.joueurs.get(auteur) : null;
     if (k) {
       k.kills++;
+      if (this.options.mode === 'solo' && k.vivant) {
+        const pv = Math.min(REGAIN_SOLO, 100 - k.pv);
+        k.pv += pv; k.bouclier = Math.min(100, k.bouclier + REGAIN_SOLO - pv);
+        this.reseau.diffuser({ t: 'pv', id: k.id, pv: k.pv, b: k.bouclier, regain: REGAIN_SOLO });
+      }
       if (k.bot && Math.random() < 0.6) { k.emT = 2.5; k.em = (k.look && k.look.emote) || 'salut'; }
     }
     const dist = k ? Math.round(Math.hypot(k.x - j.x, k.y - j.y, k.z - j.z)) : 0;
@@ -401,6 +447,26 @@ export class Hote {
             break;
           }
         }
+      }
+    }
+
+    // Esprits : les autels vides en refont un ; Pousse (soin) et Gardien (protection) font remonter vie / bouclier
+    this.espritT += dt;
+    if (this.espritT >= 1 && this.sanctuaires) {
+      this.espritT -= 1;
+      for (const sa of this.sanctuaires) {
+        if (sa.dispo || this.temps < sa.retour) continue;
+        sa.dispo = true;
+        sa.type = TYPES_ESPRITS[Math.floor(Math.random() * TYPES_ESPRITS.length)];
+        this.reseau.diffuser({ t: 'sanctuaire', s: sa.id, type: sa.type });
+      }
+      for (const j of this.joueurs.values()) {
+        const r = j.vivant && j.esprit && REGEN[j.esprit.type];
+        if (!r) continue;
+        if (j.esprit.type === 'soin' && j.pv < r.max && j.pv > 0) j.pv = Math.min(r.max, j.pv + r.pas);
+        else if (j.esprit.type === 'protection' && j.bouclier < r.max) j.bouclier = Math.min(r.max, j.bouclier + r.pas);
+        else continue;
+        this.reseau.diffuser({ t: 'pv', id: j.id, pv: j.pv, b: j.bouclier, regen: true });
       }
     }
 
@@ -465,6 +531,7 @@ export class Hote {
       return;
     }
 
+    if (b.mannequin) { this.majMannequin(b, dt); return; }
     // Au sol : en train de se soigner (immobile)
     if (b.soinT > 0) {
       b.soinT -= dt;
@@ -488,7 +555,7 @@ export class Hote {
       return;
     }
     b.vueT -= dt;
-    if (b.vueT <= 0) { b.vueT = 0.3 + Math.random() * 0.25; this.chercherCible(b); }
+    if (b.vueT <= 0) { b.vueT = 0.3 + Math.random() * 0.25; this.chercherCible(b); this.espritBot(b); }
     const z = etatZone(this.zone, this.temps);
     const distProchaine = Math.hypot(b.x - z.cx, b.z - z.cz);
     const distActuelle = Math.hypot(b.x - z.x, b.z - z.z);
@@ -539,7 +606,7 @@ export class Hote {
     }
     // Contourner un obstacle
     if (b.detourT > 0) { b.detourT -= dt; const ox = mx; mx = -mz * b.cote; mz = ox * b.cote; }
-    const vit = b.dansEau ? 3.5 : 6.3;
+    const vit = (b.dansEau ? 3.5 : 6.3) * (b.esprit && b.esprit.type === 'mobilite' ? VITESSE_MOBILITE : 1);
     const n = Math.hypot(mx, mz);
     if (n > 0.01) { b.vx = mx / n * vit; b.vz = mz / n * vit; } else { b.vx *= 0.8; b.vz *= 0.8; }
     b.vy -= 25 * dt;
@@ -558,6 +625,20 @@ export class Hote {
     b.f = (b.auSol ? 1 : 0) | (t && b.voit ? 2 : 0);
   }
 
+  // Esprits pour les bots : capturer en passant, et se servir du pouvoir au bon moment
+  espritBot(b) {
+    if (!this.sanctuaires || b.mannequin) return;
+    if (!b.esprit) {
+      for (const sa of this.sanctuaires) if (sa.dispo && Math.hypot(sa.x - b.x, sa.z - b.z) < PORTEE_CAPTURE && Math.abs(sa.y - b.y) < 3) { this.capturer(b, sa); return; }
+      return;
+    }
+    if (this.temps < b.esprit.pret) return;
+    const t = b.cible ? this.joueurs.get(b.cible) : null;
+    const d = t ? Math.hypot(t.x - b.x, t.z - b.z) : Infinity;
+    const type = b.esprit.type;
+    if ((type === 'soin' && b.pv < 55) || (type === 'protection' && t && b.bouclier < 30) || (type === 'batisseur' && t && b.voit && d < 30 && b.auSol)) this.pouvoir(b, { ry: b.ry });
+  }
+
   // Objectif du bot : un ravitaillement posé, ou un objet utile au sol
   viserButin(b, z) {
     let best = null, bd = 120;
@@ -565,6 +646,14 @@ export class Hote {
       if (rv.ouvert || !posRavito(rv, this.temps).pose) continue;
       const d = Math.hypot(rv.x - b.x, rv.z - b.z);
       if (d < bd && Math.hypot(rv.x - z.x, rv.z - z.z) < z.r - 5) { bd = d; best = { ravito: rv.id, x: rv.x, z: rv.z }; }
+    }
+    // un esprit libre pas trop loin (s'il n'en a pas encore)
+    if (!best && !b.esprit && !b.mannequin && this.sanctuaires) {
+      bd = 55;
+      for (const sa of this.sanctuaires) {
+        const d = Math.hypot(sa.x - b.x, sa.z - b.z);
+        if (sa.dispo && d < bd && Math.hypot(sa.x - z.x, sa.z - z.z) < z.r - 5) { bd = d; best = { sanctuaire: sa.id, x: sa.x, z: sa.z }; }
+      }
     }
     if (!best) {
       bd = 28;
@@ -583,6 +672,7 @@ export class Hote {
   prendreObjectif(b) {
     const o = b.objectif;
     if (o.ravito) { this.ouvrirRavito(b.id, o.ravito); return; }
+    if (o.sanctuaire !== undefined) { const sa = this.sanctuaires[o.sanctuaire]; if (sa && sa.dispo) this.capturer(b, sa); return; }
     const it = this.butins.get(o.butin);
     if (!it) return;
     this.butins.delete(it.id);
@@ -666,7 +756,82 @@ export class Hote {
     return [arrondi(ox + dx * best), arrondi(oy + dy * best), arrondi(oz + dz * best)];
   }
 
+  // ---------- Esprits élémentaires ----------
+  capturer(j, sa) {
+    if (!sa.dispo || !j.vivant) return false;
+    sa.dispo = false;
+    sa.retour = this.temps + RECHARGE_SANCTUAIRE;
+    // un seul esprit à la fois : l'ancien repart
+    j.esprit = { type: sa.type, pret: this.temps + 3 };
+    this.reseau.diffuser({ t: 'esprit', s: sa.id, par: j.id, type: sa.type, pret: arrondi(j.esprit.pret) });
+    this.avancerDefi(j.id, 'esprit');
+    return true;
+  }
+
+  pouvoir(j, m) {
+    if (!j || !j.vivant || !j.esprit || this.temps < j.esprit.pret || j.ph === 'dirigeable') return;
+    const type = j.esprit.type, def = ESPRITS[type];
+    j.esprit.pret = this.temps + def.recharge;
+    const ry = Number.isFinite(+(m && m.ry)) ? +m.ry : j.ry;
+    this.reseau.diffuser({ t: 'pouvoir', par: j.id, type, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), ry: arrondi(ry), pret: arrondi(j.esprit.pret) });
+    if (type === 'soin') {
+      // Bourgeon : soigne le joueur et ses coéquipiers proches
+      for (const e of this.joueurs.values()) {
+        if (!e.vivant || e.pv >= 100 || (e !== j && !(memeEquipe(j, e) && Math.hypot(e.x - j.x, e.z - j.z) <= BOURGEON.rayon))) continue;
+        e.pv = Math.min(100, e.pv + BOURGEON.pv);
+        this.reseau.diffuser({ t: 'pv', id: e.id, pv: e.pv, b: e.bouclier });
+      }
+    } else if (type === 'protection') {
+      j.bouclier = Math.min(100, j.bouclier + CARAPACE);
+      this.reseau.diffuser({ t: 'pv', id: j.id, pv: j.pv, b: j.bouclier });
+    } else if (type === 'batisseur') {
+      // Fort express : 4 murs autour du joueur (gratuits)
+      for (let k = 0; k < 4; k++) this.construire(j.id, cibleConstruction(this.monde, 'mur', j.x, j.y, j.z, ry + k * Math.PI / 2, 0));
+    }
+    // Filou (mobilité) : le bond est fait par le joueur lui-même ; Zyeuto (vision) : seulement de l'affichage chez le joueur
+  }
+
+  // ---------- Entraînement ----------
+  majMannequin(b, dt) {
+    b.destT -= dt;
+    if (!b.dest || b.destT <= 0 || Math.hypot(b.dest.x - b.x, b.dest.z - b.z) < 2) { b.dest = this.pointTerre(Math.random, 0, 0, 45); b.destT = 5 + Math.random() * 6; }
+    const dx = b.dest.x - b.x, dz = b.dest.z - b.z, d = Math.hypot(dx, dz) || 1;
+    b.vx = dx / d * 2.6; b.vz = dz / d * 2.6; b.vy -= 25 * dt;
+    b.ry = angleVers(b.ry, Math.atan2(-dx, -dz), Math.min(1, dt * 4));
+    this.monde.deplacer(b, dt);
+    b.a = ''; b.f = b.auSol ? 1 : 0;
+  }
+
+  reapparaitre(j, auteur) {
+    const a = auteur && auteur !== j.id ? this.joueurs.get(auteur) : null;
+    if (j.mannequin) {
+      if (a) { a.kills++; this.avancerDefi(a.id, 'mannequins'); }
+      this.reseau.diffuser({ t: 'mannequin', id: j.id, par: auteur || null, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z) });
+    }
+    const p = this.pointTerre(Math.random, 0, 0, j.mannequin ? 45 : 30);
+    const h = this.monde.lancerRayon(p.x, 160, p.z, 0, -1, 0, 320);
+    j.x = p.x; j.z = p.z; j.y = (h ? h.y : this.monde.hauteurTerrain(p.x, p.z)) + 0.5; j.vx = j.vz = j.vy = 0;
+    j.pv = 100; j.bouclier = 0;
+    this.reseau.diffuser({ t: 'pv', id: j.id, pv: 100, b: 0, reap: true });
+    if (!j.bot) this.reseau.envoyerA(j.id, { t: 'reapparition', x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z) });
+  }
+
+  avancerDefi(id, cle) {
+    if (!this.options.entrainement || this.fini || !this.defis) return;
+    const d = this.defis.get(id);
+    const def = DEFIS_ENTRAINEMENT.find(x => x.id === cle);
+    if (!d || !def || d[cle] >= def.n) return;
+    d[cle]++;
+    this.reseau.envoyerA(id, { t: 'defis', d });
+    if (DEFIS_ENTRAINEMENT.every(x => d[x.id] >= x.n)) {
+      this.fini = true;
+      const j = this.joueurs.get(id);
+      this.reseau.diffuser({ t: 'fin', gagnant: id, nom: j.nom, kills: j.kills, equipe: 0, gagnants: [id], entrainement: true });
+    }
+  }
+
   reactionBot(b, auteur) {
+    if (b.mannequin) return;
     b.agresseur = auteur;
     b.vueT = 0;
     b.emT = 0; b.em = '';

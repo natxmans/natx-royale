@@ -4,6 +4,7 @@ import { CATALOGUE, CATEGORIES, RARETES_COSM, COLLAB, objet, prixDe, possede, ac
 import { echapper } from './outils.js';
 import { NOUVEAUTES } from './nouveautes.js';
 import { dessinerIdees } from './avis.js';
+import { MODES } from './partage.js';
 
 const $ = s => document.querySelector(s);
 
@@ -144,7 +145,7 @@ export class Menus {
     const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
     const precision = s.tirs ? Math.round(s.touches / s.tirs * 100) : 0;
     const r = p.records;
-    const histo = p.historique.map(h => `<tr><td>${h.gagne ? '🏆' : '#' + (h.place || '?')}</td><td>${h.kills} 💀</td><td>${h.degats} dégâts</td><td>${mmss(h.survie)}</td><td>${h.mode === 'duo' ? '👥' : '👤'}</td></tr>`).join('');
+    const histo = p.historique.map(h => `<tr><td>${h.gagne ? '🏆' : '#' + (h.place || '?')}</td><td>${h.kills} 💀</td><td>${h.degats} dégâts</td><td>${mmss(h.survie)}</td><td>${(MODES[h.mode] || MODES.solo).icone}</td></tr>`).join('');
     $('#statsProfil').innerHTML = `<h3>📊 Tes stats</h3>
       <div class="chiffres"><div><b>${s.parties}</b>parties</div><div><b>${s.victoires}</b>TOP 1</div><div><b>${s.kills}</b>éliminations</div><div><b>${poss}/${total}</b>objets</div>
       <div><b>${precision} %</b>précision</div><div><b>${Math.round((s.temps || 0) / 60)} min</b>de jeu</div></div>

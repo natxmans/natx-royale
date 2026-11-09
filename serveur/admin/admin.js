@@ -80,22 +80,22 @@ function remplirSelects() {
 }
 
 // ---------- Navigation ----------
+const VUES = { tableau: '#vueTableau', retours: '#vueRetours', cadeaux: '#vueCadeaux', joueurs: '#vueJoueurs', jeu: '#vueJeu' };
 for (const b of document.querySelectorAll('#navigation button')) b.addEventListener('click', () => {
-  for (const x of document.querySelectorAll('#navigation button')) x.classList.toggle('actif', x === b);
-  if (b.dataset.vue === 'tableau') montrerVue('tableau');
-  else {
+  allumerNav(b);
+  if (b.dataset.vue === 'retours') {
     const g = b.dataset.groupe;
     filtres.groupe = g === 'spam' ? '' : g; filtres.spam = g === 'spam' ? '1' : '0'; filtres.page = 0;
     $('#titreRetours').textContent = b.textContent.replace(/^\S+\s/, '');
     $('#btnPurger').classList.toggle('cache', g !== 'spam');
-    montrerVue('retours');
   }
+  montrerVue(b.dataset.vue);
 });
+function allumerNav(b) { for (const x of document.querySelectorAll('#navigation button')) x.classList.toggle('actif', x === b); }
 function montrerVue(v) {
-  $('#vueTableau').classList.toggle('cache', v !== 'tableau');
-  $('#vueRetours').classList.toggle('cache', v !== 'retours');
+  for (const [nom, sel] of Object.entries(VUES)) $(sel).classList.toggle('cache', nom !== v);
   fermerDetail();
-  if (v === 'tableau') chargerTableau(); else chargerListe();
+  ({ tableau: chargerTableau, retours: chargerListe, cadeaux: chargerCadeaux, joueurs: chargerJoueurs, jeu: chargerJeu })[v]();
 }
 
 // ---------- Tableau de bord ----------
@@ -107,6 +107,7 @@ async function chargerTableau() {
     ['Parties jouées', s.parties, 'cyan'], ['Retours reçus', s.retours, 'jaune'], ['Bugs signalés', s.bugs, 'rouge'], ['Idées et contenus', s.idees, 'violet'],
     ['Acceptées', s.acceptees, 'vert'], ['En cours', s.en_cours, ''], ['Nouveaux à lire', s.nouveaux, 'cyan'], ['Publiées', s.publiees, ''],
     ['Votes', s.votes, ''], ['Note moyenne', s.note_moyenne ? s.note_moyenne + ' / 5' : '—', 'jaune'], ['Spams', s.spams, ''],
+    ['Joueurs', s.joueurs ?? 0, 'violet'], ['Actifs (7 jours)', s.actifs_7j ?? 0, 'vert'], ['Cadeaux reçus', s.cadeaux_recus ?? 0, 'jaune'],
   ];
   $('#cartesStats').replaceChildren(...cartes.map(([t, v, c]) => el('div', { class: 'stat ' + c }, el('b', {}, v), el('span', {}, t))));
   const max = Math.max(1, ...Object.values(d.par_categorie));
@@ -183,10 +184,13 @@ function afficherDetail(r) {
     r.partie_id ? el('span', { class: 'badge', title: 'Identifiant de la partie' }, '🎮 ' + r.partie_id) : null,
     r.plateforme ? el('span', { class: 'badge' }, r.plateforme === 'tactile' ? '📱 téléphone' : '💻 ordinateur') : null,
     r.version_jeu ? el('span', { class: 'badge' }, 'v' + r.version_jeu) : null,
+    r.joueur_code ? el('span', { class: 'badge', title: 'Code joueur de l\'auteur' }, '👤 ' + r.joueur_code) : null,
     r.autres_du_joueur ? el('span', { class: 'badge' }, r.autres_du_joueur + ' autre(s) retour(s) de ce joueur') : null,
     r.spam ? el('span', { class: 'badge cat-bug' }, '🚫 spam') : null,
   ].filter(Boolean));
   $('#detailTexte').textContent = r.texte || '(le joueur a seulement donné une note)';
+  $('#btnOffrir').dataset.joueur = r.joueur_code || '';
+  $('#btnOffrir').classList.toggle('cache', !r.joueur_code);
   $('#detailStatut').value = r.statut;
   $('#detailPublic').checked = !!r.public;
   $('#detailTextePublic').value = r.texte_public || '';
@@ -221,6 +225,189 @@ $('#btnNote').addEventListener('click', async () => {
   if (!texte) return;
   try { const r = await api('POST', `/retours/${detailId}/notes`, { texte }); $('#nouvelleNote').value = ''; afficherDetail(r); toast('Note ajoutée'); }
   catch (e) { toast(e.message, true); }
+});
+
+// ---------- Cadeaux et skins ----------
+let CATALOGUE = null;
+const choisis = new Set();
+const NOMS_RARETES = { commun: 'Commun', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire', collab: 'Collab 2K27' };
+const formatCode = c => { const x = c.replace(/[^0-9a-f]/gi, '').toUpperCase().slice(0, 8); return x.length > 4 ? x.slice(0, 4) + '-' + x.slice(4) : x; };
+const jusquau = t => t ? new Date(t * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'sans limite';
+
+async function chargerCadeaux() {
+  try {
+    if (!CATALOGUE) { CATALOGUE = await api('GET', '/catalogue'); dessinerObjets(); }
+    const d = await api('GET', '/cadeaux');
+    dessinerListeCadeaux(d.cadeaux);
+  } catch (e) { toast(e.message, true); }
+  majFormulaireCadeau();
+}
+
+function objetsOffrables() { return (CATALOGUE?.objets || []).filter(o => !o.gratuit); }
+
+function dessinerObjets() {
+  const filtre = $('#cRecherche').value.trim().toLowerCase();
+  const groupes = (CATALOGUE.categories || []).map(cat => {
+    const objets = objetsOffrables().filter(o => o.cat === cat.id && (!filtre || o.nom.toLowerCase().includes(filtre) || NOMS_RARETES[o.rarete]?.toLowerCase().includes(filtre)));
+    if (!objets.length) return null;
+    const tous = objets.every(o => choisis.has(o.cle));
+    const entete = el('button', { class: 'cat-objets', type: 'button', title: tous ? 'Tout décocher' : 'Tout cocher', onclick: () => {
+      for (const o of objets) tous ? choisis.delete(o.cle) : choisis.add(o.cle);
+      dessinerObjets();
+    } }, cat.icone + ' ' + cat.nom, el('small', {}, objets.filter(o => choisis.has(o.cle)).length + ' / ' + objets.length));
+    return el('div', { class: 'groupe-objets' }, entete, el('div', { class: 'puces' }, ...objets.map(o => {
+      const b = el('button', { type: 'button', class: 'puce r-' + o.rarete + (choisis.has(o.cle) ? ' choisie' : ''), title: NOMS_RARETES[o.rarete] || o.rarete,
+        onclick: () => { choisis.has(o.cle) ? choisis.delete(o.cle) : choisis.add(o.cle); b.classList.toggle('choisie'); majFormulaireCadeau(); } }, o.nom);
+      return b;
+    })));
+  }).filter(Boolean);
+  $('#cObjets').replaceChildren(...(groupes.length ? groupes : [el('p', { class: 'vide' }, 'Aucun objet ne correspond.')]));
+  majFormulaireCadeau();
+}
+
+function majFormulaireCadeau() {
+  const cible = $('#cCible').value;
+  $('#cBlocJoueur').classList.toggle('cache', cible !== 'joueur');
+  $('#cBlocCode').classList.toggle('cache', cible !== 'code');
+  $('#cBlocMax').classList.toggle('cache', cible !== 'code');
+  const n = choisis.size, pieces = Math.max(0, +$('#cPieces').value || 0);
+  $('#cCompteObjets').textContent = n ? n + ' objet' + (n > 1 ? 's' : '') + ' choisi' + (n > 1 ? 's' : '') : 'aucun objet choisi';
+  const pour = { tous: 'pour tout le monde', joueur: 'pour le joueur ' + ($('#cJoueur').value || '…'), code: 'avec un code cadeau' }[cible];
+  const contenu = [pieces ? pieces + ' 🪙' : null, n ? n + ' objet' + (n > 1 ? 's' : '') : null].filter(Boolean).join(' + ') || 'rien pour l\'instant';
+  $('#cResume').textContent = contenu + ' · ' + pour;
+}
+$('#cCible').addEventListener('change', majFormulaireCadeau);
+$('#cPieces').addEventListener('input', majFormulaireCadeau);
+$('#cJoueur').addEventListener('input', e => { e.target.value = formatCode(e.target.value); majFormulaireCadeau(); });
+$('#cRecherche').addEventListener('input', () => CATALOGUE && dessinerObjets());
+for (const b of document.querySelectorAll('[data-choix]')) b.addEventListener('click', () => {
+  const c = b.dataset.choix;
+  if (c === 'rien') choisis.clear();
+  else for (const o of objetsOffrables()) if (c === 'tout' || o.rarete === c) choisis.add(o.cle);
+  dessinerObjets();
+});
+
+$('#btnCreerCadeau').addEventListener('click', async () => {
+  const cible = $('#cCible').value;
+  const corps = {
+    titre: $('#cTitre').value.trim(), message: $('#cMessage').value.trim(), cible,
+    pieces: +$('#cPieces').value || 0, objets: [...choisis], duree_jours: +$('#cDuree').value,
+    joueur: cible === 'joueur' ? $('#cJoueur').value : undefined,
+    code: cible === 'code' ? $('#cCode').value : undefined,
+    max_utilisations: cible === 'code' && $('#cMax').value ? +$('#cMax').value : undefined,
+  };
+  if (!corps.titre) { toast('Donne un nom au cadeau.', true); $('#cTitre').focus(); return; }
+  const b = $('#btnCreerCadeau'); b.disabled = true;
+  try {
+    const d = await api('POST', '/cadeaux', corps);
+    const r = $('#cResultat');
+    r.classList.remove('cache');
+    r.replaceChildren(...(d.code ? ['✅ Cadeau créé ! Code à donner aux joueurs : ', el('b', { class: 'code' }, d.code)]
+      : ['✅ Cadeau créé ! ' + (cible === 'tous' ? 'Tous les joueurs le recevront en ouvrant le jeu.' : 'Le joueur ' + corps.joueur + ' le recevra en ouvrant le jeu.')]));
+    toast('Cadeau créé 🎁');
+    $('#cTitre').value = ''; $('#cMessage').value = ''; $('#cCode').value = ''; $('#cMax').value = ''; $('#cPieces').value = 0;
+    choisis.clear(); dessinerObjets();
+    dessinerListeCadeaux((await api('GET', '/cadeaux')).cadeaux);
+  } catch (e) { toast(e.message, true); }
+  b.disabled = false;
+});
+
+function dessinerListeCadeaux(liste) {
+  $('#videCadeaux').classList.toggle('cache', liste.length > 0);
+  const noms = Object.fromEntries((CATALOGUE?.objets || []).map(o => [o.cle, o.nom]));
+  $('#lignesCadeaux').replaceChildren(...liste.map(c => {
+    const expire = c.expire_le && c.expire_le * 1000 < Date.now();
+    const pour = c.cible === 'tous' ? '🌍 Tout le monde' : c.cible === 'joueur' ? '👤 ' + c.joueur_code : null;
+    const contenu = [c.pieces ? c.pieces + ' 🪙' : null, ...c.objets.slice(0, 4).map(k => noms[k] || k)].filter(Boolean).join(', ') + (c.objets.length > 4 ? ` +${c.objets.length - 4} autres` : '');
+    const etat = !c.actif ? el('span', { class: 'badge st-refuse' }, 'arrêté') : expire ? el('span', { class: 'badge' }, 'expiré') : el('span', { class: 'badge st-accepte' }, 'actif');
+    return el('tr', { class: 'sans-clic' + (c.actif && !expire ? '' : ' eteint') },
+      el('td', {}, el('b', {}, c.titre), c.message ? el('div', { class: 'petit' }, c.message) : null, el('div', { class: 'petit' }, date(c.cree_le) + (c.auteur ? ' · ' + c.auteur : ''))),
+      el('td', {}, pour || ['🔑 ', el('b', { class: 'code' }, c.code)]),
+      el('td', {}, el('div', { class: 'extrait' }, contenu)),
+      el('td', {}, c.recus + (c.max_utilisations ? ' / ' + c.max_utilisations : '') + ' joueur' + (c.recus > 1 ? 's' : '')),
+      el('td', {}, jusquau(c.expire_le), ' ', etat),
+      el('td', { class: 'boutons-ligne' },
+        el('button', { class: 'bouton discret petit', title: c.actif ? 'Ne plus donner ce cadeau' : 'Donner à nouveau ce cadeau', onclick: async () => {
+          try { await api('POST', '/cadeaux/' + c.id, { actif: !c.actif }); chargerCadeaux(); } catch (e) { toast(e.message, true); }
+        } }, c.actif ? '⏸️ Arrêter' : '▶️ Réactiver'),
+        el('button', { class: 'bouton danger petit', title: 'Supprimer ce cadeau', onclick: async () => {
+          if (!confirm(`Supprimer le cadeau « ${c.titre} » ? (Les joueurs qui l'ont reçu le gardent.)`)) return;
+          try { await api('DELETE', '/cadeaux/' + c.id); toast('Cadeau supprimé'); chargerCadeaux(); } catch (e) { toast(e.message, true); }
+        } }, '🗑️')));
+  }));
+}
+
+// ouvrir le formulaire de cadeau déjà rempli pour un joueur
+function offrirA(code) {
+  allumerNav(document.querySelector('#navigation [data-vue="cadeaux"]'));
+  montrerVue('cadeaux');
+  $('#cCible').value = 'joueur'; $('#cJoueur').value = code; majFormulaireCadeau();
+  $('#cTitre').focus();
+}
+$('#btnOffrir').addEventListener('click', () => $('#btnOffrir').dataset.joueur && offrirA($('#btnOffrir').dataset.joueur));
+
+// ---------- Joueurs ----------
+const filtreJoueurs = { q: '', page: 0 };
+async function chargerJoueurs() {
+  let d;
+  try { d = await api('GET', `/joueurs?q=${encodeURIComponent(filtreJoueurs.q)}&page=${filtreJoueurs.page}`); } catch (e) { toast(e.message, true); return; }
+  $('#totalJoueurs').textContent = d.total + ' joueur' + (d.total > 1 ? 's' : '');
+  $('#videJoueurs').classList.toggle('cache', d.joueurs.length > 0);
+  $('#lignesJoueurs').replaceChildren(...d.joueurs.map(j => el('tr', { class: 'sans-clic' + (j.bloque ? ' eteint' : '') },
+    el('td', {}, el('b', { class: 'code' }, j.code), j.bloque ? el('span', { class: 'badge cat-bug' }, 'bloqué') : null),
+    el('td', {}, date(j.cree_le)), el('td', {}, j.vu_le ? date(j.vu_le) : '—'),
+    el('td', {}, j.parties), el('td', {}, j.retours), el('td', {}, j.cadeaux),
+    el('td', { class: 'boutons-ligne' },
+      el('button', { class: 'bouton petit', onclick: () => offrirA(j.code) }, '🎁 Offrir'),
+      el('button', { class: 'bouton discret petit', onclick: async () => {
+        if (!j.bloque && !confirm(`Bloquer le joueur ${j.code} ? Il ne pourra plus envoyer d'avis, voter ni utiliser de code cadeau.`)) return;
+        try { await api('POST', '/joueurs/bloquer', { joueur: j.code, bloque: !j.bloque }); toast(j.bloque ? 'Joueur débloqué' : 'Joueur bloqué'); chargerJoueurs(); } catch (e) { toast(e.message, true); }
+      } }, j.bloque ? '✅ Débloquer' : '🚫 Bloquer')))));
+  const pages = Math.max(1, Math.ceil(d.total / 50));
+  $('#infoJoueurs').textContent = `Page ${d.page + 1} / ${pages}`;
+  $('#joueursPrec').disabled = d.page <= 0;
+  $('#joueursSuiv').disabled = d.page + 1 >= pages;
+}
+let rechercheJT = null;
+$('#rechercheJoueur').addEventListener('input', e => { clearTimeout(rechercheJT); rechercheJT = setTimeout(() => { filtreJoueurs.q = e.target.value.replace(/[^0-9a-f]/gi, ''); filtreJoueurs.page = 0; chargerJoueurs(); }, 300); });
+$('#joueursPrec').addEventListener('click', () => { filtreJoueurs.page = Math.max(0, filtreJoueurs.page - 1); chargerJoueurs(); });
+$('#joueursSuiv').addEventListener('click', () => { filtreJoueurs.page++; chargerJoueurs(); });
+
+// ---------- Annonce et bonus ----------
+function afficherJeu(d) {
+  const a = d.annonce || {};
+  $('#jAnnonce').value = a.texte || '';
+  $('#jStyle').value = a.style || 'info';
+  $('#jAnnonceActive').checked = !!a.active;
+  majApercu();
+  const b = d.en_ligne?.bonus;
+  $('#jBonusEtat').replaceChildren(b
+    ? el('span', { class: 'actif' }, `⚡ En cours : ${b.texte} × ${String(b.multiplicateur).replace('.', ',')} jusqu'au ${jusquau(b.fin)}`)
+    : el('span', {}, 'Aucun bonus en cours.'));
+  $('#btnStopBonus').classList.toggle('cache', !b);
+  if (b) { $('#jMult').value = String(b.multiplicateur); $('#jBonusTexte').value = b.texte; }
+}
+function majApercu() {
+  const p = $('#jApercu');
+  p.className = 'apercu-annonce ' + $('#jStyle').value + ($('#jAnnonceActive').checked ? '' : ' eteint');
+  p.textContent = $('#jAnnonce').value.trim() || '(message vide)';
+}
+async function chargerJeu() { try { afficherJeu(await api('GET', '/jeu')); } catch (e) { toast(e.message, true); } }
+for (const id of ['#jAnnonce', '#jStyle', '#jAnnonceActive']) $(id).addEventListener('input', majApercu);
+$('#btnAnnonce').addEventListener('click', async () => {
+  try {
+    afficherJeu(await api('POST', '/jeu', { annonce: { texte: $('#jAnnonce').value, style: $('#jStyle').value, active: $('#jAnnonceActive').checked } }));
+    toast($('#jAnnonceActive').checked ? 'Annonce affichée dans le jeu 📢' : 'Annonce enregistrée (cachée)');
+  } catch (e) { toast(e.message, true); }
+});
+$('#btnBonus').addEventListener('click', async () => {
+  try {
+    afficherJeu(await api('POST', '/jeu', { bonus: { multiplicateur: +$('#jMult').value, heures: +$('#jDuree').value, texte: $('#jBonusTexte').value || 'Bonus de pièces' } }));
+    toast('Bonus lancé ⚡');
+  } catch (e) { toast(e.message, true); }
+});
+$('#btnStopBonus').addEventListener('click', async () => {
+  try { afficherJeu(await api('POST', '/jeu', { bonus: { multiplicateur: 1 } })); toast('Bonus arrêté'); } catch (e) { toast(e.message, true); }
 });
 
 // ---------- Démarrage ----------

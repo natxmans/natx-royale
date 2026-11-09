@@ -32,6 +32,10 @@
       <button data-vue="retours" data-groupe="bugs">🐞 Bugs</button>
       <button data-vue="retours" data-groupe="idees">💡 Idées et avis</button>
       <button data-vue="retours" data-groupe="spam">🚫 Spams</button>
+      <span class="separateur">Le jeu</span>
+      <button data-vue="cadeaux">🎁 Cadeaux et skins</button>
+      <button data-vue="joueurs">👥 Joueurs</button>
+      <button data-vue="jeu">📢 Annonce et bonus</button>
     </nav>
     <div class="moi"><span id="nomAdmin"></span><button id="btnDeconnexion" class="bouton discret">Se déconnecter</button></div>
   </aside>
@@ -68,6 +72,97 @@
       </div>
       <div class="pages"><button id="pagePrec" class="bouton discret">← Précédents</button><span id="infoPage"></span><button id="pageSuiv" class="bouton discret">Suivants →</button></div>
     </section>
+
+    <!-- Cadeaux et skins -->
+    <section id="vueCadeaux" class="cache">
+      <header class="titre"><h1>Cadeaux et skins</h1></header>
+      <div class="panneau">
+        <h2>🎁 Nouveau cadeau</h2>
+        <p class="aide">Débloque des skins et donne des pièces : à tout le monde, à un seul joueur (avec son code joueur, visible dans la Boutique du jeu),
+          ou à ceux qui tapent un code cadeau. Le joueur le reçoit la prochaine fois qu'il ouvre le jeu.</p>
+        <div class="form-grille">
+          <label>Nom du cadeau<input id="cTitre" maxlength="60" placeholder="Ex. : Merci pour ton idée !"></label>
+          <label>Message pour le joueur (facultatif)<input id="cMessage" maxlength="200" placeholder="Ex. : Bravo pour ton TOP 1 !"></label>
+          <label>Pour qui ?<select id="cCible">
+            <option value="tous">🌍 Tout le monde</option>
+            <option value="joueur">👤 Un seul joueur</option>
+            <option value="code">🔑 Ceux qui tapent un code cadeau</option>
+          </select></label>
+          <label id="cBlocJoueur" class="cache">Code joueur<input id="cJoueur" maxlength="9" placeholder="ABCD-1234" autocomplete="off"></label>
+          <label id="cBlocCode" class="cache">Code cadeau (vide = au hasard)<input id="cCode" maxlength="24" placeholder="Ex. : NOEL2026" autocomplete="off"></label>
+          <label id="cBlocMax" class="cache">Utilisations max (vide = illimité)<input id="cMax" type="number" min="1" max="100000" placeholder="Illimité"></label>
+          <label>Pièces offertes<input id="cPieces" type="number" min="0" max="100000" value="0" step="50"></label>
+          <label>Valable<select id="cDuree">
+            <option value="0">Sans limite</option><option value="1">1 jour</option><option value="3">3 jours</option>
+            <option value="7" selected>7 jours</option><option value="30">30 jours</option>
+          </select></label>
+        </div>
+        <div class="titre-objets"><h3>Skins et objets à débloquer</h3><span id="cCompteObjets" class="compte"></span></div>
+        <div class="filtres">
+          <input id="cRecherche" type="search" placeholder="Chercher un objet…" maxlength="40">
+          <button class="bouton discret" data-choix="tout">Tout</button>
+          <button class="bouton discret" data-choix="legendaire">+ Légendaires</button>
+          <button class="bouton discret" data-choix="epique">+ Épiques</button>
+          <button class="bouton discret" data-choix="collab">+ Collab 2K27</button>
+          <button class="bouton discret" data-choix="rien">Rien</button>
+        </div>
+        <div id="cObjets" class="objets"></div>
+        <div class="actions bas"><button id="btnCreerCadeau" class="bouton principal">🎁 Créer le cadeau</button><span id="cResume" class="compte"></span></div>
+        <p id="cResultat" class="resultat cache" role="status"></p>
+      </div>
+      <div class="panneau">
+        <h2>Cadeaux envoyés</h2>
+        <div class="table-cadre">
+          <table class="table fixe">
+            <thead><tr><th>Cadeau</th><th>Pour</th><th>Contenu</th><th>Reçu par</th><th>Jusqu'au</th><th></th></tr></thead>
+            <tbody id="lignesCadeaux"></tbody>
+          </table>
+          <p id="videCadeaux" class="vide cache">Aucun cadeau pour l'instant.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Joueurs -->
+    <section id="vueJoueurs" class="cache">
+      <header class="titre"><h1>Joueurs</h1><span id="totalJoueurs" class="compte"></span></header>
+      <p class="aide">Les joueurs sont anonymes : chacun a un <b>code joueur</b> (dans la Boutique du jeu, en bas). Demande-le à un pote pour lui offrir un cadeau rien que pour lui.
+        Un joueur bloqué ne peut plus envoyer d'avis, voter ni utiliser de code cadeau.</p>
+      <div class="filtres"><input id="rechercheJoueur" type="search" placeholder="Chercher un code joueur (ex. 80FD-FB83)…" maxlength="9"></div>
+      <div class="table-cadre">
+        <table class="table fixe">
+          <thead><tr><th>Code joueur</th><th>Arrivé le</th><th>Vu le</th><th>Parties</th><th>Avis</th><th>Cadeaux</th><th></th></tr></thead>
+          <tbody id="lignesJoueurs"></tbody>
+        </table>
+        <p id="videJoueurs" class="vide cache">Aucun joueur pour l'instant.</p>
+      </div>
+      <div class="pages"><button id="joueursPrec" class="bouton discret">← Précédents</button><span id="infoJoueurs"></span><button id="joueursSuiv" class="bouton discret">Suivants →</button></div>
+    </section>
+
+    <!-- Annonce et bonus -->
+    <section id="vueJeu" class="cache">
+      <header class="titre"><h1>Annonce et bonus</h1></header>
+      <div class="grille-2">
+        <div class="panneau bloc">
+          <h2>📢 Annonce dans le menu du jeu</h2>
+          <label>Message (200 caractères)<textarea id="jAnnonce" maxlength="200" rows="3" placeholder="Ex. : Nouvelle carte ce week-end !"></textarea></label>
+          <label>Style<select id="jStyle"><option value="info">💬 Info (bleu)</option><option value="evenement">🎉 Événement (violet)</option><option value="alerte">⚠️ Important (orange)</option></select></label>
+          <label class="ligne"><input id="jAnnonceActive" type="checkbox"> Afficher dans le jeu</label>
+          <p class="aide">Aperçu :</p>
+          <div id="jApercu" class="apercu-annonce info"></div>
+          <div class="actions"><button id="btnAnnonce" class="bouton principal">Enregistrer l'annonce</button></div>
+        </div>
+        <div class="panneau bloc">
+          <h2>⚡ Bonus de pièces</h2>
+          <p class="aide">Les pièces gagnées en fin de partie sont multipliées pendant la durée choisie. Le bonus s'affiche dans le menu du jeu.</p>
+          <label>Multiplicateur<select id="jMult"><option value="1.5">× 1,5</option><option value="2" selected>× 2</option><option value="3">× 3</option></select></label>
+          <label>Durée<select id="jDuree"><option value="1">1 heure</option><option value="3">3 heures</option><option value="12">12 heures</option>
+            <option value="24" selected>1 jour</option><option value="48">2 jours</option><option value="72">3 jours</option><option value="168">1 semaine</option></select></label>
+          <label>Nom de l'événement<input id="jBonusTexte" maxlength="40" placeholder="Ex. : Week-end double pièces"></label>
+          <p id="jBonusEtat" class="etat-bonus"></p>
+          <div class="actions"><button id="btnBonus" class="bouton principal">⚡ Lancer le bonus</button><button id="btnStopBonus" class="bouton danger">Arrêter le bonus</button></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- Détail d'un retour -->
@@ -80,6 +175,9 @@
         <label>Statut<select id="detailStatut"></select></label>
         <label class="ligne"><input id="detailPublic" type="checkbox"> Publier pour que les joueurs votent</label>
         <label>Texte affiché aux joueurs (facultatif, 300 caractères)<textarea id="detailTextePublic" maxlength="300" rows="3" placeholder="Laisser vide pour afficher le message d'origine"></textarea></label>
+        <div class="actions">
+          <button id="btnOffrir" class="bouton">🎁 Offrir un cadeau à ce joueur</button>
+        </div>
         <div class="actions">
           <button id="btnEnregistrer" class="bouton principal">Enregistrer</button>
           <button id="btnSpam" class="bouton discret">Marquer comme spam</button>

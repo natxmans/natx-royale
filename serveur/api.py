@@ -42,7 +42,7 @@ PREFIXE = os.environ.get('NATX_PREFIXE', '').strip().rstrip('/')
 if PREFIXE and not PREFIXE.startswith('/'):
     PREFIXE = '/' + PREFIXE
 COOKIE_SECURE = os.environ.get('NATX_HTTPS') == '1'
-VERSION_API = 1
+VERSION_API = 2
 DUREE_SESSION = 12 * 3600
 
 CATEGORIES = {
@@ -51,7 +51,7 @@ CATEGORIES = {
     'performance': 'Performance', 'interface': 'Interface', 'autre': 'Autre',
 }
 STATUTS = ['nouveau', 'a_etudier', 'en_cours', 'accepte', 'refuse', 'corrige']
-MODES = {'solo', 'duo'}
+MODES = {'br', 'solo', 'duo', 'escouade', 'entrainement'}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS joueurs (id TEXT PRIMARY KEY, cree_le INTEGER NOT NULL, ip_hash TEXT);
@@ -80,7 +80,18 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS limites (cle TEXT PRIMARY KEY, debut INTEGER NOT NULL, compte INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS journal (
   id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id INTEGER, action TEXT NOT NULL, retour_id INTEGER, cree_le INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS cadeaux (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, titre TEXT NOT NULL, message TEXT, pieces INTEGER NOT NULL DEFAULT 0,
+  objets TEXT NOT NULL DEFAULT '[]', cible TEXT NOT NULL, joueur_id TEXT, code TEXT UNIQUE, max_utilisations INTEGER,
+  actif INTEGER NOT NULL DEFAULT 1, expire_le INTEGER, cree_le INTEGER NOT NULL, admin_id INTEGER);
+CREATE TABLE IF NOT EXISTS cadeaux_recus (
+  cadeau_id INTEGER NOT NULL, joueur_id TEXT NOT NULL, recu_le INTEGER NOT NULL, PRIMARY KEY (cadeau_id, joueur_id));
+CREATE TABLE IF NOT EXISTS reglages_jeu (cle TEXT PRIMARY KEY, valeur TEXT NOT NULL, maj_le INTEGER NOT NULL);
 """
+CIBLES = {'tous', 'joueur', 'code'}
+STYLES_ANNONCE = {'info', 'evenement', 'alerte'}
+ALPHABET_CODE = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'  # sans 0/O ni 1/I : faciles à recopier
+CATALOGUE_FICHIER = os.path.join(ICI, 'catalogue.json')
 
 
 # ---------------------------------------------------------------- outils
@@ -128,6 +139,11 @@ def connexion():
     if not _schema_ok:
         with _verrou_schema:
             db.executescript(SCHEMA)
+            colonnes = {r[1] for r in db.execute('PRAGMA table_info(joueurs)')}
+            if 'bloque' not in colonnes:
+                db.execute('ALTER TABLE joueurs ADD COLUMN bloque INTEGER NOT NULL DEFAULT 0')
+            if 'vu_le' not in colonnes:
+                db.execute('ALTER TABLE joueurs ADD COLUMN vu_le INTEGER')
             _schema_ok = True
     return db
 
@@ -176,6 +192,75 @@ def verifier_mdp(mdp, stocke):
 
 
 _HASH_FACTICE = None
+_catalogue = None
+
+
+def catalogue():
+    """Objets du jeu que l'admin peut offrir (fabriqué depuis js/boutique.js par extraire_catalogue.py)."""
+    global _catalogue
+    if _catalogue is None:
+        try:
+            with open(CATALOGUE_FICHIER, encoding='utf-8') as f:
+                _catalogue = json.load(f)
+        except (OSError, ValueError):
+            _catalogue = {'categories': [], 'raretes': {}, 'objets': []}
+    return _catalogue
+
+
+def code_court(jid):
+    """Ce que le joueur voit dans le jeu : les 8 premiers caractères de son id, ex. 80FD-FB83."""
+    return (jid[:4] + '-' + jid[4:8]).upper() if jid else ''
+
+
+def joueur_par_code(db, code):
+    c = re.sub(r'[^0-9a-f]', '', str(code or '').lower())
+    if len(c) != 8:
+        raise Erreur(400, 'Code joueur invalide (8 caractères, ex. 80FD-FB83).')
+    lignes = db.execute('SELECT id FROM joueurs WHERE id LIKE ?', (c + '%',)).fetchall()
+    if len(lignes) != 1:
+        raise Erreur(404, 'Aucun joueur avec ce code.' if not lignes else 'Plusieurs joueurs ont ce code : impossible de choisir.')
+    return lignes[0]['id']
+
+
+def normaliser_code(code):
+    return re.sub(r'[^A-Z0-9]', '', str(code or '').upper())[:24]
+
+
+def formater_code(code):
+    """Codes tirés au hasard : NATX-ABCD-EFGH ; codes choisis par l'admin : tels quels (NOEL2026)."""
+    if code and re.fullmatch(r'NATX[A-Z2-9]{8}', code):
+        return code[:4] + '-' + code[4:8] + '-' + code[8:]
+    return code or None
+
+
+def joueur_vu(db, jid):
+    db.execute('UPDATE joueurs SET vu_le=? WHERE id=?', (maintenant(), jid))
+
+
+def pas_bloque(db, jid):
+    l = db.execute('SELECT bloque FROM joueurs WHERE id=?', (jid,)).fetchone()
+    if l and l['bloque']:
+        raise Erreur(403, 'Ce compte ne peut plus envoyer d\'avis ni voter.')
+
+
+def lire_reglage(db, cle):
+    l = db.execute('SELECT valeur FROM reglages_jeu WHERE cle=?', (cle,)).fetchone()
+    try:
+        return json.loads(l['valeur']) if l else None
+    except ValueError:
+        return None
+
+
+def ecrire_reglage(db, cle, valeur):
+    db.execute('INSERT OR REPLACE INTO reglages_jeu(cle, valeur, maj_le) VALUES (?,?,?)', (cle, json.dumps(valeur, ensure_ascii=False), maintenant()))
+
+
+def contenu_cadeau(l):
+    try:
+        objets = json.loads(l['objets'] or '[]')
+    except ValueError:
+        objets = []
+    return {'id': l['id'], 'titre': l['titre'], 'message': l['message'] or '', 'pieces': l['pieces'], 'objets': objets}
 
 
 def limite(db, cle, maxi, fenetre):
@@ -302,6 +387,7 @@ def api_partie(req, db):
         except (TypeError, ValueError):
             return 0
     mode = d.get('mode') if d.get('mode') in MODES else 'solo'
+    joueur_vu(db, jid)
     db.execute('INSERT OR IGNORE INTO parties(partie_id, joueur_id, cree_le, mode, nb_joueurs, place, kills, duree) VALUES (?,?,?,?,?,?,?,?)',
                (pid, jid, maintenant(), mode, entier('nb_joueurs', 1, 64), entier('place', 0, 64), entier('kills', 0, 200), entier('duree', 0, 7200)))
     return 201, {'ok': True}
@@ -311,6 +397,7 @@ def api_retour(req, db):
     """Un avis envoyé depuis l'écran de fin de partie (ou le menu)."""
     d = req.json()
     jid = joueur_obligatoire(req, d)
+    pas_bloque(db, jid)
     categorie = d.get('categorie')
     if categorie not in CATEGORIES:
         raise Erreur(400, 'Choisis une catégorie.')
@@ -360,6 +447,7 @@ def api_vote(req, db, rid, enlever=False):
     if enlever:
         db.execute('DELETE FROM votes WHERE retour_id=? AND joueur_id=?', (rid, jid))
     else:
+        pas_bloque(db, jid)
         if not limite(db, 'vote:' + jid, 40, 3600) or not limite(db, 'vote:ip:' + req.ip_hash, 150, 3600):
             raise Erreur(429, 'Trop de votes d\'un coup, réessaie plus tard.')
         # protection : pas plus de 3 votes depuis la même connexion pour une même idée
@@ -369,6 +457,71 @@ def api_vote(req, db, rid, enlever=False):
         db.execute('INSERT OR IGNORE INTO votes(retour_id, joueur_id, cree_le, ip_hash) VALUES (?,?,?,?)', (rid, jid, maintenant(), req.ip_hash))
     total = db.execute('SELECT COUNT(*) FROM votes WHERE retour_id=?', (rid,)).fetchone()[0]
     return 200, {'ok': True, 'votes': total, 'a_vote': 0 if enlever else 1}
+
+
+def etat_jeu(db):
+    """Ce que le menu du jeu affiche : l'annonce de l'admin et le bonus de pièces en cours."""
+    a = lire_reglage(db, 'annonce') or {}
+    b = lire_reglage(db, 'bonus') or {}
+    annonce = {'texte': a['texte'], 'style': a.get('style', 'info')} if a.get('active') and a.get('texte') else None
+    bonus = None
+    if b.get('multiplicateur', 1) > 1 and b.get('fin', 0) > maintenant():
+        bonus = {'multiplicateur': b['multiplicateur'], 'fin': b['fin'], 'texte': b.get('texte') or 'Bonus de pièces'}
+    return {'annonce': annonce, 'bonus': bonus}
+
+
+def api_jeu(req, db):
+    return 200, etat_jeu(db)
+
+
+def api_cadeaux(req, db):
+    """Les cadeaux qui attendent ce joueur (pour tout le monde ou rien que pour lui). Chacun n'est donné qu'une fois."""
+    jid = joueur_obligatoire(req, req.json())
+    if not limite(db, 'cadeaux:' + jid, 30, 3600):
+        raise Erreur(429, 'Trop de demandes, réessaie plus tard.')
+    joueur_vu(db, jid)
+    l = db.execute('SELECT bloque FROM joueurs WHERE id=?', (jid,)).fetchone()
+    if l and l['bloque']:
+        return 200, {'cadeaux': []}
+    t = maintenant()
+    lignes = db.execute("""SELECT * FROM cadeaux c WHERE c.actif=1 AND (c.expire_le IS NULL OR c.expire_le > ?)
+        AND (c.cible='tous' OR (c.cible='joueur' AND c.joueur_id=?))
+        AND NOT EXISTS (SELECT 1 FROM cadeaux_recus r WHERE r.cadeau_id=c.id AND r.joueur_id=?) ORDER BY c.id LIMIT 20""", (t, jid, jid)).fetchall()
+    donnes = []
+    for l in lignes:
+        # INSERT OR IGNORE : si le jeu est ouvert deux fois en même temps, le cadeau n'est donné qu'une fois
+        if db.execute('INSERT OR IGNORE INTO cadeaux_recus(cadeau_id, joueur_id, recu_le) VALUES (?,?,?)', (l['id'], jid, t)).rowcount:
+            donnes.append(contenu_cadeau(l))
+    return 200, {'cadeaux': donnes}
+
+
+def api_code_cadeau(req, db):
+    """Un code cadeau tapé dans la boutique du jeu."""
+    d = req.json()
+    jid = joueur_obligatoire(req, d)
+    pas_bloque(db, jid)
+    # contre ceux qui essaient des codes au hasard
+    if not limite(db, 'code:' + jid, 8, 600) or not limite(db, 'code:ip:' + req.ip_hash, 20, 600):
+        raise Erreur(429, 'Trop d\'essais. Attends 10 minutes.')
+    code = normaliser_code(d.get('code'))
+    if len(code) < 4:
+        raise Erreur(400, 'Tape un code cadeau.')
+    db.execute('BEGIN IMMEDIATE')
+    try:
+        l = db.execute("SELECT * FROM cadeaux WHERE code=? AND cible='code' AND actif=1 AND (expire_le IS NULL OR expire_le > ?)", (code, maintenant())).fetchone()
+        if not l:
+            raise Erreur(404, 'Code inconnu ou expiré.')
+        if db.execute('SELECT 1 FROM cadeaux_recus WHERE cadeau_id=? AND joueur_id=?', (l['id'], jid)).fetchone():
+            raise Erreur(409, 'Tu as déjà utilisé ce code !')
+        if l['max_utilisations'] and db.execute('SELECT COUNT(*) FROM cadeaux_recus WHERE cadeau_id=?', (l['id'],)).fetchone()[0] >= l['max_utilisations']:
+            raise Erreur(410, 'Ce code a déjà été utilisé le nombre de fois prévu.')
+        db.execute('INSERT INTO cadeaux_recus(cadeau_id, joueur_id, recu_le) VALUES (?,?,?)', (l['id'], jid, maintenant()))
+        db.execute('COMMIT')
+    except BaseException:
+        db.execute('ROLLBACK')
+        raise
+    joueur_vu(db, jid)
+    return 200, {'cadeau': contenu_cadeau(l)}
 
 
 # ---------------------------------------------------------------- espace admin
@@ -444,6 +597,9 @@ def admin_tableau(req, db):
         'publiees': un('SELECT COUNT(*) FROM retours WHERE spam=0 AND public=1'),
         'spams': un('SELECT COUNT(*) FROM retours WHERE spam=1'),
         'votes': un('SELECT COUNT(*) FROM votes'),
+        'joueurs': un('SELECT COUNT(*) FROM joueurs'),
+        'actifs_7j': un('SELECT COUNT(*) FROM joueurs WHERE COALESCE(vu_le, cree_le) > ?', maintenant() - 7 * 86400),
+        'cadeaux_recus': un('SELECT COUNT(*) FROM cadeaux_recus'),
         'note_moyenne': db.execute('SELECT ROUND(AVG(note), 2) FROM retours WHERE spam=0 AND note IS NOT NULL').fetchone()[0],
     }
     par_cat = {r['categorie']: r['n'] for r in db.execute('SELECT categorie, COUNT(*) AS n FROM retours WHERE spam=0 GROUP BY categorie')}
@@ -506,6 +662,7 @@ def admin_detail(req, db, rid):
     r['journal'] = [dict(j) for j in db.execute("""SELECT j.action, j.cree_le, a.identifiant AS auteur FROM journal j
         LEFT JOIN admins a ON a.id = j.admin_id WHERE j.retour_id=? ORDER BY j.cree_le DESC LIMIT 20""", (rid,))]
     r['autres_du_joueur'] = db.execute('SELECT COUNT(*) FROM retours WHERE joueur_id=? AND id<>?', (r['joueur_id'], rid)).fetchone()[0]
+    r['joueur_code'] = code_court(r['joueur_id'])
     r.pop('joueur_id', None)
     return 200, r
 
@@ -568,6 +725,163 @@ def admin_purger_spams(req, db):
     return 200, {'ok': True, 'supprimes': len(ids)}
 
 
+def admin_catalogue(req, db):
+    session_admin(req, db)
+    return 200, catalogue()
+
+
+def admin_cadeaux(req, db):
+    session_admin(req, db)
+    lignes = db.execute("""SELECT c.*, (SELECT COUNT(*) FROM cadeaux_recus r WHERE r.cadeau_id=c.id) AS recus,
+        a.identifiant AS auteur FROM cadeaux c LEFT JOIN admins a ON a.id=c.admin_id ORDER BY c.id DESC LIMIT 200""").fetchall()
+    sortie = []
+    for l in lignes:
+        c = contenu_cadeau(l)
+        c.update({'cible': l['cible'], 'joueur_code': code_court(l['joueur_id']), 'code': formater_code(l['code']),
+                  'max_utilisations': l['max_utilisations'], 'actif': l['actif'], 'expire_le': l['expire_le'],
+                  'cree_le': l['cree_le'], 'recus': l['recus'], 'auteur': l['auteur']})
+        sortie.append(c)
+    return 200, {'cadeaux': sortie, 'joueurs': db.execute('SELECT COUNT(*) FROM joueurs').fetchone()[0]}
+
+
+def admin_cadeau_creer(req, db):
+    s = session_admin(req, db, ecriture=True)
+    d = req.json()
+    titre = nettoyer(d.get('titre'), 60)
+    if len(titre) < 2:
+        raise Erreur(400, 'Donne un nom au cadeau.')
+    message = nettoyer(d.get('message'), 200) or None
+    try:
+        pieces = int(d.get('pieces') or 0)
+    except (TypeError, ValueError):
+        raise Erreur(400, 'Nombre de pièces invalide.')
+    if not 0 <= pieces <= 100000:
+        raise Erreur(400, 'Entre 0 et 100 000 pièces.')
+    connus = {o['cle'] for o in catalogue()['objets']}
+    objets = d.get('objets') or []
+    if not isinstance(objets, list) or len(objets) > 300 or any(not isinstance(o, str) or o not in connus for o in objets):
+        raise Erreur(400, 'Objet inconnu dans la liste (catalogue pas à jour ?).')
+    objets = list(dict.fromkeys(objets))
+    if not pieces and not objets:
+        raise Erreur(400, 'Ajoute des pièces ou au moins un objet.')
+    cible = d.get('cible')
+    if cible not in CIBLES:
+        raise Erreur(400, 'Choisis pour qui est le cadeau.')
+    joueur_id = code = maxi = None
+    if cible == 'joueur':
+        joueur_id = joueur_par_code(db, d.get('joueur'))
+    if cible == 'code':
+        code = normaliser_code(d.get('code'))
+        if code and len(code) < 4:
+            raise Erreur(400, 'Le code doit faire au moins 4 lettres ou chiffres.')
+        if not code:
+            code = 'NATX' + ''.join(secrets.choice(ALPHABET_CODE) for _ in range(8))
+        if db.execute('SELECT 1 FROM cadeaux WHERE code=?', (code,)).fetchone():
+            raise Erreur(409, 'Ce code existe déjà, choisis-en un autre.')
+        if d.get('max_utilisations') not in (None, '', 0):
+            try:
+                maxi = int(d['max_utilisations'])
+            except (TypeError, ValueError):
+                raise Erreur(400, 'Nombre d\'utilisations invalide.')
+            if not 1 <= maxi <= 100000:
+                raise Erreur(400, 'Entre 1 et 100 000 utilisations.')
+    try:
+        jours = int(d.get('duree_jours') or 0)
+    except (TypeError, ValueError):
+        jours = 0
+    expire = maintenant() + jours * 86400 if 0 < jours <= 365 else None
+    cur = db.execute("""INSERT INTO cadeaux(titre, message, pieces, objets, cible, joueur_id, code, max_utilisations, actif, expire_le, cree_le, admin_id)
+        VALUES (?,?,?,?,?,?,?,?,1,?,?,?)""", (titre, message, pieces, json.dumps(objets), cible, joueur_id, code, maxi, expire, maintenant(), s['admin_id']))
+    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'cadeau #{cur.lastrowid} créé ({cible})', maintenant()))
+    return 201, {'ok': True, 'id': cur.lastrowid, 'code': formater_code(code)}
+
+
+def cadeau_existant(db, cid):
+    if not db.execute('SELECT 1 FROM cadeaux WHERE id=?', (cid,)).fetchone():
+        raise Erreur(404, 'Cadeau introuvable.')
+
+
+def admin_cadeau_modifier(req, db, cid):
+    s = session_admin(req, db, ecriture=True)
+    cadeau_existant(db, cid)
+    actif = 1 if req.json().get('actif') else 0
+    db.execute('UPDATE cadeaux SET actif=? WHERE id=?', (actif, cid))
+    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'cadeau #{cid} ' + ('réactivé' if actif else 'arrêté'), maintenant()))
+    return 200, {'ok': True, 'actif': actif}
+
+
+def admin_cadeau_supprimer(req, db, cid):
+    s = session_admin(req, db, ecriture=True)
+    cadeau_existant(db, cid)
+    db.execute('DELETE FROM cadeaux_recus WHERE cadeau_id=?', (cid,))
+    db.execute('DELETE FROM cadeaux WHERE id=?', (cid,))
+    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'cadeau #{cid} supprimé', maintenant()))
+    return 200, {'ok': True}
+
+
+def admin_jeu(req, db):
+    session_admin(req, db)
+    return 200, {'annonce': lire_reglage(db, 'annonce') or {}, 'bonus': lire_reglage(db, 'bonus') or {}, 'en_ligne': etat_jeu(db), 'maintenant': maintenant()}
+
+
+def admin_jeu_modifier(req, db):
+    s = session_admin(req, db, ecriture=True)
+    d = req.json()
+    if isinstance(d.get('annonce'), dict):
+        a = d['annonce']
+        texte = nettoyer(a.get('texte'), 200)
+        style = a.get('style') if a.get('style') in STYLES_ANNONCE else 'info'
+        ecrire_reglage(db, 'annonce', {'texte': texte, 'style': style, 'active': bool(a.get('active')) and bool(texte)})
+        db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], 'annonce ' + ('affichée' if a.get('active') and texte else 'cachée'), maintenant()))
+    if isinstance(d.get('bonus'), dict):
+        b = d['bonus']
+        try:
+            mult = float(b.get('multiplicateur') or 1)
+            heures = int(b.get('heures') or 0)
+        except (TypeError, ValueError):
+            raise Erreur(400, 'Bonus invalide.')
+        if mult not in (1, 1.5, 2, 3):
+            raise Erreur(400, 'Multiplicateur : 1, 1,5, 2 ou 3.')
+        if mult > 1 and not 1 <= heures <= 24 * 14:
+            raise Erreur(400, 'Durée du bonus : entre 1 heure et 14 jours.')
+        bonus = {'multiplicateur': mult, 'fin': maintenant() + heures * 3600 if mult > 1 else 0, 'texte': nettoyer(b.get('texte'), 40)}
+        ecrire_reglage(db, 'bonus', bonus)
+        db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'bonus pièces x{mult:g}' if mult > 1 else 'bonus arrêté', maintenant()))
+    return admin_jeu(req, db)
+
+
+def admin_joueurs(req, db):
+    session_admin(req, db)
+    q = re.sub(r'[^0-9a-f]', '', (req.query.get('q') or '').lower())[:8]
+    try:
+        page = max(0, int(req.query.get('page') or 0))
+    except ValueError:
+        page = 0
+    where, params = ('WHERE j.id LIKE ?', [q + '%']) if q else ('', [])
+    total = db.execute(f'SELECT COUNT(*) FROM joueurs j {where}', params).fetchone()[0]
+    lignes = db.execute(f"""SELECT j.id, j.cree_le, j.vu_le, j.bloque,
+        (SELECT COUNT(*) FROM parties p WHERE p.joueur_id=j.id) AS parties,
+        (SELECT COUNT(*) FROM retours r WHERE r.joueur_id=j.id) AS retours,
+        (SELECT COUNT(*) FROM cadeaux_recus c WHERE c.joueur_id=j.id) AS cadeaux
+        FROM joueurs j {where} ORDER BY COALESCE(j.vu_le, j.cree_le) DESC LIMIT 50 OFFSET ?""", params + [page * 50]).fetchall()
+    joueurs = []
+    for l in lignes:
+        j = dict(l)
+        j['code'] = code_court(j.pop('id'))
+        joueurs.append(j)
+    return 200, {'total': total, 'page': page, 'joueurs': joueurs}
+
+
+def admin_joueur_bloquer(req, db):
+    s = session_admin(req, db, ecriture=True)
+    d = req.json()
+    jid = joueur_par_code(db, d.get('joueur'))
+    bloque = 1 if d.get('bloque') else 0
+    db.execute('UPDATE joueurs SET bloque=? WHERE id=?', (bloque, jid))
+    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'joueur {code_court(jid)} ' + ('bloqué' if bloque else 'débloqué'), maintenant()))
+    return 200, {'ok': True, 'bloque': bloque}
+
+
 # ---------------------------------------------------------------- routes
 ROUTES = [
     ('GET', r'/api/sante', api_sante, True),
@@ -577,6 +891,9 @@ ROUTES = [
     ('GET', r'/api/suggestions', api_suggestions, True),
     ('POST', r'/api/suggestions/(\d+)/vote', api_vote, True),
     ('DELETE', r'/api/suggestions/(\d+)/vote', lambda req, db, rid: api_vote(req, db, rid, enlever=True), True),
+    ('GET', r'/api/jeu', api_jeu, True),
+    ('POST', r'/api/cadeaux', api_cadeaux, True),
+    ('POST', r'/api/cadeaux/code', api_code_cadeau, True),
     ('POST', r'/api/admin/connexion', admin_connexion, False),
     ('POST', r'/api/admin/deconnexion', admin_deconnexion, False),
     ('GET', r'/api/admin/moi', admin_moi, False),
@@ -587,6 +904,15 @@ ROUTES = [
     ('POST', r'/api/admin/retours/(\d+)/notes', admin_note, False),
     ('DELETE', r'/api/admin/retours/(\d+)', admin_supprimer, False),
     ('POST', r'/api/admin/spams/purger', admin_purger_spams, False),
+    ('GET', r'/api/admin/catalogue', admin_catalogue, False),
+    ('GET', r'/api/admin/cadeaux', admin_cadeaux, False),
+    ('POST', r'/api/admin/cadeaux', admin_cadeau_creer, False),
+    ('POST', r'/api/admin/cadeaux/(\d+)', admin_cadeau_modifier, False),
+    ('DELETE', r'/api/admin/cadeaux/(\d+)', admin_cadeau_supprimer, False),
+    ('GET', r'/api/admin/jeu', admin_jeu, False),
+    ('POST', r'/api/admin/jeu', admin_jeu_modifier, False),
+    ('GET', r'/api/admin/joueurs', admin_joueurs, False),
+    ('POST', r'/api/admin/joueurs/bloquer', admin_joueur_bloquer, False),
 ]
 _compteur = [0]
 
@@ -620,7 +946,7 @@ def application(environ, start_response):
         print('Erreur serveur :', repr(e), file=sys.stderr)
         code, entetes, corps = reponse_json(500, {'erreur': 'Erreur du serveur.'})
     raisons = {200: 'OK', 201: 'Created', 204: 'No Content', 302: 'Found', 400: 'Bad Request', 401: 'Unauthorized', 403: 'Forbidden',
-               404: 'Not Found', 405: 'Method Not Allowed', 413: 'Payload Too Large', 429: 'Too Many Requests', 500: 'Internal Server Error'}
+               404: 'Not Found', 405: 'Method Not Allowed', 409: 'Conflict', 410: 'Gone', 413: 'Payload Too Large', 429: 'Too Many Requests', 500: 'Internal Server Error'}
     start_response(f'{code} {raisons.get(code, "OK")}', entetes)
     return corps
 

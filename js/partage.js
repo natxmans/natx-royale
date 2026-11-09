@@ -103,6 +103,39 @@ export function posRavito(r, t) {
 // Deux joueurs de la même équipe (équipe 0 = chacun pour soi)
 export const memeEquipe = (a, b) => !!(a && b && a.equipe && a.equipe === b.equipe);
 
+// ---------- Modes de jeu ----------
+// taille = joueurs par équipe (1 = chacun pour soi) ; bots = nombre proposé ; botsMax = limite du curseur
+export const MODES = {
+  br: {
+    nom: 'Battle Royale', icone: '👑', taille: 1, bots: 39, botsMax: 59, zone: 'normale', court: 'Chacun pour soi, grande partie',
+    regle: 'Chacun pour soi sur toute l\'île. Le dernier debout gagne.',
+  },
+  solo: {
+    nom: 'Solo', icone: '👤', taille: 1, bots: 15, botsMax: 30, zone: 'rapide', court: 'Partie rapide contre les bots',
+    regle: 'Zone rapide · chaque élimination te rend 25 PV. Le dernier debout gagne.',
+  },
+  duo: {
+    nom: 'Duo', icone: '👥', taille: 2, bots: 19, botsMax: 39, zone: 'normale', court: 'Équipes de 2',
+    regle: 'Équipes de 2, pas de tir ami. La dernière équipe debout gagne.',
+  },
+  escouade: {
+    nom: 'Escouade', icone: '🛡️', taille: 4, bots: 23, botsMax: 39, zone: 'normale', court: 'Équipes de 4',
+    regle: 'Équipes de 4, pas de tir ami. La dernière équipe debout gagne.',
+  },
+  entrainement: {
+    nom: 'Entraînement', icone: '🎯', taille: 1, bots: 8, botsMax: 16, zone: 'normale', court: 'Sans danger, pour s\'exercer',
+    regle: 'Pas de zone, munitions et matériaux à volonté, tu réapparais. Réussis les 3 défis pour gagner !',
+  },
+};
+export const modeValide = m => (MODES[m] ? m : 'br');
+export const REGAIN_SOLO = 25;
+// Entraînement : le premier qui réussit les 3 défis gagne
+export const DEFIS_ENTRAINEMENT = [
+  { id: 'mannequins', texte: 'Abats des mannequins', n: 5, icone: '🎯' },
+  { id: 'constr', texte: 'Construis des murs, sols ou rampes', n: 15, icone: '🔨' },
+  { id: 'esprit', texte: 'Capture un esprit élémentaire', n: 1, icone: '✨' },
+];
+
 // ---------- Grenades : trajectoire qui rebondit (même calcul chez tout le monde) ----------
 export function simulerGrenade(monde, g, dt) {
   g.vy -= 22 * dt;

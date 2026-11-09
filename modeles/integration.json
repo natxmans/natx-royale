@@ -24,8 +24,34 @@
       },
       "collisions": [],
       "rampes": [
-        { "nom": "marches avant", "de": [0.18, 0.0, -7.03], "a": [0.18, 0.5, -6.43], "largeur": 3.16 },
-        { "nom": "marches arriere", "de": [-0.16, 0.0, 5.62], "a": [-0.76, 0.5, 5.62], "largeur": 2.3 }
+        {
+          "nom": "marches avant",
+          "de": [
+            0.18,
+            0.0,
+            -7.03
+          ],
+          "a": [
+            0.18,
+            0.5,
+            -6.43
+          ],
+          "largeur": 3.16
+        },
+        {
+          "nom": "marches arriere",
+          "de": [
+            -0.16,
+            0.0,
+            5.62
+          ],
+          "a": [
+            -0.76,
+            0.5,
+            5.62
+          ],
+          "largeur": 2.3
+        }
       ],
       "coffre": [
         3.2,
@@ -33,14 +59,15 @@
       ],
       "coffreY": 0.5,
       "_livraison": "Exporté par la session Modélisation. Coordonnées three.js (x droite, y haut, z = -avant) relatives à l'origine de la maison (au sol, au centre). Collisions : 36 boîtes COL_… DANS le .glb (enfants de maison_cottage), d'où \"collisions\": []. Porte d'entrée face avant (-Z) : ouverture x -0,20..1,45, y 0,50..2,95 (1,65 x 2,45 m), plan du mur à z -3,73..-3,48, aucune boîte COL_ dedans. Sol intérieur et porche à y = 0,50. rampes = marches (de/a en three.js, largeur en m). coffre = [x, z] three.js, coffreY = hauteur du sol. 10 781 triangles visibles, 1,39 Mo, 2 textures 1024 px. Détails : LISEZMOI.txt section 6c.",
-      "licence": "« Free GameReady Cottage » par Gerhald3D (TurboSquid). Le fichier LISEZ-MOI du modèle dit : « Feel free to use for any purposes, except re-sale ». Usage dans le jeu OK ; créditer l'auteur ; ne pas publier le fichier d'origine (modeles/sources/fournis/)."
+      "licence": "« Free GameReady Cottage » par Gerhald3D (TurboSquid). Le fichier LISEZ-MOI du modèle dit : « Feel free to use for any purposes, except re-sale ». Usage dans le jeu OK ; créditer l'auteur ; ne pas publier le fichier d'origine (modeles/sources/fournis/).",
+      "_v002": "house_cottage_v002.glb : même objet maison_cottage, même taille, mêmes rampes, même coffre -> changer seulement « fichier ». Porche décoré (+ COL_banc, COL_buches, COL_pot_gauche, COL_pot_droite), un seul maillage à 5 matériaux (5 appels de dessin au lieu d'~30), 12 007 tri, 1,43 Mo. En plus : maison_cottage_loin (1 823 tri) pour THREE.LOD. Détails : LISEZMOI.txt section 10."
     }
   ],
   "armes": [
     {
       "id": "futuriste",
       "actif": true,
-      "fichier": "weapon_futuriste_v001.glb",
+      "fichier": "weapon_futuriste_v002.glb",
       "objet": "fusil_futuriste",
       "remplace": "fusil",
       "avant": "-z",
@@ -53,7 +80,172 @@
       "materiauRarete": "rarete",
       "materiauLueur": "lueur",
       "_livraison": "Exporté par la session Modélisation : déjà à la bonne échelle (1,35 m) et orienté (canon -Z dans three.js) ; l'origine est déjà au milieu de la poignée (poignee = position de l'origine en fractions de la boîte). 6 324 triangles, 327 Ko, pas de texture. Bout du canon (three.js) : [0, 0.133, -0.832]. Détails : LISEZMOI.txt section 6a.",
-      "licence": "Modèle « concept » téléchargé : vérifier la licence et le crédit AVANT de publier le jeu."
+      "licence": "Modèle « concept » téléchargé : vérifier la licence et le crédit AVANT de publier le jeu.",
+      "_v002": "weapon_futuriste_v002.glb : même objet fusil_futuriste, EXACTEMENT la même boîte -> changer seulement « fichier » (longueur, poignee, avant inchangés). Bandes d'énergie, cœur du tambour et anneau du canon en « lueur ». 6 972 tri, 374 Ko. En plus : fusil_futuriste_loin (1 711 tri). Détails : LISEZMOI.txt section 9."
+    }
+  ],
+  "_esprits_aide": "Esprits élémentaires livrés par la session Modélisation (actif:false = pas encore dans le jeu). Racine = objet vide au centre du corps, jamais animée ; avant vers -Z ; déjà à l'échelle (1 = taille livrée). placement = position conseillée dans le repère du joueur (three.js). Animations dans gltf.animations (flotter en boucle, activer / apparaitre une fois). Détails : LISEZMOI.txt section 8.",
+  "esprits": [
+    {
+      "id": "soin",
+      "actif": true,
+      "fichier": "esprits_v001.glb",
+      "objet": "esprit_soin",
+      "nom": "Pousse",
+      "couleur": "#a8ff7a",
+      "animations": {
+        "flotter": "soin_flotter",
+        "activer": "soin_activer",
+        "apparaitre": "soin_apparaitre"
+      },
+      "durees": {
+        "flotter": 2.0,
+        "activer": 1.2,
+        "apparaitre": 0.8
+      },
+      "taille": {
+        "w": 0.4,
+        "h": 0.5,
+        "d": 0.37
+      },
+      "placement": [
+        -0.55,
+        1.85,
+        0.15
+      ],
+      "triangles": 3700
+    },
+    {
+      "id": "mobilite",
+      "actif": true,
+      "fichier": "esprits_v001.glb",
+      "objet": "esprit_mobilite",
+      "nom": "Filou",
+      "couleur": "#5ff2ff",
+      "animations": {
+        "flotter": "mobilite_flotter",
+        "activer": "mobilite_activer",
+        "apparaitre": "mobilite_apparaitre"
+      },
+      "durees": {
+        "flotter": 2.0,
+        "activer": 1.0,
+        "apparaitre": 0.8
+      },
+      "taille": {
+        "w": 0.31,
+        "h": 0.26,
+        "d": 0.54
+      },
+      "placement": [
+        -0.55,
+        1.85,
+        0.15
+      ],
+      "triangles": 3528
+    },
+    {
+      "id": "protection",
+      "actif": true,
+      "fichier": "esprits_v001.glb",
+      "objet": "esprit_protection",
+      "nom": "Gardien",
+      "couleur": "#9ff0ff",
+      "animations": {
+        "flotter": "protection_flotter",
+        "activer": "protection_activer",
+        "apparaitre": "protection_apparaitre"
+      },
+      "durees": {
+        "flotter": 2.0,
+        "activer": 1.2,
+        "apparaitre": 0.8
+      },
+      "taille": {
+        "w": 0.55,
+        "h": 0.41,
+        "d": 0.48
+      },
+      "placement": [
+        -0.55,
+        1.85,
+        0.15
+      ],
+      "triangles": 3090
+    },
+    {
+      "id": "vision",
+      "actif": true,
+      "fichier": "esprits_v001.glb",
+      "objet": "esprit_vision",
+      "nom": "Zyeuto",
+      "couleur": "#ff6ef0",
+      "animations": {
+        "flotter": "vision_flotter",
+        "activer": "vision_activer",
+        "apparaitre": "vision_apparaitre"
+      },
+      "durees": {
+        "flotter": 2.0,
+        "activer": 1.5,
+        "apparaitre": 0.8
+      },
+      "taille": {
+        "w": 0.58,
+        "h": 0.39,
+        "d": 0.28
+      },
+      "placement": [
+        -0.55,
+        1.85,
+        0.15
+      ],
+      "triangles": 2456
+    },
+    {
+      "id": "batisseur",
+      "actif": true,
+      "fichier": "esprits_v001.glb",
+      "objet": "esprit_batisseur",
+      "nom": "Briquet",
+      "couleur": "#fff0a8",
+      "animations": {
+        "flotter": "batisseur_flotter",
+        "activer": "batisseur_activer",
+        "apparaitre": "batisseur_apparaitre"
+      },
+      "durees": {
+        "flotter": 2.0,
+        "activer": 1.2,
+        "apparaitre": 0.8
+      },
+      "taille": {
+        "w": 0.58,
+        "h": 0.3,
+        "d": 0.48
+      },
+      "placement": [
+        -0.55,
+        1.85,
+        0.15
+      ],
+      "triangles": 3622
+    }
+  ],
+  "socles": [
+    {
+      "id": "esprit",
+      "actif": true,
+      "fichier": "esprits_v001.glb",
+      "objet": "socle_esprit",
+      "hauteurEsprit": 1.0,
+      "animation": "socle_tourner",
+      "taille": {
+        "w": 0.94,
+        "h": 0.67,
+        "d": 0.94
+      },
+      "_livraison": "Autel où l'on trouve un esprit : origine au sol ; l'esprit flotte à 1,0 m au-dessus. Boîte COL_socle dans le .glb. 1 120 tri."
     }
   ]
 }
