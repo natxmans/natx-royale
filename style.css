@@ -441,7 +441,7 @@ body.tactile #invite:active { background: rgba(255, 210, 63, .35); }
 @keyframes invite-pulse { 50% { box-shadow: 0 0 0 6px rgba(255, 210, 63, .18); } }
 /* Téléphone : ce qu'on touche du doigt passe AU-DESSUS des zones invisibles du joystick (gauche) et de la caméra (droite),
    sinon le doigt bouge la caméra au lieu de ramasser ou de changer d'objet */
-body.tactile #invite, body.tactile #bas { z-index: 4; }
+body.tactile #invite, body.tactile #bas, body.tactile #mortPanneau, body.tactile #spectateur, body.tactile #chatSaisie { z-index: 4; }
 body.tactile #progression { top: 66%; }
 body.tactile #astuceTuto { top: 26%; font-size: 13px; }
 body.tactile #mortPanneau { top: 8%; font-size: 13px; padding: 10px 16px; max-width: 70vw; }
