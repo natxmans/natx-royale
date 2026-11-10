@@ -8,7 +8,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const VERSION = 2; // à augmenter quand un .glb change (évite le vieux cache du navigateur)
 const BIBLIO = {};           // nom de l'objet → Object3D (modèle d'origine, jamais affiché)
 const ANIMATIONS = {};       // nom de l'animation → AnimationClip (ex. soin_flotter, socle_tourner)
-export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [] };
+export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [] };
 const chargeur = new GLTFLoader();
 const dejaCharges = new Map(); // un fichier partagé (ex. esprits_v001.glb) n'est chargé qu'une fois
 
@@ -47,7 +47,7 @@ async function chargerIntegration() {
     if (scene) INTEGRATION.armes.push({ ...a, scene });
   }
   // Esprits et autels : les objets gardent leur nom (esprit_soin, socle_esprit…) pour modeleGlb()
-  for (const cle of ['esprits', 'socles']) {
+  for (const cle of ['esprits', 'socles', 'lod', 'mannequins']) {
     for (const e of man[cle] || []) {
       if (!e.actif || !e.fichier) continue;
       const scene = await chargerFichier(e.fichier);

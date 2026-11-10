@@ -109,6 +109,8 @@ le changer plus tard.
 | `NATX_HTTPS` | `1` | cookie admin « Secure » (le site doit être en HTTPS) |
 | `NATX_PROXY` | `1` seulement si le proxy de l'hébergeur AJOUTE la vraie adresse à `X-Forwarded-For` (`0` sur alwaysdata : il la met déjà dans `REMOTE_ADDR`) | adresse du joueur pour les limites anti-abus |
 | `NATX_SECRET` | (facultatif, jamais dans un fichier du projet) | sinon le serveur crée `donnees/secret.key` |
+| `NATX_TURN_CLE_ID` | identifiant de la clé TURN Cloudflare (Realtime → TURN) | relais pour jouer entre potes en 4G : à mettre **dans le panneau**, jamais dans Git |
+| `NATX_TURN_JETON` | jeton d'API de cette clé TURN | **secret** : seulement dans le panneau de l'hébergeur |
 | `NATX_DONNEES` | (facultatif) dossier de la base | si on veut la mettre ailleurs |
 
 **Ne jamais** mettre de clé secrète ni de mot de passe dans le code du jeu, dans `reglages*.env` ou dans Git.
@@ -143,6 +145,7 @@ le changer plus tard.
 | GET | `/api/suggestions?tri=populaires\|recentes` | idées publiées + votes |
 | POST / DELETE | `/api/suggestions/<id>/vote` | voter / retirer son vote |
 | GET | `/api/jeu` | annonce et bonus de pièces en cours (affichés dans le menu du jeu) |
+| GET | `/api/relais` | relais TURN temporaires (12 h) pour la 4G ; liste vide tant que `NATX_TURN_*` n'est pas réglé |
 | POST | `/api/cadeaux` | cadeaux qui attendent ce joueur (pour tous ou rien que pour lui), donnés une seule fois |
 | POST | `/api/cadeaux/code` | utiliser un code cadeau (8 essais / 10 min par joueur, 20 par connexion) |
 | — | `/api/admin/…` | connexion, tableau de bord, liste filtrée, détail, statut, publication, notes, spams |

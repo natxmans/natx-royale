@@ -12,16 +12,57 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏝️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=7">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="style.css?v=8">
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
 } }</script>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+<script>
+// Si le jeu ne démarre pas (réseau mobile très lent, site bloqué…), on le dit au lieu d'une page figée,
+// avec ce qui a raté (pour comprendre ce qui se passe sur le téléphone des potes).
+(function () {
+  var erreurs = [], debut = Date.now();
+  addEventListener('error', function (e) {
+    var t = e.target;
+    if (t && (t.src || t.href)) erreurs.push('pas chargé : ' + String(t.src || t.href).replace(/^https?:\/\//, '').slice(0, 80));
+    else if (e.message) erreurs.push(String(e.message).slice(0, 120));
+  }, true);
+  addEventListener('unhandledrejection', function (e) { erreurs.push(String((e.reason && e.reason.message) || e.reason).slice(0, 120)); });
+  function verifier() {
+    if (window.natx) return;
+    var el = document.getElementById('demarrageLent');
+    if (!el) return;
+    var s = Math.round((Date.now() - debut) / 1000);
+    el.querySelector('.details').textContent = (erreurs.length ? erreurs.slice(0, 4).join(' · ') : 'Aucune erreur : la connexion est très lente (' + s + ' s).')
+      + ' · ' + (navigator.connection && navigator.connection.effectiveType ? 'réseau ' + navigator.connection.effectiveType : '') + ' · ' + (navigator.userAgent.match(/(SamsungBrowser|Chrome|Firefox|Safari)\/[\d.]+/) || [''])[0];
+    el.classList.remove('cache');
+    // quels sites répondent ? (moteur 3D chez jsdelivr, multijoueur chez unpkg)
+    var sites = [['moteur 3D', 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js'], ['multijoueur', 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js']];
+    sites.forEach(function (s) {
+      var fini = false, t = setTimeout(function () { if (!fini) { fini = true; ajouter(s[0] + ' : ne répond pas'); } }, 8000);
+      fetch(s[1], { method: 'HEAD', mode: 'no-cors', cache: 'no-store' }).then(function () { if (!fini) { fini = true; clearTimeout(t); ajouter(s[0] + ' : OK'); } },
+        function () { if (!fini) { fini = true; clearTimeout(t); ajouter(s[0] + ' : bloqué'); } });
+    });
+    function ajouter(x) { var d = el.querySelector('.details'); if (d.textContent.indexOf(x) < 0) d.textContent += ' · ' + x; }
+  }
+  setTimeout(verifier, 20000);
+  setTimeout(verifier, 45000);
+})();
+</script>
 </head>
-<body>
+<body class="demarrage">
 <canvas id="jeu"></canvas>
+<div id="demarrage">
+  <div class="boite"><div class="roue"></div><h2>Chargement de l'île…</h2>
+    <div id="demarrageLent" class="cache">
+      <p>Le jeu met longtemps à démarrer. Vérifie ta connexion, puis réessaie (en Wi-Fi si possible).</p>
+      <p class="details petit-texte"></p>
+      <button class="gros vert" onclick="location.reload()">🔄 Réessayer</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== MENU ===== -->
 <div id="menu" class="ecran menu">
@@ -360,6 +401,6 @@
 <div id="chargement" class="ecran cache"><div class="boite"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=8"></script>
+<script type="module" src="js/jeu.js?v=9"></script>
 </body>
 </html>

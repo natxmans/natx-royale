@@ -1,6 +1,10 @@
 // Espace administrateur de NATX ROYALE. Aucun secret ici : la session est un cookie HttpOnly
 // posé par le serveur, et chaque modification envoie le jeton anti-CSRF reçu à la connexion.
 const $ = s => document.querySelector(s);
+// Cette page ne marche que sur le serveur des avis. La copie gardée sur GitHub (serveur/admin/ du dépôt) renvoie
+// donc vers la vraie adresse : sur GitHub la connexion répondrait « Erreur 405 ».
+const VRAIE_ADRESSE = 'https://chrysalide.alwaysdata.net/natx/admin/';
+if (/github\.io$/i.test(location.hostname)) location.replace(VRAIE_ADRESSE);
 // l'API est à côté de la page admin (…/admin/ → …/api/admin), que le site soit à la racine ou sous /natx
 const BASE_API = new URL('../api/admin', location.href).pathname;
 let CSRF = null;
@@ -34,7 +38,7 @@ async function api(methode, chemin, corps) {
     body: corps ? JSON.stringify(corps) : undefined,
   });
   let d = {};
-  try { d = await r.json(); } catch (e) { d = {}; }
+  try { d = await r.json(); } catch (e) { d = { erreur: `Ce n'est pas le serveur des avis (erreur ${r.status}). Ouvre ${VRAIE_ADRESSE}` }; }
   if (r.status === 401 && chemin !== '/connexion') { montrerConnexion(d.erreur); throw new Error(d.erreur || 'Connexion nécessaire.'); }
   if (!r.ok) throw new Error(d.erreur || 'Erreur ' + r.status);
   return d;

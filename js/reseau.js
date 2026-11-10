@@ -1,6 +1,14 @@
 // Connexion entre potes avec PeerJS (WebRTC) : un joueur héberge, les autres
 // tapent son code. En solo, tout passe en local sans Internet.
+import { serveursRelais } from './retours.js';
 const PREFIXE = 'natxroyale-v1-';
+
+// Serveurs pour traverser les box et la 4G : STUN publics + relais (TURN) fourni par notre serveur s'il est configuré.
+// (Les relais par défaut de PeerJS ne répondaient plus le 10 nov. 2026 : on ne les utilise pas.)
+async function optionsPeer() {
+  const relais = await serveursRelais();
+  return { debug: 0, config: { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }, ...relais] } };
+}
 
 export class Reseau {
   constructor() {
@@ -20,12 +28,13 @@ export class Reseau {
     this.estHote = true; this.monId = 'hote'; this.code = null;
   }
 
-  heberger(code) {
+  async heberger(code) {
     this.estHote = true; this.monId = 'hote';
+    const options = await optionsPeer();
     return new Promise((ok, ko) => {
       if (!window.Peer) { ko(new Error('PeerJS ne s\'est pas chargé (pas d\'Internet ?)')); return; }
       this.code = code;
-      const peer = new window.Peer(PREFIXE + code, { debug: 0 });
+      const peer = new window.Peer(PREFIXE + code, options);
       this.peer = peer;
       const minuteur = setTimeout(() => ko(new Error('Le serveur de connexion ne répond pas.')), 12000);
       peer.on('open', () => { clearTimeout(minuteur); ok(code); });
@@ -43,13 +52,17 @@ export class Reseau {
     });
   }
 
-  rejoindre(code) {
+  async rejoindre(code) {
     this.estHote = false;
+    const options = await optionsPeer();
     return new Promise((ok, ko) => {
       if (!window.Peer) { ko(new Error('PeerJS ne s\'est pas chargé (pas d\'Internet ?)')); return; }
-      const peer = new window.Peer({ debug: 0 });
+      const peer = new window.Peer(options);
       this.peer = peer;
-      const minuteur = setTimeout(() => ko(new Error('Impossible de joindre la partie ' + code + '. Vérifie le code.')), 15000);
+      let signal = false; // le serveur de connexion a répondu : le code est bon, c'est le lien direct qui coince
+      const minuteur = setTimeout(() => ko(new Error(signal
+        ? `La partie ${code} existe, mais la connexion avec l'hôte ne passe pas. C'est fréquent en 4G : essaie en Wi-Fi.`
+        : 'Le serveur de connexion ne répond pas. Vérifie ta connexion Internet.')), 20000);
       peer.on('error', err => {
         clearTimeout(minuteur);
         if (err.type === 'peer-unavailable') ko(new Error('Aucune partie avec le code ' + code + '.'));
@@ -57,6 +70,7 @@ export class Reseau {
       });
       peer.on('open', id => {
         this.monId = id;
+        signal = true;
         const conn = peer.connect(PREFIXE + code, { reliable: true, serialization: 'json' });
         this.connHote = conn;
         conn.on('open', () => { clearTimeout(minuteur); this.code = code; ok(id); });

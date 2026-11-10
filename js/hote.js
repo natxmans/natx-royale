@@ -192,6 +192,12 @@ export class Hote {
       const b = this.nouveauJoueur(id, nomBot, COULEURS_BOTS[k % COULEURS_BOTS.length], true, n);
       b.look = lookAuHasard(); b.equipe = equipeDe(n); n++;
       b.mannequin = this.options.entrainement;
+      if (b.mannequin) {
+        // un mannequin est planté au sol près du centre (il ne saute pas du dirigeable)
+        const p = this.pointTerre(r, 0, 0, 40);
+        const h = monde.lancerRayon(p.x, 160, p.z, 0, -1, 0, 320);
+        b.x = p.x; b.z = p.z; b.y = (h ? h.y : monde.hauteurTerrain(p.x, p.z)) + 0.2; b.ph = 'sol'; b.ry = r() * Math.PI * 2;
+      }
       this.joueurs.set(id, b);
     }
     this.nbUnites = new Set([...this.joueurs.values()].map(j => (j.equipe ? 'e' + j.equipe : j.id))).size;
@@ -232,7 +238,7 @@ export class Hote {
     this.reseau.diffuser({
       t: 'debut', graine, partieId: this.partieId, dirigeable: this.dirigeable, zone: this.zone, difficulte: o.difficulte,
       options: { mode: o.mode, entrainement: !!o.entrainement, matsDepart: o.entrainement ? 999 : o.matsDepart | 0, fete: !!o.fete, vitesseZone: o.vitesseZone },
-      joueurs: [...this.joueurs.values()].map(j => ({ id: j.id, nom: j.nom, couleur: j.couleur, bot: j.bot, n: j.n, look: j.look, equipe: j.equipe })),
+      joueurs: [...this.joueurs.values()].map(j => ({ id: j.id, nom: j.nom, couleur: j.couleur, bot: j.bot, n: j.n, look: j.look, equipe: j.equipe, mannequin: !!j.mannequin })),
       butins: listeButins,
       esprits: this.sanctuaires.map(sa => ({ id: sa.id, x: sa.x, y: sa.y, z: sa.z, type: sa.type, dispo: true })),
     });
@@ -793,11 +799,15 @@ export class Hote {
 
   // ---------- Entraînement ----------
   majMannequin(b, dt) {
-    b.destT -= dt;
-    if (!b.dest || b.destT <= 0 || Math.hypot(b.dest.x - b.x, b.dest.z - b.z) < 2) { b.dest = this.pointTerre(Math.random, 0, 0, 45); b.destT = 5 + Math.random() * 6; }
-    const dx = b.dest.x - b.x, dz = b.dest.z - b.z, d = Math.hypot(dx, dz) || 1;
-    b.vx = dx / d * 2.6; b.vz = dz / d * 2.6; b.vy -= 25 * dt;
-    b.ry = angleVers(b.ry, Math.atan2(-dx, -dz), Math.min(1, dt * 4));
+    // planté sur son poteau : il ne marche pas, il se tourne vers le joueur le plus proche (cible face à lui)
+    let proche = null, pd = 45;
+    for (const j of this.joueurs.values()) {
+      if (j.bot || !j.vivant) continue;
+      const d = Math.hypot(j.x - b.x, j.z - b.z);
+      if (d < pd) { pd = d; proche = j; }
+    }
+    if (proche) b.ry = angleVers(b.ry, Math.atan2(-(proche.x - b.x), -(proche.z - b.z)), Math.min(1, dt * 1.5));
+    b.vx = b.vz = 0; b.vy -= 25 * dt;
     this.monde.deplacer(b, dt);
     b.a = ''; b.f = b.auSol ? 1 : 0;
   }

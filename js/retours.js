@@ -86,6 +86,24 @@ export async function chargerSuggestions(tri = 'populaires') {
   return d.suggestions;
 }
 
+// ---------- Serveur relais (TURN) pour jouer entre potes en 4G ----------
+// Le serveur garde la clé secrète et donne des accès temporaires ; sans réponse en 3 s, on fait sans.
+let relaisCache = null, relaisT = 0;
+export async function serveursRelais() {
+  if (!URL_API) return [];
+  if (relaisCache && performance.now() - relaisT < 30 * 60 * 1000) return relaisCache;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const r = await fetch(URL_API + '/relais', { signal: ctrl.signal });
+    clearTimeout(t);
+    const d = r.ok ? await r.json() : {};
+    relaisCache = Array.isArray(d.iceServers) ? d.iceServers.filter(s => s && s.urls) : [];
+    relaisT = performance.now();
+  } catch (e) { relaisCache = []; relaisT = performance.now() - 29 * 60 * 1000; }
+  return relaisCache;
+}
+
 // ---------- Cadeaux de l'admin, annonce, bonus de pièces ----------
 export const chargerEtatJeu = () => appel('GET', '/jeu');
 export const recupererCadeaux = () => avecJeton(jeton => appel('POST', '/cadeaux', { jeton }));

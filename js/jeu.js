@@ -7,7 +7,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Monde, DEMI, rayonBoite } from './monde.js';
 import { OBJETS, RARETES, modeleObjet, modelesPrets, remplacerModeleArme } from './armes.js';
 import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPret } from './personnage.js';
-import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele } from './modeles.js';
+import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele, clipAnimation } from './modeles.js';
 import { signalerPartie } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
 import { initCadeaux, bonusActif, texteMultiplicateur } from './cadeaux.js';
@@ -361,7 +361,7 @@ function liberer(o) {
 }
 
 function viderJoueursEtButin() {
-  for (const a of etat.autres.values()) scene.remove(a.modele);
+  for (const a of etat.autres.values()) { scene.remove(a.modele); if (a.lod) scene.remove(a.lod); }
   etat.autres.clear();
   for (const b of etat.butins.values()) scene.remove(b.mesh);
   etat.butins.clear();
@@ -421,7 +421,17 @@ function creerAutre(info) {
   const modele = creerPersonnage(info.couleur, info.nom, info.n || 0, look);
   modele.visible = false;
   scene.add(modele);
-  const a = { id: info.id, modele, vivant: true, cible: null, x: 0, y: 0, z: 0, ry: 0, rx: 0, vitesse: 0, f: 0, look, couleur: info.couleur, ph: '' };
+  const a = { id: info.id, modele, vivant: true, cible: null, x: 0, y: 0, z: 0, ry: 0, rx: 0, vitesse: 0, f: 0, look, couleur: info.couleur, ph: '', lod: undefined, mannequin: null };
+  if (info.mannequin || (etat.options.entrainement && info.bot)) {
+    const corps = modeleGlb('mannequin_entrainement');
+    if (corps) {
+      for (const ch of modele.children) if (ch !== modele.userData.etiquette) ch.visible = false;
+      modele.add(corps);
+      const mixer = new THREE.AnimationMixer(corps);
+      const clip = clipAnimation('mannequin_touche');
+      a.mannequin = { corps, mixer, action: clip ? mixer.clipAction(clip).setLoop(THREE.LoopOnce, 1) : null };
+    }
+  }
   // coéquipier : losange vert visible à travers les murs
   if (coequipier(info.id)) {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texLosange, depthTest: false, transparent: true, fog: false }));
@@ -439,6 +449,24 @@ const texLosange = (() => {
 })();
 
 function nomDe(id) { const i = etat.infos.get(id); return i ? i.nom : '???'; }
+
+// Personnage lointain (modèle léger de la session modélisation) : 2 appels de dessin au lieu d'environ 40
+const DIST_LOD = (INTEGRATION.lod[0] && INTEGRATION.lod[0].distance) || 65;
+function lodDe(a) {
+  if (a.lod !== undefined) return a.lod;
+  const g = modeleGlb('personnage_loin', { ombres: false });
+  if (!g) { a.lod = null; return null; }
+  g.traverse(o => {
+    if (!o.isMesh) return;
+    const recolorer = mm => { if (mm.name !== 'tenue') return mm; const c = mm.clone(); c.color.set(a.couleur); c.vertexColors = true; return c; };
+    o.material = Array.isArray(o.material) ? o.material.map(recolorer) : recolorer(o.material);
+  });
+  if (a.marqueur) g.add(a.marqueur.clone());
+  g.visible = false;
+  scene.add(g);
+  a.lod = g;
+  return g;
+}
 
 // ---------- Butin au sol ----------
 const matsRayon = new Map();
@@ -698,6 +726,8 @@ function recevoir(m) {
         }
       }
       const inf = etat.infos.get(m.id); if (inf) { inf.pv = m.pv; inf.b = m.b; }
+      const touche = m.deg && etat.autres.get(m.id);
+      if (touche && touche.mannequin && touche.mannequin.action) touche.mannequin.action.reset().play();
       if (moi && m.de === moi.id && m.id !== moi.id && m.deg) {
         if (reglages.chiffresDegats) afficherDegats(m.x, m.y + 2.3, m.z, m.deg, m.tete, m.b > 0);
         moi.degats += m.deg;
@@ -1924,7 +1954,7 @@ function chercherInteraction() {
 function majAutres(dt) {
   const k = Math.min(1, dt * 12);
   for (const a of etat.autres.values()) {
-    if (!a.vivant || !a.cible) { a.modele.visible = false; continue; }
+    if (!a.vivant || !a.cible) { a.modele.visible = false; if (a.lod) a.lod.visible = false; continue; }
     const c = a.cible;
     const ox = a.x, oz = a.z;
     if (Math.hypot(c.x - a.x, c.y - a.y, c.z - a.z) > 12) { a.x = c.x; a.y = c.y; a.z = c.z; }
@@ -1958,6 +1988,14 @@ function majAutres(dt) {
     }
     const loin = dc > 40;
     if (m.userData.loin !== loin) { m.userData.loin = loin; for (const d of m.userData.details) d.visible = !loin; }
+    // très loin et au sol : le modèle léger remplace le vrai personnage
+    const tresLoin = !a.mannequin && dc > DIST_LOD && c.ph === 'sol' && etat.spectate !== a.id && m.visible;
+    const lod = tresLoin ? lodDe(a) : a.lod;
+    if (lod) {
+      lod.visible = tresLoin;
+      if (tresLoin) { lod.position.copy(m.position); lod.rotation.y = a.ry; m.visible = false; }
+    }
+    if (a.mannequin) a.mannequin.mixer.update(dt);
   }
 }
 
@@ -3234,6 +3272,7 @@ const menus = new Menus({
 });
 initMenu();
 afficherEcran('menu');
+document.body.classList.remove('demarrage');
 const bonus = bonusDuJour(profil);
 if (bonus) setTimeout(() => { toast(`🎁 Bonus du jour : +${bonus} 🪙 !`, 4000); menus.majPieces(true); }, 900);
 initCadeaux({ profil, menus, son: n => { initSons(); son(n); } });

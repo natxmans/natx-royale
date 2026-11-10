@@ -474,6 +474,61 @@ def api_jeu(req, db):
     return 200, etat_jeu(db)
 
 
+# Relais TURN (Cloudflare Realtime) : la clé reste ici, le jeu reçoit des accès valables quelques heures.
+# À régler dans le panneau de l'hébergeur : NATX_TURN_CLE_ID et NATX_TURN_JETON (jamais dans Git).
+TURN_API = os.environ.get('NATX_TURN_API', 'https://rtc.live.cloudflare.com/v1/turn/keys')
+_relais = {'serveurs': None, 'fin': 0}
+_verrou_relais = threading.Lock()
+
+
+def nettoyer_relais(brut):
+    liste = brut if isinstance(brut, list) else [brut] if isinstance(brut, dict) else []
+    propres = []
+    for s in liste:
+        if not isinstance(s, dict):
+            continue
+        urls = s.get('urls')
+        urls = [urls] if isinstance(urls, str) else urls if isinstance(urls, list) else []
+        urls = [u for u in urls if isinstance(u, str) and re.match(r'^(stun|turns?):', u)][:8]
+        if not urls:
+            continue
+        e = {'urls': urls}
+        if isinstance(s.get('username'), str) and isinstance(s.get('credential'), str):
+            e['username'], e['credential'] = s['username'][:200], s['credential'][:200]
+        propres.append(e)
+    return propres
+
+
+def serveurs_relais():
+    cle, jeton = os.environ.get('NATX_TURN_CLE_ID', ''), os.environ.get('NATX_TURN_JETON', '')
+    if not cle or not jeton:
+        return None
+    t = maintenant()
+    with _verrou_relais:
+        if _relais['serveurs'] is not None and _relais['fin'] - t > 2 * 3600:
+            return _relais['serveurs']
+        import urllib.request
+        duree = 12 * 3600
+        demande = urllib.request.Request(f'{TURN_API}/{cle}/credentials/generate-ice-servers', data=json.dumps({'ttl': duree}).encode(),
+                                         headers={'Authorization': 'Bearer ' + jeton, 'Content-Type': 'application/json'}, method='POST')
+        try:
+            with urllib.request.urlopen(demande, timeout=6) as r:
+                d = json.loads(r.read().decode('utf-8'))
+        except Exception as e:  # le jeu se débrouillera sans relais
+            print('Relais TURN indisponible :', repr(e), file=sys.stderr)
+            return _relais['serveurs'] or []
+        _relais['serveurs'] = nettoyer_relais(d.get('iceServers'))
+        _relais['fin'] = t + duree
+        return _relais['serveurs']
+
+
+def api_relais(req, db):
+    if not limite(db, 'relais:ip:' + req.ip_hash, 60, 3600):
+        raise Erreur(429, 'Trop de demandes.')
+    s = serveurs_relais()
+    return 200, {'iceServers': s or [], 'configure': s is not None}
+
+
 def api_cadeaux(req, db):
     """Les cadeaux qui attendent ce joueur (pour tout le monde ou rien que pour lui). Chacun n'est donné qu'une fois."""
     jid = joueur_obligatoire(req, req.json())
@@ -892,6 +947,7 @@ ROUTES = [
     ('POST', r'/api/suggestions/(\d+)/vote', api_vote, True),
     ('DELETE', r'/api/suggestions/(\d+)/vote', lambda req, db, rid: api_vote(req, db, rid, enlever=True), True),
     ('GET', r'/api/jeu', api_jeu, True),
+    ('GET', r'/api/relais', api_relais, True),
     ('POST', r'/api/cadeaux', api_cadeaux, True),
     ('POST', r'/api/cadeaux/code', api_code_cadeau, True),
     ('POST', r'/api/admin/connexion', admin_connexion, False),

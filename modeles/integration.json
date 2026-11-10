@@ -247,5 +247,25 @@
       },
       "_livraison": "Autel où l'on trouve un esprit : origine au sol ; l'esprit flotte à 1,0 m au-dessus. Boîte COL_socle dans le .glb. 1 120 tri."
     }
+  ],
+  "lod": [
+    {
+      "id": "personnage_loin",
+      "actif": true,
+      "fichier": "personnage_loin_v001.glb",
+      "objet": "personnage_loin",
+      "distance": 65,
+      "_livraison": "Session Modélisation, 9 nov. : 670 tri, 2 matériaux (« tenue » recoloré par le jeu, vertexColors gardé). Utilisé au-delà de « distance » mètres, au sol."
+    }
+  ],
+  "mannequins": [
+    {
+      "id": "entrainement",
+      "actif": true,
+      "fichier": "entrainement_v001.glb",
+      "objet": "mannequin_entrainement",
+      "animation": "mannequin_touche",
+      "_livraison": "Session Modélisation, 9 nov. : 2 968 tri, cible vers -Z, animation mannequin_touche 0,5 s (LoopOnce, revient à la pose)."
+    }
   ]
 }
