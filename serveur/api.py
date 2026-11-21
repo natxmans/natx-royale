@@ -1021,7 +1021,7 @@ def admin_cadeau_creer(req, db):
         raise Erreur(400, 'Entre 0 et 100 000 pièces.')
     connus = {o['cle'] for o in catalogue()['objets']}
     objets = d.get('objets') or []
-    if not isinstance(objets, list) or len(objets) > 300 or any(not isinstance(o, str) or o not in connus for o in objets):
+    if not isinstance(objets, list) or len(objets) > 1000 or any(not isinstance(o, str) or o not in connus for o in objets):
         raise Erreur(400, 'Objet inconnu dans la liste (catalogue pas à jour ?).')
     objets = list(dict.fromkeys(objets))
     if not pieces and not objets:

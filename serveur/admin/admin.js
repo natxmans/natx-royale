@@ -527,9 +527,12 @@ function formCadeau(cat, expediteurDefaut) {
   const filtreCat = choix({ '': 'Toutes catégories', ...Object.fromEntries(cat.categories.map(c => [c.id, c.icone + ' ' + c.nom])) }, '');
   const grille = el('div', { class: 'objets' });
   const compte = el('span', { class: 'compte' });
+  const filtreRar = choix({ '': 'Toutes raretés', ...Object.fromEntries(Object.entries(cat.raretes).map(([k, v]) => [k, v.nom])) }, '');
+  let affiches = [];
   const dessiner = () => {
     const q = rech.value.toLowerCase();
-    grille.replaceChildren(...offrables.filter(o => (!filtreCat.value || o.cat === filtreCat.value) && (!q || o.nom.toLowerCase().includes(q))).slice(0, 400).map(o => {
+    affiches = offrables.filter(o => (!filtreCat.value || o.cat === filtreCat.value) && (!filtreRar.value || o.rarete === filtreRar.value) && (!q || o.nom.toLowerCase().includes(q)));
+    grille.replaceChildren(...affiches.slice(0, 400).map(o => {
       const c = el('button', { class: 'objet' + (b.objets.has(o.cle) ? ' choisi' : ''), type: 'button', title: o.cle }, el('b', {}, o.nom), el('small', {}, `${o.cat} · ${cat.raretes[o.rarete]?.nom || o.rarete}${o.nouveau250 ? ' · nouveau' : ''}`));
       c.style.setProperty('--rarete', cat.raretes[o.rarete]?.couleur || '#888');
       c.onclick = () => { b.objets.has(o.cle) ? b.objets.delete(o.cle) : b.objets.add(o.cle); dessiner(); };
@@ -537,7 +540,7 @@ function formCadeau(cat, expediteurDefaut) {
     }));
     compte.textContent = `${b.objets.size} objet(s) choisi(s)`;
   };
-  rech.oninput = dessiner; filtreCat.onchange = dessiner; dessiner();
+  rech.oninput = dessiner; filtreCat.onchange = dessiner; filtreRar.onchange = dessiner; dessiner();
   const creer = el('button', { class: 'bouton principal' }, '🎁 Envoyer le cadeau');
   const resultat = el('p', { class: 'resultat cache', role: 'status' });
   creer.onclick = async () => {
@@ -557,7 +560,9 @@ function formCadeau(cat, expediteurDefaut) {
     el('div', { class: 'form-grille' }, champ('Nom du cadeau', titre), champ('Message (facultatif)', message), champ('Expéditeur affiché', expediteur),
       champ('Pour qui ?', cible), blocJoueur, blocCode, blocMax, champ('Pièces offertes', pieces), champ('Valable', dureeC)),
     el('div', { class: 'titre-objets' }, el('h3', {}, 'Objets à offrir'), compte),
-    el('div', { class: 'filtres' }, rech, filtreCat, el('button', { class: 'bouton discret', type: 'button', onclick: () => { b.objets.clear(); dessiner(); } }, 'Rien')),
+    el('div', { class: 'filtres' }, rech, filtreCat, filtreRar,
+      el('button', { class: 'bouton discret', type: 'button', onclick: () => { for (const o of affiches) b.objets.add(o.cle); dessiner(); } }, '+ Tout ce qui est affiché'),
+      el('button', { class: 'bouton discret', type: 'button', onclick: () => { b.objets.clear(); dessiner(); } }, 'Rien')),
     grille, el('div', { class: 'actions bas' }, creer), resultat);
 }
 
