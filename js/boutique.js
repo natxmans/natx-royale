@@ -19,6 +19,7 @@ export const CATEGORIES = [
   { id: 'deltaplane', nom: 'Deltaplanes', un: 'Deltaplane', icone: '🪁' },
   { id: 'trainee', nom: 'Traînées', un: 'Traînée', icone: '✨' },
   { id: 'emote', nom: 'Émotes', un: 'Émote', icone: '💃' },
+  { id: 'arme', nom: 'Skins d’armes', un: 'Skin d’arme', icone: '🔫' },
 ];
 
 // g = gratuit (déjà possédé au départ)
@@ -121,26 +122,59 @@ export const CATALOGUE = [
   L('victoire', 'emote', 'Champion', 'epique', 'Le poing levé.'),
   L('zen', 'emote', 'Zen', 'legendaire', 'Lévite en méditant.'),
   L('pompes', 'emote', 'Pompes', 'commun', 'Une petite séance de sport en plein combat.'),
+  // Skins d'armes : ils habillent toutes les armes que tu tiens (seule la bande lumineuse garde la couleur de la rareté)
+  L('aucun', 'arme', 'D’origine', 'commun', 'Les armes comme on les trouve sur l’île.', true),
+  L('bois', 'arme', 'Bois verni', 'commun', 'Des armes en beau bois, comme de vieux jouets.'),
+  L('bonbon', 'arme', 'Bonbon', 'commun', 'Rose et blanc : sucré mais dangereux.'),
+  L('jungle', 'arme', 'Jungle', 'rare', 'Vert et brun, pour se fondre dans les buissons.'),
+  L('glace', 'arme', 'Glace', 'rare', 'Des armes taillées dans la glace.'),
+  L('chrome', 'arme', 'Chrome', 'epique', 'Tout brille comme un miroir.'),
+  L('neon', 'arme', 'Néon', 'epique', 'Noir profond et lignes cyan qui brillent.'),
+  L('lave', 'arme', 'Lave', 'epique', 'De la roche noire fendue de lave.'),
+  L('galaxie', 'arme', 'Galaxie', 'legendaire', 'Violet de nuit et éclats roses, venus de l’espace.'),
+  L('or', 'arme', 'Plaqué or', 'legendaire', 'De l’or partout. Tout simplement.'),
+  L('natx2k27', 'arme', 'Néon 2K27', 'collab', 'Les couleurs du festival sur tes armes.'),
 ];
 
 // Tenue Staff : réservée aux comptes joueurs liés à un compte admin (panel → Mon compte → Mon compte joueur).
 // Le serveur dit qui est du staff (boîte de réception) ; elle n'est ni en vente, ni offrable, ni portée par les bots,
 // et l'hôte d'une partie l'enlève à un joueur qui la porterait sans être vraiment du staff (voir hote.js).
+// L'ENSEMBLE Staff est complet : une pièce dans chaque catégorie (tenue, casquette, sac radio, pioche, deltaplane, traînée,
+// salut et skin d'arme), toutes avec l'identifiant « staff », la rareté « staff » et les mêmes règles que la tenue.
+const ENSEMBLE_STAFF = [
+  ['tenue', 'Tenue Staff', 'Réservée au staff de NATX ROYALE : elle arrive toute seule quand ton compte joueur est lié à ton compte admin.'],
+  ['chapeau', 'Casquette Staff', 'La casquette du staff : graphite, visière menthe et écusson lumineux.'],
+  ['dos', 'Sac radio Staff', 'Le sac du staff, avec sa radio et son antenne qui clignote.'],
+  ['pioche', 'Pioche Staff', 'La pioche du staff : manche graphite et pointes lumineuses.'],
+  ['deltaplane', 'Deltaplane Staff', 'Une aile graphite marquée STAFF, bordée de menthe.'],
+  ['trainee', 'Traînée Staff', 'Des étincelles menthe et blanches derrière toi.'],
+  ['emote', 'Salut du Staff', 'Le salut officiel : la main au front, bien droit.'],
+  ['arme', 'Skin Staff', 'Tes armes en graphite, avec des lignes menthe qui brillent.'],
+];
+for (const [cat, nom, desc] of ENSEMBLE_STAFF) CATALOGUE.push({ id: 'staff', cat, nom, rarete: 'staff', reserve: true, gratuit: false, desc });
 export const CLE_STAFF = 'tenue:staff';
-CATALOGUE.push({ id: 'staff', cat: 'tenue', nom: 'Tenue Staff', rarete: 'staff', reserve: true, gratuit: false,
-  desc: 'Réservée au staff de NATX ROYALE : elle arrive toute seule quand ton compte joueur est lié à ton compte admin.' });
+export const CLES_STAFF = ENSEMBLE_STAFF.map(e => e[0] + ':staff');
+// un look qui porte au moins une pièce de l'ensemble Staff (l'hôte le fait vérifier par le serveur)
+export const lookAStaff = look => !!look && CLES_STAFF.some(c => look[c.split(':')[0]] === 'staff');
+export function retirerStaffDuLook(look) {
+  let change = false;
+  if (look) for (const c of CLES_STAFF) { const cat = c.split(':')[0]; if (look[cat] === 'staff') { look[cat] = LOOK_DEFAUT[cat]; change = true; } }
+  return change;
+}
+// Donne (ou retire) tout l'ensemble selon ce que dit le serveur. « completee » = le compte avait déjà la tenue, il reçoit le reste.
 export function appliquerStaff(p, estStaff) {
-  const i = p.possedes.indexOf(CLE_STAFF);
-  if (estStaff && i < 0) { p.possedes.push(CLE_STAFF); p.nouveautes.push(CLE_STAFF); return 'ajoutee'; }
-  if (!estStaff && i >= 0) {
-    p.possedes.splice(i, 1);
-    const n = p.nouveautes.indexOf(CLE_STAFF);
-    if (n >= 0) p.nouveautes.splice(n, 1);
-    if (p.equipe.tenue === 'staff') p.equipe.tenue = LOOK_DEFAUT.tenue;
-    for (const pr of p.presets || []) if (pr && pr.tenue === 'staff') pr.tenue = LOOK_DEFAUT.tenue;
-    return 'retiree';
+  if (estStaff) {
+    const avait = p.possedes.includes(CLE_STAFF);
+    const manquantes = CLES_STAFF.filter(c => !p.possedes.includes(c));
+    if (!manquantes.length) return null;
+    p.possedes.push(...manquantes); p.nouveautes.push(...manquantes);
+    return avait ? 'completee' : 'ajoutee';
   }
-  return null;
+  if (!CLES_STAFF.some(c => p.possedes.includes(c))) return null;
+  for (const liste of [p.possedes, p.nouveautes]) for (let i = liste.length - 1; i >= 0; i--) if (CLES_STAFF.includes(liste[i])) liste.splice(i, 1);
+  retirerStaffDuLook(p.equipe);
+  for (const pr of p.presets || []) retirerStaffDuLook(pr);
+  return 'retiree';
 }
 
 export const COLLAB = CATALOGUE.filter(o => o.rarete === 'collab');
@@ -220,7 +254,7 @@ export function ajouterCosmetiquesAdmin(liste) {
 }
 export const cleObjet = o => o.cat + ':' + o.id;
 
-export const LOOK_DEFAUT = { tenue: 'classique', chapeau: 'casquette', dos: 'rien', pioche: 'classique', deltaplane: 'classique', trainee: 'aucune', emote: 'salut' };
+export const LOOK_DEFAUT = { tenue: 'classique', chapeau: 'casquette', dos: 'rien', pioche: 'classique', deltaplane: 'classique', trainee: 'aucune', emote: 'salut', arme: 'aucun' };
 
 // Vérifie un look reçu par le réseau
 export function nettoyerLook(l) {

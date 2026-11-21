@@ -2232,6 +2232,7 @@ function poussiere(x, y, z, n) {
 const COULEURS_TRAINEE = {
   fumee: ['#ffffff', '#e1e8f0'], etincelles: ['#ffd23f', '#ffae1f', '#fff3b0'], coeurs: ['#ff5d8f', '#ff8fb1'],
   etoiles: ['#ffe27a', '#ffffff', '#9fe0ff'], arcenciel: ['#ff4d4d', '#ff9a1f', '#ffe14d', '#4fe06f', '#4aa8ff', '#b552ff'], neon2k27: ['#22e8ff', '#ff2e88', '#b026ff'],
+  staff: ['#14e0a2', '#ffffff', '#0b8f68'], // ensemble Staff
 };
 // Traînées des 250 : une case de l'atlas livré (trainees_250_v001.png) + les réglages de la fiche
 let particules250 = null;
@@ -2260,7 +2261,7 @@ function trainee(e, type, dt) {
   e.traineeT = (e.traineeT || 0) - dt;
   if (e.traineeT > 0) return;
   e.traineeT = type === 'arcenciel' ? 0.015 : 0.035;
-  const forme = { fumee: 0, etincelles: 3, coeurs: 1, etoiles: 2, arcenciel: 0, neon2k27: 3 }[type];
+  const forme = { fumee: 0, etincelles: 3, coeurs: 1, etoiles: 2, arcenciel: 0, neon2k27: 3, staff: 3 }[type];
   const n = type === 'arcenciel' ? 1 : 2;
   for (let i = 0; i < n; i++) {
     e.traineeIdx = ((e.traineeIdx || 0) + 1) % cs.length;

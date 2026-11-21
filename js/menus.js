@@ -339,7 +339,7 @@ export class Menus {
   }
 
   cadragePour(o) {
-    return { chapeau: 'tete', dos: 'dos', deltaplane: 'delta', pioche: 'pioche' }[o.cat] || 'corps';
+    return { chapeau: 'tete', dos: 'dos', deltaplane: 'delta', pioche: 'pioche', arme: 'arme' }[o.cat] || 'corps';
   }
 
   choisirBoutique(o) {

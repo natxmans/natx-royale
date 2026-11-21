@@ -35,6 +35,11 @@
    "id": "emote",
    "nom": "Émotes",
    "icone": "💃"
+  },
+  {
+   "id": "arme",
+   "nom": "Skins d’armes",
+   "icone": "🔫"
   }
  ],
  "raretes": {
@@ -864,6 +869,105 @@
    "nom": "Pompes",
    "rarete": "commun",
    "desc": "Une petite séance de sport en plein combat.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:aucun",
+   "cat": "arme",
+   "id": "aucun",
+   "nom": "D’origine",
+   "rarete": "commun",
+   "desc": "Les armes comme on les trouve sur l’île.",
+   "gratuit": true
+  },
+  {
+   "cle": "arme:bois",
+   "cat": "arme",
+   "id": "bois",
+   "nom": "Bois verni",
+   "rarete": "commun",
+   "desc": "Des armes en beau bois, comme de vieux jouets.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:bonbon",
+   "cat": "arme",
+   "id": "bonbon",
+   "nom": "Bonbon",
+   "rarete": "commun",
+   "desc": "Rose et blanc : sucré mais dangereux.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:jungle",
+   "cat": "arme",
+   "id": "jungle",
+   "nom": "Jungle",
+   "rarete": "rare",
+   "desc": "Vert et brun, pour se fondre dans les buissons.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:glace",
+   "cat": "arme",
+   "id": "glace",
+   "nom": "Glace",
+   "rarete": "rare",
+   "desc": "Des armes taillées dans la glace.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:chrome",
+   "cat": "arme",
+   "id": "chrome",
+   "nom": "Chrome",
+   "rarete": "epique",
+   "desc": "Tout brille comme un miroir.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:neon",
+   "cat": "arme",
+   "id": "neon",
+   "nom": "Néon",
+   "rarete": "epique",
+   "desc": "Noir profond et lignes cyan qui brillent.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:lave",
+   "cat": "arme",
+   "id": "lave",
+   "nom": "Lave",
+   "rarete": "epique",
+   "desc": "De la roche noire fendue de lave.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:galaxie",
+   "cat": "arme",
+   "id": "galaxie",
+   "nom": "Galaxie",
+   "rarete": "legendaire",
+   "desc": "Violet de nuit et éclats roses, venus de l’espace.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:or",
+   "cat": "arme",
+   "id": "or",
+   "nom": "Plaqué or",
+   "rarete": "legendaire",
+   "desc": "De l’or partout. Tout simplement.",
+   "gratuit": false
+  },
+  {
+   "cle": "arme:natx2k27",
+   "cat": "arme",
+   "id": "natx2k27",
+   "nom": "Néon 2K27",
+   "rarete": "collab",
+   "desc": "Les couleurs du festival sur tes armes.",
    "gratuit": false
   },
   {

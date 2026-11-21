@@ -2,7 +2,7 @@
 // tenues, chapeaux, objets de dos, pioches, deltaplanes et émotes de la boutique.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { modeleObjet } from './armes.js';
+import { modeleObjet, OBJETS, habillerArme } from './armes.js';
 import { modeleGlb, ficheTenue, ficheEmote, clipAnimation } from './modeles.js';
 import { LOOK_DEFAUT } from './boutique.js';
 
@@ -303,6 +303,12 @@ function chapeau(id, c, blender = false) {
   const C = (rt, rb, h, s = 16) => new THREE.CylinderGeometry(rt, rb, h, s);
   const comp = '#' + new THREE.Color(c).offsetHSL(0.5, 0, -0.05).getHexString();
   switch (id) {
+    case 'staff': // casquette du staff : graphite, visière menthe, liseré et écusson lumineux
+      add(DOME(0.292), M('#11161c'), 0, 0.08, 0.01).scale.y = 0.92;
+      add(new THREE.CylinderGeometry(0.21, 0.21, 0.025, 20, 1, false, Math.PI / 2, Math.PI), M('#14e0a2'), 0, 0.095, -0.2).scale.set(1.1, 1, 1);
+      add(new THREE.TorusGeometry(0.29, 0.012, 6, 28), LUEUR('#14e0a2'), 0, 0.1, 0.01, Math.PI / 2);
+      add(new THREE.SphereGeometry(0.05, 8, 6), LUEUR('#14e0a2'), 0, 0.21, -0.255).scale.set(1, 1.2, 0.4);
+      couvre = true; break;
     case 'casquette':
       add(DOME(0.292), M(comp), 0, 0.08, 0.01).scale.y = 0.92;
       add(new THREE.CylinderGeometry(0.21, 0.21, 0.025, 20, 1, false, Math.PI / 2, Math.PI), M(comp), 0, 0.095, -0.2).scale.set(1.1, 1, 1);
@@ -434,6 +440,14 @@ function objetDos(id, c, blender = false) {
   const add = (geom, m, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geom, m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); g.add(o); return o; };
   const B = (w, h, d) => new THREE.BoxGeometry(w, h, d);
   switch (id) {
+    case 'staff': // sac radio du staff : bandes menthe et antenne
+      add(new THREE.CapsuleGeometry(0.2, 0.22, 6, 12), M('#11161c'), 0, 0, 0.32).scale.set(1.15, 1, 0.65);
+      add(B(0.36, 0.05, 0.03), LUEUR('#14e0a2'), 0, 0.09, 0.455); add(B(0.36, 0.03, 0.03), LUEUR('#14e0a2'), 0, -0.07, 0.455);
+      add(new THREE.CapsuleGeometry(0.1, 0.08, 4, 10), M('#1b222b'), 0, -0.17, 0.46).scale.set(1.4, 0.8, 0.6);
+      for (const s of [-1, 1]) add(B(0.05, 0.5, 0.04), M('#0b0f13'), 0.14 * s, 0.05, 0.24);
+      add(new THREE.CylinderGeometry(0.01, 0.01, 0.5, 6), METAL('#9aa3ad'), 0.16, 0.42, 0.36);
+      add(new THREE.SphereGeometry(0.035, 8, 6), LUEUR('#14e0a2'), 0.16, 0.68, 0.36);
+      break;
     case 'sac':
       add(new THREE.CapsuleGeometry(0.2, 0.2, 6, 12), M('#e67e22'), 0, 0, 0.32).scale.set(1.15, 1, 0.65);
       add(new THREE.CapsuleGeometry(0.12, 0.1, 4, 10), M('#d35400'), 0, -0.12, 0.47).scale.set(1.4, 0.8, 0.6);
@@ -535,6 +549,11 @@ export function modelePioche(id) {
   const B = (w, h, d) => new THREE.BoxGeometry(w, h, d);
   const manche = (c = '#8a5a2b', l = 0.9) => add(new THREE.CylinderGeometry(0.035, 0.04, l, 8), M(c), 0, 0, -0.3, Math.PI / 2, 0, 0);
   switch (id) {
+    case 'staff': // pioche du staff : manche graphite, pointes lumineuses
+      manche('#11161c'); add(B(0.7, 0.1, 0.1), METAL('#2a333d', 0.3), 0, 0, -0.75); add(B(0.1, 0.13, 0.13), LUEUR('#14e0a2'), 0, 0, -0.75);
+      for (const s of [-1, 1]) add(new THREE.ConeGeometry(0.06, 0.24, 8), LUEUR('#14e0a2'), 0.46 * s, 0, -0.75, 0, 0, -Math.PI / 2 * s);
+      add(new THREE.CylinderGeometry(0.045, 0.045, 0.14, 8), M('#14e0a2'), 0, 0, 0.08, Math.PI / 2, 0, 0);
+      break;
     case 'pelle': manche(); add(B(0.32, 0.03, 0.42), METAL('#9aa3ad'), 0, 0, -0.9); add(B(0.2, 0.07, 0.06), M('#2b2d33'), 0, 0, 0.17); break;
     case 'cle': add(B(0.09, 0.05, 0.95), METAL('#c8ced6'), 0, 0, -0.35); add(B(0.3, 0.06, 0.16), METAL('#c8ced6'), 0.06, 0, -0.85); add(B(0.08, 0.06, 0.12), METAL('#c8ced6'), -0.06, 0, -0.98); add(B(0.11, 0.07, 0.3), M('#d63031'), 0, 0, 0.05); break;
     case 'baguette': {
@@ -640,6 +659,16 @@ export function modeleDeltaplane(id, c) {
       const noir = M('#111118');
       add(B(3.2, 0.08, 1.6), [noir, noir, ecran, noir, noir, noir], 0, 0, 0);
       add(B(3.3, 0.1, 0.06), LUEUR(NEON.cyan), 0, 0, -0.83); add(B(3.3, 0.1, 0.06), LUEUR(NEON.rose), 0, 0, 0.83);
+      barre(); break;
+    }
+    case 'staff': { // deltaplane du staff : aile graphite marquée STAFF, bords menthe lumineux
+      const dessus = mat('deltastaff', () => new THREE.MeshLambertMaterial({ map: tex('deltastaff', (g2, w, h) => {
+        rect(g2, '#11161c', 0, 0, w, h); rect(g2, '#14e0a2', 0, 0, w, 7); rect(g2, '#14e0a2', 0, h - 7, w, 7);
+        g2.font = "900 62px 'Lilita One', system-ui"; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillStyle = '#f2f5f7'; g2.fillText('STAFF', w / 2, h / 2 + 3);
+      }, 256, 112) }));
+      const noir = M('#11161c');
+      add(B(3.2, 0.07, 1.4), [noir, noir, dessus, dessus, noir, noir], 0, 0, 0);
+      add(B(3.3, 0.09, 0.06), LUEUR('#14e0a2'), 0, 0, -0.72); add(B(3.3, 0.09, 0.06), LUEUR('#14e0a2'), 0, 0, 0.72);
       barre(); break;
     }
     default:
@@ -1017,6 +1046,8 @@ export function tenirObjet(g, objet, rarete) {
   u.mainArme.clear();
   if (!objet) return;
   const m = objet === 'pioche' ? modelePioche(u.look.pioche) : modeleObjet(objet, rarete || 0);
+  // skin d'armes du joueur (cosmétique « arme ») : seulement sur les vraies armes, pas sur les soins ni les grenades
+  if (objet !== 'pioche' && OBJETS[objet] && OBJETS[objet].type === 'arme') habillerArme(m, u.look.arme);
   m.rotation.x = -Math.PI / 2;
   if (TENU_A_LA_MAIN.has(objet)) m.rotation.x = 0;
   m.traverse(o => { if (o.isMesh) o.castShadow = true; });
@@ -1028,6 +1059,13 @@ function poseEmote(u, id, t) {
   const r = u.racine;
   const s = Math.sin;
   switch (id) {
+    case 'staff': { // salut du staff : la main au front, bien droit, puis le bras redescend
+      const k = Math.min(1, t * 5) * (t > 2.2 ? Math.max(0, 1 - (t - 2.2) * 4) : 1);
+      u.bd.rotation.set(0, 0, 1.75 * k); u.coudeD.rotation.set(0, 0, 2.15 * k);
+      u.bg.rotation.set(0, 0, -0.05); u.coudeG.rotation.x = 0.05;
+      u.tete.rotation.x = -0.06 * k; r.position.y = 0.02 * k;
+      break;
+    }
     case 'salut':
       u.bd.rotation.set(0, 0, 2.5 + s(t * 9) * 0.3); u.coudeD.rotation.x = 0.4 + s(t * 9) * 0.3;
       u.bg.rotation.set(0.1, 0, 0.15); u.tete.rotation.z = s(t * 4.5) * 0.08; break;

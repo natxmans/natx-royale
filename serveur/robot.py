@@ -125,9 +125,10 @@ def analyser_joueur(db, jid, parties_signalees=()):
         elif n >= 20 and v / n >= 0.85:
             indices.append(f'{v} victoires sur {n} parties')
         possedes = charger(pr['possedes'], [])
-        if 'tenue:staff' in possedes and not gestion.staff_de(db, jid) and not db.execute(
+        # une pièce de l'ensemble Staff (tenue, casquette, sac, pioche, deltaplane, traînée, salut, skin d'arme : toutes « <catégorie>:staff »)
+        if any(isinstance(c, str) and c.endswith(':staff') for c in possedes) and not gestion.staff_de(db, jid) and not db.execute(
                 "SELECT 1 FROM journal WHERE cible=? AND action LIKE 'liaison staff acceptée%'", ('joueur:' + jid,)).fetchone():
-            preuves.append('il a la Tenue Staff sans avoir jamais été du staff : profil modifié')
+            preuves.append("il a une pièce de l'ensemble Staff sans avoir jamais été du staff : profil modifié")
         if (pr['pieces'] or 0) > 300000:
             indices.append(f"{pr['pieces']} pièces, c'est énorme")
     return {'preuves': preuves[:5], 'indices': indices[:5], 'parties': len(parties)}

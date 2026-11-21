@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { creerPersonnage, modelePioche, modeleDeltaplane, animerPersonnage, tenirObjet, presenterPersonnage } from './personnage.js';
-import { modeleObjet } from './armes.js';
+import { modeleObjet, habillerArme } from './armes.js';
 import { creerEsprit, animerEsprit, jouerEsprit } from './esprits.js';
 
 export class Apercu {
@@ -87,7 +87,8 @@ export class Apercu {
     this.cadrage = cadrage;
     this.emote = emote;
     this.planeur = cadrage === 'delta';
-    tenirObjet(this.perso, cadrage === 'pioche' ? 'pioche' : null, 0);
+    // skin d'armes : le personnage tient un fusil légendaire pour bien le voir
+    tenirObjet(this.perso, cadrage === 'pioche' ? 'pioche' : cadrage === 'arme' ? 'fusil' : null, cadrage === 'arme' ? 4 : 0);
     if (cadrage === 'dos') this.angle = Math.PI + 0.5;
     else if (cadrage !== this.ancienCadrage) this.angle = 0.35;
     this.ancienCadrage = cadrage;
@@ -128,7 +129,7 @@ export class Apercu {
     this.camera.position.set(cibles[0], cibles[1], cibles[2]);
     this.camera.lookAt(cibles[3], cibles[4], cibles[5]);
     this.perso.position.y = this.planeur ? 0.6 + Math.sin(performance.now() / 600) * 0.1 : 0;
-    animerPersonnage(this.perso, dt, { vitesse: 0, auSol: !this.planeur, planeur: this.planeur, arme: c === 'pioche' ? 'pioche' : null, pitch: 0, emote: this.emote });
+    animerPersonnage(this.perso, dt, { vitesse: 0, auSol: !this.planeur, planeur: this.planeur, arme: c === 'pioche' ? 'pioche' : c === 'arme' ? 'fusil' : null, pitch: 0, emote: this.emote });
     if (c === 'pioche' && !this.emote) this.perso.userData.bd.rotation.set(1.2, 0, 0.2);
     this.r.render(this.scene, this.camera);
   }
@@ -170,6 +171,7 @@ export class Apercu {
     if (o.cat === 'pioche') return this.miniature(cle, () => { const g = modelePioche(o.id); g.rotation.set(-0.9, 0.6, 0.6); return g; }, [0.2, 0.3, 1]);
     if (o.cat === 'deltaplane') return this.miniature(cle, () => { const g = new THREE.Group(); const d = modeleDeltaplane(o.id, couleur); d.position.y = 0; g.add(d); return g; }, [0.4, 1.1, 1.4]);
     if (o.cat === 'trainee') return null;
+    if (o.cat === 'arme') return this.miniature(cle, () => { const g = habillerArme(modeleObjet('fusil', 4), o.id); g.rotation.set(0.25, 1.1, 0); return g; }, [0.2, 0.25, 1]);
     const look = {};
     look[o.cat] = o.id;
     if (o.cat !== 'chapeau') look.chapeau = 'aucun';

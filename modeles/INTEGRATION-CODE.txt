@@ -195,3 +195,19 @@ Les 10 pouvoirs (réglages dans js/esprits.js, décidés par l'hôte dans js/hot
   eau Goutte      nage aussi vite qu'il court | Bulle : rebondit très haut 6 s, sans dégâts de chute, 20 s
   chance Pépite   coffres fermés à 40 m sur la mini-carte | Jackpot : une arme rare ou un soin tombe devant lui, 45 s
   etoile Lumi     sauve d'un coup mortel une fois par partie (40 PV) | Étoile filante : fonce sur 14 m, 20 dégâts sur le trajet, 18 s
+
+
+=====================================================================================
+7) 21 NOVEMBRE 2026 (nuit) — ENSEMBLE STAFF COMPLET ET SKINS D'ARMES (codés, en attente de modèles)
+=====================================================================================
+(écrit par la session Développement)
+
+- Ensemble Staff : 8 pièces d'identifiant « staff », rareté « staff », réservées (jamais en vente, ni offrables, ni portées par les bots) :
+  tenue, chapeau, dos, pioche, deltaplane, trainee, emote, arme. Le jeu les donne toutes quand le serveur dit que le compte est lié au staff,
+  les retire toutes sinon ; l'hôte d'une partie fait vérifier par le serveur tout look qui en porte une seule.
+  Pour l'instant chapeau, dos, pioche et deltaplane sont faits en code (js/personnage.js). Le code prend le modèle livré dès qu'il existe :
+  objets chapeau_staff, dos_staff, pioche_staff, deltaplane_staff (mêmes règles que les cosmétiques des 250).
+- Skins d'armes : catégorie « arme » de la boutique (11 skins + « D'origine »). Aucun modèle : SKINS_ARMES (js/armes.js) remplace les matériaux
+  des armes d'objets.glb selon leur nom : rarete → corps2, arme_sombre → corps, bois → corps2, bois_fonce → corps, caoutchouc → poignee,
+  metal_clair / acier → metal (ou lignes lumineuses si le skin a « lueur »). La bande « lueur » garde la couleur de la rareté.
+  Une nouvelle arme doit donc garder ces noms de matériaux pour que les skins lui aillent.

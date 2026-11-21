@@ -4,7 +4,7 @@ import { hasard, angleVers, arrondi, borner } from './outils.js';
 import { OBJETS, RARETES, tirerButin, LISTE_ARMES, butinRavitaillement } from './armes.js';
 import { rayonBoite, DEMI } from './monde.js';
 import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, REGAIN_SOLO, DEFIS_ENTRAINEMENT, posCargaison, CARGO } from './partage.js';
-import { nettoyerLook, lookAuHasard, LOOK_DEFAUT } from './boutique.js';
+import { nettoyerLook, lookAuHasard, LOOK_DEFAUT, lookAStaff, retirerStaffDuLook } from './boutique.js';
 import { URL_API, verifierStaff } from './retours.js';
 // rareté de collection de chaque esprit (aspect seulement) et référence publique (signalements) : vérifiées ici
 const RARETES_OK = new Set(['commun', 'rare', 'epique', 'legendaire']);
@@ -62,10 +62,10 @@ export class Hote {
   // l'hôte la fait vérifier par le serveur ; sans preuve valable, la tenue est remplacée par la tenue de base pour tout le monde.
   controlerStaff(de) {
     const p = this.salon.get(de);
-    if (!p || p.look.tenue !== 'staff') return;
+    if (!p || !lookAStaff(p.look)) return; // une pièce de l'ensemble Staff suffit (tenue, casquette, pioche, skin d'arme…)
     const cle = (p.ref || '') + ':' + (p.badge || '');
     if (p.staffOk === cle) return; // déjà vérifié : c'est bien du staff
-    if (!URL_API || !p.ref || !p.badge || p.staffNon === cle) { p.look.tenue = LOOK_DEFAUT.tenue; return; }
+    if (!URL_API || !p.ref || !p.badge || p.staffNon === cle) { retirerStaffDuLook(p.look); return; }
     if (p.staffVerif === cle) return; // vérification en cours
     p.staffVerif = cle;
     verifierStaff([{ ref: p.ref, badge: p.badge }]).then(d => {
@@ -73,7 +73,7 @@ export class Hote {
       if (!q) return;
       if (Array.isArray(d.staff) && d.staff.includes(q.ref)) { q.staffOk = cle; return; }
       q.staffNon = cle;
-      if (q.look.tenue === 'staff') { q.look.tenue = LOOK_DEFAUT.tenue; this.diffuserSalon(); }
+      if (retirerStaffDuLook(q.look)) this.diffuserSalon();
     }).catch(() => { const q = this.salon.get(de); if (q) q.staffVerif = null; }); // serveur injoignable : on ne punit pas un vrai staff
   }
 

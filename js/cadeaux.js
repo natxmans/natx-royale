@@ -2,7 +2,7 @@
 // Le SERVEUR décide de ce qui est livré à qui et note chaque ouverture une seule fois ;
 // le profil garde en plus la liste des cadeaux déjà ouverts (un cadeau n'est jamais donné deux fois).
 // Sans serveur joignable, rien ne change dans le jeu.
-import { objet, sauverProfil, RARETES_COSM, CATEGORIES, appliquerConfigBoutique, ajouterCosmetiquesAdmin, appliquerStaff } from './boutique.js';
+import { objet, sauverProfil, RARETES_COSM, CATEGORIES, appliquerConfigBoutique, ajouterCosmetiquesAdmin, appliquerStaff, CLES_STAFF } from './boutique.js';
 import { enregistrerAjouts } from './modeles.js';
 import { ESPRITS, reglerEspritsDisponibles } from './esprits.js';
 import {
@@ -251,10 +251,12 @@ function majStaff() {
   const p = ctx.profil;
   const r = appliquerStaff(p, !!boite.staff);
   if (!r) return;
-  if (r === 'ajoutee' && equiperStaff) { p.equipe.tenue = 'staff'; equiperStaff = false; }
+  // il vient d'accepter la liaison : on lui met tout l'ensemble tout de suite
+  if (r === 'ajoutee' && equiperStaff) { for (const c of CLES_STAFF) p.equipe[c.split(':')[0]] = 'staff'; equiperStaff = false; }
   sauverProfil(p);
-  if (r === 'ajoutee') { ctx.son('ramasser'); ctx.toast('🛡️ Ton compte est lié au staff : tu as reçu la Tenue Staff ! (Casier → Tenues)', 6000); }
-  else ctx.toast("🛡️ La Tenue Staff a été retirée : ton compte n'est plus lié au staff.", 6000);
+  if (r === 'ajoutee') { ctx.son('ramasser'); ctx.toast('🛡️ Ton compte est lié au staff : tu as reçu l’ensemble Staff complet ! (tenue, casquette, sac, pioche, deltaplane, traînée, salut et skin d’arme, dans ton Casier)', 8000); }
+  else if (r === 'completee') { ctx.son('ramasser'); ctx.toast('🛡️ Ton ensemble Staff est maintenant complet : casquette, sac radio, pioche, deltaplane, traînée, salut et skin d’arme sont dans ton Casier !', 8000); }
+  else ctx.toast("🛡️ L'ensemble Staff a été retiré : ton compte n'est plus lié au staff.", 6000);
   const m = ctx.menus;
   m.surLook();
   if (m.page === 'jouer') m.montrerPerso();

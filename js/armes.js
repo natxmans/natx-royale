@@ -108,6 +108,50 @@ function cloneBlender(objet, rarete) {
   return g;
 }
 
+// ---------- Skins d'armes (cosmétique « arme » de la boutique) ----------
+// Un skin change les matériaux de l'arme tenue en main : la grande coque (corps2, qui porte d'habitude la couleur de la
+// rareté), le corps sombre, les parties en métal et la poignée. La bande « lueur » garde la couleur de la rareté :
+// on reconnaît toujours une arme épique ou légendaire, et la rareté reste écrite dans l'inventaire.
+// lueur = les parties en métal deviennent des lignes lumineuses de cette couleur.
+export const SKINS_ARMES = {
+  bois:     { corps2: '#a8733a', corps: '#5a3a1e', metal: '#c9a25a', poignee: '#3d2712', rugosite: 0.85 },
+  bonbon:   { corps2: '#ff7eb6', corps: '#ffffff', metal: '#ffd1e6', poignee: '#b83a7a', rugosite: 0.5 },
+  jungle:   { corps2: '#5b7a3a', corps: '#2f2a1c', metal: '#3b3324', poignee: '#1f1c12', rugosite: 0.9 },
+  glace:    { corps2: '#d9f1ff', corps: '#7fb6dd', metal: '#ffffff', poignee: '#4a7fa8', metallique: 0.3, rugosite: 0.15 },
+  chrome:   { corps2: '#eef3f8', corps: '#9aa3ad', metal: '#ffffff', poignee: '#3a4048', metallique: 1, rugosite: 0.1 },
+  neon:     { corps2: '#14121f', corps: '#0a0a14', metal: '#22e8ff', poignee: '#07070d', lueur: '#22e8ff' },
+  lave:     { corps2: '#2b1b1b', corps: '#120d0d', metal: '#ff6a00', poignee: '#0b0808', lueur: '#ff6a00' },
+  galaxie:  { corps2: '#3a2390', corps: '#140c33', metal: '#ff6ef0', poignee: '#0c0722', lueur: '#ff6ef0' },
+  or:       { corps2: '#e8b923', corps: '#b8860b', metal: '#fff1a8', poignee: '#5a4210', metallique: 0.95, rugosite: 0.22 },
+  natx2k27: { corps2: '#1d1d33', corps: '#0a0a14', metal: '#ff2e88', poignee: '#07070d', lueur: '#ff2e88' },
+  staff:    { corps2: '#11161c', corps: '#0b0f13', metal: '#14e0a2', poignee: '#07090c', lueur: '#14e0a2' },
+};
+const PARTIES_SKIN = { rarete: 'corps2', arme_sombre: 'corps', bois: 'corps2', bois_fonce: 'corps', caoutchouc: 'poignee', metal_clair: 'metal', acier: 'metal' };
+const matsSkins = new Map();
+function materiauSkin(mat, id, s) {
+  const partie = PARTIES_SKIN[mat.name];
+  if (!partie) return mat;
+  const cle = id + ':' + mat.name;
+  if (!matsSkins.has(cle)) {
+    let m;
+    if (partie === 'metal' && s.lueur) m = new THREE.MeshBasicMaterial({ color: new THREE.Color(s.lueur).multiplyScalar(1.5), toneMapped: false });
+    else {
+      // l'acier un peu plus sombre que le métal clair, pour garder du relief
+      const coul = new THREE.Color(s[partie]).multiplyScalar(mat.name === 'acier' ? 0.8 : 1);
+      m = new THREE.MeshStandardMaterial({ color: coul, metalness: s.metallique ?? (partie === 'metal' ? 0.7 : 0.15), roughness: s.rugosite ?? 0.45 });
+    }
+    m.name = mat.name;
+    matsSkins.set(cle, m);
+  }
+  return matsSkins.get(cle);
+}
+export function habillerArme(modele, id) {
+  const s = SKINS_ARMES[id];
+  if (!s || !modele) return modele;
+  modele.traverse(o => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(m => materiauSkin(m, id, s)) : materiauSkin(o.material, id, s); });
+  return modele;
+}
+
 // ---------- Modèles 3D en cubes (secours si le fichier Blender ne charge pas) ----------
 function cube(w, h, d, couleur, x = 0, y = 0, z = 0) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: couleur }));
