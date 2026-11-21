@@ -800,7 +800,7 @@ function creerPersonnageBlender(couleur, nom, numero, look) {
 
 // Ombre, deltaplane, détails cachés de loin, étiquette du nom
 function finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, dos, ch, look, nom, couleur }) {
-  // noms des articulations = noms des pistes des clips d'émotes (emotes_250_v001.glb)
+  // noms des articulations = noms des pistes des clips d'émotes (emotes_250_v002.glb : la v001 perdait les poses tenues, ex. mains sur les hanches)
   racine.name = 'racine'; teteG.name = 'tete';
   JG.hanche.name = 'hanche_G'; JD.hanche.name = 'hanche_D'; JG.genou.name = 'genou_G'; JD.genou.name = 'genou_D';
   BG.epaule.name = 'epaule_G'; BD.epaule.name = 'epaule_D'; BG.coude.name = 'coude_G'; BD.coude.name = 'coude_D';
@@ -1036,16 +1036,22 @@ function poseEmote(u, id, t) {
 }
 
 // Émotes des 250 : clips d'animation livrés (pistes sur les articulations nommées ci-dessus)
+// Les clips d'émotes sont appliqués à la main, piste par piste, à chaque image (sans AnimationMixer) :
+// le mixer de three.js ne réécrit pas une valeur qui n'a pas changé depuis l'image d'avant, alors que remettre()
+// ramène le perso au repos à chaque image. Résultat : une pose TENUE (mains sur les hanches) disparaissait.
 function jouerClipEmote(g, u, clip, f) {
-  if (!u.mixer) u.mixer = new THREE.AnimationMixer(g);
-  if (!u.action250 || u.action250.getClip() !== clip) {
-    if (u.action250) u.action250.stop();
-    u.action250 = u.mixer.clipAction(clip);
-    u.action250.play();
+  if (u.clip250 !== clip) {
+    u.clip250 = clip;
+    u.pistes250 = [];
+    for (const piste of clip.tracks) {
+      const { nodeName, propertyName } = THREE.PropertyBinding.parseTrackName(piste.name);
+      const noeud = g.getObjectByName(nodeName);
+      if (noeud && (propertyName === 'quaternion' || propertyName === 'position')) u.pistes250.push({ noeud, prop: propertyName, interp: piste.createInterpolant() });
+    }
   }
   const d = clip.duration || f.duree || 1;
-  u.action250.time = f.boucle ? u.emoteT % d : Math.min(u.emoteT, d);
-  u.mixer.update(0);
+  const t = f.boucle ? u.emoteT % d : Math.min(u.emoteT, d);
+  for (const p of u.pistes250) p.noeud[p.prop].fromArray(p.interp.evaluate(t));
 }
 
 function remettre(u) {
@@ -1073,7 +1079,7 @@ export function animerPersonnage(g, dt, etat) {
     else poseEmote(u, etat.emote, u.emoteT);
   } else {
     if (u.emote) { u.emote = null; u.mainArme.visible = true; }
-    if (u.action250) { u.action250.stop(); u.action250 = null; }
+    u.clip250 = null;
     if (!etat.auSol) {
       u.jg.rotation.x = 0.5; u.jd.rotation.x = -0.2;
       u.genouG.rotation.x = -0.9; u.genouD.rotation.x = -0.4;

@@ -38,7 +38,7 @@ async function envoyer() {
   if (enCours) { planifier(); return; }
   enCours = true;
   const p = ctx.profil;
-  if (!(p.rev > 0)) p.rev = 1;
+  if (!(p.rev > 0)) { p.rev = 1; try { localStorage.setItem(CLE_PROFIL, JSON.stringify(p)); } catch (e) { /* stockage bloqué */ } }
   try {
     await sauvegarderCompte(p.rev, paquet(p));
     derniereSauvegarde = Date.now(); etat = 'ok';

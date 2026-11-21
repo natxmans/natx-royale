@@ -514,8 +514,8 @@
   {
    "actif": true,
    "categorie": "emote",
-   "fichier": "emotes_250_v001.glb",
-   "fiche": "emotes_250_v001.json",
+   "fichier": "emotes_250_v002.glb",
+   "fiche": "emotes_250_v002.json",
    "objets": [
     "emote_arc_en_ciel_final",
     "emote_bonjour_soleil",

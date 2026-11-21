@@ -30,7 +30,7 @@ import getpass
 import mimetypes
 import threading
 from socketserver import ThreadingMixIn
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 from wsgiref.simple_server import make_server, WSGIServer, WSGIRequestHandler
 
 ICI = os.path.dirname(os.path.abspath(__file__))
@@ -145,6 +145,9 @@ CREATE TABLE IF NOT EXISTS comptes (
   maj_le INTEGER, taille INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS robot_rapports (
   id INTEGER PRIMARY KEY AUTOINCREMENT, cree_le INTEGER NOT NULL, declenche TEXT, resume TEXT NOT NULL, details TEXT);
+CREATE TABLE IF NOT EXISTS robot_recompenses (
+  auteur_id TEXT NOT NULL, cible_id TEXT NOT NULL, cadeau_id INTEGER, pieces INTEGER NOT NULL, cree_le INTEGER NOT NULL,
+  PRIMARY KEY (auteur_id, cible_id));
 """
 CIBLES = {'tous', 'joueur', 'code'}
 STYLES_ANNONCE = {'info', 'evenement', 'alerte'}
@@ -612,10 +615,18 @@ def api_jeu(req, db):
     return 200, etat_jeu(db)
 
 
-# Relais TURN (Cloudflare Realtime) : la clé reste ici, le jeu reçoit des accès valables quelques heures.
-# À régler dans le panneau de l'hébergeur : NATX_TURN_CLE_ID et NATX_TURN_JETON (jamais dans Git).
+# Relais TURN : pour jouer entre potes en 4G ou derrière une box stricte. La clé reste ici, sur le serveur ;
+# le jeu ne reçoit que des accès temporaires. À régler dans le panneau de l'hébergeur (jamais dans Git).
+# Trois réglages possibles, le premier trouvé est utilisé :
+#   Metered (compte gratuit sans carte bancaire) : NATX_TURN_APP (nom de l'appli Metered) + NATX_TURN_JETON (sa « Secret Key »)
+#   Relais à identifiants fixes                  : NATX_TURN_URLS (séparées par des virgules) + NATX_TURN_UTILISATEUR + NATX_TURN_MDP
+#   Cloudflare Realtime (demande une carte)      : NATX_TURN_CLE_ID + NATX_TURN_JETON
 TURN_API = os.environ.get('NATX_TURN_API', 'https://rtc.live.cloudflare.com/v1/turn/keys')
-_relais = {'serveurs': None, 'fin': 0}
+TURN_API_METERED = os.environ.get('NATX_TURN_API_METERED', 'https://{app}.metered.live/api/v1/turn')
+DUREE_RELAIS = 12 * 3600
+# un accès Metered tout neuf met jusqu'à 2 minutes à marcher partout : on le prépare à l'avance et on attend avant de le donner
+ATTENTE_RELAIS = {'metered': 150}
+_relais = {'serveurs': None, 'fin': 0, 'suivants': None, 'suivants_le': 0, 'suivants_fin': 0, 'echec_le': 0}
 _verrou_relais = threading.Lock()
 
 
@@ -631,33 +642,86 @@ def nettoyer_relais(brut):
         if not urls:
             continue
         e = {'urls': urls}
-        if isinstance(s.get('username'), str) and isinstance(s.get('credential'), str):
+        if isinstance(s.get('username'), str) and isinstance(s.get('credential'), str) and s['username'] and s['credential']:
             e['username'], e['credential'] = s['username'][:200], s['credential'][:200]
         propres.append(e)
-    return propres
+    return propres[:12]
+
+
+def fournisseur_relais():
+    """Quel relais est réglé : 'metered', 'fixe', 'cloudflare' ou None."""
+    e = os.environ
+    if e.get('NATX_TURN_APP') and e.get('NATX_TURN_JETON'):
+        return 'metered'
+    if e.get('NATX_TURN_URLS') and e.get('NATX_TURN_UTILISATEUR') and e.get('NATX_TURN_MDP'):
+        return 'fixe'
+    if e.get('NATX_TURN_CLE_ID') and e.get('NATX_TURN_JETON'):
+        return 'cloudflare'
+    return None
+
+
+def appel_json(url, methode='GET', corps=None, entetes=None):
+    """Petit appel HTTPS vers le fournisseur du relais (remplacé par un faux dans les tests)."""
+    import urllib.request
+    demande = urllib.request.Request(url, data=json.dumps(corps).encode() if corps is not None else None,
+                                     headers={'Content-Type': 'application/json', **(entetes or {})}, method=methode)
+    with urllib.request.urlopen(demande, timeout=6) as r:
+        return json.loads(r.read().decode('utf-8'))
+
+
+def acces_relais(fournisseur):
+    """Demande au fournisseur des accès valables DUREE_RELAIS secondes → liste propre de serveurs (jamais la clé)."""
+    jeton = os.environ.get('NATX_TURN_JETON', '')
+    if fournisseur == 'metered':
+        app = os.environ.get('NATX_TURN_APP', '').strip().lower()
+        if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,60}', app):
+            raise ValueError('NATX_TURN_APP : nom d\'appli Metered invalide')
+        base = TURN_API_METERED.format(app=app)
+        acces = appel_json(base + '/credential?secretKey=' + quote(jeton, safe=''), 'POST', {'expiryInSeconds': DUREE_RELAIS, 'label': 'natx-royale'})
+        cle = acces.get('apiKey') if isinstance(acces, dict) else None
+        if not isinstance(cle, str) or not cle:
+            raise ValueError('Metered : pas de clé d\'accès dans la réponse')
+        serveurs = nettoyer_relais(appel_json(base + '/credentials?apiKey=' + quote(cle, safe='')))
+    else:
+        d = appel_json(f"{TURN_API}/{os.environ.get('NATX_TURN_CLE_ID', '')}/credentials/generate-ice-servers", 'POST', {'ttl': DUREE_RELAIS},
+                       {'Authorization': 'Bearer ' + jeton})
+        serveurs = nettoyer_relais(d.get('iceServers') if isinstance(d, dict) else None)
+    if not any('username' in x for x in serveurs):
+        raise ValueError('le fournisseur n\'a renvoyé aucun relais utilisable')
+    return serveurs
 
 
 def serveurs_relais():
-    cle, jeton = os.environ.get('NATX_TURN_CLE_ID', ''), os.environ.get('NATX_TURN_JETON', '')
-    if not cle or not jeton:
+    f = fournisseur_relais()
+    if not f:
         return None
+    if f == 'fixe':  # identifiants fixes : rien à demander (ils sont alors visibles par les joueurs, c'est inévitable)
+        urls = [u.strip() for u in os.environ.get('NATX_TURN_URLS', '').split(',') if u.strip()]
+        return nettoyer_relais([{'urls': urls, 'username': os.environ.get('NATX_TURN_UTILISATEUR', ''), 'credential': os.environ.get('NATX_TURN_MDP', '')}])
     t = maintenant()
     with _verrou_relais:
-        if _relais['serveurs'] is not None and _relais['fin'] - t > 2 * 3600:
-            return _relais['serveurs']
-        import urllib.request
-        duree = 12 * 3600
-        demande = urllib.request.Request(f'{TURN_API}/{cle}/credentials/generate-ice-servers', data=json.dumps({'ttl': duree}).encode(),
-                                         headers={'Authorization': 'Bearer ' + jeton, 'Content-Type': 'application/json'}, method='POST')
+        r = _relais
+        valables = lambda: r['serveurs'] if r['serveurs'] is not None and r['fin'] > t else None
+        # l'accès préparé à l'avance devient l'accès courant quand il a eu le temps de marcher partout
+        if r['suivants'] is not None and t - r['suivants_le'] >= ATTENTE_RELAIS.get(f, 0):
+            r['serveurs'], r['fin'], r['suivants'] = r['suivants'], r['suivants_fin'], None
+        if r['serveurs'] is not None and r['fin'] - t > 2 * 3600:
+            return r['serveurs']
+        if r['suivants'] is not None:
+            return valables() or r['suivants']
+        if t - r['echec_le'] < 60:  # le fournisseur vient de refuser : on ne le rappelle pas à chaque joueur
+            return valables() or []
         try:
-            with urllib.request.urlopen(demande, timeout=6) as r:
-                d = json.loads(r.read().decode('utf-8'))
-        except Exception as e:  # le jeu se débrouillera sans relais
-            print('Relais TURN indisponible :', repr(e), file=sys.stderr)
-            return _relais['serveurs'] or []
-        _relais['serveurs'] = nettoyer_relais(d.get('iceServers'))
-        _relais['fin'] = t + duree
-        return _relais['serveurs']
+            nouveaux = acces_relais(f)
+        except Exception as e:  # le jeu se débrouillera sans relais (on n'écrit jamais l'adresse appelée : elle contient la clé)
+            print('Relais TURN indisponible :', type(e).__name__, getattr(e, 'code', ''), file=sys.stderr)
+            r['echec_le'] = t
+            return valables() or []
+        if valables() and ATTENTE_RELAIS.get(f):
+            r['suivants'], r['suivants_le'], r['suivants_fin'] = nouveaux, t, t + DUREE_RELAIS
+        else:
+            r['serveurs'], r['fin'] = nouveaux, t + DUREE_RELAIS
+        return r['serveurs']
 
 
 def api_relais(req, db):

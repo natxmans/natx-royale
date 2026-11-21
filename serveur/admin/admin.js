@@ -456,13 +456,14 @@ function blocRapport(r, ouvert) {
   const sanc = (d.sanctions || []).map(s => el('li', {}, pastille(s.type === 'avertissement' ? 'avertissement' : `suspension ${s.heures} h`, 'rouge'), ' ',
     s.qui ? personne(s.qui) : s.joueur, ` — règle ${s.regle}`));
   const regarder = (d.a_regarder || []).map(t => el('li', {}, t));
+  const recomp = (d.recompenses || []).map(x => el('li', {}, x.qui ? personne(x.qui) : x.joueur, ` : +${x.pieces} pièces (il avait signalé ${x.tricheur})`));
   const spam = (av.spam || []).map(a => el('li', {}, `Avis #${a.id} caché (${a.raison}) : « ${a.texte} »`));
   const etude = (av.a_etudier || []).map(a => el('li', {}, `Avis #${a.id} (${a.categorie}, ${a.votes} votes) → À étudier : « ${a.texte} »`));
   const top = (av.top || []).map(a => el('li', {}, `${a.votes} 👍 · ${a.categorie} · « ${a.texte} »`));
   const section = (titre, items) => (items.length ? [el('h3', {}, titre), el('ul', { class: 'liste-simple' }, items)] : []);
   return el('details', { class: 'rapport-robot', open: ouvert ? true : null },
     el('summary', {}, el('b', {}, date(r.cree_le)), ' · ', el('span', { class: 'petit' }, r.declenche || ''), el('div', {}, r.resume)),
-    ...section('👀 À regarder par un humain', regarder), ...section('⛔ Sanctions données', sanc), ...section('🚩 Signalements', sig),
+    ...section('👀 À regarder par un humain', regarder), ...section('⛔ Sanctions données', sanc), ...section('🎁 Récompenses (signalement d’un vrai tricheur)', recomp), ...section('🚩 Signalements', sig),
     ...section('🧹 Avis cachés (spam)', spam), ...section('📌 Avis passés « À étudier »', etude), ...section('🏆 Avis les plus votés', top),
     !regarder.length && !sanc.length && !sig.length && !spam.length && !etude.length ? el('p', { class: 'vide' }, 'Rien à signaler ce jour-là.') : null);
 }
@@ -472,9 +473,10 @@ async function vueRobot() {
   const actif = el('input', { type: 'checkbox', checked: d.reglages.actif, disabled: !peutRegler });
   const suspendre = el('input', { type: 'checkbox', checked: d.reglages.peut_suspendre, disabled: !peutRegler });
   const heure = choix(Object.fromEntries(Array.from({ length: 24 }, (_, h) => [h, `${h} h`])), d.reglages.heure, { disabled: !peutRegler });
+  const recompense = el('input', { type: 'number', min: 0, max: 2000, step: 50, value: d.reglages.recompense, disabled: !peutRegler });
   const enregistrer = peutRegler ? el('button', { class: 'bouton principal' }, 'Enregistrer') : null;
   if (enregistrer) enregistrer.onclick = async () => {
-    if (await action(enregistrer, () => api('POST', '/robot/reglages', { actif: actif.checked, peut_suspendre: suspendre.checked, heure: +heure.value }), 'Réglages du robot enregistrés.')) recharger();
+    if (await action(enregistrer, () => api('POST', '/robot/reglages', { actif: actif.checked, peut_suspendre: suspendre.checked, heure: +heure.value, recompense: +recompense.value }), 'Réglages du robot enregistrés.')) recharger();
   };
   const lancer = el('button', { class: 'bouton' }, '▶️ Le faire passer maintenant');
   lancer.onclick = async () => { const r = await action(lancer, () => api('POST', '/robot/lancer', {})); if (r) { toast(r.resume); recharger(); } };
@@ -488,11 +490,12 @@ async function vueRobot() {
           el('li', {}, 'Insultes, anti-jeu : la discussion n\'est pas enregistrée, donc il attend que plusieurs joueurs DIFFÉRENTS signalent la même personne.'),
           el('li', {}, 'Pseudo : il cherche les gros mots et les faux « admin / staff ».'),
           el('li', {}, 'Avis : il cache le spam et met « À étudier » les bugs (3 votes) et les idées (5 votes).'),
-          el('li', {}, 'Échelle : avertissement → suspension 24 h → 3 jours. Jamais plus, jamais le staff, une seule sanction par joueur et par jour.')),
+          el('li', {}, 'Échelle : avertissement → suspension 24 h → 3 jours. Jamais plus, jamais le staff, une seule sanction par joueur et par jour.'),
+          el('li', {}, 'Récompense : quand la triche est PROUVÉE par les parties, les joueurs qui l’avaient signalée reçoivent des pièces dans leur boîte de cadeaux (les 5 premiers, une fois par tricheur, 3 fois par semaine au plus, jamais le compte du tricheur lui-même).')),
         el('p', { class: 'aide' }, 'Tu peux lever n\'importe quelle sanction du robot dans ⛔ Sanctions. Tout ce qu\'il fait est dans le journal d\'audit (catégorie « robot »).'),
         el('div', { class: 'actions' }, lancer)),
       panneau('⚙️ Réglages', el('label', { class: 'ligne' }, actif, ' Robot allumé'), el('label', { class: 'ligne' }, suspendre, ' Il a le droit de suspendre (sinon : seulement des avertissements)'),
-        champ('Heure du passage', heure), enregistrer ? el('div', { class: 'actions' }, enregistrer) : el('p', { class: 'aide' }, 'Seuls les admins et super admins changent ces réglages.'),
+        champ('Heure du passage', heure), champ('Récompense pour avoir signalé un vrai tricheur (pièces, 0 = aucune)', recompense), enregistrer ? el('div', { class: 'actions' }, enregistrer) : el('p', { class: 'aide' }, 'Seuls les admins et super admins changent ces réglages.'),
         el('h3', {}, '📜 Règles qu\'il applique'), el('ol', { class: 'liste-simple' }, d.regles.map(r => el('li', {}, r.titre))))),
     panneau('🗓️ Rapports (les 30 derniers)', d.rapports.length ? d.rapports.map((r, i) => blocRapport(r, i === 0)) : el('p', { class: 'vide' }, 'Le robot n\'est pas encore passé.')),
   ];
@@ -588,7 +591,7 @@ async function vueCadeaux() {
   if (PERM('cadeaux.creer')) blocs.push(formCadeau(cat, d.expediteur_defaut));
   const recherche = el('input', { type: 'search', placeholder: 'Titre, expéditeur, code cadeau, code joueur ou pseudo…', value: etatCadeaux.q, maxlength: 40 });
   let t; recherche.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { etatCadeaux.q = recherche.value; etatCadeaux.page = 0; recharger(); }, 400); });
-  const origine = choix({ '': 'Toutes les origines', admin: 'Envoyés par l\'équipe', cargaison: 'Gagnés dans une cargaison' }, etatCadeaux.origine,
+  const origine = choix({ '': 'Toutes les origines', admin: 'Envoyés par l\'équipe', cargaison: 'Gagnés dans une cargaison', robot: 'Récompenses du robot' }, etatCadeaux.origine,
     { onchange: e => { etatCadeaux.origine = e.target.value; recharger(); } });
   const lignes = d.cadeaux.map(c => {
     const pour = c.cible === 'tous' ? '🌍 Tout le monde' : c.cible === 'joueur' ? personne(c.joueur_qui, c.joueur_code) : `🔑 ${c.code}${c.max_utilisations ? ` (max ${c.max_utilisations})` : ''}`;
@@ -1121,7 +1124,7 @@ async function vueServeur() {
     panneau('🧩 Services', el('ul', { class: 'liste-simple' },
       el('li', {}, 'Base de données : ', ok(d.services.base)), el('li', {}, 'Catalogue des objets : ', ok(d.services.catalogue)),
       el('li', {}, 'Sauvegarde automatique (moins de 2 jours) : ', ok(d.services.sauvegarde_auto)),
-      el('li', {}, 'Relais pour la 4G (TURN Cloudflare) : ', d.services.relais_turn ? pastille('configuré', 'vert') : pastille('pas configuré (compte Cloudflare à créer)', 'jaune')))),
+      el('li', {}, 'Relais pour la 4G (TURN) : ', d.services.relais_turn ? pastille('configuré (' + ({ metered: 'Metered', fixe: 'identifiants fixes', cloudflare: 'Cloudflare' }[d.services.relais_fournisseur] || '?') + ')', 'vert') : pastille('pas configuré (voir LISEZMOI du serveur)', 'jaune')))),
     mes.length ? panneau('📈 Requêtes et temps de réponse (48 dernières heures)', barres([
       { nom: 'Requêtes', valeurs: mes.map(m => ({ x: m.heure.replace(' ', 'T'), y: m.requetes })) },
       { nom: 'Refusées (4xx)', valeurs: mes.map(m => ({ x: m.heure.replace(' ', 'T'), y: m.refus })) },

@@ -930,7 +930,7 @@ def admin_serveur(req, db):
                  'joueurs': un(db, 'SELECT COUNT(*) FROM joueurs')},
         'sauvegardes': {'nb': len(sauv), 'derniere': sauv[0] if sauv else None,
                         'derniere_auto_il_y_a_h': round((time.time() - autos[0]['cree_le']) / 3600, 1) if autos else None},
-        'services': {'base': _controle['resultat'] == 'ok', 'relais_turn': bool(os.environ.get('NATX_TURN_CLE_ID') and os.environ.get('NATX_TURN_JETON')),
+        'services': {'base': _controle['resultat'] == 'ok', 'relais_turn': bool(api.fournisseur_relais()), 'relais_fournisseur': api.fournisseur_relais(),
                      'catalogue': bool(cat().get('objets')), 'sauvegarde_auto': bool(autos and time.time() - autos[0]['cree_le'] < 2 * 86400)},
         'temps': {'p95_ms': p95, 'moyen_heure_ms': round(cette_heure['total_ms'] / cette_heure['requetes']) if cette_heure else None,
                   'max_heure_ms': cette_heure['max_ms'] if cette_heure else None, 'echantillon': len(durees)},
@@ -1228,7 +1228,7 @@ def admin_cadeaux(req, db):
     session_admin(req, db, permission='cadeaux.voir')
     q = nettoyer(req.query.get('q'), 40)
     conds, params = ['1=1'], []
-    if req.query.get('origine') in ('admin', 'cargaison'):
+    if req.query.get('origine') in ('admin', 'cargaison', 'robot'):
         conds.append('c.origine=?'); params.append(req.query['origine'])
     if q:
         hexa = re.sub(r'[^0-9a-f]', '', q.lower())

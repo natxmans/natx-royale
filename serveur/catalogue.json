@@ -6379,7 +6379,7 @@
    "serie": 1,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_salut_cosmique",
    "triangles": null
   },
@@ -6394,7 +6394,7 @@
    "serie": 2,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_pas_du_pingouin",
    "triangles": null
   },
@@ -6409,7 +6409,7 @@
    "serie": 3,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_reglage_express",
    "triangles": null
   },
@@ -6424,7 +6424,7 @@
    "serie": 4,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_petit_jardin",
    "triangles": null
   },
@@ -6439,7 +6439,7 @@
    "serie": 5,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_etoile_filante",
    "triangles": null
   },
@@ -6454,7 +6454,7 @@
    "serie": 6,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_pose_du_samourai",
    "triangles": null
   },
@@ -6469,7 +6469,7 @@
    "serie": 7,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_brume_mysterieuse",
    "triangles": null
   },
@@ -6484,7 +6484,7 @@
    "serie": 8,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_danse_du_corsaire",
    "triangles": null
   },
@@ -6499,7 +6499,7 @@
    "serie": 9,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_vague_oceane",
    "triangles": null
   },
@@ -6514,7 +6514,7 @@
    "serie": 10,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_plongee_imaginaire",
    "triangles": null
   },
@@ -6529,7 +6529,7 @@
    "serie": 11,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_sommet_atteint",
    "triangles": null
   },
@@ -6544,7 +6544,7 @@
    "serie": 12,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_champignon_disco",
    "triangles": null
   },
@@ -6559,7 +6559,7 @@
    "serie": 13,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_lucioles_en_fete",
    "triangles": null
   },
@@ -6574,7 +6574,7 @@
    "serie": 14,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_decollage_comete",
    "triangles": null
   },
@@ -6589,7 +6589,7 @@
    "serie": 15,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_joystick_retro",
    "triangles": null
   },
@@ -6604,7 +6604,7 @@
    "serie": 16,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_marche_du_desert",
    "triangles": null
   },
@@ -6619,7 +6619,7 @@
    "serie": 17,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_danse_des_marees",
    "triangles": null
   },
@@ -6634,7 +6634,7 @@
    "serie": 18,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_feuille_au_vent",
    "triangles": null
   },
@@ -6649,7 +6649,7 @@
    "serie": 19,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_gardien_du_phare",
    "triangles": null
   },
@@ -6664,7 +6664,7 @@
    "serie": 20,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_potion_parfaite",
    "triangles": null
   },
@@ -6679,7 +6679,7 @@
    "serie": 21,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_engrenage_humain",
    "triangles": null
   },
@@ -6694,7 +6694,7 @@
    "serie": 22,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_livraison_reussie",
    "triangles": null
   },
@@ -6709,7 +6709,7 @@
    "serie": 23,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_patinage_fantome",
    "triangles": null
   },
@@ -6724,7 +6724,7 @@
    "serie": 24,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_solo_de_l_espace",
    "triangles": null
   },
@@ -6739,7 +6739,7 @@
    "serie": 25,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_reveil_des_ruines",
    "triangles": null
   },
@@ -6754,7 +6754,7 @@
    "serie": 26,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_eclat_cristallin",
    "triangles": null
   },
@@ -6769,7 +6769,7 @@
    "serie": 27,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_reve_lunaire",
    "triangles": null
   },
@@ -6784,7 +6784,7 @@
    "serie": 28,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_pas_volcanique",
    "triangles": null
   },
@@ -6799,7 +6799,7 @@
    "serie": 29,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_salut_saphir",
    "triangles": null
   },
@@ -6814,7 +6814,7 @@
    "serie": 30,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_pose_du_corsaire",
    "triangles": null
   },
@@ -6829,7 +6829,7 @@
    "serie": 31,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_petit_dragon",
    "triangles": null
   },
@@ -6844,7 +6844,7 @@
    "serie": 32,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_meteore_express",
    "triangles": null
   },
@@ -6859,7 +6859,7 @@
    "serie": 33,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_danse_pixel",
    "triangles": null
   },
@@ -6874,7 +6874,7 @@
    "serie": 34,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_quatre_saisons",
    "triangles": null
   },
@@ -6889,7 +6889,7 @@
    "serie": 35,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_carte_au_tresor",
    "triangles": null
   },
@@ -6904,7 +6904,7 @@
    "serie": 36,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_coucou_mecanique",
    "triangles": null
   },
@@ -6919,7 +6919,7 @@
    "serie": 37,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_nuage_de_joie",
    "triangles": null
   },
@@ -6934,7 +6934,7 @@
    "serie": 38,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_palette_vivante",
    "triangles": null
   },
@@ -6949,7 +6949,7 @@
    "serie": 39,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_vague_de_corail",
    "triangles": null
   },
@@ -6964,7 +6964,7 @@
    "serie": 40,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_satellite_en_orbite",
    "triangles": null
   },
@@ -6979,7 +6979,7 @@
    "serie": 41,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_citron_presse",
    "triangles": null
   },
@@ -6994,7 +6994,7 @@
    "serie": 42,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_robot_arroseur",
    "triangles": null
   },
@@ -7009,7 +7009,7 @@
    "serie": 43,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_surf_imaginaire",
    "triangles": null
   },
@@ -7024,7 +7024,7 @@
    "serie": 44,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_valse_des_vagues",
    "triangles": null
   },
@@ -7039,7 +7039,7 @@
    "serie": 45,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_lanterne_magique",
    "triangles": null
   },
@@ -7054,7 +7054,7 @@
    "serie": 46,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_reparation_eclair",
    "triangles": null
   },
@@ -7069,7 +7069,7 @@
    "serie": 47,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_flocon_tourbillonnant",
    "triangles": null
   },
@@ -7084,7 +7084,7 @@
    "serie": 48,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_bonjour_soleil",
    "triangles": null
   },
@@ -7099,7 +7099,7 @@
    "serie": 49,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_regard_stellaire",
    "triangles": null
   },
@@ -7114,7 +7114,7 @@
    "serie": 50,
    "besoin": "animation",
    "livre": true,
-   "fichier": "emotes_250_v001.glb",
+   "fichier": "emotes_250_v002.glb",
    "objet": "emote_arc_en_ciel_final",
    "triangles": null
   }

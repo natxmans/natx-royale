@@ -6,7 +6,8 @@ Ce qu'il fait à chaque passage :
      l'ont signalé, puis décide : sanction selon l'échelle des règles, « à vérifier par un humain », ou rejet.
   2. Avis : il cache le spam (trop court, liens, lettres répétées, doublons, gros mots sans contenu)
      et met « À étudier » les bugs et idées qui ont beaucoup de votes.
-  3. Il écrit un rapport (panel → 🤖 Robot) et note chaque action au journal d'audit (catégorie « robot »).
+  3. Triche PROUVÉE par les parties : les joueurs qui l'avaient signalée reçoivent des pièces (boîte de cadeaux).
+  4. Il écrit un rapport (panel → 🤖 Robot) et note chaque action au journal d'audit (catégorie « robot »).
 
 Ses limites (voulues) : il ne sanctionne jamais un compte du staff ; au plus 1 sanction par joueur et par passage ;
 jamais plus de 3 jours de suspension ; rien de définitif ; un admin peut lever n'importe laquelle de ses sanctions.
@@ -26,7 +27,9 @@ from api import Erreur, maintenant, code_court
 
 REGLES = {1: 'Respecte les autres', 2: 'Pas de triche', 3: 'Les bugs, on les signale', 4: 'Un pseudo correct', 5: "Pas d'anti-jeu",
           6: 'Une discussion propre', 7: 'Ta vie privée', 8: 'Ton compte est à toi', 9: 'Des signalements honnêtes', 10: 'Le staff'}
-REGLAGES_DEFAUT = {'actif': True, 'heure': 7, 'peut_suspendre': True}
+REGLAGES_DEFAUT = {'actif': True, 'heure': 7, 'peut_suspendre': True, 'recompense': 300}  # recompense = pièces offertes (0 = aucune)
+MAX_RECOMPENSES_PAR_TRICHEUR = 5  # les 5 premiers joueurs qui l'ont signalé
+MAX_RECOMPENSES_PAR_SEMAINE = 3  # par joueur qui signale
 P = '🤖 '  # tout ce que le robot écrit commence par ce signe
 FENETRE = 14 * 86400  # on compte les signalements des 14 derniers jours
 HISTORIQUE = 60 * 86400  # sanctions des 60 derniers jours pour savoir si c'est la 1re fois
@@ -155,7 +158,8 @@ def pseudos_de(db, jid):
 
 
 def decider(db, jid, motif, sigs, cfg):
-    """→ (statut, note, sanction) ; sanction = (règle, phrase pour le joueur) ou None."""
+    """→ (statut, note, sanction) ; sanction = (règle, phrase pour le joueur) ou None.
+    Un 3e élément 'prouve' = triche prouvée par les parties (ceux qui l'ont signalé sont récompensés)."""
     n = nb_signaleurs(db, jid, motif)
     vieux = min(s['cree_le'] for s in sigs) < maintenant() - FENETRE
     qui = f'{n} joueur(s) différent(s) en 14 jours'
@@ -163,7 +167,7 @@ def decider(db, jid, motif, sigs, cfg):
         a = analyser_joueur(db, jid, [s['partie_id'] for s in sigs])
         if a['preuves']:
             return 'traite', f"Triche prouvée : {' ; '.join(a['preuves'])}. Signalé par {qui}.", \
-                (2, f"tes parties montrent des résultats impossibles ({a['preuves'][0]}).")
+                (2, f"tes parties montrent des résultats impossibles ({a['preuves'][0]}).", 'prouve')
         if n >= 3 and a['indices']:
             return 'traite', f"Signalé par {qui} + résultats suspects : {' ; '.join(a['indices'])}.", \
                 (2, "plusieurs joueurs t'ont signalé pour triche et tes parties ont des résultats suspects.")
@@ -225,6 +229,48 @@ def sanctionner(db, jid, regle, phrase, cfg):
     return {'id': cur.lastrowid, 'type': type_, 'heures': heures, 'regle': regle, 'joueur': code_court(jid), 'qui': gestion.qui(db, jid)}
 
 
+def recompenser(db, jid, sigs, cfg, rapport):
+    """Triche PROUVÉE par les parties (pas seulement « plusieurs signalements ») : les joueurs qui l'avaient signalé
+    reçoivent des pièces dans leur boîte de cadeaux. Garde-fous contre la triche à la récompense :
+    une seule fois par (joueur qui signale, tricheur) ; pas le tricheur ni quelqu'un de la même adresse internet que lui
+    (son 2e compte) ; une seule personne par adresse ; les 5 premiers seulement ; 3 récompenses par joueur et par semaine."""
+    montant = cfg['recompense']
+    if montant <= 0:
+        return 0
+    t = maintenant()
+    ip_de = lambda j: (db.execute('SELECT ip_hash FROM joueurs WHERE id=?', (j,)).fetchone() or {'ip_hash': None})['ip_hash']
+    ip_tricheur = ip_de(jid)
+    # ceux du groupe traité maintenant + ceux que le robot avait rejetés avant d'avoir la preuve (ils avaient raison)
+    auteurs = [s['auteur_id'] for s in sigs] + [l['auteur_id'] for l in db.execute(
+        """SELECT auteur_id FROM signalements WHERE cible_id=? AND motif='triche' AND cree_le>? AND statut='rejete' AND traite_par IS NULL
+        ORDER BY id""", (jid, t - FENETRE))]
+    ips, n = set(), 0
+    for a in dict.fromkeys(auteurs):
+        if n >= MAX_RECOMPENSES_PAR_TRICHEUR:
+            break
+        ip = ip_de(a)
+        if a == jid or (ip and (ip == ip_tricheur or ip in ips)):
+            continue
+        if db.execute('SELECT 1 FROM robot_recompenses WHERE auteur_id=? AND cible_id=?', (a, jid)).fetchone():
+            continue
+        if db.execute('SELECT COUNT(*) FROM robot_recompenses WHERE auteur_id=? AND cree_le>?', (a, t - 7 * 86400)).fetchone()[0] >= MAX_RECOMPENSES_PAR_SEMAINE:
+            continue
+        if api.sanction_active(db, a, ('suspension', 'cadeaux')):
+            continue
+        cur = db.execute("""INSERT INTO cadeaux(titre, message, pieces, objets, cible, joueur_id, actif, cree_le, expediteur, origine)
+            VALUES (?,?,?, '[]', 'joueur', ?, 1, ?, ?, 'robot')""",
+                         ('🕵️ Bien vu, merci !', "Ton signalement a aidé à attraper un vrai tricheur. Voici ta récompense. Continue à signaler seulement ce que tu vois vraiment.",
+                          montant, a, t, '🤖 Robot modérateur'))
+        db.execute('INSERT INTO robot_recompenses(auteur_id, cible_id, cadeau_id, pieces, cree_le) VALUES (?,?,?,?,?)', (a, jid, cur.lastrowid, montant, t))
+        api.journaliser(db, None, f'{P}robot : récompense de {montant} pièces pour {code_court(a)} (signalement d\'un tricheur prouvé)', 'robot', 'joueur:' + a,
+                        {'cadeau': cur.lastrowid, 'tricheur': code_court(jid)})
+        rapport['recompenses'].append({'joueur': code_court(a), 'qui': gestion.qui(db, a), 'pieces': montant, 'tricheur': code_court(jid)})
+        if ip:
+            ips.add(ip)
+        n += 1
+    return n
+
+
 def traiter_signalements(db, cfg, rapport):
     lignes = db.execute(f"""SELECT * FROM signalements WHERE statut='nouveau'
         OR (statut='en_cours' AND traite_par IS NULL AND note LIKE '{P}%') ORDER BY id""").fetchall()
@@ -256,11 +302,15 @@ def traiter_signalements(db, cfg, rapport):
             if jid in deja:
                 note += ' Déjà sanctionné aujourd\'hui pour autre chose : pas de 2e sanction.'
             else:
-                fait = sanctionner(db, jid, *sanction, cfg)
+                fait = sanctionner(db, jid, sanction[0], sanction[1], cfg)
                 if fait:
                     deja.add(jid)
                     note += ' → ' + ('avertissement' if fait['type'] == 'avertissement' else f"suspension {fait['heures']} h") + '.'
                     rapport['sanctions'].append(fait)
+                    if len(sanction) > 2:  # triche prouvée : merci à ceux qui l'ont signalé
+                        n_rec = recompenser(db, jid, sigs, cfg, rapport)
+                        if n_rec:
+                            note += f' {n_rec} joueur(s) récompensé(s) pour le signalement.'
                 else:
                     note += ' Déjà suspendu en ce moment : rien de plus.'
         change = [fermer(s, statut, note) for s in sigs]
@@ -335,14 +385,14 @@ def traiter_avis(db, cfg, rapport):
 # ================================================================ un passage complet
 def passer(db, declenche='auto'):
     cfg = reglages(db)
-    rapport = {'signalements': [], 'sanctions': [], 'a_regarder': [], 'avis': {'spam': [], 'a_etudier': [], 'nouveaux': {}, 'top': []}}
+    rapport = {'signalements': [], 'sanctions': [], 'recompenses': [], 'a_regarder': [], 'avis': {'spam': [], 'a_etudier': [], 'nouveaux': {}, 'top': []}}
     db.execute('BEGIN IMMEDIATE')
     try:
         traiter_signalements(db, cfg, rapport)
         surveiller_parties(db, rapport)
         traiter_avis(db, cfg, rapport)
         nb_sig = sum(len(s.get('ids', [1])) for s in rapport['signalements'])
-        resume = (f"{nb_sig} signalement(s) traité(s), {len(rapport['sanctions'])} sanction(s), "
+        resume = (f"{nb_sig} signalement(s) traité(s), {len(rapport['sanctions'])} sanction(s), {len(rapport['recompenses'])} récompense(s), "
                   f"{len(rapport['a_regarder'])} chose(s) à regarder par un humain, "
                   f"{sum(rapport['avis']['nouveaux'].values())} avis en 24 h ({len(rapport['avis']['spam'])} caché(s) comme spam, "
                   f"{len(rapport['avis']['a_etudier'])} passé(s) « À étudier »).")
@@ -405,7 +455,8 @@ def admin_robot_reglages(req, db):
     d = req.json()
     avant = reglages(db)
     apres = {'actif': bool(d.get('actif', avant['actif'])), 'peut_suspendre': bool(d.get('peut_suspendre', avant['peut_suspendre'])),
-             'heure': gestion.entier(d.get('heure'), 0, 23, avant['heure'])}
+             'heure': gestion.entier(d.get('heure'), 0, 23, avant['heure']),
+             'recompense': gestion.entier(d.get('recompense'), 0, 2000, avant['recompense'])}
     api.ecrire_reglage(db, 'robot', apres)
     api.journaliser(db, s, f'{P}réglages du robot modifiés', 'robot', None, {'avant': avant, 'apres': apres}, req=req)
     return 200, {'ok': True, 'reglages': apres}

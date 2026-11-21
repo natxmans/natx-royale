@@ -109,8 +109,10 @@ le changer plus tard.
 | `NATX_HTTPS` | `1` | cookie admin « Secure » (le site doit être en HTTPS) |
 | `NATX_PROXY` | `1` seulement si le proxy de l'hébergeur AJOUTE la vraie adresse à `X-Forwarded-For` (`0` sur alwaysdata : il la met déjà dans `REMOTE_ADDR`) | adresse du joueur pour les limites anti-abus |
 | `NATX_SECRET` | (facultatif, jamais dans un fichier du projet) | sinon le serveur crée `donnees/secret.key` |
-| `NATX_TURN_CLE_ID` | identifiant de la clé TURN Cloudflare (Realtime → TURN) | relais pour jouer entre potes en 4G : à mettre **dans le panneau**, jamais dans Git |
-| `NATX_TURN_JETON` | jeton d'API de cette clé TURN | **secret** : seulement dans le panneau de l'hébergeur |
+| `NATX_TURN_APP` | nom de l'appli **Metered** (compte gratuit, sans carte bancaire) | relais pour jouer entre potes en 4G : à mettre **dans le panneau**, jamais dans Git |
+| `NATX_TURN_JETON` | la « Secret Key » de cette appli Metered | **secret** : seulement dans le panneau de l'hébergeur |
+| `NATX_TURN_URLS`, `NATX_TURN_UTILISATEUR`, `NATX_TURN_MDP` | autre possibilité : un relais à identifiants fixes (adresses `turn:…` séparées par des virgules) | ces identifiants partent alors chez les joueurs (inévitable avec des identifiants fixes) |
+| `NATX_TURN_CLE_ID` (+ `NATX_TURN_JETON`) | autre possibilité : clé TURN Cloudflare Realtime | Cloudflare demande un moyen de paiement pour l'activer |
 | `NATX_DONNEES` | (facultatif) dossier de la base | si on veut la mettre ailleurs |
 
 **Ne jamais** mettre de clé secrète ni de mot de passe dans le code du jeu, dans `reglages*.env` ou dans Git.
@@ -210,6 +212,14 @@ Routes : `POST /api/admin/liaison` {joueur}, `DELETE /api/admin/liaison` ({quoi:
 - **Avis** : spam caché (trop court, lien, lettres répétées, insulte seule, doublon) ; bug avec 3 votes ou idée avec 5 votes → « À étudier ».
 - **Échelle** : avertissement → suspension 24 h → 3 jours. Jamais plus, jamais un compte du staff, une sanction par joueur et par passage. Un admin peut lever chaque sanction (⛔ Sanctions).
 - Tout est noté au journal d'audit (catégorie `robot`) et dans un rapport (panel → 🤖 Robot modérateur, où on peut aussi l'éteindre, changer l'heure, lui retirer le droit de suspendre, ou le lancer à la main). En SSH : `python3 api.py robot`.
+- **Récompense** : quand la triche est PROUVÉE par les parties (pas seulement « plusieurs signalements »), les joueurs qui l'avaient signalée reçoivent des pièces (300 par défaut, réglable, 0 = aucune) dans leur boîte de cadeaux, origine `robot`. Garde-fous : les 5 premiers, une fois par (signaleur, tricheur), 3 par semaine au plus, jamais le tricheur ni un compte de la même adresse que lui, une personne par adresse. Table `robot_recompenses`.
 - Limites : les parties et statistiques sont envoyées par le jeu de chaque joueur (indices, pas preuves absolues) ; sans signalement, il ne sanctionne jamais (il prévient seulement).
 - Les règles montrées aux joueurs sont dans `js/regles.js` (bouton 📜 Règles du jeu, montrées une fois au premier lancement) ; `robot.REGLES` doit garder les mêmes numéros et titres (un test le vérifie).
 Routes : `GET /api/admin/robot`, `POST /api/admin/robot/reglages`, `POST /api/admin/robot/lancer`.
+
+### Relais pour la 4G (TURN), mis à jour le 21 nov. 2026
+Le serveur sait utiliser trois sortes de relais (le premier réglé gagne) : **Metered** (`NATX_TURN_APP` + `NATX_TURN_JETON`), un relais à **identifiants fixes** (`NATX_TURN_URLS` + `NATX_TURN_UTILISATEUR` + `NATX_TURN_MDP`), ou **Cloudflare Realtime** (`NATX_TURN_CLE_ID` + `NATX_TURN_JETON`).
+- Cloudflare a été abandonné le 21 nov. : l'activation de Realtime passe par une page de paiement (0 $ mais carte ou PayPal obligatoires).
+- Metered : le serveur crée un accès valable 12 h (`POST https://<appli>.metered.live/api/v1/turn/credential?secretKey=…`), récupère la liste des relais (`GET …/credentials?apiKey=…`) et la garde en mémoire. Un accès tout neuf n'est donné aux joueurs qu'après 150 s (il met jusqu'à 2 minutes à marcher partout) : l'ancien sert en attendant.
+- Quota gratuit de Metered : leur page de tarifs dit 500 Mo par mois (« No credit card required »), leur page « Open Relay » dit 20 Go par mois. À vérifier dans leur tableau de bord. Quand le quota est fini, le relais s'arrête sans doute (pas confirmé) : le jeu continue alors comme sans relais.
+- `GET /api/relais` répond `{"iceServers": [...], "configure": true}` quand c'est réglé. La clé secrète ne quitte jamais le serveur et n'est jamais écrite dans les journaux.

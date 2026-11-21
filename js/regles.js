@@ -28,6 +28,7 @@ export function htmlRegles() {
   return `<ol class="liste-regles">${REGLES.map(r => `<li><b>${echapper(r.titre)}</b> — ${echapper(r.texte)}</li>`).join('')}</ol>
     <h3>⚖️ Si une règle n'est pas respectée</h3>
     <ul class="echelle-regles">${ECHELLE.map(e => `<li>${echapper(e)}</li>`).join('')}</ul>
+    <p class="petit-texte">🎁 Si ton signalement aide à attraper un <b>vrai</b> tricheur (prouvé par ses parties), tu reçois des pièces dans ta boîte de cadeaux.</p>
     <p class="petit-texte">🤖 Un robot modérateur lit les signalements tous les jours et regarde les dernières parties des joueurs signalés.
       Un humain de l'équipe peut toujours revoir sa décision : si tu penses qu'il s'est trompé, écris-le dans 💡 Idées → Autre.</p>`;
 }
