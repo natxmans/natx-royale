@@ -976,7 +976,7 @@ async function vueEsprits() {
 
 // ================================================================ événements et cargaisons
 async function vueEvenements() {
-  const [d, c, cat] = await Promise.all([api('GET', '/evenements'), api('GET', '/cargaisons'), catalogue()]);
+  const [d, c, cat, prog] = await Promise.all([api('GET', '/evenements'), api('GET', '/cargaisons'), catalogue(), api('GET', '/programme')]);
   const modif = PERM('evenements.modifier');
   const lignes = d.evenements.map(e => el('tr', {},
     el('td', {}, el('b', {}, e.nom), e.description ? el('div', { class: 'petit' }, e.description) : null),
@@ -996,9 +996,41 @@ async function vueEvenements() {
     el('header', { class: 'titre' }, el('h1', {}, 'Cargaisons et événements'), modif ? el('button', { class: 'bouton principal', onclick: () => formEvenement(d, cat, null) }, '➕ Nouvel événement') : null),
     el('p', { class: 'aide' }, 'Pendant un événement en cours, chaque partie (si le serveur est joignable) a une cargaison : un cargo volant traverse l\'île et largue une caisse en parachute. ',
       'Le SERVEUR tire l\'esprit et la récompense au début de la partie, et ne la donne qu\'au premier joueur qui ouvre la caisse (dans sa boîte de réception).'),
+    panneauProgramme(prog, modif),
     panneau('📅 Événements', tableau(['Événement', 'Période', 'État', 'Réglages', 'Statistiques', ''], lignes, 'Aucun événement. Crée-en un pour lancer les cargaisons.')),
     panneau('📦 Historique des cargaisons', tableau(['Tirée le', 'Partie', 'Hôte', 'Récompense', 'Ouverte par', 'État'], lignesC, 'Aucune cargaison pour l\'instant.')),
   ];
+}
+// Programme du jour : des mini-événements qui démarrent tout seuls, tous les jours aux mêmes heures
+function panneauProgramme(p, modif) {
+  const r = p.reglage;
+  const actif = el('input', { type: 'checkbox', checked: !!r.actif });
+  const heures = el('input', { maxlength: 60, value: r.heures.join(', '), placeholder: '12:30, 17:30, 20:00' });
+  const duree = el('input', { type: 'number', min: 15, max: 180, step: 5, value: r.duree });
+  const cases = Object.entries(p.types).map(([id, t]) => {
+    const c = el('input', { type: 'checkbox', checked: r.types.includes(id) });
+    c.dataset.type = id;
+    return el('label', { class: 'ligne' }, c, `${t.icone} ${t.nom} — ${t.texte}`);
+  });
+  const hm = t => new Date(t * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const jour = t => new Date(t * 1000).toLocaleDateString('fr-FR', { weekday: 'long' });
+  const etat = e => (p.maintenant >= e.fin ? ['terminé', 'gris'] : p.maintenant >= e.debut ? ['en cours', 'vert'] : ['à venir', 'cyan']);
+  const lignes = p.programme.map(e => el('tr', {}, el('td', {}, jour(e.debut)), el('td', {}, hm(e.debut) + ' → ' + hm(e.fin)),
+    el('td', {}, el('b', {}, `${e.icone} ${e.nom}`)), el('td', {}, e.texte), el('td', {}, pastille(...etat(e)))));
+  const b = el('button', { class: 'bouton principal' }, 'Enregistrer le programme');
+  b.onclick = async () => {
+    // « 17h30 », « 17:30 » ou « 9:00 » : tout devient 17:30 / 09:00
+    const liste = heures.value.split(/[,;\s]+/).map(h => h.trim().toLowerCase().replace('h', ':')).filter(Boolean).map(h => (/^\d:\d\d$/.test(h) ? '0' + h : /^\d\d?:$/.test(h) ? h.padStart(3, '0') + '00' : h));
+    const corps = { actif: actif.checked, heures: liste, duree: +duree.value, types: cases.map(l => l.querySelector('input')).filter(c => c.checked).map(c => c.dataset.type) };
+    if (await action(b, () => api('POST', '/programme', corps), 'Programme enregistré.')) recharger();
+  };
+  return panneau('🗓️ Programme du jour (automatique)',
+    el('p', { class: 'aide' }, 'Tous les jours, aux heures choisies (heure de Paris), un mini-événement démarre tout seul. Le serveur tire au sort lequel, sans mettre deux fois le même dans la journée tant qu\'il y a assez de sortes cochées. Les joueurs le voient sur l\'accueil du jeu, avec le prochain à venir. ',
+      'Un événement « Cargaison » créé plus bas passe avant la cargaison du programme.'),
+    modif ? el('div', { class: 'grille-2' },
+      el('div', {}, el('label', { class: 'ligne' }, actif, 'Programme allumé'), champ('Heures de début, séparées par des virgules', heures), champ('Durée de chaque événement (minutes)', duree)),
+      el('div', {}, el('p', { class: 'aide' }, 'Sortes d\'événements tirées au sort :'), ...cases, el('div', { class: 'actions' }, b))) : null,
+    tableau(['Jour', 'Heure', 'Événement', 'Effet', 'État'], lignes, 'Le programme est éteint : aucun événement automatique.'));
 }
 function formEvenement(d, cat, e) {
   const cfg = e ? e.config : d.config_defaut;

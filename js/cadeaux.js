@@ -5,6 +5,7 @@
 import { objet, sauverProfil, RARETES_COSM, CATEGORIES, appliquerConfigBoutique, ajouterCosmetiquesAdmin, appliquerStaff, CLES_STAFF } from './boutique.js';
 import { enregistrerAjouts } from './modeles.js';
 import { ESPRITS, reglerEspritsDisponibles } from './esprits.js';
+import { MODES } from './partage.js';
 import {
   URL_API, chargerEtatJeu, recupererBoite, ouvrirCadeauServeur, avertissementLu, utiliserCodeCadeau, codeJoueur, envoyerProfil, repondreLiaison,
 } from './retours.js';
@@ -22,10 +23,27 @@ const ecouteurs = new Set(); // modules qui veulent savoir quand la boîte chang
 export const etatBoite = () => boite;
 export const surBoite = f => ecouteurs.add(f);
 
-// Bonus de pièces lancé par l'admin (null s'il n'y en a pas ou s'il est fini)
+// ---------- Programme du jour : mini-événements automatiques (heure dorée, cargaison, butin de fête, mode vedette) ----------
+// Le serveur envoie le programme d'aujourd'hui et de demain, avec son heure à lui (l'horloge du joueur peut être fausse).
+let decalageServeur = 0; // secondes : heure du serveur moins heure du joueur
+const heureServeur = () => Date.now() / 1000 + decalageServeur;
+export const programmeDuJour = () => (Array.isArray(etatJeu.programme) ? etatJeu.programme : []);
+export function evenementEnCours(type = null) {
+  const t = heureServeur();
+  return programmeDuJour().find(e => e.debut <= t && t < e.fin && (!type || e.type === type)) || null;
+}
+export function prochainEvenement() {
+  const t = heureServeur();
+  return programmeDuJour().filter(e => e.debut > t).sort((a, b) => a.debut - b.debut)[0] || null;
+}
+const heureMinute = t => new Date(t * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', ' h ');
+
+// Bonus de pièces : celui lancé par l'admin, sinon l'« heure dorée » du programme du jour (null s'il n'y en a pas)
 export function bonusActif() {
   const b = etatJeu.bonus;
-  return b && b.multiplicateur > 1 && b.fin * 1000 > Date.now() ? b : null;
+  if (b && b.multiplicateur > 1 && b.fin * 1000 > Date.now()) return b;
+  const e = evenementEnCours('pieces');
+  return e ? { multiplicateur: 2, fin: e.fin, texte: e.nom, duJour: true } : null;
 }
 export const texteMultiplicateur = m => '× ' + String(m).replace('.', ',');
 export const etatServeurJeu = () => etatJeu;
@@ -74,15 +92,48 @@ export function ajouterEsprit(profil, type, rarete) {
 function afficherAnnonce() {
   const barre = $('#annonceJeu');
   if (!barre) return;
-  const a = etatJeu.annonce, b = bonusActif();
+  const a = etatJeu.annonce, bonus = bonusActif(), b = bonus && !bonus.duJour ? bonus : null; // l'heure dorée est annoncée par le programme
   $('#annonceTexte').textContent = a ? a.texte : '';
   $('#annonceTexte').classList.toggle('cache', !a);
+  // programme du jour : l'événement en cours, sinon le prochain
+  const enCours = evenementEnCours(), suivant = prochainEvenement(), p = $('#programmeTexte');
+  if (p) {
+    p.textContent = enCours ? `${enCours.icone} ${enCours.nom} en cours : ${enCours.texte} · jusqu'à ${heureMinute(enCours.fin)}`
+      : suivant ? `📅 Prochain événement : ${suivant.icone} ${suivant.nom} à ${heureMinute(suivant.debut)}` : '';
+    p.classList.toggle('cache', !enCours && !suivant);
+    p.classList.toggle('en-cours', !!enCours);
+  }
   if (b) {
     const fin = new Date(b.fin * 1000).toLocaleString('fr-FR', { weekday: 'long', hour: '2-digit', minute: '2-digit' });
     $('#bonusTexte').textContent = `⚡ ${b.texte} : pièces ${texteMultiplicateur(b.multiplicateur)} jusqu'à ${fin}`;
   }
   $('#bonusTexte').classList.toggle('cache', !b);
-  barre.className = 'annonce-jeu ' + (a ? a.style : 'evenement') + (a || b ? '' : ' cache');
+  // « seul-programme » : rien d'autre à dire que le programme → sur petit écran le bandeau se pose par-dessus la scène, sans prendre de place
+  barre.className = 'annonce-jeu ' + (a ? a.style : 'evenement') + (a || b || enCours || suivant ? '' : ' cache') + (!a && !b ? ' seul-programme' : '');
+}
+
+// La fenêtre « Programme du jour » : aujourd'hui et demain, avec ce qui est passé, en cours, à venir
+function ouvrirProgramme() {
+  const t = heureServeur(), jour = d => new Date(d * 1000).toDateString();
+  const liste = $('#listeProgramme');
+  liste.replaceChildren();
+  let dernier = null;
+  for (const e of programmeDuJour()) {
+    if (jour(e.debut) !== dernier) {
+      dernier = jour(e.debut);
+      const h = document.createElement('h3');
+      h.textContent = dernier === jour(t) ? 'Aujourd\'hui' : 'Demain';
+      liste.append(h);
+    }
+    const l = document.createElement('div'), quand = document.createElement('b'), quoi = document.createElement('span'), etat = document.createElement('small');
+    l.className = 'ligne-programme' + (t >= e.fin ? ' passe' : t >= e.debut ? ' en-cours' : '');
+    quand.textContent = heureMinute(e.debut);
+    quoi.textContent = `${e.icone} ${e.nom} · ${e.type === 'mode' && MODES[e.mode] ? `XP × 2 en mode ${MODES[e.mode].icone} ${MODES[e.mode].nom}` : e.texte}`;
+    etat.textContent = t >= e.fin ? 'terminé' : t >= e.debut ? `en cours jusqu'à ${heureMinute(e.fin)}` : `${Math.round((e.fin - e.debut) / 60)} min`;
+    l.append(quand, quoi, etat);
+    liste.append(l);
+  }
+  $('#fenetreProgramme').classList.remove('cache');
 }
 
 function ligne(icone, texte, couleur) {
@@ -342,6 +393,7 @@ export const descriptionEsprit = t => (etatJeu.esprits && etatJeu.esprits[t] && 
 
 async function verifierJeu() {
   try { etatJeu = await chargerEtatJeu(); } catch (e) { /* serveur injoignable : rien à afficher */ }
+  if (Number.isFinite(etatJeu.maintenant)) decalageServeur = etatJeu.maintenant - Date.now() / 1000;
   afficherAnnonce();
   // boutique : prix, promotions, rotation, objets retirés ou ajoutés par l'admin
   enregistrerAjouts(etatJeu.ajouts);
@@ -414,6 +466,11 @@ export async function initCadeaux({ profil, menus, son, toast, reglages, version
   codeJoueur().then(code => { $('#codeJoueur').textContent = code || '—'; })
     .catch(() => { $('#codeJoueur').textContent = 'indisponible pour l\'instant'; });
 
+  // programme du jour : la fenêtre, et le texte de l'accueil qui change tout seul quand un événement commence ou finit
+  $('#programmeTexte').onclick = () => { son('clic'); ouvrirProgramme(); };
+  $('#fermerProgramme').onclick = () => $('#fenetreProgramme').classList.add('cache');
+  $('#fenetreProgramme').addEventListener('pointerdown', e => { if (e.target.id === 'fenetreProgramme') e.target.classList.add('cache'); });
+  setInterval(afficherAnnonce, 30000);
   await Promise.all([verifierJeu(), verifierBoite()]);
   synchroniserProfil(true);
   // nouveaux cadeaux pendant que le jeu est ouvert (menu ET partie) : on regarde toutes les 30 s

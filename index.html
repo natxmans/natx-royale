@@ -14,35 +14,35 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=16">
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-  "./js/apercu.js": "./js/apercu.js?v=19",
-  "./js/armes.js": "./js/armes.js?v=19",
-  "./js/avis.js": "./js/avis.js?v=19",
-  "./js/boutique.js": "./js/boutique.js?v=19",
-  "./js/cadeaux.js": "./js/cadeaux.js?v=19",
-  "./js/catalogue250.js": "./js/catalogue250.js?v=19",
-  "./js/compte.js": "./js/compte.js?v=19",
-  "./js/effets.js": "./js/effets.js?v=19",
-  "./js/esprits.js": "./js/esprits.js?v=19",
-  "./js/hote.js": "./js/hote.js?v=19",
-  "./js/icones.js": "./js/icones.js?v=19",
-  "./js/jeu.js": "./js/jeu.js?v=19",
-  "./js/lieux.js": "./js/lieux.js?v=19",
-  "./js/menus.js": "./js/menus.js?v=19",
-  "./js/modeles.js": "./js/modeles.js?v=19",
-  "./js/monde.js": "./js/monde.js?v=19",
-  "./js/nouveautes.js": "./js/nouveautes.js?v=19",
-  "./js/outils.js": "./js/outils.js?v=19",
-  "./js/partage.js": "./js/partage.js?v=19",
-  "./js/personnage.js": "./js/personnage.js?v=19",
-  "./js/regles.js": "./js/regles.js?v=19",
-  "./js/reseau.js": "./js/reseau.js?v=19",
-  "./js/retours.js": "./js/retours.js?v=19",
-  "./js/sons.js": "./js/sons.js?v=19",
-  "./js/touches.js": "./js/touches.js?v=19"
+  "./js/apercu.js": "./js/apercu.js?v=20",
+  "./js/armes.js": "./js/armes.js?v=20",
+  "./js/avis.js": "./js/avis.js?v=20",
+  "./js/boutique.js": "./js/boutique.js?v=20",
+  "./js/cadeaux.js": "./js/cadeaux.js?v=20",
+  "./js/catalogue250.js": "./js/catalogue250.js?v=20",
+  "./js/compte.js": "./js/compte.js?v=20",
+  "./js/effets.js": "./js/effets.js?v=20",
+  "./js/esprits.js": "./js/esprits.js?v=20",
+  "./js/hote.js": "./js/hote.js?v=20",
+  "./js/icones.js": "./js/icones.js?v=20",
+  "./js/jeu.js": "./js/jeu.js?v=20",
+  "./js/lieux.js": "./js/lieux.js?v=20",
+  "./js/menus.js": "./js/menus.js?v=20",
+  "./js/modeles.js": "./js/modeles.js?v=20",
+  "./js/monde.js": "./js/monde.js?v=20",
+  "./js/nouveautes.js": "./js/nouveautes.js?v=20",
+  "./js/outils.js": "./js/outils.js?v=20",
+  "./js/partage.js": "./js/partage.js?v=20",
+  "./js/personnage.js": "./js/personnage.js?v=20",
+  "./js/regles.js": "./js/regles.js?v=20",
+  "./js/reseau.js": "./js/reseau.js?v=20",
+  "./js/retours.js": "./js/retours.js?v=20",
+  "./js/sons.js": "./js/sons.js?v=20",
+  "./js/touches.js": "./js/touches.js?v=20"
 } }</script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
 <script>
@@ -110,7 +110,7 @@
       <button class="petit" id="btnPleinEcran" title="Plein écran">⛶</button>
     </div>
   </header>
-  <div id="annonceJeu" class="annonce-jeu cache" role="status"><span id="annonceTexte"></span><span id="bonusTexte" class="bonus-jeu cache"></span></div>
+  <div id="annonceJeu" class="annonce-jeu cache" role="status"><span id="annonceTexte"></span><span id="bonusTexte" class="bonus-jeu cache"></span><button id="programmeTexte" class="programme-jeu cache" title="Voir le programme du jour"></button></div>
   <div id="barreSuspension" class="barre-suspension cache" role="alert"></div>
 
   <section class="page" id="pageJouer">
@@ -520,6 +520,15 @@
   </div>
 </div>
 <!-- Règles du jeu (js/regles.js) : bouton 📜 du menu, et montrées une fois au premier lancement -->
+<!-- Programme du jour : les mini-événements automatiques d'aujourd'hui et de demain -->
+<div id="fenetreProgramme" class="ecran cache fenetre-menu" role="dialog" aria-labelledby="titreProgramme">
+  <div class="boite regles">
+    <h2 id="titreProgramme">📅 Programme du jour</h2>
+    <p class="petit-texte">Des mini-événements tous les jours, aux mêmes heures. Ils commencent tout seuls : il suffit de lancer une partie.</p>
+    <div id="listeProgramme"></div>
+    <button class="gros vert" id="fermerProgramme">✔ Fermer</button>
+  </div>
+</div>
 <!-- Commandes et statistiques : dans des fenêtres, pour que l'accueil tienne sur un écran sans défiler -->
 <div id="fenetreCommandes" class="ecran cache fenetre-menu" role="dialog" aria-labelledby="titreCommandes">
   <div class="boite regles aide">
@@ -569,6 +578,6 @@
 <div id="chargement" class="ecran cache"><div class="boite"><img class="illustration" src="modeles/interface/illustrations/chargement_petit.webp" width="320" height="180" alt="" loading="lazy"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=19"></script>
+<script type="module" src="js/jeu.js?v=20"></script>
 </body>
 </html>

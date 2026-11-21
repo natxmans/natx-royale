@@ -9,8 +9,10 @@ Chaque route admin vérifie la session ET la permission du rôle (api.session_ad
 demandent le jeton anti-CSRF, et les actions sensibles une confirmation ou le mot de passe.
 Aucune route n'exécute de commande système.
 """
+import calendar
 import json
 import os
+import random
 import re
 import sqlite3
 import secrets
@@ -262,8 +264,11 @@ def api_jeu(req, db):
     e['boutique'] = api.lire_reglage(db, 'boutique') or {}
     e['collections'] = api.lire_reglage(db, 'collections') or {}
     e['esprits'] = {k: {'actif': v['actif'], 'description': v['description']} for k, v in reglages_esprits(db).items()}
-    ev = evenement_actif(db)
+    ev = evenement_actif(db) or evenement_programme(db, 'cargaison', t)   # événement de l'admin, sinon celui du programme du jour
     e['cargaison'] = {'nom': ev['nom'], 'fin': ev['fin']} if ev else None
+    # programme du jour : les mini-événements automatiques, et l'heure du serveur (l'horloge du joueur peut être fausse)
+    e['programme'] = programme_du_jour(db, t)
+    e['maintenant'] = t
     return 200, e
 
 
@@ -541,6 +546,8 @@ def api_cargaison(req, db):
     if api.sanction_active(db, jid, ('suspension',)):
         return 200, {'cargaison': None}
     ev = evenement_actif(db)
+    if not ev and evenement_programme(db, 'cargaison'):
+        ev = {'id': None, 'nom': TYPES_PROGRAMME['cargaison']['nom'], 'config': '{}'}   # créneau « cargaison » du programme du jour : réglages par défaut
     if not ev:
         return 200, {'cargaison': None}
     cfg = config_cargaison(ev)
@@ -1657,6 +1664,98 @@ def admin_esprits_modifier(req, db):
     return 200, {'ok': True}
 
 
+# ================================================================ programme du jour (mini-événements automatiques)
+# Chaque jour, à heures fixes (heure de Paris), un mini-événement d'une heure, tiré au sort par la date : le même
+# pour tout le monde, sans que personne ait à le créer. L'admin choisit les heures, la durée et les sortes d'événements.
+PROGRAMME_DEFAUT = {'actif': True, 'heures': ['12:30', '17:30', '20:00'], 'duree': 60, 'types': ['pieces', 'cargaison', 'fete', 'mode']}
+TYPES_PROGRAMME = {
+    'pieces': {'nom': 'Heure dorée', 'icone': '🪙', 'texte': 'Pièces × 2 à la fin de chaque partie'},
+    'cargaison': {'nom': 'Cargaison surprise', 'icone': '📦', 'texte': 'Une cargaison tombe dans chaque partie'},
+    'fete': {'nom': 'Butin de fête', 'icone': '🎉', 'texte': "Du butin rare partout sur l'île"},
+    'mode': {'nom': 'Mode vedette', 'icone': '🎯', 'texte': 'XP × 2 dans le mode du moment'},
+}
+MODES_VEDETTES = {'br': 'Battle Royale', 'solo': 'Solo', 'duo': 'Duo', 'trio': 'Trio', 'escouade': 'Escouade',
+                  'eclair': 'Éclair', 'melee': 'Mêlée', 'tireurs': "Tireurs d'élite", 'lune': 'Lune'}
+RE_HEURE = re.compile(r'([01]\d|2[0-3]):([0-5]\d)')
+
+
+def decalage_paris(t):
+    """Secondes à ajouter à l'heure universelle pour avoir l'heure de Paris (été : dernier dimanche de mars → d'octobre)."""
+    an = time.gmtime(t).tm_year
+
+    def dernier_dimanche(mois):
+        d = calendar.timegm((an, mois, 31, 1, 0, 0))
+        return d - ((time.gmtime(d).tm_wday + 1) % 7) * 86400
+    return 7200 if dernier_dimanche(3) <= t < dernier_dimanche(10) else 3600
+
+
+def reglage_programme(db):
+    r = dict(PROGRAMME_DEFAUT)
+    r.update({k: v for k, v in (api.lire_reglage(db, 'programme') or {}).items() if k in PROGRAMME_DEFAUT})
+    return r
+
+
+def programme_du_jour(db, t=None, jours=2):
+    """Les mini-événements d'aujourd'hui et de demain, dans l'ordre. Rien si le programme est éteint."""
+    cfg = reglage_programme(db)
+    if not cfg['actif'] or not cfg['heures'] or not cfg['types']:
+        return []
+    t = maintenant() if t is None else t
+    res = []
+    for k in range(jours):
+        midi = t + k * 86400
+        dec = decalage_paris(midi)
+        jour = (midi + dec) // 86400               # numéro du jour, à Paris
+        minuit = jour * 86400 - dec
+        tirage = random.Random(f'natx-programme-{jour}')
+        types = [x for x in cfg['types'] if x in TYPES_PROGRAMME]
+        tirage.shuffle(types)
+        for i, hm in enumerate(sorted(cfg['heures'])):
+            h, m = (int(x) for x in hm.split(':'))
+            type_ = types[i % len(types)]
+            debut = minuit + h * 3600 + m * 60
+            ev = {'type': type_, 'debut': debut, 'fin': debut + cfg['duree'] * 60, **TYPES_PROGRAMME[type_]}
+            if type_ == 'mode':
+                ev['mode'] = tirage.choice(sorted(MODES_VEDETTES))
+                ev['texte'] = f"XP × 2 en mode {MODES_VEDETTES[ev['mode']]}"
+            res.append(ev)
+    return res
+
+
+def evenement_programme(db, type_, t=None):
+    """Le mini-événement de cette sorte en cours en ce moment (ou None)."""
+    t = maintenant() if t is None else t
+    return next((e for e in programme_du_jour(db, t) if e['type'] == type_ and e['debut'] <= t < e['fin']), None)
+
+
+def admin_programme(req, db):
+    session_admin(req, db, permission='evenements.voir')
+    return 200, {'reglage': reglage_programme(db), 'defaut': PROGRAMME_DEFAUT, 'types': TYPES_PROGRAMME,
+                 'programme': programme_du_jour(db), 'maintenant': maintenant()}
+
+
+def admin_programme_modifier(req, db):
+    s = session_admin(req, db, ecriture=True, permission='evenements.modifier')
+    d = req.json()
+    avant = reglage_programme(db)
+    heures = sorted({str(h).strip() for h in (d.get('heures') if isinstance(d.get('heures'), list) else [])})
+    if len(heures) > 6 or any(not RE_HEURE.fullmatch(h) for h in heures):
+        raise Erreur(400, 'Heures invalides : 6 au plus, écrites comme 17:30.')
+    duree = entier(d.get('duree'), 15, 180, 60)
+    minutes = [int(h[:2]) * 60 + int(h[3:]) for h in heures]
+    if any(b - a < duree for a, b in zip(minutes, minutes[1:])) or (len(minutes) > 1 and minutes[0] + 1440 - minutes[-1] < duree):
+        raise Erreur(400, 'Deux événements se chevauchent : écarte les heures ou raccourcis la durée.')
+    types = [x for x in TYPES_PROGRAMME if x in (d.get('types') if isinstance(d.get('types'), list) else [])]
+    actif = bool(d.get('actif'))
+    if actif and (not heures or not types):
+        raise Erreur(400, 'Pour allumer le programme, il faut au moins une heure et une sorte d\'événement.')
+    apres = {'actif': actif, 'heures': heures, 'duree': duree, 'types': types}
+    api.ecrire_reglage(db, 'programme', apres)
+    journaliser(db, s, 'programme du jour ' + ('allumé' if actif else 'éteint') + f" ({len(heures)} événement(s) par jour)", 'evenements', 'programme',
+                {'avant': avant, 'apres': apres}, req=req)
+    return 200, {'ok': True, 'reglage': apres, 'programme': programme_du_jour(db)}
+
+
 # ================================================================ admin : événements et cargaisons
 def lire_evenement(db, d):
     nom = nettoyer(d.get('nom'), 60)
@@ -1817,6 +1916,8 @@ ROUTES = [
     ('DELETE', r'/api/admin/promotions/(\d+)', admin_promo_supprimer, False),
     ('GET', r'/api/admin/esprits', admin_esprits, False),
     ('POST', r'/api/admin/esprits', admin_esprits_modifier, False),
+    ('GET', r'/api/admin/programme', admin_programme, False),
+    ('POST', r'/api/admin/programme', admin_programme_modifier, False),
     ('GET', r'/api/admin/evenements', admin_evenements, False),
     ('POST', r'/api/admin/evenements', admin_evenement_creer, False),
     ('POST', r'/api/admin/evenements/(\d+)', admin_evenement_modifier, False),

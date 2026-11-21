@@ -10,7 +10,7 @@ import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPre
 import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele, clipAnimation, prechargerCosmetiques, chargerCosmetiques, cosmetiquePret, ficheEmote, ficheTrainee, QUALITE_TENUES } from './modeles.js';
 import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, signalerJoueur, URL_API } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
-import { initCadeaux, bonusActif, texteMultiplicateur, synchroniserProfil, etatBoite, verifierBoite } from './cadeaux.js';
+import { initCadeaux, bonusActif, texteMultiplicateur, synchroniserProfil, etatBoite, verifierBoite, evenementEnCours } from './cadeaux.js';
 import { initCompte } from './compte.js';
 import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, FEU, GLACE, NATURE, VENT, TEMPS, EAU, CHANCE, ETOILE, OMBRE, replique, RARETES_ESPRIT, meilleuresRaretes } from './esprits.js';
 import { Reseau } from './reseau.js';
@@ -1200,6 +1200,9 @@ function debutPartie(m) {
   const equipe = regles.taille > 1 ? ' · tes coéquipiers ont un losange vert ◆' : '';
   const centre = etat.options.entrainement ? ' · mannequins et esprits au centre de l\'île' : '';
   setTimeout(() => banniere(`${regles.icone} ${regles.nom.toUpperCase()}`, regles.regle + equipe + centre), 1500);
+  // programme du jour : on rappelle l'événement en cours au début de la partie
+  const evt = etat.options.entrainement ? null : evenementEnCours();
+  if (evt && (evt.type !== 'mode' || evt.mode === etat.options.mode)) setTimeout(() => ajouterFil(`${evt.icone} Événement du jour : <b>${echapper(evt.nom)}</b> · ${echapper(evt.texte)}`, true), 5000);
   etat.defis = etat.options.entrainement ? Object.fromEntries(DEFIS_ENTRAINEMENT.map(x => [x.id, 0])) : null;
   majDefisEntrainement();
 }
@@ -1395,7 +1398,10 @@ function donnerRecompense(place, gagne) {
   const details = r.details.slice();
   for (const d of finis) details.push(['✅ Défi : ' + texteDefi(d), RECOMPENSE_DEFI.pieces]);
   // XP et niveaux
-  const xp = xpPartie({ kills: moi.kills, place, nbJoueurs: etat.infos.size, gagne, degats: moi.degats, survie }) + finis.length * RECOMPENSE_DEFI.xp;
+  // programme du jour : « mode vedette » = l'XP de la partie compte double dans ce mode pendant l'événement
+  const vedette = etat.options.entrainement ? null : evenementEnCours('mode');
+  const xpDouble = !!vedette && vedette.mode === (etat.options.mode || 'solo');
+  const xp = xpPartie({ kills: moi.kills, place, nbJoueurs: etat.infos.size, gagne, degats: moi.degats, survie }) * (xpDouble ? 2 : 1) + finis.length * RECOMPENSE_DEFI.xp;
   const niveaux = ajouterXP(profil, xp);
   for (const n of niveaux) details.push([`⭐ Niveau ${n.niveau} atteint`, n.pieces]);
   signalerPartie({ partie_id: etat.partieId, mode: etat.options.mode || 'solo', nb_joueurs: etat.infos.size, place, kills: moi.kills, duree: survie });
@@ -1408,7 +1414,7 @@ function donnerRecompense(place, gagne) {
   const pct = Math.round(profil.xp / xpPourNiveau(profil.niveau) * 100);
   moi.gainHtml = details.map(([t, v], i) => `<div class="ligne" style="animation-delay:${i * 0.12}s"><span>${echapper(t)}</span><span>+${v} 🪙</span></div>`).join('')
     + `<div class="total"><span>Total</span><span>+${total} 🪙</span></div>`
-    + `<div class="xp"><span>+${xp} XP · Niveau <b>${profil.niveau}</b></span><div class="barre-xp"><i style="width:${pct}%"></i></div></div>`
+    + `<div class="xp"><span>+${xp} XP${xpDouble ? ' (× 2, mode vedette 🎯)' : ''} · Niveau <b>${profil.niveau}</b></span><div class="barre-xp"><i style="width:${pct}%"></i></div></div>`
     + (records.length ? `<div class="record">🏅 Nouveau record : ${records.map(echapper).join(', ')} !</div>` : '');
   return moi.gainHtml;
 }
@@ -3729,7 +3735,8 @@ function majSalon(m) {
 
 function majChoixModes() {
   const mode = modeValide(reglages.mode);
-  for (const b of document.querySelectorAll('#choixModes [data-mode]')) b.classList.toggle('choisi', b.dataset.mode === mode);
+  const vedette = evenementEnCours('mode'); // programme du jour : le mode qui rapporte XP × 2 en ce moment
+  for (const b of document.querySelectorAll('#choixModes [data-mode]')) { b.classList.toggle('choisi', b.dataset.mode === mode); b.classList.toggle('vedette', !!vedette && vedette.mode === b.dataset.mode); }
   const r = MODES[mode];
   $('#descMode').textContent = r.regle;
   $('#btnSoloTexte').textContent = `${r.icone} Jouer en ${r.nom} `;
@@ -3771,7 +3778,7 @@ function appliquerMode(mode) {
   $('#regleMode').textContent = r.icone + ' ' + r.regle;
 }
 function demarrerHote() {
-  hote = new Hote(reseau, { preparerMonde, signatureCargo: (id, sig) => reclamerRecompenseCargo(id, sig) });
+  hote = new Hote(reseau, { preparerMonde, signatureCargo: (id, sig) => reclamerRecompenseCargo(id, sig), evenementDuJour: type => evenementEnCours(type) });
   appliquerMode(reglages.mode);
   lireOptionsSalon();
   reseau.surMessageClient = recevoir;
@@ -3951,6 +3958,7 @@ function initMenu() {
     $('#btnPerso').classList.toggle('actif', oui);
     if (!oui) menus.montrerPerso(); // retour au personnage en pied, avec son chapeau
   };
+  setInterval(() => { if (etat.ecran === 'menu') majChoixModes(); }, 30000); // le « mode vedette » commence et finit tout seul
   $('#btnPerso').onclick = () => { son('clic'); voirPerso($('#vuePerso').classList.contains('cache')); };
   $('#btnPersoFini').onclick = () => { son('clic'); voirPerso(false); };
   // petit écran : le profil (niveau, défis, stats) s’ouvre par-dessus avec « ⭐ Profil »
@@ -4047,7 +4055,8 @@ document.body.classList.remove('demarrage');
 activerIcones(); // icônes livrées à la place des émojis des menus (si le fichier est là)
 const bonus = bonusDuJour(profil);
 if (bonus) setTimeout(() => { toast(`🎁 Bonus du jour : +${bonus} 🪙 !`, 4000); menus.majPieces(true); }, 900);
-initCadeaux({ profil, menus, son: n => { initSons(); son(n); }, toast, reglages, version: VERSION_JEU });
+initCadeaux({ profil, menus, son: n => { initSons(); son(n); }, toast, reglages, version: VERSION_JEU })
+  .then(() => majChoixModes()).catch(() => {}); // le programme du jour est arrivé : la carte du « mode vedette » s'allume
 initCompte({ profil, reglages, toast });
 // Les cosmétiques livrés (les 250 nouveaux) se chargent après l'écran d'accueil, sans ralentir le démarrage
 chargerCosmetiques(clesLook(profil.equipe), true).then(() => { if (etat.ecran === 'menu' && menus.page === 'jouer') { menus.montrerPerso(); menus.apercu.presenter(3); } }).catch(() => {});

@@ -28,6 +28,8 @@ Une bataille royale cartoon à jouer entre potes, directement dans le navigateur
 - **Ton personnage** : couleur, peau, coiffure et couleur des cheveux, plus 250 cosmétiques (tenues, chapeaux,
   sacs, pioches, deltaplanes, emotes, traînées) et des skins d'armes. Tout se gagne en jouant, avec les pièces
   du jeu.
+- **Un programme du jour** : des mini-événements d'une heure, tous les jours aux mêmes heures (pièces × 2, cargaison
+  surprise, butin de fête, XP × 2 dans le mode vedette). Ils commencent tout seuls et l'accueil annonce le prochain.
 - **Sur l'île aussi** : construction (murs, sols, rampes), coffres dorés, ravitaillements, cargaison,
   champignons rebondissants, fontaines de soin, jour et nuit.
 - **Multijoueur sans serveur de jeu** : un joueur héberge la partie, les autres rejoignent avec son code

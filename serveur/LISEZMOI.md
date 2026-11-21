@@ -217,6 +217,17 @@ Routes : `POST /api/admin/liaison` {joueur}, `DELETE /api/admin/liaison` ({quoi:
 - Les règles montrées aux joueurs sont dans `js/regles.js` (bouton 📜 Règles du jeu, montrées une fois au premier lancement) ; `robot.REGLES` doit garder les mêmes numéros et titres (un test le vérifie).
 Routes : `GET /api/admin/robot`, `POST /api/admin/robot/reglages`, `POST /api/admin/robot/lancer`.
 
+## Programme du jour (mini-événements automatiques)
+
+Tous les jours, aux heures choisies (heure de Paris), un mini-événement démarre tout seul : **heure dorée** (pièces × 2),
+**cargaison surprise**, **butin de fête**, **mode vedette** (XP × 2 dans un mode tiré au sort). Le tirage dépend seulement de la date :
+tout le monde a le même programme, sans rien créer. Réglage `programme` (table `reglages_jeu`) : `actif`, `heures`, `duree`, `types` ;
+par défaut 12:30, 17:30 et 20:00, 60 minutes, les 4 sortes. Panel → 📦 Cargaisons et événements → 🗓️ Programme du jour.
+- `GET /api/jeu` envoie `programme` (aujourd'hui et demain) et `maintenant` (l'heure du serveur).
+- La cargaison est décidée par le serveur (`/api/cargaison`) ; un événement créé par un admin passe avant celle du programme.
+- Pièces, butin de fête et XP sont appliqués par le jeu (comme le bonus de pièces de l'admin) : rien de secret là-dedans.
+Routes : `GET /api/admin/programme`, `POST /api/admin/programme` (rôles super admin, admin, événements).
+
 ## Avis « À étudier » transmis
 
 Quand un avis passe en **À étudier** (par un admin, ou par le robot : bug à 3 votes, idée à 5 votes), il devient « à transmettre »

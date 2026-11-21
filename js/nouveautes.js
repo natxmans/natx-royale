@@ -143,4 +143,12 @@ export const NOUVEAUTES = [
     'Mode Tireurs d’élite 🔭 : une seule arme sur toute l’île, le fusil de précision',
     'Mode Lune 🌙 : gravité faible, sauts géants, et tomber ne fait plus mal',
   ]],
+  ['📅 Programme du jour (novembre)', [
+    'Des mini-événements d’une heure, tous les jours aux mêmes heures : ils commencent tout seuls',
+    '🪙 Heure dorée : les pièces gagnées à la fin de la partie comptent double',
+    '📦 Cargaison surprise : une cargaison tombe dans chaque partie',
+    '🎉 Butin de fête : du butin rare partout sur l’île',
+    '🎯 Mode vedette : XP × 2 dans le mode du moment (sa carte s’allume sur l’accueil)',
+    'L’accueil annonce l’événement en cours ou le prochain ; clique dessus pour voir tout le programme',
+  ]],
 ];

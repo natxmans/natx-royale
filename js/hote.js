@@ -244,7 +244,9 @@ export class Hote {
     this.nbUnites = new Set([...this.joueurs.values()].map(j => (j.equipe ? 'e' + j.equipe : j.id))).size;
     this.butins = new Map(); this.prochainButin = 1;
     const listeButins = [];
-    const fete = !!(this.options.fete || regles.fete);
+    // butin de fête : coché dans le salon, voulu par le mode (Éclair), ou événement « butin de fête » du programme du jour
+    const feteJour = !this.options.entrainement && !!(this.jeu.evenementDuJour && this.jeu.evenementDuJour('fete'));
+    const fete = this.fete = !!(this.options.fete || regles.fete || feteJour);
     for (const pt of monde.pointsButin) {
       if (pt.bonus || fete || r() < 0.75) listeButins.push(this.creerButin(tirerButin(r, !!pt.bonus, fete), pt.x, pt.y, pt.z, false));
     }
@@ -342,7 +344,7 @@ export class Hote {
     if (!c || this.coffresOuverts.has(id)) return;
     this.coffresOuverts.add(id);
     this.reseau.diffuser({ t: 'coffreX', id });
-    const r = Math.random, fete = !!(this.options.fete || this.regles.fete);
+    const r = Math.random, fete = !!this.fete;
     const items = [tirerButin(r, true, fete), r() < 0.5 ? { objet: 'munitions', qte: 40 } : tirerButin(r, true, fete), { objet: 'materiaux', qte: 30 }];
     // coffre doré : une arme épique ou légendaire en plus
     if (c.dore) {

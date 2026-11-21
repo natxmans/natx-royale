@@ -949,7 +949,7 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
 /* téléphone tenu debout : le personnage en haut, le panneau dessous */
 @media (max-width: 640px) and (orientation: portrait) {
   #pageJouer { flex-direction: column; }
-  #sceneJouer { order: -1; min-height: 24vh; max-width: none; }
+  #sceneJouer { order: -1; min-height: 18vh; max-width: none; }
   #pageJouer .col-jouer { width: 100%; }
   .panneau-jouer .logo.logo-image, .bandeau-collab span:last-child { display: none; }
   .ligne-potes small { display: none; }
@@ -968,9 +968,40 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
   #pageJouer button.gros, #pageJouer .ligne-potes button.gros { padding: 5px 8px; }
 }
 @media (max-width: 640px) and (orientation: portrait) and (max-height: 700px) {
-  #sceneJouer { min-height: 17vh; }
+  #sceneJouer { min-height: 15vh; }
   .desc-mode, .nom-podium { display: none; }
   .panneau-jouer { gap: 6px; }
   .choix-modes button { min-height: 46px; }
   #pageJouer button.gros { font-size: 17px; padding: 9px 10px; }
+}
+/* ---------- Programme du jour (mini-événements automatiques) ---------- */
+.programme-jeu { font: inherit; font-weight: 900; color: #fff; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .3); border-radius: 20px; padding: 3px 12px; cursor: pointer; }
+.programme-jeu:hover { background: rgba(255, 255, 255, .2); }
+.programme-jeu.en-cours { color: #1d1300; background: linear-gradient(90deg, #ffe066, #ffb81f); border-color: #fff; box-shadow: 0 0 14px rgba(255, 190, 40, .6); }
+.ligne-programme { display: grid; grid-template-columns: 74px 1fr auto; gap: 4px 10px; align-items: center; padding: 8px 12px; margin: 6px 0; border-radius: 12px; background: rgba(255, 255, 255, .06); font-weight: 800; }
+.ligne-programme b { font-family: 'Lilita One', system-ui; font-weight: 400; font-size: 18px; color: var(--jaune); }
+.ligne-programme small { color: var(--doux); white-space: nowrap; }
+.ligne-programme.passe { opacity: .45; }
+.ligne-programme.en-cours { background: rgba(255, 184, 31, .2); outline: 2px solid var(--jaune); }
+#listeProgramme h3 { margin: 12px 0 4px; font-size: 18px; }
+.choix-modes button.vedette { position: relative; border-color: #ff9a3c; box-shadow: 0 0 10px rgba(255, 154, 60, .45); }
+.choix-modes button.vedette::after { content: 'XP × 2'; position: absolute; top: -7px; right: -3px; padding: 1px 5px; border-radius: 8px; background: #ff9a3c; color: #1d1300; font-size: 9px; font-weight: 900; }
+@media (max-height: 520px) { .annonce-jeu { padding: 3px 10px; font-size: 12px; gap: 2px 10px; } .programme-jeu { padding: 1px 9px; } }
+@media (max-width: 640px) { .ligne-programme { grid-template-columns: 62px 1fr; } .ligne-programme small { grid-column: 2; } }
+/* petit écran : le programme seul se pose par-dessus le haut de la scène, dans un bandeau de hauteur zéro
+   (l'accueil garde toute sa hauteur) ; et si une annonce de l'équipe prend de la place, l'accueil peut défiler plutôt que d'être coupé */
+@media (max-width: 1000px), (max-height: 520px) {
+  #pageJouer { overflow-y: auto; }
+  .menu:has(#pageJouer:not(.cache)) .annonce-jeu.seul-programme { position: relative; z-index: 4; height: 0; min-height: 0; margin: 0; padding: 0; border: 0; background: none; overflow: visible; flex-wrap: nowrap; justify-content: flex-end; align-items: flex-start; animation: none; }
+  .menu:has(#pageJouer:not(.cache)) .annonce-jeu.seul-programme .programme-jeu { flex: none; max-width: 46vw; margin: 3px 6px 0; padding: 2px 10px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(30, 20, 60, .88); }
+  .menu:has(#pageJouer:not(.cache)) .annonce-jeu.seul-programme .programme-jeu.en-cours { background: linear-gradient(90deg, #ffe066, #ffb81f); }
+}
+/* là où les écrans du menu ont 10 px d'écart entre leurs blocs, le bandeau de hauteur zéro ne doit pas en ajouter un */
+@media (max-width: 820px), (max-height: 520px) {
+  .menu:has(#pageJouer:not(.cache)) .annonce-jeu.seul-programme { margin-bottom: -10px; }
+}
+@media (max-width: 640px) and (orientation: portrait) {
+  .menu:has(#pageJouer:not(.cache)) .annonce-jeu.seul-programme { justify-content: center; }
+  .menu:has(#pageJouer:not(.cache)) .annonce-jeu.seul-programme .programme-jeu { max-width: 94vw; }
+  #annonceJeu.seul-programme:not(.cache) ~ #pageJouer .bandeau-collab { top: 34px; }
 }
