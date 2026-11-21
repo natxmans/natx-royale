@@ -163,16 +163,15 @@ function dessinerBoite() {
   const ouverte = !$('#fenetreBoite').classList.contains('cache');
   majCompteur();
   if (!ouverte) return;
-  const onglet = $('#fenetreBoite').dataset.onglet || 'attente';
-  for (const b of document.querySelectorAll('#ongletsBoite button')) b.classList.toggle('actif', b.dataset.onglet === onglet);
+  // Un cadeau ouvert disparaît tout seul de la boîte : elle ne montre que ce qui reste à ouvrir (plus d'onglet « Historique »).
+  const onglet = 'attente';
   const liste = $('#listeBoite');
   liste.replaceChildren();
-  const elems = onglet === 'attente' ? boite.non_ouverts : boite.historique;
-  $('#ouvrirTout').classList.toggle('cache', onglet !== 'attente' || boite.non_ouverts.length < 2);
+  const elems = boite.non_ouverts;
+  $('#ouvrirTout').classList.toggle('cache', boite.non_ouverts.length < 2);
   $('#infoBoite').textContent = boite.prive_cadeaux
     ? '⛔ Ton compte ne peut pas recevoir de cadeaux pour le moment.'
-    : onglet === 'attente' ? (elems.length ? 'Ouvre tes cadeaux pour les ajouter à ton profil.' : 'Aucun cadeau à ouvrir pour l\'instant.')
-      : (elems.length ? 'Les 30 derniers cadeaux que tu as ouverts.' : 'Tu n\'as encore ouvert aucun cadeau.');
+    : elems.length ? 'Ouvre tes cadeaux pour les ajouter à ton profil. Un cadeau ouvert disparaît de ta boîte.' : 'Aucun cadeau à ouvrir pour l\'instant.';
   for (const c of elems) {
     const li = document.createElement('li');
     li.className = 'entree-boite' + (c.origine === 'cargaison' ? ' cargaison' : '');
@@ -202,8 +201,7 @@ async function ouvrir(id, bouton) {
   if (bouton) { bouton.disabled = true; bouton.textContent = '…'; }
   try {
     const d = await ouvrirCadeauServeur(id);
-    boite.non_ouverts = boite.non_ouverts.filter(c => c.id !== id);
-    if (!boite.historique.some(c => c.id === id)) boite.historique.unshift(d.cadeau);
+    boite.non_ouverts = boite.non_ouverts.filter(c => c.id !== id); // ouvert : il sort de la boîte
     recevoir(d.cadeau);
     dessinerBoite();
     synchroniserProfil(true);
@@ -388,7 +386,6 @@ export async function initCadeaux({ profil, menus, son, toast, reglages, version
   };
   $('#btnBoite').onclick = () => ouvrirBoite();
   $('#fermerBoite').onclick = () => $('#fenetreBoite').classList.add('cache');
-  for (const b of document.querySelectorAll('#ongletsBoite button')) b.onclick = () => { $('#fenetreBoite').dataset.onglet = b.dataset.onglet; dessinerBoite(); };
   $('#ouvrirTout').onclick = async () => {
     for (const c of [...boite.non_ouverts]) await ouvrir(c.id);
   };

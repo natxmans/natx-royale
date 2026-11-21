@@ -1,0 +1,168 @@
+{
+ "_aide": "Ensemble Staff (session Modélisation) : une pièce par catégorie, aux mêmes règles que les cosmétiques des 250. Coordonnées three.js. La Tenue Staff elle-même est dans tenue_staff_v001.glb / tenues_hd_v001.json.",
+ "fichier": "ensemble_staff_v001.glb",
+ "id": "staff",
+ "rarete": "staff",
+ "couleurs": {
+  "graphite": "#11161c",
+  "menthe": "#14e0a2"
+ },
+ "objets": [
+  {
+   "objet": "chapeau_staff",
+   "categorie": "chapeau",
+   "nom": "Casquette du Staff",
+   "triangles": 1310,
+   "pivot": "centre de la tête (1,86 m)",
+   "taille": [
+    0.276,
+    0.151,
+    0.433
+   ],
+   "min": [
+    -0.138,
+    0.036,
+    -0.278
+   ],
+   "max": [
+    0.138,
+    0.187,
+    0.156
+   ],
+   "materiaux": [
+    "cosm_couleurs",
+    "lumiere_menthe"
+   ]
+  },
+  {
+   "objet": "dos_staff",
+   "categorie": "dos",
+   "nom": "Sac Radio du Staff",
+   "triangles": 1292,
+   "pivot": "milieu du dos, sur la surface du dos ; l'objet part vers +Z (three.js)",
+   "taille": [
+    0.413,
+    0.967,
+    0.428
+   ],
+   "min": [
+    -0.219,
+    -0.18,
+    -0.246
+   ],
+   "max": [
+    0.194,
+    0.787,
+    0.182
+   ],
+   "materiaux": [
+    "cosm_couleurs",
+    "lumiere_menthe"
+   ]
+  },
+  {
+   "objet": "pioche_staff",
+   "categorie": "pioche",
+   "nom": "Pioche du Staff",
+   "triangles": 772,
+   "pivot": "la poignée ; manche vers -Z (three.js), tête au bout",
+   "taille": [
+    0.087,
+    0.75,
+    0.987
+   ],
+   "min": [
+    -0.044,
+    -0.375,
+    -0.81
+   ],
+   "max": [
+    0.044,
+    0.375,
+    0.177
+   ],
+   "materiaux": [
+    "cosm_couleurs",
+    "lumiere_menthe"
+   ]
+  },
+  {
+   "objet": "deltaplane_staff",
+   "categorie": "deltaplane",
+   "nom": "Aile du Staff",
+   "triangles": 2352,
+   "pivot": "aux pieds ; barre à 2,3 m de haut et 0,45 m devant",
+   "taille": [
+    4.057,
+    1.076,
+    2.379
+   ],
+   "min": [
+    -2.028,
+    2.279,
+    -1.478
+   ],
+   "max": [
+    2.028,
+    3.356,
+    0.901
+   ],
+   "materiaux": [
+    "cosm_couleurs",
+    "lumiere_menthe"
+   ]
+  }
+ ],
+ "trainee": {
+  "_aide": "Même format que trainees_250_v001.json et même atlas (aucune image en plus) : cases etoile4, point_doux, etincelle.",
+  "slug": "staff",
+  "nom": "Sillage du Staff",
+  "rarete": "staff",
+  "atlas": "trainees_250_v001.png",
+  "case": 2,
+  "cases": [
+   2,
+   9,
+   3
+  ],
+  "formes": [
+   "etoile4",
+   "point_doux",
+   "etincelle"
+  ],
+  "teinter": true,
+  "couleurs": [
+   "#14e0a2",
+   "#7dffd0",
+   "#f2f5f7"
+  ],
+  "taille": 0.35,
+  "tailleFin": 0.9,
+  "vie": 1.1,
+  "gravite": -0.15,
+  "frein": 1.0,
+  "alpha": 0.9,
+  "additif": true,
+  "vitesse": 0.5,
+  "dispersion": 0.35,
+  "cadence": 0.045,
+  "nombre": 1
+ },
+ "emote": {
+  "_aide": "Même format que emotes_250_v002.json ; le clip est dans un fichier à part (mêmes 10 nœuds).",
+  "fichier": "emote_staff_v001.glb",
+  "slug": "staff",
+  "nom": "Salut du Staff",
+  "rarete": "staff",
+  "clip": "emote_staff",
+  "duree": 2.5,
+  "boucle": false,
+  "effets": [
+   {
+    "t": 0.45,
+    "type": "eclat",
+    "ancre": "tete"
+   }
+  ]
+ }
+}

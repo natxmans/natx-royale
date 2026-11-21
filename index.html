@@ -458,7 +458,7 @@
 <div id="fenetreBoite" class="ecran cache" role="dialog" aria-labelledby="titreBoite" data-onglet="attente">
   <div class="boite large boite-reception">
     <div class="bandeau mince" style="--image: url('modeles/interface/illustrations/cadeaux.webp')"><h2 id="titreBoite">🎁 Boîte de réception</h2></div>
-    <div class="onglets-boite" id="ongletsBoite"><button data-onglet="attente" class="actif">À ouvrir</button><button data-onglet="historique">Historique</button></div>
+    <!-- plus d'onglet « Historique » : un cadeau ouvert disparaît de la boîte -->
     <p id="infoBoite" class="petit-texte"></p>
     <ul id="listeBoite" class="liste-boite"></ul>
     <div class="boutons-cadeau"><button class="gros vert cache" id="ouvrirTout">Tout ouvrir</button><button class="petit" id="fermerBoite">Fermer</button></div>
@@ -516,6 +516,6 @@
 <div id="chargement" class="ecran cache"><div class="boite"><img class="illustration" src="modeles/interface/illustrations/chargement_petit.webp" width="320" height="180" alt="" loading="lazy"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=15"></script>
+<script type="module" src="js/jeu.js?v=16"></script>
 </body>
 </html>

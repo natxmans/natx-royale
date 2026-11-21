@@ -230,7 +230,11 @@ def migrer(db):
     if 'ouvert_le' in nouvelles:
         # avant la boîte de réception, un cadeau livré était ouvert tout de suite par le jeu
         db.execute('UPDATE cadeaux_recus SET ouvert_le = recu_le WHERE ouvert_le IS NULL')
-    ajouter_colonnes(db, 'cadeaux', ["expediteur TEXT", "origine TEXT NOT NULL DEFAULT 'admin'", 'esprit TEXT'])
+    ajouter_colonnes(db, 'cadeaux', ["expediteur TEXT", "origine TEXT NOT NULL DEFAULT 'admin'", 'esprit TEXT', 'archive_le INTEGER'])
+    # Un cadeau pour UN joueur qui l'a ouvert sort tout seul de la liste du panel (archive_le) : on rattrape ceux d'avant.
+    db.execute("""UPDATE cadeaux SET archive_le=? WHERE archive_le IS NULL AND cible='joueur'
+        AND EXISTS (SELECT 1 FROM cadeaux_recus r WHERE r.cadeau_id=cadeaux.id AND r.ouvert_le IS NOT NULL)
+        AND NOT EXISTS (SELECT 1 FROM cadeaux_recus r WHERE r.cadeau_id=cadeaux.id AND r.ouvert_le IS NULL AND r.annule_le IS NULL)""", (maintenant(),))
     ajouter_colonnes(db, 'admins', ['actif INTEGER NOT NULL DEFAULT 1', 'doit_changer_mdp INTEGER NOT NULL DEFAULT 0',
                                     'cree_par INTEGER', 'derniere_connexion INTEGER',
                                     # liaison staff : le compte joueur de l'admin (joueur_id) et la demande en attente

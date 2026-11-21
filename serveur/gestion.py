@@ -286,7 +286,7 @@ def entree_boite(l):
 def livrer_en_attente(db, jid):
     """Les cadeaux « pour tout le monde » ou « pour ce joueur » arrivent dans sa boîte (une seule fois chacun)."""
     t = maintenant()
-    lignes = db.execute("""SELECT id FROM cadeaux c WHERE c.actif=1 AND (c.expire_le IS NULL OR c.expire_le > ?)
+    lignes = db.execute("""SELECT id FROM cadeaux c WHERE c.actif=1 AND c.archive_le IS NULL AND (c.expire_le IS NULL OR c.expire_le > ?)
         AND (c.cible='tous' OR (c.cible='joueur' AND c.joueur_id=?))
         AND NOT EXISTS (SELECT 1 FROM cadeaux_recus r WHERE r.cadeau_id=c.id AND r.joueur_id=?) ORDER BY c.id LIMIT 50""", (t, jid, jid)).fetchall()
     for l in lignes:
@@ -317,6 +317,34 @@ def api_boite(req, db):
                  'prive_cadeaux': bool(prive), 'maintenant': t, 'staff': infos_staff(db, jid), 'liaison': demande_liaison(db, jid)}
 
 
+def archiver_si_fini(db, cid):
+    """Un cadeau que tous ses destinataires ont ouvert sort TOUT SEUL de la liste du panel (demande du 21 nov. 2026).
+
+    Il n'est pas effacé de la base : le jeu doit pouvoir redonner le contenu si la réponse s'est perdue (coupure réseau),
+    la fiche du joueur garde son historique, et le journal d'audit garde l'envoi.
+    - pour UN joueur : dès qu'il l'a ouvert ;
+    - avec un code : quand le nombre maximum d'utilisations est atteint et que tout le monde l'a ouvert ;
+    - pour tout le monde : seulement une fois arrêté ou expiré (de nouveaux joueurs peuvent encore le recevoir avant).
+    """
+    c = db.execute('SELECT * FROM cadeaux WHERE id=?', (cid,)).fetchone()
+    if not c or c['archive_le']:
+        return False
+    en_attente = un(db, 'SELECT COUNT(*) FROM cadeaux_recus WHERE cadeau_id=? AND ouvert_le IS NULL AND annule_le IS NULL', cid)
+    ouverts = un(db, 'SELECT COUNT(*) FROM cadeaux_recus WHERE cadeau_id=? AND ouvert_le IS NOT NULL', cid)
+    if en_attente or not ouverts:
+        return False
+    t = maintenant()
+    if c['cible'] == 'joueur':
+        fini = True
+    elif c['cible'] == 'code':
+        fini = bool(c['max_utilisations']) and un(db, 'SELECT COUNT(*) FROM cadeaux_recus WHERE cadeau_id=?', cid) >= c['max_utilisations']
+    else:
+        fini = not c['actif'] or bool(c['expire_le'] and c['expire_le'] <= t)
+    if fini:
+        db.execute('UPDATE cadeaux SET archive_le=? WHERE id=?', (t, cid))
+    return fini
+
+
 def api_boite_ouvrir(req, db):
     """Ouvrir un cadeau : le serveur note l'ouverture UNE fois ; redemander renvoie le même contenu avec deja=true."""
     d = req.json()
@@ -336,6 +364,7 @@ def api_boite_ouvrir(req, db):
         raise Erreur(410, 'Ce cadeau a expiré.')
     t = maintenant()
     deja = not db.execute('UPDATE cadeaux_recus SET ouvert_le=? WHERE cadeau_id=? AND joueur_id=? AND ouvert_le IS NULL', (t, cid, jid)).rowcount
+    archiver_si_fini(db, cid)
     l = db.execute('SELECT c.*, r.recu_le, r.ouvert_le FROM cadeaux_recus r JOIN cadeaux c ON c.id=r.cadeau_id WHERE r.cadeau_id=? AND r.joueur_id=?', (cid, jid)).fetchone()
     return 200, {'cadeau': entree_boite(l), 'deja': deja}
 
@@ -1228,6 +1257,12 @@ def admin_cadeaux(req, db):
     session_admin(req, db, permission='cadeaux.voir')
     q = nettoyer(req.query.get('q'), 40)
     conds, params = ['1=1'], []
+    # les cadeaux que tous leurs destinataires ont ouverts sortent tout seuls de la liste ; « etat=ouverts » les montre quand même
+    etat = req.query.get('etat')
+    if etat == 'ouverts':
+        conds.append('c.archive_le IS NOT NULL')
+    elif etat != 'tous':
+        conds.append('c.archive_le IS NULL')
     if req.query.get('origine') in ('admin', 'cargaison', 'robot'):
         conds.append('c.origine=?'); params.append(req.query['origine'])
     if q:
@@ -1255,9 +1290,11 @@ def admin_cadeaux(req, db):
         c['joueur_qui'] = noms.get(l['joueur_id'])
         c.update({'cible': l['cible'], 'joueur_code': code_court(l['joueur_id']), 'code': api.formater_code(l['code']),
                   'max_utilisations': l['max_utilisations'], 'actif': l['actif'], 'expire_le': l['expire_le'], 'cree_le': l['cree_le'],
-                  'recus': l['recus'], 'ouverts': l['ouverts'], 'en_attente': l['en_attente'], 'annules': l['annules'], 'auteur': l['auteur']})
+                  'recus': l['recus'], 'ouverts': l['ouverts'], 'en_attente': l['en_attente'], 'annules': l['annules'], 'auteur': l['auteur'],
+                  'archive_le': l['archive_le']})
         sortie.append(c)
-    return 200, {'cadeaux': sortie, 'total': total, 'page': page_de(req), 'joueurs': un(db, 'SELECT COUNT(*) FROM joueurs'), 'expediteur_defaut': api.EXPEDITEUR_DEFAUT}
+    return 200, {'cadeaux': sortie, 'total': total, 'page': page_de(req), 'joueurs': un(db, 'SELECT COUNT(*) FROM joueurs'), 'expediteur_defaut': api.EXPEDITEUR_DEFAUT,
+                 'ouverts_retires': un(db, 'SELECT COUNT(*) FROM cadeaux WHERE archive_le IS NOT NULL')}
 
 
 def admin_cadeau_livraisons(req, db, cid):

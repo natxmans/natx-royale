@@ -233,3 +233,11 @@ Le panel n'accepte que ses propres fichiers (règle CSP), donc `serveur/copier_v
 - pour tester en local : `python -X utf8 serveur/copier_visuels.py` ;
 - les originaux de `modeles/admin/` ne sont jamais modifiés ; `serveur/admin/visuels/` est une copie qu'on peut effacer et refaire ;
 - si le dossier `visuels/` manque, le panel marche comme avant, avec ses émojis.
+
+### Cadeaux ouverts : ils disparaissent tout seuls (21 nov. 2026)
+
+- Dans le jeu : la boîte de réception ne montre plus que les cadeaux à ouvrir. Dès qu'un cadeau est ouvert, il sort de la boîte (plus d'onglet « Historique »).
+- Dans le panel : un cadeau sort tout seul de la liste quand tous ceux qui devaient le recevoir l'ont ouvert (colonne `cadeaux.archive_le`) :
+  pour un joueur, dès qu'il l'a ouvert ; avec un code, quand le maximum d'utilisations est atteint ; pour tout le monde, seulement une fois arrêté ou expiré.
+- Rien n'est effacé de la base : le jeu peut redemander le contenu si la réponse s'est perdue, la fiche du joueur garde son historique et le journal garde l'envoi.
+  Le filtre « Cadeaux ouverts, retirés tout seuls » de la page Cadeaux permet de les revoir.

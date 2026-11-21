@@ -544,8 +544,27 @@
   "tenue:sorcier": "vignettes/tenue/sorcier.webp",
   "tenue:tee2k27": "vignettes/tenue/tee2k27.webp",
   "tenue:sweat2k27": "vignettes/tenue/sweat2k27.webp",
-  "tenue:staff": "vignettes/tenue/staff.webp"
+  "tenue:staff": "vignettes/tenue/staff.webp",
+  "emote:staff": "vignettes/emote/staff.webp",
+  "chapeau:staff": "vignettes/chapeau/staff.webp",
+  "dos:staff": "vignettes/dos/staff.webp",
+  "pioche:staff": "vignettes/pioche/staff.webp",
+  "deltaplane:staff": "vignettes/deltaplane/staff.webp",
+  "arme:bois": "vignettes/arme/bois.webp",
+  "arme:bonbon": "vignettes/arme/bonbon.webp",
+  "arme:jungle": "vignettes/arme/jungle.webp",
+  "arme:glace": "vignettes/arme/glace.webp",
+  "arme:chrome": "vignettes/arme/chrome.webp",
+  "arme:neon": "vignettes/arme/neon.webp",
+  "arme:lave": "vignettes/arme/lave.webp",
+  "arme:galaxie": "vignettes/arme/galaxie.webp",
+  "arme:or": "vignettes/arme/or.webp",
+  "arme:natx2k27": "vignettes/arme/natx2k27.webp",
+  "arme:staff": "vignettes/arme/staff.webp",
+  "trainee:staff": "vignettes/trainee/staff.webp"
  },
  "nombre": 271,
- "poids_total_ko": 1403
+ "poids_total_ko": 1464,
+ "nombre_par_cle": 288,
+ "_ajouts": "Dans « par_cle » seulement (ils n'ont pas d'id du catalogue des 250) : les 7 pièces de l'ensemble Staff (chapeau:staff, dos:staff, pioche:staff, deltaplane:staff, trainee:staff, emote:staff, arme:staff) et les 11 skins d'armes (arme:<id>). Refaits par sources/construire_staff_vignettes.py (à relancer après le mode « index » de construire_admin_images.py, qui réécrit ce fichier)."
 }

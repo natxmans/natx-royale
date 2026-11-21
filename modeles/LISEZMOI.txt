@@ -616,3 +616,16 @@ Détails dans RAPPORT-MODELISATION-250.md, section 23.
   admin/illustrations/esprits_15.webp et interface/illustrations/esprits_15.webp : les 15 esprits (les esprits.webp restent).
 Vérifié dans three.js (noms, 80 animations, durées, objets cachés, boucles, retour au repos). Rien n'a été testé dans le jeu.
 
+
+18) ENSEMBLE STAFF COMPLET + VIGNETTES DES SKINS D'ARMES (21 novembre 2026) — RIEN N'EST BRANCHÉ
+=================================================================================================
+Détails dans RAPPORT-MODELISATION-250.md, section 24.
+  ensemble_staff_v001.glb   chapeau_staff (casquette), dos_staff (sac radio à antenne), pioche_staff (pointes lumineuses),
+                            deltaplane_staff (aile marquée STAFF). Mêmes règles que les cosmétiques des 250 :
+                            cosm_couleurs + lumiere_menthe, aucune texture. 772 à 2 352 triangles.
+  ensemble_staff_v001.json  la fiche : les 4 objets, l'entrée « trainee » (atlas existant) et l'entrée « emote ».
+  emote_staff_v001.glb      clip emote_staff (salut, 2,5 s, une fois), même format que emotes_250_v002.glb.
+  admin/vignettes/          17 vignettes en plus : chapeau, dos, pioche, deltaplane, trainee, emote « staff » et
+                            arme/<id>.webp pour les 11 skins d'armes. Clés ajoutées à « par_cle » de admin/vignettes.json.
+La Tenue Staff (tenue_staff_v001.glb) ne change pas. Vérifié dans three.js, pas testé dans le jeu.
+

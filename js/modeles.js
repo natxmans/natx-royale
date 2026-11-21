@@ -9,7 +9,7 @@ import { activerCosmetiques } from './boutique.js';
 const VERSION = 2; // à augmenter quand un .glb change (évite le vieux cache du navigateur)
 const BIBLIO = {};           // nom de l'objet → Object3D (modèle d'origine, jamais affiché)
 const ANIMATIONS = {};       // nom de l'animation → AnimationClip (ex. soin_flotter, socle_tourner)
-export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [], cosmetiques250: [], cargaisons: [], tenuesHD: false, vegetation: false };
+export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [], cosmetiques250: [], cargaisons: [], tenuesHD: false, vegetation: false, ensembleStaff: false };
 const chargeur = new GLTFLoader();
 const dejaCharges = new Map(); // un fichier partagé (ex. esprits_v001.glb) n'est chargé qu'une fois
 
@@ -91,6 +91,23 @@ async function chargerIntegration() {
       }
       INTEGRATION.tenuesHD = true;
     } else console.warn('Index des tenues HD illisible :', hd.fiche);
+  }
+  // Ensemble Staff livré (casquette, sac radio, pioche, deltaplane, salut, traînée) : chargé à la demande comme les 250,
+  // mais JAMAIS mis en vente (pas d'activerCosmetiques) : ces pièces restent réservées au staff (js/boutique.js).
+  const es = man.ensemble_staff;
+  if (es && es.actif && es.fiche) {
+    let doc = null;
+    try { const r = await fetch(`modeles/${es.fiche}?v=${VERSION}`); if (r.ok) doc = await r.json(); } catch (err) { doc = null; }
+    if (doc && Array.isArray(doc.objets)) {
+      for (const o of doc.objets) if (o && CATEGORIES_MODELE.has(o.categorie) && o.objet === o.categorie + '_staff') fichierDe.set(o.categorie + ':staff', doc.fichier || es.fichier);
+      if (doc.emote && doc.emote.clip && doc.emote.fichier) { FICHES.emote.set('staff', { ...doc.emote, slug: 'staff', texture: null }); fichierDe.set('emote:staff', doc.emote.fichier); }
+      if (doc.trainee && doc.trainee.atlas) {
+        const modele = FICHES.trainee.values().next().value; // même atlas que les traînées des 250 : même nombre de colonnes
+        FICHES.trainee.set('staff', { ...doc.trainee, slug: 'staff', fichier: doc.trainee.atlas, atlas: doc.trainee.atlas, colonnes: (modele && modele.colonnes) || 8, texture: null });
+        fichierDe.set('trainee:staff', doc.trainee.atlas);
+      }
+      INTEGRATION.ensembleStaff = true;
+    } else console.warn('Fiche de l’ensemble Staff illisible :', es.fiche);
   }
   // Formes de la végétation (inst_tronc, inst_sapin, inst_rocher_1…) : js/monde.js les met dans ses InstancedMesh
   if (man.vegetation && man.vegetation.actif && man.vegetation.fichier) INTEGRATION.vegetation = !!(await chargerFichier(man.vegetation.fichier));

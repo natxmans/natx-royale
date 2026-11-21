@@ -1844,6 +1844,12 @@
   "fichier": "animations_perso_v001.glb",
   "fiche": "animations_perso_v001.json"
  },
+ "_ensemble_staff_aide": "Ensemble Staff livré le 21 nov. 2026 : casquette, sac radio, pioche, deltaplane (ensemble_staff_v001.glb), salut (emote_staff_v001.glb) et traînée (atlas des 250). Chargé à la demande, jamais mis en vente : les pièces restent réservées au staff (js/boutique.js). actif:false = le jeu reprend ses versions faites en code.",
+ "ensemble_staff": {
+  "actif": true,
+  "fichier": "ensemble_staff_v001.glb",
+  "fiche": "ensemble_staff_v001.json"
+ },
  "_esprits_v002": "21 nov. 2026 : esprits_v002.glb (mêmes nœuds et animations que v001 + attente2, deplacer, content, surpris, yeux_joie). v001 gardé dans modeles/ pour revenir en arrière.",
  "_esprits_v003": "21 nov. 2026 : esprits_v003.glb branché (v002 + <id>_obtention 2,5 s jouée quand un joueur reçoit un esprit, + <id>_eclat caché au repos). v002 gardé dans modeles/ pour revenir en arrière.",
  "_esprits_plus": "21 nov. 2026 : les 10 esprits ajoutés (feu, glace, foudre, eau, nature, ombre, chance, temps, vent, etoile) viennent d'esprits_plus_v001.glb. Leurs pouvoirs sont dans js/esprits.js, js/hote.js et js/jeu.js. Sans ce fichier, le jeu les montre avec une forme de secours faite en code.",

@@ -211,3 +211,16 @@ Les 10 pouvoirs (réglages dans js/esprits.js, décidés par l'hôte dans js/hot
   des armes d'objets.glb selon leur nom : rarete → corps2, arme_sombre → corps, bois → corps2, bois_fonce → corps, caoutchouc → poignee,
   metal_clair / acier → metal (ou lignes lumineuses si le skin a « lueur »). La bande « lueur » garde la couleur de la rareté.
   Une nouvelle arme doit donc garder ces noms de matériaux pour que les skins lui aillent.
+
+
+=====================================================================================
+8) 21 NOVEMBRE 2026 (nuit) — ensemble_staff_v001.glb EST BRANCHÉ
+=====================================================================================
+(écrit par la session Développement ; aucun fichier 3D modifié)
+
+- integration.json « ensemble_staff » { actif, fichier, fiche } ; js/modeles.js lit ensemble_staff_v001.json :
+  objets → chargés à la demande sous leur nom (chapeau_staff, dos_staff, pioche_staff, deltaplane_staff), le code les prend à la place de
+  ses versions faites en code ; emote → clip emote_staff d'emote_staff_v001.glb ; trainee → atlas des 250 avec les cases de la fiche.
+  Ces pièces ne sont jamais mises en vente : elles restent réservées au staff.
+- Vignettes : les 17 clés ajoutées à admin/vignettes.json servent dans le Casier du jeu (skins d'armes et pièces Staff) et dans le panel
+  (la copie serveur/admin/visuels/ est refaite à chaque mise en ligne par copier_visuels.py).

@@ -39,7 +39,7 @@ let visuelsDemandes = null;
 function chargerVisuels() { // une seule fois (dès l'écran de connexion : ce ne sont que des images, sans donnée du jeu)
   return visuelsDemandes || (visuelsDemandes = (async () => {
     try {
-      const r = await fetch(VISUELS.dossier + 'vignettes.json?v=13');
+      const r = await fetch(VISUELS.dossier + 'vignettes.json?v=14');
       if (!r.ok) return;
       VISUELS.vignettes = (await r.json()).par_cle || {};
       VISUELS.ok = true;
@@ -52,21 +52,21 @@ chargerVisuels();
 function icone(id) {
   if (!VISUELS.ok || !VISUELS.icones.has(id)) return null;
   const s = svg('svg', { class: 'ic', viewBox: '0 0 24 24', 'aria-hidden': 'true' });
-  s.append(svg('use', { href: VISUELS.dossier + 'icones/icones.svg?v=13#i-' + id }));
+  s.append(svg('use', { href: VISUELS.dossier + 'icones/icones.svg?v=14#i-' + id }));
   return s;
 }
 const sansEmoji = titre => titre.replace(/^\S+\s/, '');
 // vignette d'un cosmétique (« tenue:ninja ») ; null s'il n'y en a pas
 function vignette(cle, classe = 'vig') {
   const chemin = VISUELS.ok && VISUELS.vignettes[cle];
-  return chemin ? el('img', { class: classe, src: VISUELS.dossier + chemin + '?v=13', alt: '', loading: 'lazy', width: 256, height: 256 }) : null;
+  return chemin ? el('img', { class: classe, src: VISUELS.dossier + chemin + '?v=14', alt: '', loading: 'lazy', width: 256, height: 256 }) : null;
 }
-const badgeRarete = rarete => (VISUELS.ok && VISUELS.raretes.has(rarete) ? el('img', { class: 'badge-rarete', src: `${VISUELS.dossier}raretes/badge_${rarete}.svg?v=13`, alt: '', width: 20, height: 20 }) : null);
+const badgeRarete = rarete => (VISUELS.ok && VISUELS.raretes.has(rarete) ? el('img', { class: 'badge-rarete', src: `${VISUELS.dossier}raretes/badge_${rarete}.svg?v=14`, alt: '', width: 20, height: 20 }) : null);
 // carte d'un cosmétique : le cadre de sa rareté, sa vignette dans la zone image, son nom en bas
 function carteCosmetique(o, rarete) {
   const v = vignette(o.cle, 'carte-cosm-image');
   if (!v || !VISUELS.raretes.has(rarete)) return null;
-  return el('div', { class: 'carte-cosm' }, el('img', { class: 'carte-cosm-cadre', src: `${VISUELS.dossier}cadres/cadre_${rarete}.svg?v=13`, alt: '', width: 200, height: 260 }), v, el('span', { class: 'carte-cosm-nom' }, o.nom));
+  return el('div', { class: 'carte-cosm' }, el('img', { class: 'carte-cosm-cadre', src: `${VISUELS.dossier}cadres/cadre_${rarete}.svg?v=14`, alt: '', width: 200, height: 260 }), v, el('span', { class: 'carte-cosm-nom' }, o.nom));
 }
 // en-tête d'une page : son icône devant le titre, son illustration à droite
 function decorerPage(c, p) {
@@ -76,7 +76,7 @@ function decorerPage(c, p) {
   const i = icone(p.id);
   if (i) h1.prepend(i, ' ');
   const illus = VISUELS.pages[p.id];
-  if (illus) { tete.classList.add('illustree'); tete.append(el('img', { class: 'illus-page', src: `${VISUELS.dossier}illustrations/${illus}_petit.webp?v=13`, alt: '', width: 320, height: 180 })); }
+  if (illus) { tete.classList.add('illustree'); tete.append(el('img', { class: 'illus-page', src: `${VISUELS.dossier}illustrations/${illus}_petit.webp?v=14`, alt: '', width: 320, height: 180 })); }
 }
 const date = s => s ? new Date(s * 1000).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
 const jour = s => s ? new Date(s * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
@@ -639,7 +639,7 @@ async function ouvrirRetour(id) {
 const brouillonCadeau = { cible: 'tous', joueur: '', objets: new Set() };
 let CATALOGUE = null;
 async function catalogue() { if (!CATALOGUE) CATALOGUE = await api('GET', '/catalogue'); return CATALOGUE; }
-const etatCadeaux = { q: '', origine: '', page: 0 };
+const etatCadeaux = { q: '', origine: '', etat: '', page: 0 };
 async function vueCadeaux() {
   const [d, cat] = await Promise.all([api('GET', '/cadeaux?' + new URLSearchParams(etatCadeaux)), catalogue()]);
   const blocs = [el('header', { class: 'titre' }, el('h1', {}, 'Cadeaux'), el('button', { class: 'bouton discret', onclick: recharger }, '↻ Actualiser'))];
@@ -648,6 +648,9 @@ async function vueCadeaux() {
   let t; recherche.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { etatCadeaux.q = recherche.value; etatCadeaux.page = 0; recharger(); }, 400); });
   const origine = choix({ '': 'Toutes les origines', admin: 'Envoyés par l\'équipe', cargaison: 'Gagnés dans une cargaison', robot: 'Récompenses du robot' }, etatCadeaux.origine,
     { onchange: e => { etatCadeaux.origine = e.target.value; recharger(); } });
+  // un cadeau que tous ses destinataires ont ouvert sort tout seul de la liste ; on peut quand même les revoir
+  const etat = choix({ '': 'Cadeaux en cours', ouverts: `Cadeaux ouverts, retirés tout seuls (${d.ouverts_retires || 0})`, tous: 'Tous les cadeaux' }, etatCadeaux.etat,
+    { onchange: e => { etatCadeaux.etat = e.target.value; etatCadeaux.page = 0; recharger(); } });
   const lignes = d.cadeaux.map(c => {
     const pour = c.cible === 'tous' ? '🌍 Tout le monde' : c.cible === 'joueur' ? personne(c.joueur_qui, c.joueur_code) : `🔑 ${c.code}${c.max_utilisations ? ` (max ${c.max_utilisations})` : ''}`;
     const contenu = [c.pieces ? `🪙 ${c.pieces}` : null, c.objets.length ? `${c.objets.length} objet(s)` : null, c.esprit ? `✨ ${c.esprit.type} (${c.esprit.rarete})` : null].filter(Boolean).join(' · ');
@@ -662,8 +665,9 @@ async function vueCadeaux() {
       el('td', {}, `${c.recus} livré(s)`, el('div', { class: 'petit' }, `${c.ouverts} ouvert(s) · ${c.en_attente} en attente${c.annules ? ` · ${c.annules} annulé(s)` : ''}`)),
       el('td', {}, c.expire_le ? jour(c.expire_le) : 'sans limite'), el('td', {}, boutons));
   });
-  blocs.push(panneau('Historique des cadeaux', el('div', { class: 'filtres' }, recherche, origine),
-    tableau(['Cadeau', 'Expéditeur', 'Pour', 'Contenu', 'Statut de livraison', 'Jusqu\'au', ''], lignes, 'Aucun cadeau.'),
+  blocs.push(panneau('Liste des cadeaux', el('p', { class: 'aide' }, 'Un cadeau disparaît tout seul de cette liste quand tous ceux qui devaient le recevoir l’ont ouvert. ',
+    'Un cadeau pour tout le monde reste tant qu’il n’est pas arrêté ou expiré.'), el('div', { class: 'filtres' }, recherche, origine, etat),
+    tableau(['Cadeau', 'Expéditeur', 'Pour', 'Contenu', 'Statut de livraison', 'Jusqu\'au', ''], lignes, etatCadeaux.etat === 'ouverts' ? 'Aucun cadeau ouvert.' : 'Aucun cadeau en cours.'),
     pages(d.total, d.page, 100, n => { etatCadeaux.page = n; recharger(); })));
   blocs.push(await panneauProblemes());
   return blocs;
@@ -947,7 +951,7 @@ async function vueEsprits() {
     if (b) b.onclick = async () => { if (await action(b, () => api('POST', '/esprits', { type: e.type, actif: actif.checked, poids: +poids.value, description: desc.value }), 'Esprit modifié.')) recharger(); };
     const icone = el('div', { class: 'icone-esprit' }, e.icone); icone.style.background = e.couleur;
     if (VISUELS.ok) { // vignette livrée de l'esprit (son émoji revient si l'image manque)
-      const img = el('img', { class: 'vig-esprit', src: `${VISUELS.dossier}vignettes/esprit/${e.type}.webp?v=13`, alt: '', loading: 'lazy', width: 256, height: 256 });
+      const img = el('img', { class: 'vig-esprit', src: `${VISUELS.dossier}vignettes/esprit/${e.type}.webp?v=14`, alt: '', loading: 'lazy', width: 256, height: 256 });
       img.addEventListener('error', () => img.remove());
       img.addEventListener('load', () => { icone.replaceChildren(img); icone.classList.add('avec-image'); });
       icone.append(img);
