@@ -87,7 +87,7 @@ def analyser_joueur(db, jid, parties_signalees=()):
     preuves, indices = [], []
     parties = db.execute('SELECT * FROM parties WHERE joueur_id=? ORDER BY cree_le DESC LIMIT 30', (jid,)).fetchall()
     for p in parties:
-        if p['mode'] == 'entrainement':  # mannequins : les éliminations ne veulent rien dire
+        if p['mode'] in ('entrainement', 'melee'):  # mannequins, ou Mêlée (on réapparaît) : les éliminations ne veulent rien dire
             continue
         nb, k, d, pl = p['nb_joueurs'] or 0, p['kills'] or 0, p['duree'] or 0, p['place'] or 0
         q = jour_txt(p['cree_le'])
@@ -103,7 +103,7 @@ def analyser_joueur(db, jid, parties_signalees=()):
     for pid in {x for x in parties_signalees if x}:
         lignes = db.execute('SELECT joueur_id, place, kills, nb_joueurs, mode FROM parties WHERE partie_id=?', (pid,)).fetchall()
         moi = next((x for x in lignes if x['joueur_id'] == jid), None)
-        if not moi or moi['mode'] == 'entrainement':
+        if not moi or moi['mode'] in ('entrainement', 'melee'):
             continue
         if moi['place'] == 1 and moi['mode'] == 'br' and any(x['place'] == 1 and x['joueur_id'] != jid for x in lignes):
             indices.append('dans la partie signalée, un autre joueur dit aussi avoir gagné')

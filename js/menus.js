@@ -163,12 +163,14 @@ export class Menus {
     const precision = s.tirs ? Math.round(s.touches / s.tirs * 100) : 0;
     const r = p.records;
     const histo = p.historique.map(h => `<tr><td>${h.gagne ? '🏆' : '#' + (h.place || '?')}</td><td>${h.kills} 💀</td><td>${h.degats} dégâts</td><td>${mmss(h.survie)}</td><td>${(MODES[h.mode] || MODES.solo).icone}</td></tr>`).join('');
-    $('#statsProfil').innerHTML = `<h3>📊 Tes stats</h3>
-      <div class="chiffres"><div><b>${s.parties}</b>parties</div><div><b>${s.victoires}</b>TOP 1</div><div><b>${s.kills}</b>éliminations</div><div><b>${poss}/${total}</b>objets</div>
+    // l’accueil montre 4 chiffres ; tout le reste (records, dernières parties) est dans la fenêtre « Tout voir »
+    $('#statsProfil').innerHTML = `<h3>📊 Tes stats <button class="petit" id="btnStats">Tout voir</button></h3>
+      <div class="chiffres"><div><b>${s.parties}</b>parties</div><div><b>${s.victoires}</b>TOP 1</div><div><b>${s.kills}</b>élim.</div><div><b>${poss}/${total}</b>objets</div></div>`;
+    $('#statsDetail').innerHTML = `<div class="chiffres"><div><b>${s.parties}</b>parties</div><div><b>${s.victoires}</b>TOP 1</div><div><b>${s.kills}</b>éliminations</div><div><b>${poss}/${total}</b>objets</div>
       <div><b>${precision} %</b>précision</div><div><b>${Math.round((s.temps || 0) / 60)} min</b>de jeu</div></div>
       <h3>🏅 Records</h3>
       <div class="chiffres petits"><div><b>${r.kills}</b>élim. en 1 partie</div><div><b>${r.degats}</b>dégâts</div><div><b>${r.place ? '#' + r.place : '—'}</b>meilleure place</div><div><b>${mmss(r.survie)}</b>survie</div></div>
-      ${histo ? `<details><summary>🕘 Mes 10 dernières parties</summary><table class="histo">${histo}</table></details>` : ''}`;
+      ${histo ? `<h3>🕘 Mes 10 dernières parties</h3><table class="histo">${histo}</table>` : ''}`;
     for (const el of document.querySelectorAll('#niveauEntete')) el.textContent = '⭐ ' + p.niveau;
   }
 

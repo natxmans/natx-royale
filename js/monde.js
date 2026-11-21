@@ -3,9 +3,9 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { hasard, creerBruit, borner } from './outils.js';
-import { construireLieu, rampe } from './lieux.js';
+import { construireLieu, construireSecrets, rampe } from './lieux.js';
 import { modeleBlender } from './armes.js';
-import { modeleGlb, geometrieGlb, INTEGRATION } from './modeles.js';
+import { modeleGlb, geometrieGlb, objetLivre, INTEGRATION } from './modeles.js';
 
 // Version abîmée (plus sombre) d'un matériau de construction Blender
 const matsAbimes = new Map();
@@ -237,6 +237,9 @@ function textureBois(teinte, abime) {
   return t;
 }
 
+// Matériaux des décors livrés qui n'ont pas de couleurs par sommet : lumineux (cristal, flammes, lampes) ou d'une couleur unie
+const DECORS_LUMINEUX = { lueur_passage: '#7fe9ff', flamme: '#ff9a2e', lueur_lampe: '#ffe2a0' };
+const DECORS_UNIS = { or_tresor: '#e8b923', toit_tour: '#7a3b2e', toile: '#c8553d' };
 const lisse = (a, b, x) => { const t = borner((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const distSegment = (x, z, ax, az, bx, bz) => {
   const vx = bx - ax, vz = bz - az, L = vx * vx + vz * vz || 1;
@@ -253,13 +256,14 @@ export class Monde {
     this.cellules = new Map();
     this.tampon = 0;
     this.maisons = []; this.arbres = []; this.rochers = []; this.coffres = []; this.lieux = []; this.routes = [];
+    this.passages = []; this.reserves = [];
     this.pointsButin = []; this.cheminees = []; this.champs = []; this.palmiersForces = []; this.riviere = [];
     this.anim = { ecrans: [], phares: [], projecteurs: [], fumees: [], fontaines: [] };
     this.constructions = new Map();
     this.animations = []; this.secousses = []; this.chutes = [];
     this.temps = 0;
     this.groupe = new THREE.Group();
-    this.C = new Constructeur(); this.V = []; this.Lum = []; this.Ecrans = [];
+    this.C = new Constructeur(); this.V = []; this.Lum = []; this.Ecrans = []; this.LumGeos = [];
     this.genererTerrain();
     this.creuserRiviere();
     this.creuserLac();
@@ -267,6 +271,7 @@ export class Monde {
     this.genererRoutes();
     this.calculerHMax();
     for (const m of this.maisons) this.construireMaison(m);
+    this.genererSecrets();
     this.cheminees.push(...this.anim.fumees);
     this.lieuxFontaines = this.anim.fontaines;
     this.genererArbresRochers();
@@ -279,7 +284,9 @@ export class Monde {
     }
     this.geosMaisons = this.C.geometriesParZone(64);
     this.geoVitres = this.V.length ? geometrieBoites(this.V.map(b => ({ ...b, couleur: '#ffffff' }))) : null;
-    this.geoLumieres = this.Lum.length ? geometrieBoites(this.Lum) : null;
+    const lumBoites = this.Lum.length ? geometrieBoites(this.Lum) : null;
+    // + les parties lumineuses des décors livrés (cristal des trappes, flammes, lanternes)
+    this.geoLumieres = this.LumGeos.length ? (mergeGeometries([...(lumBoites ? [lumBoites] : []), ...this.LumGeos]) || lumBoites) : lumBoites;
     this.geoEcrans = this.Ecrans.length ? geometrieBoites(this.Ecrans) : null;
   }
 
@@ -863,7 +870,47 @@ export class Monde {
   // ---------- Arbres et rochers ----------
   libreDeMaison(x, z, marge) {
     for (const m of this.maisons) if (x > m.x0 - marge && x < m.x1 + marge && z > m.z0 - marge && z < m.z1 + marge) return false;
+    // les coins réservés aux secrets et aux décors de la nature (trappes, salles, tours, ruines, campements)
+    for (const q of this.reserves) if (x > q.x0 - marge && x < q.x1 + marge && z > q.z0 - marge && z < q.z1 + marge) return false;
     return true;
+  }
+
+  // Passages secrets, salles au trésor, tours de guet, ruines, campements : tirés dans un générateur
+  // à part (graine + 4242), le même chez tous les joueurs. Les outils de lieux.js prennent leurs
+  // nuances de couleur dans this.rng : on le remplace le temps de la construction.
+  // Pose un décor livré (modeles/decors_secrets_v001.glb) : sa forme est fondue dans le décor des bâtiments.
+  // Les couleurs par sommet du fichier sont gardées ; les matériaux « à recolorer » (toit_tour, toile), l'or et
+  // les parties lumineuses prennent une couleur unie. Renvoie false si le modèle n'est pas chargé :
+  // le code dessine alors ses boîtes. NE CHANGE RIEN aux collisions ni aux tirages au sort.
+  poserDecor(nom, x, y, z, cap = 0, couleurs = null, echelle = 1) {
+    // en qualité basse (téléphones), on garde les boîtes du code : 50 000 triangles de moins sur l'île
+    const src = INTEGRATION.decors && !Monde.decorsLegers ? objetLivre('decor:' + nom) : null;
+    if (!src) return false;
+    const inv = new THREE.Matrix4().copy(src.matrixWorld).invert();
+    const pose = new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), cap), new THREE.Vector3(echelle, echelle, echelle));
+    const copie = (attr, n) => { const a = new Float32Array(attr.count * n); for (let i = 0; i < attr.count; i++) { a[i * n] = attr.getX(i); a[i * n + 1] = attr.getY(i); a[i * n + 2] = attr.getZ(i); } return new THREE.BufferAttribute(a, n); };
+    src.traverse(o => {
+      if (!o.isMesh) return;
+      const og = o.geometry, mat = (o.material && o.material.name) || '';
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', copie(og.attributes.position, 3));
+      if (og.attributes.normal) g.setAttribute('normal', copie(og.attributes.normal, 3));
+      g.setIndex(og.index ? Array.from(og.index.array) : Array.from({ length: og.attributes.position.count }, (_, i) => i));
+      if (!og.attributes.normal) g.computeVertexNormals();
+      g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(pose, new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)));
+      const lumineux = DECORS_LUMINEUX[mat];
+      const unie = (couleurs && couleurs[mat]) || lumineux || DECORS_UNIS[mat];
+      if (unie || !og.attributes.color) this.C.colorer(g, unie || '#9a958c');
+      else g.setAttribute('color', copie(og.attributes.color, 3));
+      (lumineux ? this.LumGeos : this.C.geos).push(g);
+    });
+    return true;
+  }
+
+  genererSecrets() {
+    const r = hasard(this.graine + 4242), avant = this.rng;
+    this.rng = r;
+    try { construireSecrets(this, r); } finally { this.rng = avant; }
   }
 
   // Un point juste devant l'entrée d'une maison (on y laisse le passage libre)
@@ -915,7 +962,8 @@ export class Monde {
       this.ajouterBoite(ro.boite);
       this.rochers.push(ro);
     }
-    for (let essai = 0; essai < 500 && this.coffres.length < 70; essai++) {
+    // 76 et plus 70 : les 6 coffres des salles secrètes ne remplacent pas des coffres de la nature
+    for (let essai = 0; essai < 500 && this.coffres.length < 76; essai++) {
       const x = (r() * 2 - 1) * DEMI * 0.85, z = (r() * 2 - 1) * DEMI * 0.85;
       const h = this.hauteurTerrain(x, z);
       if (h < 1.5 || !this.libreDeMaison(x, z, 3) || this.dansLieu(x, z, 2)) continue;
@@ -934,7 +982,7 @@ export class Monde {
   }
   genererBonus() {
     const r = hasard(this.graine + 99);
-    for (const c of this.coffres) c.dore = r() < 0.12;
+    for (const c of this.coffres) { const d = r() < 0.12; c.dore = d || !!c.secret; } // les coffres des salles secrètes sont toujours dorés
     this.trampolines = []; this.sources = [];
     const loinDe = (liste, x, z, d) => liste.every(t => Math.hypot(t.x - x, t.z - z) > d);
     // une fontaine de soin dans chaque lieu (là où il y a de la place)
@@ -1541,6 +1589,7 @@ export class Monde {
       if (!co.dore || !co.mesh) continue;
       for (const p of co.parties || []) p.material = this.matCoffreDore;
       co.mesh.scale.setScalar(1.18);
+      if (co.secret) continue; // pas de rayon de lumière : il dépasserait du toit et trahirait la salle secrète
       const rayon = new THREE.Mesh(geoRayonDore, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffd23f').multiplyScalar(1.5), transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }));
       rayon.position.set(co.x, co.y, co.z);
       co.rayon = rayon; this.rayonsDores.push(rayon);
@@ -1871,7 +1920,7 @@ export class Monde {
     // bâtiments (vus du dessus)
     g.fillStyle = 'rgba(40,40,55,.55)';
     for (const bx of this.C.boites) {
-      if (!bx.solide || bx.maxY - bx.minY < 2.5) continue;
+      if (!bx.solide || bx.secret || bx.maxY - bx.minY < 2.5) continue; // les salles secrètes ne sont pas sur la carte
       const [x0, z0] = P(bx.minX, bx.minZ), [x1, z1] = P(bx.maxX, bx.maxZ);
       g.fillRect(x0, z0, Math.max(1, x1 - x0), Math.max(1, z1 - z0));
     }

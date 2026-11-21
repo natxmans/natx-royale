@@ -916,6 +916,12 @@
   "actif": true,
   "fichier": "vegetation_v001.glb"
  },
+ "_decors_secrets_aide": "Décors des passages secrets et de la nature (trappe, buissons, salle au trésor, faux mur, tour de guet, ruines, tente, feu, souche, lanterne, lampadaire). js/lieux.js les pose avec monde.poserDecor ; les collisions restent dans le code. actif: false = les boîtes dessinées par le code.",
+ "decors_secrets": {
+  "actif": true,
+  "fichier": "decors_secrets_v001.glb",
+  "fiche": "decors_secrets_v001.json"
+ },
  "armes": [
   {
    "id": "futuriste",

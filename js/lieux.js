@@ -14,13 +14,13 @@ const vitre = (m, x0, y0, z0, x1, y1, z1) => m.V.push({ minX: Math.min(x0, x1), 
 const coffre = (m, x, y, z, rot = 0) => m.coffres.push({ id: m.coffres.length, x, y, z, rot, ouvert: false });
 const butin = (m, x, y, z, bonus = false) => m.pointsButin.push({ x, y, z, bonus });
 // Colonne solide (cylindre dessiné, collision ronde de la même taille)
-function colonne(m, x, y0, z, r, h, c, seg = 14) {
-  m.C.cylindre(x, y0, z, r, r, h, c, seg);
+function colonne(m, x, y0, z, r, h, c, seg = 14, dessin = true) {
+  if (dessin) m.C.cylindre(x, y0, z, r, r, h, c, seg);
   m.ajouterBoite({ cyl: true, cx: x, cz: z, r, minX: x - r, maxX: x + r, minZ: z - r, maxZ: z + r, minY: y0, maxY: y0 + h, solide: true, type: 'maison' });
 }
 
 // Rampe droite (le long de x ou de z) de (xa,za,ya) à (xb,zb,yb)
-export function rampe(m, xa, za, ya, xb, zb, yb, larg, couleur) {
+export function rampe(m, xa, za, ya, xb, zb, yb, larg, couleur, dessin = true) {
   const surX = Math.abs(xb - xa) > Math.abs(zb - za);
   const L = surX ? xb - xa : zb - za;
   const pente = (yb - ya) / L;
@@ -30,6 +30,7 @@ export function rampe(m, xa, za, ya, xb, zb, yb, larg, couleur) {
   m.ajouterBoite({ minX, maxX, minZ, maxZ, minY: Math.min(ya, yb), maxY: Math.max(ya, yb), solide: false, type: 'maison', rampe: { ...p, minX, maxX, minZ, maxZ } });
   const longueur = Math.hypot(Math.abs(L), yb - ya), ang = Math.atan(pente);
   const cx = (xa + xb) / 2, cz = (za + zb) / 2, cy = (ya + yb) / 2 - 0.16;
+  if (!dessin) return; // un modèle 3D montre déjà la planche
   if (surX) m.C.tournee(longueur, 0.3, larg, cx, cy, cz, 0, 0, ang, couleur);
   else m.C.tournee(larg, 0.3, longueur, cx, cy, cz, -ang, 0, 0, couleur);
 }
@@ -590,6 +591,318 @@ function port(m, l) {
   S(m, fx - 1.7, fh - 1, fz - 1.7, fx + 1.7, top + 0.3, fz + 1.7, '#ffffff').dessin = false;
   m.anim.phares.push({ x: fx, y: top + 1.3, z: fz });
   coffre(m, ...[P(4, 16.5)].map(([x, z]) => [x, Math.max(0.5, m.hauteurTerrain(x, z)), z])[0], 0);
+}
+
+// ============================================================
+// SECRETS ET DÉCORS DE LA NATURE : tunnels à trappes, salles au trésor cachées,
+// tours de guet, ruines, campements, lampadaires le long des routes.
+// Tout est tiré dans un générateur à part : la même île chez tous les joueurs.
+// Chaque décor a son modèle 3D (modeles/decors_secrets_v001.glb, posé par m.poserDecor) ; si le modèle
+// n'est pas chargé, le code dessine ses boîtes. Les collisions et les tirages au sort sont LES MÊMES
+// dans les deux cas : sinon deux joueurs n'auraient plus la même île.
+// ============================================================
+const BOIS = '#8b5a2b', BOIS_F = '#5f3d1e', BOIS_C = '#b5834a', ROC = '#8d8a84', ROC_F = '#6f6c67', ROC_C = '#c9c4b8', MOUSSE = '#5f8f4a';
+const CROIX = [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [-0.7, -0.7], [0.7, -0.7], [-0.7, 0.7]];
+const feuillage = (m, x, z) => { const b = m.biome(x, z); return b === 'neige' ? ['#dfeef0', '#c4dadd', '#eaf5f6'] : b === 'desert' ? ['#9a9450', '#857f42', '#a8a15c'] : ['#3f7d3a', '#4c8f41', '#356b33']; };
+// S(...) qui bloque sans être dessinée quand le modèle 3D est là
+const Sm = (m, modele, ...a) => { const b = S(m, ...a); if (b && modele) b.dessin = false; return b; };
+
+// Buisson rond (décor : on passe à travers). Sert à cacher les trappes. dessiner = false : seulement les tirages.
+function buisson(m, x, z, s, r, y, dessiner = true) {
+  const a = r(), b = r(), dx = r() - 0.5, dz = r() - 0.5; // toujours 4 tirages
+  if (!dessiner) return;
+  const h = y ?? m.hauteurTerrain(x, z), bio = m.biome(x, z);
+  if (m.poserDecor('buisson_cachette_' + (bio === 'neige' ? 'neige' : bio === 'desert' ? 'desert' : 'prairie'), x, h, z, a * 6.283, null, 0.85 * s)) return;
+  const c = feuillage(m, x, z);
+  m.C.sphere(x, h + 0.4 * s, z, 0.85 * s, c[Math.floor(a * 3)], 1, 0.72, 1, 8);
+  m.C.sphere(x + dx * s, h + 0.3 * s, z + dz * s, 0.55 * s, c[Math.floor(b * 3)], 1, 0.8, 1, 7);
+}
+
+// Un coin de nature assez plat et dégagé pour y construire quelque chose de rayon R (il est aplani et réservé)
+function coinLibre(m, r, R, { hMin = 2.6, hMax = 24, pente = 2.4, ecart = 42 } = {}) {
+  for (let k = 0; k < 500; k++) {
+    const x = Math.round((r() * 2 - 1) * m.DEMI * 0.82), z = Math.round((r() * 2 - 1) * m.DEMI * 0.82);
+    const h = m.hauteurTerrain(x, z);
+    if (h < hMin || h > hMax) continue;
+    if (m.dansLieu(x, z, R + 10) || !m.libreDeMaison(x, z, R + 9) || m.distanceRoute(x, z) < R + 7 || m.dansChamp(x, z)) continue;
+    if (m.distanceRiviere(x, z, R + 18) < R + 14) continue;
+    if (m.lac && Math.hypot(x - m.lac.x, z - m.lac.z) < m.lac.r + R + 12) continue;
+    let p = 0;
+    for (const [ex, ez] of CROIX) p = Math.max(p, Math.abs(m.hauteurTerrain(x + ex * R, z + ez * R) - h));
+    if (p > pente) continue;
+    if (m.reserves.some(q => !q.petit && Math.hypot(q.x - x, q.z - z) < ecart)) continue;
+    m.aplanir(x - R, z - R, x + R, z + R, h, 5);
+    m.reserves.push({ x, z, x0: x - R, x1: x + R, z0: z - R, z1: z + R });
+    return { x, z, h };
+  }
+  return null;
+}
+
+// Un coin tranquille pour une trappe, entre dMin et dMax mètres de (cx, cz)
+function coinPourTrappe(m, r, cx, cz, dMin, dMax) {
+  for (let k = 0; k < 160; k++) {
+    const a = r() * Math.PI * 2, d = dMin + r() * (dMax - dMin);
+    const x = Math.round((cx + Math.cos(a) * d) * 2) / 2, z = Math.round((cz + Math.sin(a) * d) * 2) / 2;
+    if (Math.abs(x) > m.DEMI * 0.9 || Math.abs(z) > m.DEMI * 0.9) continue;
+    const h = m.hauteurTerrain(x, z);
+    if (h < 2 || h > 27) continue;
+    if (m.dansLieu(x, z, 3) || !m.libreDeMaison(x, z, 5) || m.distanceRoute(x, z) < 5.5 || m.dansChamp(x, z) || m.distanceRiviere(x, z, 14) < 10) continue;
+    if (!m.zoneLibre(x, z, 3.2)) continue;
+    let p = 0;
+    for (const [ex, ez] of CROIX) p = Math.max(p, Math.abs(m.hauteurTerrain(x + ex * 2.6, z + ez * 2.6) - h));
+    if (p > 1.5) continue;
+    return { x, z };
+  }
+  return null;
+}
+
+// Trappe de bois dans le sol : une entrée de passage secret (m.passages). On marche dessus, elle ne bloque rien.
+function trappe(m, x, z, r, { y = null, cache = true } = {}) {
+  if (y === null) { y = m.hauteurTerrain(x, z); m.aplanir(x - 1.3, z - 1.3, x + 1.3, z + 1.3, y, 3.5); }
+  if (!m.poserDecor('trappe_secrete', x, y, z)) {
+    D(m, x - 1.05, y - 0.3, z - 1.05, x + 1.05, y + 0.06, z + 1.05, ROC_F);
+    for (let k = 0; k < 4; k++) D(m, x - 0.86 + k * 0.43, y, z - 0.86, x - 0.45 + k * 0.43, y + 0.11, z + 0.86, k % 2 ? BOIS : '#7a4e25');
+    for (const s of [-0.5, 0.5]) D(m, x - 0.9, y + 0.09, z + s - 0.07, x + 0.9, y + 0.14, z + s + 0.07, '#3b3f46');
+    D(m, x - 0.15, y + 0.12, z - 0.15, x + 0.15, y + 0.17, z + 0.15, '#c9a227');
+    // la petite pierre qui brille : le seul indice
+    D(m, x + 0.82, y, z + 0.82, x + 1.1, y + 0.2, z + 1.1, ROC);
+    lum(m, x + 0.88, y + 0.2, z + 0.88, x + 1.04, y + 0.34, z + 1.04, '#7fe9ff');
+  }
+  if (cache) {
+    const a0 = r() * Math.PI * 2;
+    for (let k = 0; k < 3; k++) { const a = a0 + k * 1.7 + (r() - 0.5) * 0.4, s = 1.05 + r() * 0.35; buisson(m, x + Math.cos(a) * 1.95, z + Math.sin(a) * 1.95, s, r); }
+  }
+  m.reserves.push({ x, z, x0: x - 2.4, x1: x + 2.4, z0: z - 2.4, z1: z + 2.4, petit: true });
+  const p = { id: m.passages.length, x, y: y + 0.11, z, vers: -1, nom: '' };
+  m.passages.push(p);
+  return p;
+}
+// nomA = ce qu'il y a du côté de a (c'est ce que lira le joueur qui part de b)
+function relier(a, b, nomA, nomB) { a.vers = b.id; b.vers = a.id; a.nom = nomB; b.nom = nomA; }
+
+// Salle au trésor en vieilles pierres. faux = un pan de mur fissuré qu'on traverse ;
+// sinon elle n'a aucune porte : on n'y entre que par une trappe. Renvoie la trappe du dedans (ou null).
+function salleSecrete(m, x, z, h, r, faux) {
+  const A = 4, e = 0.6, H = 3.3, y0 = h - 1.5, yT = h + H;
+  const cote = Math.floor(r() * 4);                       // 0 = z-, 1 = z+, 2 = x-, 3 = x+
+  const n = [[0, -1], [0, 1], [-1, 0], [1, 0]][cote];
+  // le modèle a son entrée (ou son « devant ») vers -z : on le tourne vers le côté tiré au sort
+  const cap = [0, Math.PI, Math.PI / 2, -Math.PI / 2][cote];
+  const modele = m.poserDecor(faux ? 'salle_tresor_ouverte' : 'salle_tresor', x, h, z, cap);
+  if (modele && faux) m.poserDecor('faux_mur', x + n[0] * (A - e / 2), h, z + n[1] * (A - e / 2), cap);
+  const mur = (...a) => { const b = Sm(m, modele, ...a); if (b) b.secret = true; return b; };
+  const deco = (...a) => { if (!modele) D(m, ...a); };
+  const feu = (...a) => { if (!modele) lum(m, ...a); };
+  for (let k = 0; k < 4; k++) {
+    const surX = k < 2, s = k % 2 ? 1 : -1, long = surX ? A : A - e;
+    // u = le long du mur, w = dans l'épaisseur (de l'intérieur vers l'extérieur)
+    const B = (u0, u1, ya, yb, c, solide, w0 = A - e, w1 = A) => {
+      const a = s * w0, b = s * w1;
+      return surX ? (solide ? mur : deco)(x + u0, ya, z + a, x + u1, yb, z + b, c) : (solide ? mur : deco)(x + a, ya, z + u0, x + b, yb, z + u1, c);
+    };
+    if (faux && k === cote) {
+      B(-long, -0.85, y0, yT, ROC, true); B(0.85, long, y0, yT, ROC, true); B(-0.85, 0.85, h + 2.3, yT, ROC, true);
+      B(-0.85, 0.85, h - 0.2, h + 2.3, '#86837d', false, A - e + 0.06, A - 0.06);
+      // les fissures (dehors et dedans) : c'est à ça qu'on reconnaît le faux mur
+      for (const [w0, w1] of [[A - 0.08, A - 0.03], [A - e + 0.03, A - e + 0.08]]) {
+        B(-0.36, -0.28, h + 0.15, h + 1.0, '#45423e', false, w0, w1);
+        B(-0.36, 0.2, h + 0.94, h + 1.02, '#45423e', false, w0, w1);
+        B(0.12, 0.2, h + 1.0, h + 1.95, '#45423e', false, w0, w1);
+        B(0.12, 0.5, h + 1.9, h + 1.97, '#45423e', false, w0, w1);
+      }
+    } else B(-long, long, y0, yT, ROC, true);
+    // lierre qui pend du toit
+    for (let q = 0; q < 3; q++) { const u = (r() * 2 - 1) * (A - 0.9), l = 0.5 + r() * 1.1; B(u - 0.3, u + 0.3, yT - l, yT, q % 2 ? '#3f7d3a' : '#356b33', false, A, A + 0.07); }
+  }
+  // piliers d'angle, toit de pierre couvert de mousse et de buissons
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) mur(x + sx * A - 0.45, y0, z + sz * A - 0.45, x + sx * A + 0.45, yT + 0.95, z + sz * A + 0.45, ROC_F);
+  mur(x - A - 0.3, yT, z - A - 0.3, x + A + 0.3, yT + 0.5, z + A + 0.3, ROC_F);
+  deco(x - A - 0.15, yT + 0.5, z - A - 0.15, x + A + 0.15, yT + 0.6, z + A + 0.15, MOUSSE);
+  for (let q = 0; q < 5; q++) { const bx = x + (r() * 2 - 1) * 3, bz = z + (r() * 2 - 1) * 3, s = 1 + r() * 0.5; buisson(m, bx, bz, s, r, yT + 0.55, !modele); }
+  // dedans : dalles, tapis, torches, tas d'or
+  deco(x - A + e, h - 0.4, z - A + e, x + A - e, h + 0.03, z + A - e, '#5d5a56');
+  deco(x - 1.4, h + 0.03, z - 1.4, x + 1.4, h + 0.05, z + 1.4, '#8c2f2f');
+  const I = A - e;
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const tx = x + sx * (I - 0.25), tz = z + sz * (I - 0.25);
+    deco(tx - 0.07, h + 1.5, tz - 0.07, tx + 0.07, h + 2.05, tz + 0.07, BOIS_F);
+    feu(tx - 0.13, h + 2.05, tz - 0.13, tx + 0.13, h + 2.4, tz + 0.13, '#ffb347');
+  }
+  for (const s of [-1, 1]) {
+    const gx = x - n[0] * 2.5 + n[1] * s * 2.3, gz = z - n[1] * 2.5 + n[0] * s * 2.3;
+    deco(gx - 0.55, h, gz - 0.55, gx + 0.55, h + 0.22, gz + 0.55, '#e8b923');
+    deco(gx - 0.35, h + 0.22, gz - 0.35, gx + 0.35, h + 0.4, gz + 0.35, '#f2c94c');
+    feu(gx - 0.14, h + 0.4, gz - 0.14, gx + 0.14, h + 0.52, gz + 0.14, '#ffe27a');
+  }
+  // le coffre doré, au fond, tourné vers l'entrée
+  const rot = [0, Math.PI, Math.PI / 2, -Math.PI / 2][cote];
+  coffre(m, x - n[0] * 2.3, h + 0.03, z - n[1] * 2.3, rot);
+  m.coffres[m.coffres.length - 1].secret = true;
+  if (faux) return null;
+  coffre(m, x + n[1] * 2.3, h + 0.03, z + n[0] * 2.3, [-Math.PI / 2, Math.PI / 2, Math.PI, 0][cote]);
+  return trappe(m, x + n[0] * 1.9, z + n[1] * 1.9, r, { y: h + 0.03, cache: false });
+}
+
+// Tour de guet en bois : deux volées de rampes, une plateforme à 6 m avec un coffre, un toit pointu
+function tourDeGuet(m, x, z, h, r) {
+  const Y1 = h + 3, Y2 = h + 6, LX = 3.5, LZ = 3.2;
+  const toit = m.biome(x, z) === 'neige' ? '#e8f1f3' : ['#7a3b2e', '#3d5a7a', '#5b6b3a'][Math.floor(r() * 3)];
+  const modele = m.poserDecor('tour_de_guet', x, h, z, 0, { toit_tour: toit });
+  const P = (...a) => Sm(m, modele, ...a);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) P(x + sx * LX - 0.2, h - 1.5, z + sz * LZ - 0.2, x + sx * LX + 0.2, Y2 + 3.2, z + sz * LZ + 0.2, BOIS_F);
+  rampe(m, x - 2.4, z - 2.2, h, x + 2.0, z - 2.2, Y1, 2, BOIS_C, !modele);     // volée 1 : du sol au palier
+  P(x + 2.0, Y1 - 0.25, z - LZ, x + LX, Y1, z + LZ, BOIS);                      // palier
+  rampe(m, x + 2.0, z + 2.2, Y1, x - 2.4, z + 2.2, Y2, 2, BOIS_C, !modele);     // volée 2 : du palier à la plateforme
+  // plateforme, avec un trou au-dessus de la volée 2
+  P(x - LX, Y2 - 0.3, z - LZ, x + LX, Y2, z + 1.2, BOIS);
+  P(x - LX, Y2 - 0.3, z + 1.2, x - 2.4, Y2, z + LZ, BOIS);
+  P(x + 2.0, Y2 - 0.3, z + 1.2, x + LX, Y2, z + LZ, BOIS);
+  // garde-corps (on peut s'accroupir derrière)
+  P(x - LX, Y2, z - LZ, x + LX, Y2 + 1, z - LZ + 0.12, BOIS_C);
+  P(x - LX, Y2, z + LZ - 0.12, x + LX, Y2 + 1, z + LZ, BOIS_C);
+  P(x - LX, Y2, z - LZ, x - LX + 0.12, Y2 + 1, z + LZ, BOIS_C);
+  P(x + LX - 0.12, Y2, z - LZ, x + LX, Y2 + 1, z + LZ, BOIS_C);
+  P(x - 2.4, Y2, z + 1.2, x + 2.0, Y2 + 1, z + 1.32, BOIS_C);
+  if (!modele) {
+    // croisillons et toit
+    for (const s of [-1, 1]) m.C.tournee(0.12, 0.16, Math.hypot(LZ * 2, 3), x + s * LX, Y1 + 1.5, z, s * Math.atan2(3, LZ * 2), 0, 0, BOIS_F);
+    D(m, x - LX - 0.3, Y2 + 3.05, z - LZ - 0.3, x + LX + 0.3, Y2 + 3.2, z + LZ + 0.3, BOIS_F);
+    m.C.cone(x, Y2 + 3.2, z, 5.6, 2.1, toit, 4, 0, Math.PI / 4);
+    lum(m, x - 0.12, Y2 + 2.6, z - 0.12, x + 0.12, Y2 + 2.9, z + 0.12, '#ffe2a0');
+    D(m, x - 0.03, Y2 + 2.9, z - 0.03, x + 0.03, Y2 + 3.05, z + 0.03, '#2b2d33');
+  }
+  // butin : un coffre en haut, des caisses en bas
+  coffre(m, x - 0.6, Y2, z - 2.2, Math.PI);
+  butin(m, x + 1.6, Y2 + 0.1, z - 1); butin(m, x - 0.4, h + 0.1, z + 0.2);
+  caisses(m, x + 0.6, z - 0.7, 2, r, h);
+}
+
+// Ruines antiques : un cercle de colonnes (certaines cassées), une estrade et un coffre au milieu
+function ruines(m, x, z, h, r) {
+  const dalle = m.poserDecor('ruine_dalle', x, h, z);
+  if (!dalle) { m.C.cylindre(x, h - 0.3, z, 6.6, 6.9, 0.35, '#a39f97', 22); m.C.cylindre(x, h + 0.05, z, 2.2, 2.4, 0.2, '#8f8b84', 16); }
+  m.ajouterBoite({ cyl: true, cx: x, cz: z, r: 2.25, minX: x - 2.25, maxX: x + 2.25, minZ: z - 2.25, maxZ: z + 2.25, minY: h - 0.5, maxY: h + 0.25, solide: true, type: 'maison' });
+  const entieres = [];
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * Math.PI * 2 + 0.39, cx = x + Math.cos(a) * 5.2, cz = z + Math.sin(a) * 5.2;
+    const entiere = r() < 0.55, casse = Math.floor(r() * 3), hh = entiere ? 4.4 : [1.0, 1.8, 2.8][casse];
+    const modele = m.poserDecor(entiere ? 'ruine_colonne_entiere' : 'ruine_colonne_cassee_' + 'abc'[casse], cx, h, cz, -a);
+    if (!modele) m.C.cylindre(cx, h, cz, 0.62, 0.72, 0.3, ROC_F, 10);
+    colonne(m, cx, h, cz, 0.45, hh, ROC_C, 10, !modele);
+    if (entiere && !modele) D(m, cx - 0.62, h + hh, cz - 0.62, cx + 0.62, h + hh + 0.3, cz + 0.62, ROC_C);
+    entieres.push(entiere ? [cx, cz] : null);
+  }
+  // linteaux entre deux colonnes entières voisines
+  for (let k = 0; k < 8; k++) {
+    const a = entieres[k], b = entieres[(k + 1) % 8];
+    if (!a || !b) continue;
+    const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2, cap = Math.atan2(-(b[1] - a[1]), b[0] - a[0]);
+    if (!m.poserDecor('ruine_linteau', mx, h + 4.695, mz, cap)) m.C.tournee(Math.hypot(b[0] - a[0], b[1] - a[1]) + 0.9, 0.45, 0.85, mx, h + 4.92, mz, 0, cap, 0, ROC_C);
+  }
+  // murets effondrés, colonne tombée, gravats
+  Sm(m, m.poserDecor('ruine_muret_a', x - 0.6, h, z - 7.0), x - 3.0, h - 0.6, z - 7.3, x + 1.8, h + 1.4, z - 6.7, ROC);
+  Sm(m, m.poserDecor('ruine_muret_b', x - 7.0, h, z + 1.2, Math.PI / 2), x - 7.3, h - 0.6, z - 0.8, x - 6.7, h + 1.1, z + 3.2, ROC);
+  if (!m.poserDecor('ruine_colonne_tombee', x + 2.3, h, z + 3.5)) m.C.cylindre(x + 2.3, h + 0.47, z + 3.5, 0.45, 0.45, 3.4, ROC_C, 10, 0, 0, Math.PI / 2);
+  S(m, x + 0.6, h - 0.2, z + 3.1, x + 4.0, h + 0.9, z + 3.9, ROC_C).dessin = false;
+  for (let q = 0; q < 7; q++) {
+    const a = r() * 6.28, d = 2.8 + r() * 3.4, t = 0.18 + r() * 0.25, gx = x + Math.cos(a) * d, gz = z + Math.sin(a) * d;
+    if (dalle) { if (q < 3) m.poserDecor('ruine_gravats', gx, h + 0.05, gz, a); } else D(m, gx - t, h, gz - t, gx + t, h + t * 1.4, gz + t, q % 2 ? ROC : ROC_C);
+  }
+  for (let q = 0; q < 3; q++) { const a = r() * 6.28, s = 1 + r() * 0.5; buisson(m, x + Math.cos(a) * 7.4, z + Math.sin(a) * 7.4, s, r); }
+  coffre(m, x, h + 0.25, z, r() * 6.28);
+  butin(m, x + 3.4, h + 0.15, z - 2.2); butin(m, x - 3.6, h + 0.15, z + 1.4);
+}
+
+// Tente de toile (décor : on peut se cacher dedans). L'ouverture regarde le côté +z tourné de « cap ».
+function tente(m, x, z, h, cap, toile, toileF) {
+  if (m.poserDecor('tente', x, h, z, cap + Math.PI, { toile })) return; // le modèle s'ouvre vers -z
+  const c = Math.cos(cap), s = Math.sin(cap);
+  const P = (lx, ly, lz) => [x + lx * c + lz * s, h + ly, z - lx * s + lz * c];
+  const W = 1.35, Ht = 1.65, L = 3.1, pan = Math.hypot(W, Ht), ang = Math.atan2(Ht, W);
+  for (const k of [-1, 1]) { const [px, py, pz] = P(k * W / 2, Ht / 2, 0); m.C.tournee(pan, 0.07, L, px, py, pz, 0, cap, -k * ang, toile); }
+  m.C.triangle(P(-W, 0, -L / 2), P(W, 0, -L / 2), P(0, Ht, -L / 2), toileF);
+  for (const k of [-1, 1]) m.C.triangle(P(k * W, 0, L / 2), P(k * W * 0.42, 0, L / 2), P(0, Ht, L / 2), toileF);
+  { const [px, py, pz] = P(0, Ht + 0.02, 0); m.C.tournee(0.09, 0.09, L + 0.35, px, py, pz, 0, cap, 0, BOIS_F); }
+  { const [px, py, pz] = P(-0.3, 0.08, -0.3); m.C.tournee(0.7, 0.14, 1.9, px, py, pz, 0, cap, 0, '#3d6fb5'); }
+}
+
+// Campement : trois tentes autour d'un feu de camp, des souches pour s'asseoir, des caisses, un coffre
+function campement(m, x, z, h, r) {
+  const toiles = [['#c8553d', '#9c3f2c'], ['#3d7ac8', '#2c5a96'], ['#d9a441', '#a87b2a'], ['#4f9d5d', '#397344']];
+  const a0 = r() * Math.PI * 2;
+  for (let k = 0; k < 3; k++) {
+    const a = a0 + k * Math.PI * 2 / 3, tx = x + Math.cos(a) * 4.4, tz = z + Math.sin(a) * 4.4;
+    const [t1, t2] = toiles[Math.floor(r() * toiles.length)];
+    tente(m, tx, tz, h, Math.atan2(-Math.cos(a), -Math.sin(a)), t1, t2);
+    if (k < 2) butin(m, tx, h + 0.15, tz);
+    // une souche entre deux tentes
+    const b = a + Math.PI / 3;
+    if (k < 2) { const sx = x + Math.cos(b) * 2.1, sz = z + Math.sin(b) * 2.1; colonne(m, sx, h - 0.2, sz, 0.4, 0.65, BOIS_F, 9, !m.poserDecor('souche', sx, h, sz, b)); }
+  }
+  // le feu : cercle de pierres, bûches, flamme
+  if (!m.poserDecor('feu_de_camp', x, h, z, a0)) {
+    for (let k = 0; k < 8; k++) { const a = k / 8 * 6.283; D(m, x + Math.cos(a) * 0.75 - 0.17, h - 0.05, z + Math.sin(a) * 0.75 - 0.17, x + Math.cos(a) * 0.75 + 0.17, h + 0.24, z + Math.sin(a) * 0.75 + 0.17, k % 2 ? ROC : ROC_F); }
+    m.C.tournee(1.1, 0.16, 0.16, x, h + 0.14, z, 0, 0.5, 0.12, '#4a2f17'); m.C.tournee(1.1, 0.16, 0.16, x, h + 0.2, z, 0, 2.1, -0.12, '#4a2f17');
+    lum(m, x - 0.24, h + 0.2, z - 0.24, x + 0.24, h + 0.62, z + 0.24, '#ff8a1f');
+    lum(m, x - 0.12, h + 0.5, z - 0.12, x + 0.12, h + 0.95, z + 0.12, '#ffd23f');
+  }
+  m.anim.fumees.push({ x, y: h + 1.1, z });
+  // caisses, coffre tourné vers le feu, lanterne
+  const b = a0 + Math.PI;
+  caisses(m, x + Math.cos(b) * 5 - 0.6, z + Math.sin(b) * 5 - 0.6, 3, r, h);
+  const c = a0 + Math.PI * 5 / 3;
+  coffre(m, x + Math.cos(c) * 3.3, h, z + Math.sin(c) * 3.3, Math.atan2(Math.cos(c), Math.sin(c)));
+  const lx = x + Math.cos(c) * 5.6, lz = z + Math.sin(c) * 5.6;
+  const lanterne = m.poserDecor('lanterne_piquet', lx, h, lz, c);
+  Sm(m, lanterne, lx - 0.07, h - 0.3, lz - 0.07, lx + 0.07, h + 2.1, lz + 0.07, BOIS_F);
+  if (!lanterne) lum(m, lx - 0.16, h + 1.75, lz - 0.16, lx + 0.16, h + 2.1, lz + 0.16, '#ffcf70');
+}
+
+// Lampadaires le long des routes, une fois à gauche, une fois à droite
+function lampesDesRoutes(m) {
+  let k = 0;
+  for (const [ax, az, bx, bz] of m.routes) {
+    const L = Math.hypot(bx - ax, bz - az);
+    if (L < 40) continue;
+    const ux = (bx - ax) / L, uz = (bz - az) / L;
+    for (let d = 24; d < L - 20; d += 44, k++) {
+      const s = k % 2 ? 1 : -1, x = ax + ux * d - uz * 4.6 * s, z = az + uz * d + ux * 4.6 * s;
+      const h = m.hauteurTerrain(x, z);
+      if (h < 1.8 || m.dansLieu(x, z, 5) || !m.libreDeMaison(x, z, 2.5) || m.distanceRiviere(x, z, 16) < 11 || !m.zoneLibre(x, z, 1.4)) continue;
+      if (devantUnePorte(m, x, z, 2.8)) continue;
+      const modele = m.poserDecor('lampadaire_route', x, h, z, Math.atan2(ux, uz));
+      Sm(m, modele, x - 0.1, h, z - 0.1, x + 0.1, h + 3.6, z + 0.1, '#2b2d33');
+      if (!modele) { D(m, x - 0.32, h + 3.6, z - 0.32, x + 0.32, h + 3.72, z + 0.32, '#2b2d33'); lum(m, x - 0.22, h + 3.1, z - 0.22, x + 0.22, h + 3.6, z + 0.22, '#ffe2a0'); }
+      m.reserves.push({ x, z, x0: x - 0.6, x1: x + 0.6, z0: z - 0.6, z1: z + 0.6, petit: true });
+    }
+  }
+}
+
+// r = générateur à part (m.rng est déjà remplacé par lui pendant l'appel)
+export function construireSecrets(m, r) {
+  // 1. Tunnels : des paires de trappes entre deux lieux éloignés
+  const libres = m.lieux.slice();
+  for (let n = 0; n < 3 && libres.length >= 2; n++) {
+    const A = libres.splice(Math.floor(r() * libres.length), 1)[0];
+    libres.sort((p, q) => Math.hypot(q.x - A.x, q.z - A.z) - Math.hypot(p.x - A.x, p.z - A.z));
+    const B = libres.shift();
+    const pa = coinPourTrappe(m, r, A.x, A.z, A.rayon + 5, A.rayon + 17);
+    const pb = pa && coinPourTrappe(m, r, B.x, B.z, B.rayon + 5, B.rayon + 17);
+    if (pa && pb) relier(trappe(m, pa.x, pa.z, r), trappe(m, pb.x, pb.z, r), A.nom, B.nom);
+  }
+  // 2. Salles au trésor : deux sans porte (on y entre par une trappe cachée plus loin), deux avec un faux mur
+  for (let n = 0; n < 4; n++) {
+    const p = coinLibre(m, r, 6.5);
+    if (!p) continue;
+    const dehors = n < 2 ? coinPourTrappe(m, r, p.x, p.z, 17, 36) : null;
+    const dedans = salleSecrete(m, p.x, p.z, p.h, r, !dehors);
+    if (dedans) relier(trappe(m, dehors.x, dehors.z, r), dedans, 'la sortie', 'la salle au trésor');
+  }
+  // 3. Tours de guet, ruines, campements
+  for (let n = 0; n < 4; n++) { const p = coinLibre(m, r, 5.5, { pente: 3 }); if (p) tourDeGuet(m, p.x, p.z, p.h, r); }
+  for (let n = 0; n < 3; n++) { const p = coinLibre(m, r, 8.5, { pente: 2.8 }); if (p) ruines(m, p.x, p.z, p.h, r); }
+  for (let n = 0; n < 4; n++) { const p = coinLibre(m, r, 7, { pente: 2.6 }); if (p) campement(m, p.x, p.z, p.h, r); }
+  lampesDesRoutes(m);
 }
 
 export function construireLieu(m, l) {

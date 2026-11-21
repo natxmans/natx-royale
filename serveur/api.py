@@ -53,7 +53,7 @@ CATEGORIES = {
     'performance': 'Performance', 'interface': 'Interface', 'autre': 'Autre',
 }
 STATUTS = ['nouveau', 'a_etudier', 'en_cours', 'accepte', 'refuse', 'corrige']
-MODES = {'br', 'solo', 'duo', 'escouade', 'entrainement'}
+MODES = {'br', 'solo', 'duo', 'trio', 'escouade', 'eclair', 'melee', 'tireurs', 'lune', 'entrainement'}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS joueurs (id TEXT PRIMARY KEY, cree_le INTEGER NOT NULL, ip_hash TEXT);

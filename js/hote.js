@@ -3,7 +3,7 @@
 import { hasard, angleVers, arrondi, borner } from './outils.js';
 import { OBJETS, RARETES, tirerButin, LISTE_ARMES, butinRavitaillement } from './armes.js';
 import { rayonBoite, DEMI } from './monde.js';
-import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, REGAIN_SOLO, DEFIS_ENTRAINEMENT, posCargaison, CARGO } from './partage.js';
+import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, VITESSES_ZONE, DEFIS_ENTRAINEMENT, posCargaison, CARGO } from './partage.js';
 import { nettoyerLook, lookAuHasard, LOOK_DEFAUT, lookAStaff, retirerStaffDuLook } from './boutique.js';
 import { URL_API, verifierStaff } from './retours.js';
 // rareté de collection de chaque esprit (aspect seulement) et référence publique (signalements) : vérifiées ici
@@ -33,6 +33,7 @@ export class Hote {
     this.jeu = jeu;
     this.salon = new Map();
     this.options = { bots: 39, difficulte: 1, mode: 'br', vitesseZone: 'normale', matsDepart: 0, fete: false, entrainement: false };
+    this.regles = MODES.br; this.objectif = 0;
     this.chatT = new Map();
     this.enCours = false;
     this.joueurs = new Map();
@@ -218,7 +219,8 @@ export class Hote {
     let n = 0;
     this.options.mode = modeValide(this.options.mode);
     this.options.entrainement = this.options.mode === 'entrainement';
-    const taille = MODES[this.options.mode].taille;
+    const regles = this.regles = MODES[this.options.mode]; // ce que le mode change (voir partage.js)
+    const taille = regles.taille;
     // équipes : les joueurs du salon d'abord (les potes ensemble), puis les bots complètent
     const equipeDe = k => (taille > 1 ? 1 + Math.floor(k / taille) : 0);
     for (const p of this.salon.values()) {
@@ -242,22 +244,27 @@ export class Hote {
     this.nbUnites = new Set([...this.joueurs.values()].map(j => (j.equipe ? 'e' + j.equipe : j.id))).size;
     this.butins = new Map(); this.prochainButin = 1;
     const listeButins = [];
-    const fete = !!this.options.fete;
+    const fete = !!(this.options.fete || regles.fete);
     for (const pt of monde.pointsButin) {
       if (pt.bonus || fete || r() < 0.75) listeButins.push(this.creerButin(tirerButin(r, !!pt.bonus, fete), pt.x, pt.y, pt.z, false));
     }
     this.dirigeable = creerDirigeable(r);
     this.zone = creerPlanZone(r, monde, this.options);
+    // Mêlée : la zone est petite, le dirigeable passe au-dessus
+    const centreFixe = regles.zoneFixe ? { x: this.zone[0].x0, z: this.zone[0].z0 } : null;
+    if (centreFixe) this.dirigeable = creerDirigeable(r, centreFixe);
+    // objectif d'éliminations (toujours moins que le nombre de joueurs)
+    this.objectif = regles.objectif ? Math.max(3, Math.min(regles.objectif, this.joueurs.size - 1)) : 0;
     this.ravitos = new Map(); this.prochainRavito = 1;
     this.cargo = null;
-    this.planRavitos = this.options.entrainement ? [25, 90, 160] : [70, 165, 260].map(t => t * ({ lente: 1.45, rapide: 0.62 }[this.options.vitesseZone] || 1));
+    this.planRavitos = this.options.entrainement ? [25, 90, 160] : [70, 165, 260].map(t => t * (VITESSES_ZONE[this.options.vitesseZone] || 1));
     this.soinT = 0;
     this.constrPV = new Map();
     this.arbresPV = new Map(); this.rochersPV = new Map();
     this.coffresOuverts = new Set();
     // Sanctuaires des esprits élémentaires
     const nbSanct = this.options.entrainement ? 4 : Math.max(5, Math.min(9, 4 + Math.ceil(this.joueurs.size / 8)));
-    this.sanctuaires = placerSanctuaires(monde, r, nbSanct, this.options.entrainement ? { x: 0, z: 0 } : null)
+    this.sanctuaires = placerSanctuaires(monde, r, nbSanct, this.options.entrainement ? { x: 0, z: 0 } : centreFixe)
       .map(sa => ({ ...sa, dispo: true, retour: 0 }));
     this.espritT = 0;
     this.pieges = []; this.prochainPiege = 1; this.differes = []; // ronces posées, effets de pouvoirs à venir
@@ -269,8 +276,10 @@ export class Hote {
       if (!b.bot) continue;
       b.sautT = 3 + r() * (this.dirigeable.duree - 6);
       const l = lieux.length && r() < 0.6 ? lieux[Math.floor(r() * lieux.length)] : null;
-      b.dest = b.mannequin ? this.pointTerre(r, 0, 0, 40) : l ? { x: l.x + (r() - 0.5) * 40, z: l.z + (r() - 0.5) * 40 } : this.pointTerre(r, 0, 0, DEMI * 0.7);
-      const objet = LISTE_ARMES[Math.floor(r() * LISTE_ARMES.length)];
+      b.dest = b.mannequin ? this.pointTerre(r, 0, 0, 40) : centreFixe ? this.pointTerre(r, centreFixe.x, centreFixe.z, regles.zoneFixe * 0.7)
+        : l ? { x: l.x + (r() - 0.5) * 40, z: l.z + (r() - 0.5) * 40 } : this.pointTerre(r, 0, 0, DEMI * 0.7);
+      const armes = regles.armes || LISTE_ARMES;
+      const objet = armes[Math.floor(r() * armes.length)];
       b.arme = { objet, rarete: Math.floor(r() * 3) };
       b.mun = OBJETS[objet].chargeur; b.mats = 120 + this.options.difficulte * 60;
       b.soins = r() < 0.5 ? 1 : 0; b.gourdes = r() < 0.4 ? 1 : 0;
@@ -278,7 +287,7 @@ export class Hote {
     const o = this.options;
     this.reseau.diffuser({
       t: 'debut', graine, partieId: this.partieId, dirigeable: this.dirigeable, zone: this.zone, difficulte: o.difficulte,
-      options: { mode: o.mode, entrainement: !!o.entrainement, matsDepart: o.entrainement ? 999 : o.matsDepart | 0, fete: !!o.fete, vitesseZone: o.vitesseZone },
+      options: { mode: o.mode, entrainement: !!o.entrainement, matsDepart: o.entrainement ? 999 : Math.max(o.matsDepart | 0, regles.mats | 0), fete: fete, vitesseZone: o.vitesseZone, objectif: this.objectif },
       joueurs: [...this.joueurs.values()].map(j => ({ id: j.id, nom: j.nom, couleur: j.couleur, bot: j.bot, n: j.n, look: j.look, equipe: j.equipe, mannequin: !!j.mannequin, ref: j.ref || null })),
       butins: listeButins,
       esprits: this.sanctuaires.map(sa => ({ id: sa.id, x: sa.x, y: sa.y, z: sa.z, type: sa.type, dispo: true })),
@@ -315,6 +324,13 @@ export class Hote {
   }
 
   creerButin(item, x, y, z, envoyer = true) {
+    // mode avec une seule sorte d'arme (Tireurs d'élite) : les autres armes deviennent celle-là, les grenades des munitions
+    const permises = this.regles && this.regles.armes;
+    if (permises && OBJETS[item.objet]) {
+      const type = OBJETS[item.objet].type;
+      if (type === 'arme' && !permises.includes(item.objet)) { const o = permises[Math.floor(Math.random() * permises.length)]; item = { ...item, objet: o, mun: OBJETS[o].chargeur }; }
+      else if (type === 'lancer') item = { objet: 'munitions', rarete: 0, qte: 20 };
+    }
     const b = { id: this.prochainButin++, objet: item.objet, rarete: item.rarete | 0, qte: item.qte | 0, mun: item.mun | 0, x: arrondi(x), y: arrondi(y), z: arrondi(z) };
     this.butins.set(b.id, b);
     if (envoyer) this.reseau.diffuser({ t: 'butin+', b });
@@ -326,7 +342,7 @@ export class Hote {
     if (!c || this.coffresOuverts.has(id)) return;
     this.coffresOuverts.add(id);
     this.reseau.diffuser({ t: 'coffreX', id });
-    const r = Math.random, fete = !!this.options.fete;
+    const r = Math.random, fete = !!(this.options.fete || this.regles.fete);
     const items = [tirerButin(r, true, fete), r() < 0.5 ? { objet: 'munitions', qte: 40 } : tirerButin(r, true, fete), { objet: 'materiaux', qte: 30 }];
     // coffre doré : une arme épique ou légendaire en plus
     if (c.dore) {
@@ -480,6 +496,7 @@ export class Hote {
     // Givrette (glace) : ses tirs ralentissent celui qui est touché
     if (tireur && avecArme && j.pv > 0 && tireur.esprit && tireur.esprit.type === 'glace') this.ralentir(j, GLACE.touche, GLACE.facteurTouche);
     if (j.pv <= 0 && this.options.entrainement) { this.reapparaitre(j, auteur); return; }
+    if (j.pv <= 0 && this.regles.reapparition) { this.marquer(j, auteur, arme); return; }
     if (j.bot && auteur && auteur !== id) this.reactionBot(j, auteur);
     if (j.pv <= 0) this.eliminer(id, auteur, arme);
   }
@@ -499,10 +516,11 @@ export class Hote {
         k.bouclier = Math.min(100, k.bouclier + FOUDRE.bouclier);
         this.reseau.diffuser({ t: 'pv', id: k.id, pv: k.pv, b: k.bouclier });
       }
-      if (this.options.mode === 'solo' && k.vivant) {
-        const pv = Math.min(REGAIN_SOLO, 100 - k.pv);
-        k.pv += pv; k.bouclier = Math.min(100, k.bouclier + REGAIN_SOLO - pv);
-        this.reseau.diffuser({ t: 'pv', id: k.id, pv: k.pv, b: k.bouclier, regain: REGAIN_SOLO });
+      const regain = this.regles.regain | 0; // Solo et Éclair : une élimination rend des PV
+      if (regain && k.vivant) {
+        const pv = Math.min(regain, 100 - k.pv);
+        k.pv += pv; k.bouclier = Math.min(100, k.bouclier + regain - pv);
+        this.reseau.diffuser({ t: 'pv', id: k.id, pv: k.pv, b: k.bouclier, regain });
       }
       if (k.bot && Math.random() < 0.6) { k.emT = 2.5; k.em = (k.look && k.look.emote) || 'salut'; }
     }
@@ -571,6 +589,7 @@ export class Hote {
       const z = etatZone(this.zone, this.temps);
       for (const j of this.joueurs.values()) {
         if (!j.vivant || j.ph === 'dirigeable') continue;
+        if (this.regles.zoneFixe && j.ph !== 'sol') continue; // Mêlée : la zone est petite, on a le temps d'y descendre en deltaplane
         if (Math.hypot(j.x - z.x, j.z - z.z) > z.r) this.blesser(j.id, z.deg, null, 'zone');
       }
     }
@@ -705,7 +724,7 @@ export class Hote {
     const n = Math.hypot(mx, mz);
     if (this.temps < (b.pousseJusqua || 0)) { /* emporté par une bourrasque : il ne dirige plus rien */ }
     else if (n > 0.01) { b.vx = mx / n * vit; b.vz = mz / n * vit; } else { b.vx *= 0.8; b.vz *= 0.8; }
-    b.vy -= 25 * dt;
+    b.vy -= 25 * (this.regles.gravite || 1) * dt; // mode Lune : gravité faible
     b.bloqueT += dt;
     if (b.bloqueT > 0.6) {
       const bouge = Math.hypot(b.x - b.px, b.z - b.pz);
@@ -1055,13 +1074,31 @@ export class Hote {
     b.a = ''; b.f = b.auSol ? 1 : 0;
   }
 
+  // Mêlée : une élimination ne sort personne de la partie. Le tireur marque un point, la victime réapparaît
+  // dans la zone ; le premier à l'objectif gagne.
+  marquer(j, auteur, arme) {
+    const k = auteur && auteur !== j.id ? this.joueurs.get(auteur) : null;
+    if (k) { k.kills++; if (k.bot && Math.random() < 0.4) { k.emT = 2.5; k.em = (k.look && k.look.emote) || 'salut'; } }
+    const dist = k ? Math.round(Math.hypot(k.x - j.x, k.y - j.y, k.z - j.z)) : 0;
+    this.reseau.diffuser({ t: 'frag', v: j.id, k: k ? k.id : null, a: arme || '', kills: k ? k.kills : 0, dist, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z) });
+    this.reapparaitre(j, null);
+    j.ph = 'sol'; // même s'il tombait encore du dirigeable
+    if (j.bot) { j.cible = null; j.voit = false; j.agresseur = null; j.objectif = null; j.dest = { x: j.x, z: j.z }; j.destT = 0; j.soinT = 0; j.mun = OBJETS[j.arme.objet].chargeur; j.rechargeT = 0; }
+    if (k && this.objectif && k.kills >= this.objectif && !this.fini) {
+      this.fini = true;
+      this.reseau.diffuser({ t: 'fin', gagnant: k.id, nom: k.nom, kills: k.kills, equipe: 0, gagnants: [k.id], melee: true });
+    }
+  }
+
   reapparaitre(j, auteur) {
     const a = auteur && auteur !== j.id ? this.joueurs.get(auteur) : null;
     if (j.mannequin) {
       if (a) { a.kills++; this.avancerDefi(a.id, 'mannequins'); }
       this.reseau.diffuser({ t: 'mannequin', id: j.id, par: auteur || null, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z) });
     }
-    const p = this.pointTerre(Math.random, 0, 0, j.mannequin ? 45 : 30);
+    // au centre de l'île (entraînement) ou quelque part dans la zone (Mêlée)
+    const zf = this.regles.zoneFixe ? etatZone(this.zone, this.temps) : null;
+    const p = zf ? this.pointTerre(Math.random, zf.x, zf.z, zf.r * 0.8) : this.pointTerre(Math.random, 0, 0, j.mannequin ? 45 : 30);
     const h = this.monde.lancerRayon(p.x, 160, p.z, 0, -1, 0, 320);
     j.x = p.x; j.z = p.z; j.y = (h ? h.y : this.monde.hauteurTerrain(p.x, p.z)) + 0.5; j.vx = j.vz = j.vy = 0;
     j.pv = 100; j.bouclier = 0;

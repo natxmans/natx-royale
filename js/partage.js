@@ -7,12 +7,19 @@ import { borner } from './outils.js';
 const K = DEMI / 200;
 const PLAN = [[100, 45, 150 * K, 1], [60, 35, 85 * K, 2], [50, 28, 45 * K, 4], [40, 22, 22 * K, 6], [30, 20, 8, 8], [25, 25, 0, 10]];
 
-export const VITESSES_ZONE = { lente: 1.45, normale: 1, rapide: 0.62 };
+export const VITESSES_ZONE = { lente: 1.45, normale: 1, rapide: 0.62, eclair: 0.38 };
 export function creerPlanZone(r, monde, options = {}) {
   const etapes = [];
   const R0 = DEMI * 1.45;
   // Entraînement : la zone ne bouge jamais
   if (options.entrainement) return [{ debut: 1e7, fin: 1e7 + 1, x0: 0, z0: 0, r0: R0, x1: 0, z1: 0, r1: R0, deg: 0 }];
+  // Mêlée : une petite zone qui ne bouge pas, autour d'un lieu de l'île
+  const fixe = (MODES[options.mode] || {}).zoneFixe;
+  if (fixe) {
+    const lieux = (monde.lieux || []).filter(l => !l.cote);
+    const l = lieux.length ? lieux[Math.floor(r() * lieux.length)] : { x: 0, z: 0 };
+    return [{ debut: 1e7, fin: 1e7 + 1, x0: l.x, z0: l.z, r0: fixe, x1: l.x, z1: l.z, r1: fixe, deg: 4 }];
+  }
   const k = VITESSES_ZONE[options.vitesseZone] || 1;
   let cx = 0, cz = 0, rayon = R0, t = 0;
   for (const [att0, ret0, rc, deg] of PLAN) {
@@ -47,9 +54,10 @@ export function etatZone(etapes, t) {
 }
 
 // ---------- Dirigeable qui traverse l'île ----------
-export function creerDirigeable(r) {
-  const a = r() * Math.PI * 2, decal = (r() - 0.5) * 120;
-  const px = -Math.sin(a) * decal, pz = Math.cos(a) * decal;
+// cible = un point au-dessus duquel le dirigeable doit passer (la petite zone de la Mêlée)
+export function creerDirigeable(r, cible = null) {
+  const a = r() * Math.PI * 2, decal = (r() - 0.5) * (cible ? 40 : 120);
+  const px = (cible ? cible.x : 0) - Math.sin(a) * decal, pz = (cible ? cible.z : 0) + Math.cos(a) * decal;
   const L = DEMI * 0.96;
   return { ax: -Math.cos(a) * L + px, az: -Math.sin(a) * L + pz, bx: Math.cos(a) * L + px, bz: Math.sin(a) * L + pz, duree: 40, y: 120 };
 }
@@ -128,16 +136,43 @@ export const MODES = {
     regle: 'Chacun pour soi sur toute l\'île. Le dernier debout gagne.',
   },
   solo: {
-    nom: 'Solo', icone: '👤', taille: 1, bots: 15, botsMax: 30, zone: 'rapide', court: 'Partie rapide contre les bots',
+    nom: 'Solo', icone: '👤', taille: 1, bots: 15, botsMax: 30, zone: 'rapide', regain: 25, court: 'Partie rapide contre les bots',
     regle: 'Zone rapide · chaque élimination te rend 25 PV. Le dernier debout gagne.',
   },
   duo: {
     nom: 'Duo', icone: '👥', taille: 2, bots: 19, botsMax: 39, zone: 'normale', court: 'Équipes de 2',
     regle: 'Équipes de 2, pas de tir ami. La dernière équipe debout gagne.',
   },
+  trio: {
+    nom: 'Trio', icone: '🔱', taille: 3, bots: 20, botsMax: 39, zone: 'normale', court: 'Équipes de 3',
+    regle: 'Équipes de 3, pas de tir ami. La dernière équipe debout gagne.',
+  },
   escouade: {
     nom: 'Escouade', icone: '🛡️', taille: 4, bots: 23, botsMax: 39, zone: 'normale', court: 'Équipes de 4',
     regle: 'Équipes de 4, pas de tir ami. La dernière équipe debout gagne.',
+  },
+  // regain = PV rendus par élimination ; fete = butin rare partout ; mats = matériaux au départ
+  eclair: {
+    nom: 'Éclair', icone: '⚡', taille: 1, bots: 11, botsMax: 23, zone: 'eclair', regain: 25, fete: true, mats: 100, court: 'Une partie en 3 minutes',
+    regle: 'Tout va très vite : la zone fonce, le butin est rare partout et chaque élimination te rend 25 PV.',
+  },
+  // reapparition = personne n'est sorti de la partie ; objectif = éliminations pour gagner ;
+  // zoneFixe = rayon d'une zone qui ne bouge pas ; depart = objets donnés au début
+  melee: {
+    nom: 'Mêlée', icone: '🔁', taille: 1, bots: 9, botsMax: 19, zone: 'normale', reapparition: true, objectif: 10, zoneFixe: 85, mats: 100,
+    depart: [{ objet: 'fusil', rarete: 1 }], court: 'Tu réapparais · premier à 10',
+    regle: 'Éliminé ? Tu réapparais tout de suite. Le premier à 10 éliminations gagne. La zone est petite et ne bouge pas.',
+  },
+  // armes = les seules armes de l'île
+  tireurs: {
+    nom: 'Tireurs d\'élite', icone: '🔭', taille: 1, bots: 19, botsMax: 39, zone: 'normale', armes: ['sniper'],
+    depart: [{ objet: 'sniper', rarete: 0 }], court: 'Que des fusils de précision',
+    regle: 'Une seule arme sur toute l\'île : le fusil de précision. Tu en as un dès le départ. Vise la tête !',
+  },
+  // gravite = part de la gravité normale ; sansChute = tomber ne fait pas mal
+  lune: {
+    nom: 'Lune', icone: '🌙', taille: 1, bots: 19, botsMax: 39, zone: 'normale', gravite: 0.4, sansChute: true, court: 'Gravité faible',
+    regle: 'Gravité faible : tu sautes très haut, tu retombes doucement et les chutes ne font pas mal.',
   },
   entrainement: {
     nom: 'Entraînement', icone: '🎯', taille: 1, bots: 8, botsMax: 16, zone: 'normale', court: 'Sans danger, pour s\'exercer',

@@ -224,3 +224,20 @@ Les 10 pouvoirs (réglages dans js/esprits.js, décidés par l'hôte dans js/hot
   Ces pièces ne sont jamais mises en vente : elles restent réservées au staff.
 - Vignettes : les 17 clés ajoutées à admin/vignettes.json servent dans le Casier du jeu (skins d'armes et pièces Staff) et dans le panel
   (la copie serveur/admin/visuels/ est refaite à chaque mise en ligne par copier_visuels.py).
+
+=====================================================================================
+9) 21 NOVEMBRE 2026 (nuit) — decors_secrets_v001.glb EST BRANCHÉ
+=====================================================================================
+(écrit par la session Développement ; aucun fichier 3D modifié)
+
+- integration.json « decors_secrets » { actif, fichier, fiche } ; js/modeles.js charge le fichier avec le préfixe « decor: ».
+- js/monde.js poserDecor(nom, x, y, z, cap, couleurs, echelle) : la forme de l'objet est FONDUE dans le décor des bâtiments
+  (un seul objet 3D par zone de 64 m). Les couleurs par sommet du fichier sont gardées. Les matériaux nommés prennent une couleur unie :
+  lueur_passage, flamme, lueur_lampe → lumineux (même rendu que les lampes du jeu) ; or_tresor → or ;
+  toit_tour, toile → la couleur tirée au sort par le code. Tout autre matériau sans couleurs par sommet devient gris pierre.
+- js/lieux.js (bloc « SECRETS ET DÉCORS DE LA NATURE ») pose les 23 objets ; trappe_couvercle suit sa trappe.
+  Les collisions et les tirages au sort restent ceux du code, modèle chargé ou pas (vérifié : mêmes collisions sur 5 îles).
+- Rotations utilisées : salle et faux_mur tournés par quarts de tour (entrée vers -z dans le fichier) ; tente tournée de cap + 180°
+  (elle s'ouvre vers -z) ; ruine_muret_b tourné de 90° ; ruine_linteau posé à 4,695 m.
+- Qualité basse (téléphones) : les modèles ne sont pas utilisés, le code dessine ses boîtes (50 000 triangles de moins sur l'île).
+- Pour changer un objet : garder son nom, son origine et ses cotes ; livrer un nouveau fichier (decors_secrets_v002.glb) et le dire.

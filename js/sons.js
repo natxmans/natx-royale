@@ -68,6 +68,7 @@ export function son(nom, vol = 1) {
     case 'ravito': bip(784, 0.3, 0.15 * vol, 'triangle'); plus(260, () => bip(587, 0.45, 0.15 * vol, 'triangle')); rafale(1.2, 500, 0.5, 0.15 * vol); break;
     case 'soin': bip(400, 0.4, 0.12 * vol, 'sine', 800); break;
     case 'rebond': bip(160, 0.35, 0.3 * vol, 'sine', 720); bip(320, 0.2, 0.08 * vol, 'triangle', 900); break;
+    case 'passage': bip(220, 0.45, 0.22 * vol, 'sine', 55); plus(120, () => bip(90, 0.5, 0.2 * vol, 'triangle', 40)); plus(380, () => bip(500, 0.18, 0.08 * vol, 'triangle', 900)); break;
     case 'chute': rafale(0.2, 500, 1, 0.5 * vol); bip(120, 0.2, 0.25 * vol, 'sine', 50); break;
     case 'elimination': bip(880, 0.12, 0.2 * vol, 'square'); plus(110, () => bip(1320, 0.2, 0.2 * vol, 'square')); break;
     case 'serie': [660, 880, 1100, 1320].forEach((f, i) => plus(i * 80, () => bip(f, 0.14, 0.16 * vol, 'square'))); break;

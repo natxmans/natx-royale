@@ -127,4 +127,20 @@ export const NOUVEAUTES = [
     'Skins d’armes : 11 habillages pour toutes tes armes (bois, bonbon, jungle, glace, chrome, néon, lave, galaxie, or…), dans la Boutique et le Casier',
     '10 nouveaux esprits (15 en tout) : Braise, Givrette, Zap, Zephyr, Racine, Minuit, Tic-Tac, Goutte, Pépite et Lumi, chacun avec son bonus et son pouvoir',
   ]],
+  ['🗺️ L’île a ses secrets (novembre)', [
+    'Passages secrets : des trappes cachées dans les buissons t’emmènent d’un coup à l’autre bout de l’île. Cherche la petite pierre qui brille en bleu, puis appuie sur E',
+    'Salles au trésor : de vieilles salles en pierre avec un coffre doré dedans. Certaines ont un mur fissuré qu’on traverse, d’autres n’ont aucune porte… à toi de trouver la trappe',
+    'Un passage que tu as déjà pris reste marqué sur ta carte jusqu’à la fin de la partie',
+    'Tours de guet : monte tout en haut pour voir loin, un coffre t’y attend',
+    'Ruines antiques avec leurs colonnes, et campements avec tentes, feu de camp et butin',
+    'Des lampadaires éclairent maintenant les routes entre les lieux',
+  ]],
+  ['🎮 Nouvel accueil et 5 nouveaux modes (novembre)', [
+    'Accueil refait : tout tient sur un écran, plus besoin de défiler. Ton personnage se règle avec le bouton « Personnaliser »',
+    'Mode Trio 🔱 : des équipes de 3',
+    'Mode Éclair ⚡ : une partie en 3 minutes, butin rare partout et +25 PV à chaque élimination',
+    'Mode Mêlée 🔁 : éliminé, tu réapparais tout de suite. Le premier à 10 éliminations gagne, dans une petite zone qui ne bouge pas',
+    'Mode Tireurs d’élite 🔭 : une seule arme sur toute l’île, le fusil de précision',
+    'Mode Lune 🌙 : gravité faible, sauts géants, et tomber ne fait plus mal',
+  ]],
 ];

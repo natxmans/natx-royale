@@ -9,7 +9,7 @@ import { activerCosmetiques } from './boutique.js';
 const VERSION = 2; // à augmenter quand un .glb change (évite le vieux cache du navigateur)
 const BIBLIO = {};           // nom de l'objet → Object3D (modèle d'origine, jamais affiché)
 const ANIMATIONS = {};       // nom de l'animation → AnimationClip (ex. soin_flotter, socle_tourner)
-export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [], cosmetiques250: [], cargaisons: [], tenuesHD: false, vegetation: false, ensembleStaff: false };
+export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [], cosmetiques250: [], cargaisons: [], tenuesHD: false, vegetation: false, ensembleStaff: false, decors: false };
 const chargeur = new GLTFLoader();
 const dejaCharges = new Map(); // un fichier partagé (ex. esprits_v001.glb) n'est chargé qu'une fois
 
@@ -111,6 +111,8 @@ async function chargerIntegration() {
   }
   // Formes de la végétation (inst_tronc, inst_sapin, inst_rocher_1…) : js/monde.js les met dans ses InstancedMesh
   if (man.vegetation && man.vegetation.actif && man.vegetation.fichier) INTEGRATION.vegetation = !!(await chargerFichier(man.vegetation.fichier));
+  // Décors des passages secrets et de la nature (trappe, salle au trésor, tour, ruines, campement) : js/monde.js les fond dans le décor
+  if (man.decors_secrets && man.decors_secrets.actif && man.decors_secrets.fichier) INTEGRATION.decors = !!(await chargerFichier(man.decors_secrets.fichier, 'decor:'));
   // Animations du personnage (attente, présentation, pioche, deltaplane) : clips « perso_<nom> », lus par js/personnage.js
   if (man.animations_perso && man.animations_perso.actif && man.animations_perso.fichier) await chargerFichier(man.animations_perso.fichier, 'anim:');
   // Esprits et autels : les objets gardent leur nom (esprit_soin, socle_esprit…) pour modeleGlb()
@@ -131,6 +133,8 @@ export const modelesDecorPrets = Promise.all([
 ]);
 
 export const aModele = nom => !!BIBLIO[nom];
+// L'objet livré lui-même (lecture seule : ne pas le déplacer ni le modifier)
+export const objetLivre = nom => BIBLIO[nom] || null;
 // Géométrie d'un objet livré (pour les InstancedMesh du décor) ; null s'il n'est pas chargé
 export function geometrieGlb(nom) {
   let g = null;

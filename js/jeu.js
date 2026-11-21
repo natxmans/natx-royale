@@ -290,7 +290,7 @@ const etat = {
   envoiT: 0, spectate: null, enAttente: new Map(), grandeCarte: false, etapeZone: -1, retrecit: false,
   fini: false, mondeNeuf: false, angleMenu: 0, interaction: null, salon: null,
   options: {}, ravitos: new Map(), projectiles: [], kills: new Map(), classement: [], premierSang: false, repere: null,
-  secousse: 0, stats: {}, ping: 0, pingT: 0, barres: new Map(), tableau: false, mesCoffres: new Set(), tuto: null, exclu: false,
+  secousse: 0, stats: {}, ping: 0, pingT: 0, barres: new Map(), tableau: false, mesCoffres: new Set(), passagesVus: new Set(), regles: MODES.br, tuto: null, exclu: false,
   sanctuaires: new Map(), orbes: new Map(),
 };
 const monEquipe = () => (etat.infos.get(reseau.monId) || {}).equipe || 0;
@@ -406,6 +406,7 @@ function preparerMonde(graine) {
   viderJoueursEtButin();
   if (etat.monde) liberer(etat.monde.groupe);
   liberer(etat.meshZone); liberer(etat.meshDirigeable);
+  Monde.decorsLegers = reglages.qualite === 'basse'; // trappes, salles, tours… : modèles 3D ou boîtes du code (mêmes collisions)
   const m = new Monde(graine);
   // en qualité basse (téléphones), les arbres gardent leurs formes légères faites en code : 4 fois moins de triangles
   m.creerDecor({ ombres: Q().ombres, herbe: Q().herbe, vegetationFine: reglages.qualite !== 'basse' });
@@ -958,7 +959,7 @@ function recevoir(m) {
         if (m.deg && moi.pv + moi.bouclier < avant) {
           const orbe = etat.orbes.get(moi.id);
           if (orbe && etat.temps - (orbe.surprisT || -9) > 3) { orbe.surprisT = etat.temps; jouerEsprit(orbe.mesh, 'surpris'); }
-          $('#flash').style.opacity = 0.9;
+          $('#flash').classList.remove('noir'); $('#flash').style.opacity = 0.9;
           vibrer(m.casse ? [40, 30, 60] : 35);
           $('#flash').classList.toggle('bleu', !!m.casse || m.b > 0);
           son(m.casse ? 'bouclierCasse' : 'aie', 0.8);
@@ -985,6 +986,7 @@ function recevoir(m) {
       break;
     }
     case 'elim': recevoirElim(m); break;
+    case 'frag': recevoirFrag(m); break;
     case 'constr': {
       etat.monde.ajouterConstruction(m.c);
       etat.enAttente.delete(m.c.cle);
@@ -1088,6 +1090,7 @@ function recevoir(m) {
     case 'reapparition': {
       if (!moi) break;
       moi.x = +m.x; moi.y = +m.y; moi.z = +m.z; moi.vx = moi.vy = moi.vz = 0; moi.conso = null;
+      if (etat.regles.reapparition) { moi.munitions = Math.max(moi.munitions, 90); moi.sansChute = true; moi.historique = []; if (moi.ph === 'chute' || moi.ph === 'planeur') moi.ph = 'sol'; } // Mêlée : on repart avec des munitions
       annonce('💫 Tu réapparais !', 2, '#9fe0ff');
       break;
     }
@@ -1161,6 +1164,7 @@ function debutPartie(m) {
   etat.kills = new Map(); etat.classement = []; etat.premierSang = false; etat.repere = null; etat.secousse = 0;
   etat.stats = { tirs: 0, touches: 0, tete: 0, constr: 0, coffres: 0, distance: 0, soins: 0, emotes: 0, rebonds: 0 };
   etat.mesCoffres = new Set();
+  etat.passagesVus = new Set();
   etat.tuto = profil.stats.parties < 2 ? { t: 6, vus: new Set() } : null;
   soirActuel = -1;
   etat.dirigeable = m.dirigeable; etat.zone = m.zone;
@@ -1177,6 +1181,9 @@ function debutPartie(m) {
   etat.moi = nouveauMoiHabille(info || { id: reseau.monId, nom: '?', couleur: '#fff' });
   if (!info) { etat.moi.ph = 'mort'; etat.moi.spectateurSeulement = true; }
   etat.moi.mats = Math.min(999, etat.options.matsDepart | 0);
+  etat.regles = MODES[modeValide(etat.options.mode)];
+  // objets donnés par le mode (un fusil en Mêlée, un fusil de précision en Tireurs d’élite)
+  if (info) for (const it of etat.regles.depart || []) { const o = OBJETS[it.objet]; etat.moi.inv[etat.moi.inv.indexOf(null, 1)] = { objet: it.objet, rarete: it.rarete | 0, mun: o.chargeur }; etat.moi.munitions = Math.max(etat.moi.munitions, o.chargeur > 5 ? 90 : 20); }
   jouerMusique('dirigeable');
   const p = posDirigeable(etat.dirigeable, 0);
   etat.moi.ry = Math.atan2(-(etat.dirigeable.bx - etat.dirigeable.ax), -(etat.dirigeable.bz - etat.dirigeable.az));
@@ -1189,7 +1196,7 @@ function debutPartie(m) {
   afficherEcran('jeu');
   construireBarreObjets();
   annonce(tactile ? 'Touche ⤴ pour sauter !' : 'Appuie sur ESPACE pour sauter !', 4);
-  const regles = MODES[modeValide(etat.options.mode)];
+  const regles = etat.regles;
   const equipe = regles.taille > 1 ? ' · tes coéquipiers ont un losange vert ◆' : '';
   const centre = etat.options.entrainement ? ' · mannequins et esprits au centre de l\'île' : '';
   setTimeout(() => banniere(`${regles.icone} ${regles.nom.toUpperCase()}`, regles.regle + equipe + centre), 1500);
@@ -1210,6 +1217,28 @@ function recevoirSnap(m) {
     if (!o.cible) { o.x = x; o.y = y; o.z = z; o.ry = ry; }
     o.cible = { x, y, z, ry, rx, f, a, ph, em: em || '' };
   }
+}
+
+// Mêlée : quelqu’un est éliminé mais reste en jeu (il réapparaît). Le tireur marque un point.
+function recevoirFrag(m) {
+  if (m.k) etat.kills.set(m.k, m.kills || 0);
+  const inf = etat.infos.get(m.v), moi = etat.moi;
+  if (Number.isFinite(+m.x) && distCam(+m.x, +m.y, +m.z) < 120) explosionElimination(+m.x, +m.y, +m.z, inf ? inf.couleur : '#ffffff');
+  const v = `<b style="color:${echapper(inf ? inf.couleur : '#fff')}">${echapper(nomDe(m.v))}</b>`;
+  let texte;
+  if (m.k) {
+    const ki = etat.infos.get(m.k), ic = OBJETS[m.a] ? OBJETS[m.a].icone : '💥';
+    texte = `<b style="color:${echapper(ki ? ki.couleur : '#fff')}">${echapper(nomDe(m.k))}</b> ${ic} ${v} <small>(${m.kills | 0}/${etat.options.objectif | 0})</small>`;
+  } else texte = m.a === 'zone' ? `${v} a été avalé par la zone 🌀` : `${v} est éliminé`;
+  ajouterFil(texte, moi && (m.k === moi.id || m.v === moi.id));
+  if (!moi) return;
+  if (m.k === moi.id) {
+    moi.kills++;
+    son('elimination');
+    const reste = (etat.options.objectif | 0) - moi.kills;
+    banniere('💀 ÉLIMINATION', `${nomDe(m.v)} · ${moi.kills} / ${etat.options.objectif | 0}${reste === 1 ? ' · plus qu’une !' : ''}`);
+  }
+  if (m.v === moi.id) { moi.conso = null; son('aie', 0.8); annonce(m.k ? `💀 Éliminé par ${nomDe(m.k)}` : '💀 Éliminé', 2, '#ff7b7b'); }
 }
 
 function recevoirElim(m) {
@@ -1311,17 +1340,21 @@ function recevoirFin(m) {
     feuxArtifice(moi.x, moi.y, moi.z);
     for (let i = 0; i < 60; i++) particules.ajouter({ x: moi.x, y: moi.y + 2, z: moi.z, vx: (Math.random() - 0.5) * 10, vy: 4 + Math.random() * 8, vz: (Math.random() - 0.5) * 10, couleur: ['#ffd23f', '#ff5d8f', '#4fd1ff', '#7dff9a'][i % 4], forme: 2, taille: 0.45, tailleFin: 0.2, vie: 2.2, additif: true, gravite: 6 });
   }
-  const gainHtml = moi && !moi.recompense ? donnerRecompense(gagne ? 1 : moi.place || etat.vivants, gagne) : (moi && moi.gainHtml) || '';
+  // Mêlée : la place = le rang au nombre d’éliminations
+  const placeMelee = m.melee && moi ? 1 + [...etat.kills].filter(([id, n]) => id !== moi.id && n > moi.kills).length : 0;
+  const gainHtml = moi && !moi.recompense ? donnerRecompense(gagne ? 1 : placeMelee || moi.place || etat.vivants, gagne) : (moi && moi.gainHtml) || '';
   setTimeout(() => {
     document.exitPointerLock?.();
     $('#finTitre').innerHTML = m.entrainement ? (gagne ? 'ENTRAÎNEMENT<span>RÉUSSI</span>' : 'ENTRAÎNEMENT<span>TERMINÉ</span>')
+      : m.melee ? (gagne ? 'MÊLÉE<span>GAGNÉE</span>' : 'MÊLÉE<span>TERMINÉE</span>')
       : gagne ? 'TOP 1 !<span>CHAMPION</span>' : (m.nom ? 'PARTIE<span>TERMINÉE</span>' : 'MATCH<span>NUL</span>');
     $('#finImage')?.classList.toggle('cache', !gagne || !!m.entrainement); // illustration de victoire (podium)
     const duo = m.equipe && gagnants.length > 1;
     $('#finTexte').innerHTML = m.entrainement ? (gagne ? 'Tu as réussi les 3 défis. Prêt pour une vraie partie ! 🎉' : `<b>${echapper(m.nom || '?')}</b> a fini les défis en premier.`)
+      : m.melee ? (gagne ? `Tu es le premier à ${m.kills} éliminations. Bravo ! 🎉` : `<b>${echapper(m.nom || '?')}</b> est le premier à ${m.kills} éliminations.`)
       : gagne ? (duo ? 'Ton équipe est la dernière debout. Bravo ! 🎉' : 'Tu es le dernier debout sur l\'île. Bravo ! 🎉')
       : m.nom ? `<b>${echapper(m.nom)}</b> remporte la partie avec ${m.kills} élimination${m.kills > 1 ? 's' : ''}.` : 'Personne n\'a survécu…';
-    const place = gagne ? 1 : (moi ? moi.place || '?' : '?');
+    const place = gagne ? 1 : (moi ? placeMelee || moi.place || '?' : '?');
     $('#finStats').innerHTML = moi ? `<div><b>#${place}</b>place</div><div><b>${moi.kills}</b>élimination${moi.kills > 1 ? 's' : ''}</div><div><b>${Math.round(moi.degats)}</b>dégâts</div>` : '';
     afficherDetailsFin();
     // formulaire « TON AVIS COMPTE ! » remis à zéro pour cette partie
@@ -1741,6 +1774,7 @@ function interagir() {
   else if (it.type === 'ravito') { etat.mesCoffres.add('r' + it.r.id); reseau.versHote({ t: 'ouvrirRavito', id: it.r.id }); }
   else if (it.type === 'cargo') reseau.versHote({ t: 'ouvrirCargo', id: it.c.id });
   else if (it.type === 'esprit') reseau.versHote({ t: 'esprit', id: it.s.id, x: arrondi(moi.x), y: arrondi(moi.y), z: arrondi(moi.z) });
+  else if (it.type === 'passage') prendrePassage(it.p);
   else if (it.type === 'butin') {
     const b = it.b;
     const def = OBJETS[b.objet];
@@ -1754,6 +1788,22 @@ function interagir() {
     }
     demanderRamassage(b);
   }
+}
+// Passage secret : une trappe mène à une autre. Le joueur se déplace lui-même (comme pour le retour
+// de Tic-Tac) : rien à demander à l’hôte, qui reçoit simplement sa nouvelle position.
+function prendrePassage(p) {
+  const moi = etat.moi, q = etat.monde.passages[p.vers];
+  if (!q || etat.temps < (moi.passageT || 0)) return;
+  moi.passageT = etat.temps + 2.5;
+  poussiere(moi.x, moi.y, moi.z, 10);
+  moi.x = q.x; moi.y = q.y + 0.05; moi.z = q.z; moi.vx = moi.vy = moi.vz = 0; moi.sansChute = true; moi.accroupi = false; moi.emote = null;
+  moi.historique = [];
+  etat.interaction = null;
+  etat.passagesVus.add(p.id); etat.passagesVus.add(q.id);
+  const fl = $('#flash'); fl.classList.remove('bleu'); fl.classList.add('noir'); fl.style.opacity = 1.6;
+  son('passage'); vibrer(30);
+  poussiere(q.x, q.y, q.z, 10);
+  annonceObjet('🕳️ Passage secret → ' + p.nom);
 }
 // Demande à l'hôte : avec la position du joueur au moment du geste (l'hôte peut avoir un petit retard)
 function demanderRamassage(b) {
@@ -2116,13 +2166,13 @@ function majMoi(dt) {
       if (moi.auSol) moi.doubleSaut = false;
       moi.espacePrec = espace;
       const etaitEnLair = !moi.auSol, vyAvant = moi.vy;
-      moi.vy -= 25 * dt;
+      moi.vy -= 25 * (etat.regles.gravite || 1) * dt; // mode Lune : gravité faible
       monde.deplacer(moi, dt);
       if (etaitEnLair && moi.auSol && bulle && vyAvant < -6) { moi.vy = EAU.rebond; moi.auSol = false; moi.sansChute = true; son('saut', 0.5); poussiere(moi.x, moi.y, moi.z, 6); } // la bulle rebondit
       else if (etaitEnLair && moi.auSol) {
         if (vyAvant < -9) poussiere(moi.x, moi.y, moi.z, 8);
         // dégâts de chute (sauf après un champignon)
-        if (vyAvant < -17 && !moi.sansChute && !moi.dansEau && !etat.options.entrainement && !(moi.esprit && moi.esprit.type === 'mobilite')) { reseau.versHote({ t: 'chute', deg: Math.round((-vyAvant - 17) * 5) }); son('chute'); etat.secousse = Math.max(etat.secousse, 0.4); }
+        if (vyAvant < -17 && !moi.sansChute && !moi.dansEau && !etat.options.entrainement && !etat.regles.sansChute && !(moi.esprit && moi.esprit.type === 'mobilite')) { reseau.versHote({ t: 'chute', deg: Math.round((-vyAvant - 17) * 5) }); son('chute'); etat.secousse = Math.max(etat.secousse, 0.4); }
         moi.sansChute = false;
       }
       // champignons rebondissants
@@ -2328,6 +2378,11 @@ function chercherInteraction() {
     const d = Math.hypot(sa.x - moi.x, sa.z - moi.z);
     if (d < PORTEE_CAPTURE && Math.abs(sa.y - moi.y) < 3 && d < bd + 0.6) { bd = d; best = { type: 'esprit', s: sa }; }
   }
+  // trappes des passages secrets (pas pendant les 2,5 s qui suivent un passage)
+  if (etat.temps >= (moi.passageT || 0)) for (const p of etat.monde.passages || []) {
+    const d = Math.hypot(p.x - moi.x, p.y - moi.y, p.z - moi.z);
+    if (p.vers >= 0 && d < 2.1 && d < bd + 0.3) { bd = d; best = { type: 'passage', p }; }
+  }
   etat.interaction = best;
 }
 
@@ -2338,7 +2393,11 @@ function majAutres(dt) {
     if (!a.vivant || !a.cible) { a.modele.visible = false; if (a.lod) a.lod.visible = false; continue; }
     const c = a.cible;
     const ox = a.x, oz = a.z;
-    if (Math.hypot(c.x - a.x, c.y - a.y, c.z - a.z) > 12) { a.x = c.x; a.y = c.y; a.z = c.z; }
+    if (Math.hypot(c.x - a.x, c.y - a.y, c.z - a.z) > 12) {
+      // un joueur au sol qui change d’endroit d’un coup (passage secret) : un nuage de poussière au départ et à l’arrivée
+      if (c.ph === 'sol' && a.ph === 'sol') { if (distCam(a.x, a.y, a.z) < 60) poussiere(a.x, a.y, a.z, 10); if (distCam(c.x, c.y, c.z) < 60) poussiere(c.x, c.y, c.z, 10); }
+      a.x = c.x; a.y = c.y; a.z = c.z;
+    }
     else { a.x += (c.x - a.x) * k; a.y += (c.y - a.y) * k; a.z += (c.z - a.z) * k; }
     a.ry = angleVers(a.ry, c.ry, k);
     a.rx += (c.rx - a.rx) * k;
@@ -2490,8 +2549,11 @@ function majZone(dt) {
     etat.etapeZone = z.etape; etat.retrecit = z.retrecit;
   }
   const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-  $('#infoZone').innerHTML = z.retrecit ? `🌀 La zone avance · <b>${mmss(z.dans)}</b>`
-    : z.dans > 0 ? `🌀 Zone dans <b>${mmss(z.dans)}</b>` : '🌀 Zone finale !';
+  if (etat.regles.reapparition) {
+    let meilleur = 0; for (const n of etat.kills.values()) meilleur = Math.max(meilleur, n);
+    $('#infoZone').innerHTML = `🔁 Toi <b>${etat.moi ? etat.moi.kills : 0}</b> · meilleur <b>${meilleur}</b> · but <b>${etat.options.objectif | 0}</b>`;
+  } else $('#infoZone').innerHTML = z.retrecit ? `🌀 La zone avance · <b>${mmss(z.dans)}</b>`
+    : z.dans > 1e6 ? '' : z.dans > 0 ? `🌀 Zone dans <b>${mmss(z.dans)}</b>` : '🌀 Zone finale !';
   etat.zoneEtat = z;
 }
 
@@ -2531,6 +2593,15 @@ function dessinerCarte(cv, centreX, centreZ, vue, grand) {
   if (etat.monde && grand) {
     for (const t of etat.monde.trampolines || []) { const [x, y] = P(t.x, t.z); g.fillStyle = '#c44dff'; g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); g.stroke(); }
     for (const so of etat.monde.sources || []) { const [x, y] = P(so.x, so.z); g.fillStyle = '#0b3d2a'; g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill(); g.fillStyle = '#5bffb0'; g.fillRect(x - 5, y - 1.5, 10, 3); g.fillRect(x - 1.5, y - 5, 3, 10); }
+  }
+  // passages secrets déjà empruntés pendant cette partie (les autres restent secrets)
+  if (etat.monde) for (const id of etat.passagesVus) {
+    const p = etat.monde.passages[id];
+    if (!p) continue;
+    const [x, y] = P(p.x, p.z), k = grand ? 6 : 4;
+    if (x < -8 || y < -8 || x > T + 8 || y > T + 8) continue;
+    g.fillStyle = '#10242b'; g.strokeStyle = '#7fe9ff'; g.lineWidth = 2;
+    g.fillRect(x - k, y - k, k * 2, k * 2); g.strokeRect(x - k, y - k, k * 2, k * 2);
   }
   const cgo = etat.cargo;
   if (cgo && cgo.phase !== 'attente' && cgo.phase !== 'ouverte') {
@@ -2745,6 +2816,7 @@ function majHUD(dt) {
     if (ia.type === 'coffre') inv.innerHTML = `${kE} Ouvrir le coffre${ia.c.dore ? ' <b style="color:#ffd23f">doré</b> 🌟' : ' ✨'}`;
     else if (ia.type === 'ravito') inv.innerHTML = `${kE} Ouvrir le <b style="color:#d18bff">ravitaillement</b> 📦`;
     else if (ia.type === 'cargo') inv.innerHTML = `${kE} Ouvrir la <b style="color:#ffad1f">cargaison</b> 📦✨`;
+    else if (ia.type === 'passage') inv.innerHTML = `${kE} Prendre le <b style="color:#7fe9ff">passage secret</b> 🕳️ <small>→ ${ia.p.nom}</small>`;
     else if (ia.type === 'esprit') { const d = ESPRITS[ia.s.type]; inv.innerHTML = `${kE} Capturer <b style="color:${d.couleur}">${d.icone} ${d.nom}</b> <small>(esprit de ${d.role.toLowerCase()})</small>`; }
     else {
       const def = OBJETS[ia.b.objet];
@@ -3615,7 +3687,7 @@ function chargement(texte) {
 function texteOptions(o) {
   const r = MODES[modeValide(o.mode)];
   return [`${r.icone} ${r.nom}`, `🤖 ${o.bots} ${o.mode === 'entrainement' ? 'mannequins' : 'bots'}${o.mode === 'entrainement' ? '' : ` (${['facile', 'normal', 'difficile'][o.difficulte] || 'normal'})`}`,
-    o.mode === 'entrainement' ? null : `🌀 Zone ${o.vitesseZone || 'normale'}`, o.matsDepart && o.mode !== 'entrainement' ? `🪵 ${o.matsDepart} au départ` : null, o.fete ? '🎉 Butin de fête' : null].filter(Boolean).join(' · ');
+    o.mode === 'entrainement' || r.zoneFixe ? null : `🌀 Zone ${o.vitesseZone === 'eclair' ? 'éclair' : o.vitesseZone || 'normale'}`, o.matsDepart && o.mode !== 'entrainement' ? `🪵 ${o.matsDepart} au départ` : null, o.fete ? '🎉 Butin de fête' : null].filter(Boolean).join(' · ');
 }
 function majSalon(m) {
   // quelqu'un arrive dans le salon
@@ -3694,7 +3766,7 @@ function appliquerMode(mode) {
   const nb = $('#nbBots');
   nb.max = r.botsMax; nb.value = r.bots; $('#nbBotsTxt').textContent = r.bots;
   $('#vitesseZone').value = r.zone;
-  $('#vitesseZone').disabled = mode === 'entrainement';
+  $('#vitesseZone').disabled = mode === 'entrainement' || !!r.zoneFixe; // entraînement et Mêlée : la zone ne bouge pas
   $('#matsDepart').disabled = mode === 'entrainement';
   $('#regleMode').textContent = r.icone + ' ' + r.regle;
 }
@@ -3861,9 +3933,40 @@ function initMenu() {
     if (hote) { lireOptionsSalon(); hote.diffuserSalon(); }
   };
   for (const id of ['#difficulte', '#vitesseZone', '#matsDepart', '#optFete']) $(id).onchange = () => { if (hote) { lireOptionsSalon(); hote.diffuserSalon(); } };
+  // les modes viennent de la liste commune (partage.js) : cartes de l’accueil et liste du salon
+  $('#choixModes').replaceChildren(...Object.entries(MODES).map(([id, r]) => {
+    const b = document.createElement('button');
+    b.dataset.mode = id; b.title = r.court;
+    b.innerHTML = `<span>${r.icone}</span>${echapper(r.nom)}`;
+    return b;
+  }));
+  $('#modeJeu').replaceChildren(...Object.entries(MODES).map(([id, r]) => new Option(`${r.icone} ${r.nom} (${r.court.toLowerCase()})`, id)));
   $('#modeJeu').onchange = e => { appliquerMode(e.target.value); reglages.mode = modeValide(e.target.value); sauverReglages(); majChoixModes(); if (hote) { lireOptionsSalon(); hote.diffuserSalon(); } };
   // Menu principal : choix du mode
   for (const b of document.querySelectorAll('#choixModes [data-mode]')) b.onclick = () => { reglages.mode = b.dataset.mode; sauverReglages(); son('clic'); majChoixModes(); };
+  // « Personnaliser » : la colonne de droite montre les réglages du personnage à la place du profil
+  const voirPerso = oui => {
+    $('#vuePerso').classList.toggle('cache', !oui); $('#vueProfil').classList.toggle('cache', oui);
+    $('#colProfil').classList.toggle('perso', oui); $('#colProfil').classList.toggle('ouvert', oui);
+    $('#btnPerso').classList.toggle('actif', oui);
+    if (!oui) menus.montrerPerso(); // retour au personnage en pied, avec son chapeau
+  };
+  $('#btnPerso').onclick = () => { son('clic'); voirPerso($('#vuePerso').classList.contains('cache')); };
+  $('#btnPersoFini').onclick = () => { son('clic'); voirPerso(false); };
+  // petit écran : le profil (niveau, défis, stats) s’ouvre par-dessus avec « ⭐ Profil »
+  $('#btnProfil').onclick = () => { voirPerso(false); $('#colProfil').classList.add('ouvert'); };
+  $('#btnFermerProfil').onclick = () => $('#colProfil').classList.remove('ouvert');
+  // commandes et statistiques complètes : dans des fenêtres (l’accueil tient sur un écran)
+  const fenetre = (id, bouton, fermer) => {
+    const f = $(id);
+    if (bouton) $(bouton).onclick = () => f.classList.remove('cache');
+    $(fermer).onclick = () => f.classList.add('cache');
+    f.addEventListener('pointerdown', e => { if (e.target === f) f.classList.add('cache'); });
+    return f;
+  };
+  fenetre('#fenetreCommandes', '#btnCommandes', '#fermerCommandes');
+  const fStats = fenetre('#fenetreStats', null, '#fermerStats');
+  $('#statsProfil').addEventListener('click', e => { if (e.target.closest('#btnStats')) fStats.classList.remove('cache'); });
   majChoixModes();
   // discussion dans le salon
   $('#chatSalonSaisie').addEventListener('keydown', e => { if (e.key === 'Enter') { envoyerChat(e.target.value); e.target.value = ''; } });
@@ -3955,7 +4058,7 @@ requestAnimationFrame(boucle);
 
 // Pour tester depuis la console
 window.natx = {
-  etat, reseau, get hote() { return hote; }, touches, recevoir, preparerMonde, utiliserPouvoir, camera, scene, renderer, version: 1,
+  etat, reseau, get hote() { return hote; }, touches, recevoir, preparerMonde, utiliserPouvoir, interagir, camera, scene, renderer, version: 1,
   // Avance le jeu de quelques secondes d'un coup (pour les tests)
   simuler(secondes, pas = 1 / 30) {
     const n = Math.round(secondes / pas);
