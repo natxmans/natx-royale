@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
@@ -98,6 +98,9 @@
         <div class="champ">Ta couleur
           <div id="couleurs" class="couleurs"></div>
         </div>
+        <div class="champ">Ta peau
+          <div id="peaux" class="couleurs peaux"></div>
+        </div>
         <div class="champ">Mode de jeu
           <div id="choixModes" class="choix-modes">
             <button data-mode="br"><span>👑</span>Battle Royale</button>
@@ -118,6 +121,7 @@
         </div>
         <p id="erreurMenu" class="erreur"></p>
         <button class="gros gris" id="btnParametresMenu">⚙️ Paramètres</button>
+        <button class="petit" id="btnRegles">📜 Règles du jeu</button>
       </div>
     </div>
     <div class="scene3d" id="sceneJouer">
@@ -361,6 +365,7 @@
     <button id="btnReprendre" class="gros vert">▶️ Reprendre</button>
     <button id="btnParametresPause" class="gros gris">⚙️ Paramètres</button>
     <details class="reglages"><summary>🎮 Commandes</summary><div id="aidePause" class="aide"></div></details>
+    <details class="reglages"><summary>📜 Règles</summary><div id="reglesPause" class="aide regles-texte"></div></details>
     <button id="btnQuitter" class="petit rouge">Quitter la partie</button>
   </div>
 </div>
@@ -407,7 +412,7 @@
   <div class="boite large">
     <h2>⚙️ Paramètres</h2>
     <div class="onglets-param">
-      <button data-p="image" class="actif">🖼️ Image</button><button data-p="controles">🎮 Contrôles</button><button data-p="son">🔊 Son</button><button data-p="interface">🧭 Écran</button><button data-p="compte" id="ongletCompte">👤 Compte</button>
+      <button data-p="image" class="actif">🖼️ Image</button><button data-p="controles">🎮 Contrôles</button><button data-p="touches" class="pc-seul">⌨️ Touches</button><button data-p="son">🔊 Son</button><button data-p="interface">🧭 Écran</button><button data-p="compte" id="ongletCompte">👤 Compte</button>
     </div>
     <div id="reglagesModal" class="reglages"></div>
     <div class="groupe-param compte cache" data-g="compte" id="paramCompte">
@@ -468,9 +473,18 @@
     <h2 id="titreSignalement">🚩 Signaler <span id="signalNom"></span></h2>
     <label>Pourquoi ?<select id="signalMotif"><option value="triche">Triche</option><option value="insultes">Insultes ou harcèlement</option><option value="pseudo">Pseudo inapproprié</option><option value="antijeu">Anti-jeu</option><option value="autre">Autre</option></select></label>
     <label>Ce qui s'est passé (facultatif)<textarea id="signalTexte" rows="3" maxlength="300" placeholder="Explique en quelques mots…"></textarea></label>
-    <p class="petit-texte">L'équipe NATX ROYALE lira ton signalement. Ton identité n'est pas montrée au joueur signalé.</p>
+    <p class="petit-texte">L'équipe NATX ROYALE lira ton signalement. Ton identité n'est pas montrée au joueur signalé. <a href="#" id="signalRegles">📜 Voir les règles</a></p>
     <p id="signalMsg" class="petit-texte"></p>
     <div class="boutons-cadeau"><button class="gros rouge" id="signalEnvoyer">Envoyer</button><button class="petit" id="signalAnnuler">Annuler</button></div>
+  </div>
+</div>
+<!-- Règles du jeu (js/regles.js) : bouton 📜 du menu, et montrées une fois au premier lancement -->
+<div id="fenetreRegles" class="ecran cache" role="dialog" aria-labelledby="titreRegles">
+  <div class="boite regles">
+    <h2 id="titreRegles">📜 Les règles de NATX ROYALE</h2>
+    <p class="petit-texte">Pour que tout le monde s'amuse. Elles valent pour tous les joueurs, staff compris.</p>
+    <div id="contenuRegles" class="regles-texte"></div>
+    <button class="gros vert" id="fermerRegles">✔ J'ai compris</button>
   </div>
 </div>
 <!-- Avertissement de l'équipe (sanction « avertissement » donnée dans l'espace admin) -->
@@ -499,6 +513,6 @@
 <div id="chargement" class="ecran cache"><div class="boite"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=11"></script>
+<script type="module" src="js/jeu.js?v=12"></script>
 </body>
 </html>

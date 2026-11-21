@@ -78,7 +78,7 @@ export class Menus {
   }
 
   montrerPerso(cadrage = 'corps', look = this.profil.equipe, emote = null) {
-    this.apercu.montrer({ couleur: this.couleur, look, numero: this.reglages.numero || 0, cadrage, emote });
+    this.apercu.montrer({ couleur: this.couleur, look: this.reglages.peau ? { ...look, peau: this.reglages.peau } : look, numero: this.reglages.numero || 0, cadrage, emote });
     $('#nomPodium').textContent = this.reglages.pseudo || 'Toi';
   }
 

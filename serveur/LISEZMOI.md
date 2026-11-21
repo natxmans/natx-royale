@@ -201,3 +201,15 @@ Un compte joueur = au plus un compte admin. Une demande non acceptée expire apr
 L'hôte d'une partie fait vérifier la tenue par le serveur (`POST /api/staff/verifier`, preuve signée par le serveur) : un joueur qui la porterait sans être du staff la perd dans le salon.
 Routes : `POST /api/admin/liaison` {joueur}, `DELETE /api/admin/liaison` ({quoi: 'demande'} pour annuler la demande seulement), `POST /api/boite/liaison` {jeton, id, accepter}, `POST /api/staff/verifier` {jeton, liste:[{ref, badge}]}.
 `POST /api/boite` renvoie `staff` (rôle + preuve) et `liaison` (demande en attente, sans l'identifiant de l'admin).
+
+### Robot modérateur et règles du jeu (21 nov. 2026)
+`serveur/robot.py` passe tout seul **une fois par jour** (à la première requête après l'heure choisie, 7 h par défaut) : aucune tâche planifiée à régler chez l'hébergeur, et l'ordinateur de Nathan n'a pas besoin d'être allumé.
+- **Signalements** : pour la triche il regarde les 30 dernières parties et les statistiques du joueur. Résultat logiquement impossible (plus d'éliminations que de joueurs, place plus grande que le nombre de joueurs, plus de tirs réussis que de tirs, Tenue Staff sans être du staff) → sanction. Seulement suspect (précision très haute, beaucoup de victoires…) → sanction seulement si 3 joueurs différents l'ont signalé, sinon « à vérifier par un humain ». Rien de suspect et un seul signalement → rejeté.
+- **Insultes / anti-jeu** : la discussion n'est pas enregistrée, donc il compte les joueurs DIFFÉRENTS qui signalent (même adresse internet = une seule personne) : 2 pour les insultes, 3 pour l'anti-jeu.
+- **Pseudo** : gros mots et faux « admin / staff ».
+- **Avis** : spam caché (trop court, lien, lettres répétées, insulte seule, doublon) ; bug avec 3 votes ou idée avec 5 votes → « À étudier ».
+- **Échelle** : avertissement → suspension 24 h → 3 jours. Jamais plus, jamais un compte du staff, une sanction par joueur et par passage. Un admin peut lever chaque sanction (⛔ Sanctions).
+- Tout est noté au journal d'audit (catégorie `robot`) et dans un rapport (panel → 🤖 Robot modérateur, où on peut aussi l'éteindre, changer l'heure, lui retirer le droit de suspendre, ou le lancer à la main). En SSH : `python3 api.py robot`.
+- Limites : les parties et statistiques sont envoyées par le jeu de chaque joueur (indices, pas preuves absolues) ; sans signalement, il ne sanctionne jamais (il prévient seulement).
+- Les règles montrées aux joueurs sont dans `js/regles.js` (bouton 📜 Règles du jeu, montrées une fois au premier lancement) ; `robot.REGLES` doit garder les mêmes numéros et titres (un test le vérifie).
+Routes : `GET /api/admin/robot`, `POST /api/admin/robot/reglages`, `POST /api/admin/robot/lancer`.

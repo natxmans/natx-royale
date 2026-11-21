@@ -762,7 +762,13 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
 /* Boîte de réception et fenêtres des cadeaux : jamais plus hautes que l'écran (téléphone en paysage) */
 .boite-reception { max-height: calc(100dvh - 20px); display: flex; flex-direction: column; }
 .boite-reception .liste-boite { flex: 1 1 auto; min-height: 0; max-height: none; }
-.boite.cadeau, .boite.avertissement, .boite.signalement, .boite.liaison { max-height: calc(100dvh - 20px); overflow-y: auto; }
+.boite.cadeau, .boite.avertissement, .boite.signalement, .boite.liaison, .boite.regles { max-height: calc(100dvh - 20px); overflow-y: auto; }
+.boite.regles { max-width: 640px; border-color: #ffd23f; }
+.regles-texte { text-align: left; }
+.liste-regles { margin: 8px 0; padding-left: 26px; display: grid; gap: 7px; }
+.liste-regles li { line-height: 1.35; }
+.liste-regles li::marker { font-weight: 900; color: #ffd23f; }
+.echelle-regles { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
 .boite.liaison { max-width: 480px; text-align: center; border-color: #14e0a2; box-shadow: 0 0 24px rgba(20, 224, 162, .35); }
 .liaison-texte { font-size: 17px; font-weight: 800; background: rgba(20, 224, 162, .12); border-radius: 12px; padding: 10px; }
 @media (max-height: 500px) {
@@ -789,3 +795,17 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
 .ligne-code { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .ligne-code code { font: 900 18px/1.2 ui-monospace, Consolas, monospace; letter-spacing: 2px; background: rgba(0, 0, 0, .35); padding: 7px 12px; border-radius: 10px; color: #ffd23f; }
 .ligne-code input { font: 800 16px ui-monospace, Consolas, monospace; letter-spacing: 2px; text-transform: uppercase; flex: 1 1 200px; }
+
+/* Touches personnalisables (Paramètres → Touches) */
+.liste-touches { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 14px; margin: 8px 0; }
+.ligne-touche { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 8px; border-radius: 10px; background: rgba(255, 255, 255, .06); font-weight: 800; }
+.touche-perso { min-width: 92px; padding: 6px 10px; border-radius: 9px; border: 2px solid rgba(255, 255, 255, .25); border-bottom-width: 4px; background: #1d2433; color: #fff; font: 900 14px 'Nunito', system-ui; cursor: pointer; }
+.touche-perso:hover { border-color: #4fd1ff; }
+.touche-perso.changee { border-color: #ffd23f; color: #ffe58a; }
+.touche-perso.ecoute { border-color: #4fff7a; color: #4fff7a; animation: lueur 1.2s ease-in-out infinite; }
+/* Couleur de peau (page Jouer) */
+.couleurs.peaux button { border-radius: 50%; }
+.couleurs.peaux .peau-perso { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .2); display: inline-block; cursor: pointer; transition: transform .12s; position: relative; overflow: hidden; background: conic-gradient(#ff5d8f, #ffd23f, #4fff7a, #4fd1ff, #b552ff, #ff5d8f); }
+.couleurs.peaux .peau-perso input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
+.couleurs.peaux .peau-perso:hover { transform: scale(1.1); }
+.couleurs.peaux .peau-perso.choisi { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 0 3px rgba(255, 255, 255, .25); }

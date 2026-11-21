@@ -205,3 +205,10 @@ pre.details { white-space: pre-wrap; word-break: break-word; font-size: 12px; ba
 .alerte.staff { border-color: #14e0a2; background: rgba(20, 224, 162, .12); }
 .lien-staff { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 input.code-joueur { font-family: ui-monospace, Consolas, monospace; letter-spacing: 2px; text-transform: uppercase; max-width: 220px; }
+
+/* robot modérateur */
+.rapport-robot { border: 1px solid rgba(255, 255, 255, .12); border-radius: 12px; padding: 8px 12px; margin: 8px 0; background: rgba(255, 255, 255, .03); }
+.rapport-robot summary { cursor: pointer; font-weight: 700; }
+.rapport-robot summary div { font-weight: 800; margin-top: 2px; }
+.rapport-robot h3 { margin: 10px 0 4px; font-size: 14px; }
+.rapport-robot .petit { opacity: .85; margin-top: 2px; }

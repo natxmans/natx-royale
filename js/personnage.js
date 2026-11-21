@@ -7,6 +7,8 @@ import { modeleGlb, ficheTenue, ficheEmote, clipAnimation } from './modeles.js';
 import { LOOK_DEFAUT } from './boutique.js';
 
 const PEAUX = ['#f6cfa6', '#e2a873', '#b07445', '#7d4b2b', '#f1c6a0', '#c98b5a'];
+// couleur de peau choisie par le joueur (look.peau), sinon une teinte selon son numéro (bots)
+const peauDe = (look, numero) => (typeof look.peau === 'string' && /^#[0-9a-f]{6}$/i.test(look.peau) ? look.peau.toLowerCase() : PEAUX[numero % PEAUX.length]);
 const CHEVEUX = ['#3b2414', '#1c1c22', '#e0b54f', '#b5491f', '#6b4423', '#d9d3c7', '#2d1a0e'];
 const YEUX = ['#3b2414', '#2b6cb0', '#2f855a', '#4a3423', '#1c1c22'];
 export const NEON = { cyan: '#22e8ff', rose: '#ff2e88', violet: '#b026ff', fond: '#0a0a14' };
@@ -719,7 +721,7 @@ function partieBlender(nom, mats) {
 }
 
 function creerPersonnageBlender(couleur, nom, numero, look) {
-  const peau = PEAUX[numero % PEAUX.length];
+  const peau = peauDe(look, numero);
   const t = tenue(look.tenue, couleur, peau);
   const P = M(peau);
   const coulCheveux = t.or ? null : CHEVEUX[(numero * 3 + 1) % CHEVEUX.length];
@@ -836,7 +838,7 @@ function finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, do
 export function creerPersonnage(couleur, nom, numero = 0, lookRecu) {
   const look = { ...LOOK_DEFAUT, ...(lookRecu || {}) };
   if (corpsBlender()) return creerPersonnageBlender(couleur, nom, numero, look);
-  const peau = PEAUX[numero % PEAUX.length];
+  const peau = peauDe(look, numero);
   const t = tenue(look.tenue, couleur, peau);
   const P = M(peau);
   const mains = t.mains || P;

@@ -226,6 +226,7 @@ export const LOOK_DEFAUT = { tenue: 'classique', chapeau: 'casquette', dos: 'rie
 export function nettoyerLook(l) {
   const r = { ...LOOK_DEFAUT };
   if (l && typeof l === 'object') for (const c of Object.keys(LOOK_DEFAUT)) if (typeof l[c] === 'string' && (objet(c, l[c]) || estConnu250(c, l[c]))) r[c] = l[c];
+  if (l && typeof l.peau === 'string' && /^#[0-9a-f]{6}$/i.test(l.peau)) r.peau = l.peau.toLowerCase(); // couleur de peau choisie
   return r;
 }
 

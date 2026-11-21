@@ -10,8 +10,8 @@ const $ = s => document.querySelector(s);
 const CLE_PROFIL = 'natx-royale-profil', CLE_REGLAGES = 'natx-royale', CLE_RECHARGE = 'natx-compte-recharge';
 let ctx = null, minuteur = null, enCours = false, derniereSauvegarde = null, etat = 'inconnu';
 
-// ce qui part sur le serveur : tout le profil + pseudo et couleur (pour les retrouver sur l'autre appareil)
-const paquet = p => ({ ...p, _reglages: { pseudo: ctx.reglages.pseudo || '', couleur: ctx.reglages.couleur || '' } });
+// ce qui part sur le serveur : tout le profil + pseudo, couleur, peau et touches (pour les retrouver sur l'autre appareil)
+const paquet = p => ({ ...p, _reglages: { pseudo: ctx.reglages.pseudo || '', couleur: ctx.reglages.couleur || '', peau: ctx.reglages.peau || '', touches: ctx.reglages.touches || {} } });
 
 function remplacerProfil(sauvegarde, message) {
   const prof = { ...sauvegarde };
@@ -23,6 +23,8 @@ function remplacerProfil(sauvegarde, message) {
       const reg = JSON.parse(localStorage.getItem(CLE_REGLAGES) || '{}');
       if (typeof r.pseudo === 'string' && r.pseudo) reg.pseudo = r.pseudo.slice(0, 16);
       if (/^#[0-9a-f]{6}$/i.test(r.couleur || '')) reg.couleur = r.couleur;
+      if (/^#[0-9a-f]{6}$/i.test(r.peau || '')) reg.peau = r.peau;
+      if (r.touches && typeof r.touches === 'object' && !Array.isArray(r.touches)) reg.touches = r.touches; // revérifiées au démarrage (touches.js)
       localStorage.setItem(CLE_REGLAGES, JSON.stringify(reg));
     }
     sessionStorage.setItem(CLE_RECHARGE, message);

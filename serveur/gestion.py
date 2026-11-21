@@ -1069,14 +1069,14 @@ def admin_joueur(req, db, code):
     sanctions = []
     for l in db.execute('SELECT * FROM sanctions WHERE joueur_id=? ORDER BY id DESC', (jid,)):
         e = dict(l)
-        e['par'], e['leve_par_nom'] = ids_admins.get(l['admin_id']), ids_admins.get(l['leve_par'])
+        e['par'], e['leve_par_nom'] = ids_admins.get(l['admin_id']) or ('🤖 Robot' if (l['motif'] or '').startswith('🤖') else None), ids_admins.get(l['leve_par'])
         e['active'] = not l['leve_le'] and (not l['fin'] or l['fin'] > maintenant()) and l['debut'] <= maintenant()
         e.pop('joueur_id', None)
         sanctions.append(e)
     signal = lambda col: [{'id': l['id'], 'cree_le': l['cree_le'], 'motif': MOTIFS_SIGNALEMENT.get(l['motif'], l['motif']), 'texte': l['texte'],
                            'statut': l['statut'], 'pseudo': l['cible_pseudo']}
                           for l in db.execute(f'SELECT * FROM signalements WHERE {col}=? ORDER BY id DESC LIMIT 30', (jid,))]
-    interventions = [{'cree_le': l['cree_le'], 'action': l['action'], 'par': ids_admins.get(l['admin_id'])}
+    interventions = [{'cree_le': l['cree_le'], 'action': l['action'], 'par': ids_admins.get(l['admin_id']) or ('🤖 Robot' if l['categorie'] == 'robot' else None)}
                      for l in db.execute('SELECT * FROM journal WHERE cible=? ORDER BY id DESC LIMIT 40', ('joueur:' + jid,))]
     return 200, {
         'code': code_court(jid), 'cree_le': j['cree_le'], 'vu_le': j['vu_le'], 'connecte': bool(j['vu_le'] and j['vu_le'] > maintenant() - 120),
@@ -1141,7 +1141,7 @@ def admin_sanctions(req, db):
         e = dict(l)
         e['joueur_qui'] = noms.get(e['joueur_id'])
         e['joueur'] = code_court(e.pop('joueur_id'))
-        e['par'], e['leve_par_nom'] = ids_admins.get(l['admin_id']), ids_admins.get(l['leve_par'])
+        e['par'], e['leve_par_nom'] = ids_admins.get(l['admin_id']) or ('🤖 Robot' if (l['motif'] or '').startswith('🤖') else None), ids_admins.get(l['leve_par'])
         e['active'] = not l['leve_le'] and (not l['fin'] or l['fin'] > t)
         lignes.append(e)
     return 200, {'sanctions': lignes, 'types': api.TYPES_SANCTIONS}

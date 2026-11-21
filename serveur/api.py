@@ -6,6 +6,7 @@ Uniquement la bibliothèque standard de Python (3.9 ou plus) : WSGI + SQLite.
   Lancer en local (tests) :      python serveur/api.py serve 8799 [/prefixe]
   Créer un compte admin :        python serveur/api.py creer-admin <identifiant> [--role super_admin|admin|moderateur|boutique|evenements]
   Sauvegarder la base :          python serveur/api.py sauvegarder
+  Passage du robot modérateur :  python serveur/api.py robot   (sinon il passe tout seul une fois par jour)
   En ligne (hébergeur Python) :  serveur/wsgi.py expose « application »
 
 Variables d'environnement (voir serveur/LISEZMOI.md) :
@@ -142,6 +143,8 @@ CREATE INDEX IF NOT EXISTS pseudos_recherche ON pseudos_joueurs(pseudo);
 CREATE TABLE IF NOT EXISTS comptes (
   joueur_id TEXT PRIMARY KEY, code_hash TEXT UNIQUE, code_cree_le INTEGER, sauvegarde TEXT, rev INTEGER NOT NULL DEFAULT 0,
   maj_le INTEGER, taille INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS robot_rapports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, cree_le INTEGER NOT NULL, declenche TEXT, resume TEXT NOT NULL, details TEXT);
 """
 CIBLES = {'tous', 'joueur', 'code'}
 STYLES_ANNONCE = {'info', 'evenement', 'alerte'}
@@ -745,6 +748,7 @@ PERMISSIONS = {
     'evenements.voir': {_S, _A, _E},
     'evenements.modifier': {_S, _A, _E},
     'journal': {_S, _A},
+    'robot.regler': {_S, _A},  # robot modérateur : marche/arrêt, heure, droit de suspendre
     'admins.voir': {_S, _A},
     'admins.gerer': {_S},
     'sauvegardes.voir': {_S, _A},
@@ -1287,6 +1291,7 @@ def traiter(req):
                 db.execute('DELETE FROM actions_faites WHERE cree_le < ?', (maintenant() - 86400,))
             if _compteur[0] % 50 == 1:
                 gestion.sauvegarde_auto_si_besoin()
+            robot.passage_auto_si_besoin()  # robot modérateur : une fois par jour (test en mémoire, voir robot.py)
             # protection contre les doubles actions : un même clic (X-Action) n'est jamais exécuté deux fois
             if not public and req.methode != 'GET':
                 cle_action = req.entete('X-Action')
@@ -1321,6 +1326,8 @@ def traiter(req):
 sys.modules.setdefault('api', sys.modules[__name__])  # « python api.py serve » : gestion.py retrouve ce module-ci
 import gestion  # noqa: E402
 ROUTES[:0] = gestion.ROUTES
+import robot  # noqa: E402  (robot modérateur quotidien : signalements, avis)
+ROUTES[:0] = robot.ROUTES
 
 
 # ---------------------------------------------------------------- ligne de commande
@@ -1376,5 +1383,9 @@ if __name__ == '__main__':
     elif commande == 'sauvegarder':
         connexion().close()
         print('Sauvegarde :', gestion.faire_sauvegarde('manuelle'))
+    elif commande == 'robot':
+        db = connexion()
+        print('Robot modérateur :', robot.passer(db, 'ligne de commande')['resume'])
+        db.close()
     else:
         print(__doc__)

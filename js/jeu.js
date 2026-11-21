@@ -20,6 +20,8 @@ import { initSons, son, sonLoin, reglerVolume, reglerMusique, jouerMusique, arre
 import { borner, codeAleatoire, arrondi, echapper, angleVers } from './outils.js';
 import { creerCiel, creerMer, materiauZone, Particules, SOLEIL, COULEURS_CIEL } from './effets.js';
 import { Apercu } from './apercu.js';
+import { htmlRegles, VERSION_REGLES } from './regles.js';
+import { ACTIONS, chargerTouches, touchesPerso, traduire, toucheDe, choisirTouche, touchesParDefaut, nomTouche, chargerDisposition } from './touches.js';
 import { Menus, toast } from './menus.js';
 import { chargerProfil, sauverProfil, bonusDuJour, recompense, nettoyerLook, xpPartie, ajouterXP, avancerDefis, texteDefi, enregistrerPartie, RECOMPENSE_DEFI, xpPourNiveau, objet } from './boutique.js';
 
@@ -42,6 +44,12 @@ document.body.classList.toggle('tactile', tactile);
 if (tactile) { reglages.qualite ??= 'basse'; reglages.distance ??= 'courte'; }
 reglages.qualite ??= reglages.ombres === false ? 'basse' : 'haute';
 reglages.numero ??= Math.floor(Math.random() * 6);
+reglages.touches = chargerTouches(reglages.touches); // touches personnalisées (Paramètres → ⌨️ Touches)
+// couleur de peau choisie (page Jouer) ; la première fois, celle que le menu montrait déjà
+const TEINTES_PEAU = ['#ffe0c7', '#f6cfa6', '#f1c6a0', '#e2a873', '#c98b5a', '#b07445', '#8d5a36', '#7d4b2b', '#5c3620', '#3f2416'];
+if (!/^#[0-9a-f]{6}$/i.test(reglages.peau || '')) reglages.peau = ['#f6cfa6', '#e2a873', '#b07445', '#7d4b2b', '#f1c6a0', '#c98b5a'][reglages.numero % 6];
+// mon style tel que les autres le voient : les objets équipés + ma couleur de peau
+const monLook = () => ({ ...profil.equipe, peau: reglages.peau });
 reglages.musique ??= 0.5; reglages.fov ??= 72; reglages.inverserY ??= false; reglages.sensiVisee ??= 0.7;
 reglages.couleurViseur ??= '#ffffff'; reglages.distance ??= 'normale'; reglages.chiffresDegats ??= true; reglages.fps ??= false; reglages.visuSons ??= true;
 const DISTANCES = { courte: 0.65, normale: 1, loin: 1.45 };
@@ -424,7 +432,7 @@ function rhabiller(a, info) {
 
 // ---------- Joueurs ----------
 function nouveauMoi(info) {
-  const modele = creerPersonnage(info.couleur, null, info.n || 0, info.look || profil.equipe);
+  const modele = creerPersonnage(info.couleur, null, info.n || 0, info.look || monLook());
   scene.add(modele);
   return {
     id: info.id, nom: info.nom, couleur: info.couleur, modele,
@@ -432,7 +440,7 @@ function nouveauMoi(info) {
     ry: 0, rx: -0.2, ph: 'dirigeable', pv: 100, bouclier: 0, mats: 0, munitions: 40,
     inv: [{ objet: 'pioche', rarete: 0 }, null, null, null, null, null], slot: 0,
     tirT: 0, rechargeT: 0, conso: null, visee: false, construction: null, kills: 0, degats: 0, coup: 0,
-    sautT: 0, construitT: 0, place: 0, emote: null, look: nettoyerLook(info.look || profil.equipe), recompense: false,
+    sautT: 0, construitT: 0, place: 0, emote: null, look: nettoyerLook(info.look || monLook()), recompense: false,
     equipe: info.equipe || 0, accroupi: false, sansChute: false,
   };
 }
@@ -1329,14 +1337,9 @@ function modeConstruction(type) {
 }
 
 // ---------- Contrôles ----------
-const LABELS = { KeyQ: 'A', KeyW: 'Z', KeyA: 'Q', KeyS: 'S', KeyD: 'D', KeyF: 'F', KeyC: 'C', KeyV: 'V', KeyE: 'E', KeyR: 'R', KeyG: 'G', KeyH: 'H', KeyB: 'B', KeyX: 'X' };
-const L = c => LABELS[c] || c;
-if (navigator.keyboard && navigator.keyboard.getLayoutMap) {
-  navigator.keyboard.getLayoutMap().then(map => {
-    for (const k in LABELS) { const v = map.get(k); if (v) LABELS[k] = v.toUpperCase(); }
-    remplirAides();
-  }).catch(() => {});
-}
+// nom de la touche choisie pour une action (on donne la touche de base : L('KeyE') = touche de « ramasser »)
+const L = c => nomTouche(toucheDe(c));
+chargerDisposition(() => { remplirAides(); dessinerTouches(); });
 function aideHTML() {
   if (tactile) return `<h3>📱 Commandes tactiles</h3><table>
   <tr><td>🕹️ Pouce gauche</td><td>Se déplacer (à fond : courir, plonger)</td></tr>
@@ -1353,8 +1356,8 @@ function aideHTML() {
   const k = c => `<kbd>${L(c)}</kbd>`;
   return `<h3>🎮 Commandes</h3><table>
   <tr><td>${k('KeyW')}${k('KeyA')}${k('KeyS')}${k('KeyD')}</td><td>Se déplacer</td></tr>
-  <tr><td><kbd>Espace</kbd></td><td>Sauter · sauter du dirigeable · ouvrir le deltaplane</td></tr>
-  <tr><td><kbd>Maj</kbd></td><td>Courir (et plonger en chute libre)</td></tr>
+  <tr><td>${k('Space')}</td><td>Sauter · sauter du dirigeable · ouvrir le deltaplane</td></tr>
+  <tr><td>${k('ShiftLeft')}</td><td>Courir (et plonger en chute libre)</td></tr>
   <tr><td>🖱️ Clic gauche</td><td>Tirer · frapper · poser · se soigner</td></tr>
   <tr><td>🖱️ Clic droit</td><td>Viser (lunette avec le fusil de précision)</td></tr>
   <tr><td><kbd>1</kbd>…<kbd>6</kbd> / molette</td><td>Changer d'objet (1 = pioche)</td></tr>
@@ -1363,10 +1366,10 @@ function aideHTML() {
   <tr><td>${k('KeyQ')}</td><td>Pouvoir de ton esprit élémentaire (sanctuaires ◆ sur la carte)</td></tr>
   <tr><td>${k('KeyR')} · ${k('KeyG')}</td><td>Recharger · jeter l'objet</td></tr>
   <tr><td>${k('KeyB')} · ${k('KeyX')}</td><td>Émote (danse) 💃 · s'accroupir</td></tr>
-  <tr><td><kbd>M</kbd></td><td>Grande carte (clique dessus pour poser un repère)</td></tr>
-  <tr><td><kbd>Tab</kbd> · <kbd>Entrée</kbd></td><td>Classement · discuter</td></tr>
+  <tr><td>${k('KeyM')}</td><td>Grande carte (clique dessus pour poser un repère)</td></tr>
+  <tr><td><kbd>Tab</kbd> · <kbd>Entrée</kbd> ${k('KeyT')}</td><td>Classement · discuter</td></tr>
   <tr><td><kbd>7</kbd> <kbd>8</kbd> <kbd>9</kbd> <kbd>0</kbd></td><td>Messages rapides</td></tr>
-  </table><p>🪵 Frappe les arbres et les rochers avec la pioche pour avoir des matériaux.</p>`;
+  </table><p>🪵 Frappe les arbres et les rochers avec la pioche pour avoir des matériaux. ⌨️ Tu peux changer les touches dans ⚙️ Paramètres → Touches.</p>`;
 }
 function remplirAides() {
   $('#aideMenu').innerHTML = aideHTML();
@@ -1392,10 +1395,12 @@ function verrouiller() {
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
   if (!enJeu()) return;
-  if (['Space', 'Tab', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
-  if (e.repeat) { touches.add(e.code); return; }
-  touches.add(e.code);
-  actionTouche(e.code, e);
+  const c = traduire(e.code); // touche choisie par le joueur → touche de base du jeu
+  if (c !== e.code || ['Space', 'Tab', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+  if (!c) return;
+  if (e.repeat) { touches.add(c); return; }
+  touches.add(c);
+  actionTouche(c, e);
 });
 function actionTouche(c, e = { key: '', preventDefault() {} }) {
   const moi = etat.moi;
@@ -1407,7 +1412,7 @@ function actionTouche(c, e = { key: '', preventDefault() {} }) {
   else if (c === 'KeyE') interagir();
   else if (c === 'KeyQ') utiliserPouvoir();
   else if (c === 'KeyG') { if (moi.ph === 'sol') jeterSlot(moi.slot); }
-  else if (c === 'KeyM' || c === 'Semicolon' || e.key === 'm' || e.key === 'M') {
+  else if (c === 'KeyM' || (!touchesPerso().carte && c === e.code && (e.key === 'm' || e.key === 'M'))) {
     etat.grandeCarte = !etat.grandeCarte;
     $('#grandeCarte').classList.toggle('cache', !etat.grandeCarte);
     // souris libre pour poser un repère
@@ -1429,6 +1434,8 @@ function actionTouche(c, e = { key: '', preventDefault() {} }) {
   }
 }
 addEventListener('keyup', e => {
+  const c = traduire(e.code);
+  if (c) touches.delete(c);
   touches.delete(e.code);
   if (e.code === 'Tab') { etat.tableau = false; $('#tableau').classList.add('cache'); }
 });
@@ -2981,6 +2988,12 @@ function construireReglages(el) {
   <label class="tactile-seul">Vibrations <input data-r="vibrations" type="checkbox"></label>
   <label>Ramasser tout seul (si une case est libre) <select data-r="ramassageAuto"><option value="tactile">Sur téléphone</option><option value="oui">Toujours</option><option value="non">Jamais</option></select></label>
   </div>
+  <div class="groupe-param" data-g="touches">
+  <p class="petit-texte">Clique sur une touche, puis appuie sur la nouvelle (Échap pour annuler). Si elle sert déjà à autre chose, les deux actions échangent leurs touches. Les clics de souris, 1 à 6 (objets) et 7 à 0 (messages) ne changent pas.</p>
+  <div id="listeTouches" class="liste-touches"></div>
+  <p id="touchesMsg" class="petit-texte" role="status"></p>
+  <button type="button" class="petit" id="touchesDefaut">↺ Remettre les touches de base</button>
+  </div>
   <div class="groupe-param" data-g="son">
   <label>Volume <span class="valeur" data-v="volume"></span><input data-r="volume" type="range" min="0" max="1" step="0.05"></label>
   <label>Musique <span class="valeur" data-v="musique"></span><input data-r="musique" type="range" min="0" max="1" step="0.05"></label>
@@ -3009,7 +3022,60 @@ function construireReglages(el) {
     });
   }
   for (const b of el.querySelectorAll('[data-c]')) b.onclick = () => { reglages.couleurViseur = b.dataset.c; sauverReglages(); synchroReglages(); };
+  el.querySelector('#touchesDefaut').onclick = () => {
+    arreterEcoute(); touchesParDefaut(); reglages.touches = {}; sauverReglages();
+    dessinerTouches(); remplirAides(); $('#touchesMsg').textContent = '✅ Touches de base remises.';
+  };
+  dessinerTouches();
   synchroReglages();
+}
+
+// ---------- Touches personnalisables (Paramètres → ⌨️ Touches) ----------
+function dessinerTouches() {
+  const zone = $('#listeTouches');
+  if (!zone) return;
+  zone.innerHTML = '';
+  const perso = touchesPerso();
+  for (const a of ACTIONS) {
+    const ligne = document.createElement('div');
+    ligne.className = 'ligne-touche';
+    const nom = document.createElement('span');
+    nom.textContent = a.nom;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'touche-perso' + (perso[a.id] ? ' changee' : '');
+    b.textContent = nomTouche(toucheDe(a.id));
+    b.title = perso[a.id] ? 'Touche changée (de base : ' + nomTouche(a.base) + ')' : 'Touche de base';
+    b.onclick = () => ecouterTouche(a, b);
+    ligne.append(nom, b);
+    zone.append(ligne);
+  }
+}
+let finEcoute = null;
+function arreterEcoute() { if (finEcoute) { finEcoute(); finEcoute = null; } }
+function ecouterTouche(a, b) {
+  const deja = b.classList.contains('ecoute');
+  arreterEcoute();
+  if (deja) { dessinerTouches(); return; } // re-clic = annuler
+  dessinerTouches();
+  const bouton = [...$('#listeTouches').querySelectorAll('.touche-perso')][ACTIONS.indexOf(a)];
+  bouton.classList.add('ecoute'); bouton.textContent = 'Appuie sur une touche…';
+  $('#touchesMsg').textContent = `« ${a.nom} » : appuie sur la nouvelle touche.`;
+  const surTouche = e => {
+    // la touche sert seulement à choisir : elle ne part ni dans le jeu ni dans la page
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (e.repeat) return;
+    if (e.code === 'Escape') { arreterEcoute(); dessinerTouches(); $('#touchesMsg').textContent = ''; return; }
+    const r = choisirTouche(a.id, e.code);
+    if (!r.ok) { $('#touchesMsg').textContent = '⛔ ' + r.message + ' Choisis-en une autre.'; return; }
+    reglages.touches = touchesPerso(); sauverReglages();
+    arreterEcoute(); dessinerTouches(); remplirAides();
+    $('#touchesMsg').textContent = `✅ ${a.nom} : ${nomTouche(e.code)}` + (r.echange ? ` (échangée avec « ${r.echange} »)` : '');
+  };
+  const surClic = e => { if (e.target !== bouton) { arreterEcoute(); dessinerTouches(); $('#touchesMsg').textContent = ''; } };
+  addEventListener('keydown', surTouche, true);
+  setTimeout(() => addEventListener('pointerdown', surClic, true), 0);
+  finEcoute = () => { removeEventListener('keydown', surTouche, true); removeEventListener('pointerdown', surClic, true); };
 }
 function synchroReglages() {
   for (const c of document.querySelectorAll('[data-r]')) {
@@ -3027,7 +3093,7 @@ function synchroReglages() {
 
 // ---------- Commandes tactiles (téléphone, tablette) ----------
 const joy = { actif: false, id: null, cx: 0, cy: 0, x: 0, y: 0, force: 0 };
-const sprintActif = () => touches.has('ShiftLeft') || touches.has('ShiftRight') || (joy.actif && joy.force > 0.92);
+const sprintActif = () => touches.has('ShiftLeft') || (joy.actif && joy.force > 0.92); // Maj droite = même action tant que « courir » n'a pas été changé (touches.js)
 function pleinEcranMobile() {
   if (!tactile) return;
   try {
@@ -3393,7 +3459,7 @@ function demarrerHote() {
   appliquerMode(reglages.mode);
   lireOptionsSalon();
   reseau.surMessageClient = recevoir;
-  reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: profil.equipe, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
+  reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: monLook(), esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
 }
 
 function lirePseudo() {
@@ -3413,8 +3479,42 @@ function initMenu() {
     b.onclick = () => { reglages.couleur = c; sauverReglages(); for (const x of cc.children) x.className = x === b ? 'choisi' : ''; menus.montrerPerso(); };
     cc.appendChild(b);
   }
+  // couleur de peau : 10 teintes + « 🎨 » pour en choisir une autre
+  const pp = $('#peaux');
+  const choisirPeau = (c, fini = true) => {
+    reglages.peau = c.toLowerCase(); sauverReglages();
+    for (const x of pp.children) x.classList.toggle('choisi', x.dataset.peau === reglages.peau || (x.classList.contains('peau-perso') && !TEINTES_PEAU.includes(reglages.peau)));
+    menus.montrerPerso();
+    if (fini) menus.surLook(); // dans un salon : les autres voient la nouvelle couleur
+  };
+  for (const c of TEINTES_PEAU) {
+    const b = document.createElement('button');
+    b.style.background = c; b.title = 'Peau'; b.dataset.peau = c; b.setAttribute('aria-label', 'Couleur de peau ' + c);
+    b.onclick = () => choisirPeau(c);
+    pp.appendChild(b);
+  }
+  const autre = document.createElement('label');
+  autre.className = 'peau-perso'; autre.title = 'Choisir une autre couleur';
+  autre.innerHTML = '<input type="color" aria-label="Autre couleur de peau">';
+  const champPeau = autre.querySelector('input');
+  champPeau.value = reglages.peau;
+  champPeau.addEventListener('input', () => choisirPeau(champPeau.value, false)); // pendant qu'on cherche la couleur
+  champPeau.addEventListener('change', () => choisirPeau(champPeau.value));
+  pp.appendChild(autre);
+  for (const x of pp.children) x.classList.toggle('choisi', x.dataset.peau === reglages.peau || (x === autre && !TEINTES_PEAU.includes(reglages.peau)));
   $('#pseudo').addEventListener('input', () => { reglages.pseudo = $('#pseudo').value.trim().slice(0, 16); $('#nomPodium').textContent = reglages.pseudo || 'Toi'; sauverReglages(); });
   construireReglages($('#reglagesModal'));
+  // Règles du jeu : bouton du menu, pause, lien du signalement ; montrées une fois (et à chaque nouvelle version)
+  $('#contenuRegles').innerHTML = htmlRegles();
+  $('#reglesPause').innerHTML = htmlRegles();
+  const ouvrirRegles = () => $('#fenetreRegles').classList.remove('cache');
+  $('#btnRegles').onclick = ouvrirRegles;
+  $('#signalRegles').onclick = e => { e.preventDefault(); ouvrirRegles(); };
+  $('#fermerRegles').onclick = () => {
+    $('#fenetreRegles').classList.add('cache');
+    if (reglages.reglesLues !== VERSION_REGLES) { reglages.reglesLues = VERSION_REGLES; sauverReglages(); }
+  };
+  if (reglages.reglesLues !== VERSION_REGLES) setTimeout(() => { if (etat.ecran === 'menu') ouvrirRegles(); }, 1500);
   initAvis({ son: n => { initSons(); son(n); }, plateforme: tactile ? 'tactile' : 'pc' });
   appliquerBoutons();
   for (const b of document.querySelectorAll('.onglets-param button')) b.onclick = () => montrerGroupeParam(b.dataset.p);
@@ -3465,7 +3565,7 @@ function initMenu() {
     reseau.surPerteHote = () => { if (!etat.exclu) location.href = location.pathname + '?erreur=hote'; };
     try {
       await reseau.rejoindre(code);
-      reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: profil.equipe, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
+      reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: monLook(), esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
     } catch (err) {
       reseau.fermer();
       afficherEcran('menu');
@@ -3549,7 +3649,7 @@ for (const a of INTEGRATION.armes) {
 const apercu = new Apercu();
 const menus = new Menus({
   apercu, profil, reglages, son: n => { initSons(); son(n); },
-  surLook: () => { if (etat.ecran === 'salon') reseau.versHote({ t: 'look', look: profil.equipe, couleur: reglages.couleur, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null }); },
+  surLook: () => { if (etat.ecran === 'salon') reseau.versHote({ t: 'look', look: monLook(), couleur: reglages.couleur, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null }); },
 });
 initMenu();
 afficherEcran('menu');

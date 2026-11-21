@@ -168,6 +168,7 @@ const PAGES = [
   { id: 'joueurs', titre: '👥 Joueurs', perm: 'joueurs.voir', f: vueJoueurs },
   { id: 'signalements', titre: '🚩 Signalements', perm: 'signalements', f: vueSignalements },
   { id: 'sanctions', titre: '⛔ Sanctions', perm: 'joueurs.voir', f: vueSanctions },
+  { id: 'robot', titre: '🤖 Robot modérateur', perm: 'signalements', f: vueRobot },
   { id: 'retours', titre: '💬 Avis et bugs', perm: 'retours', f: vueRetours },
   { groupe: 'Le jeu' },
   { id: 'cadeaux', titre: '🎁 Cadeaux', perm: 'cadeaux.voir', f: vueCadeaux },
@@ -444,6 +445,59 @@ async function vueSanctions() {
   ];
 }
 
+// ================================================================ robot modérateur (serveur/robot.py)
+// Il passe tout seul une fois par jour : signalements (il regarde les parties du joueur signalé), avis (spam, bugs très votés).
+const MOTIFS_SIGNAL = { triche: 'Triche', insultes: 'Insultes ou harcèlement', pseudo: 'Pseudo inapproprié', antijeu: 'Anti-jeu', autre: 'Autre' };
+const NOMS_DECISION = { traite: ['traité', 'vert'], en_cours: ['à vérifier par un humain', 'jaune'], rejete: ['rejeté', 'gris'] };
+function blocRapport(r, ouvert) {
+  const d = r.details || {}, av = d.avis || {};
+  const sig = (d.signalements || []).map(s => el('li', {}, pastille(...(NOMS_DECISION[s.decision] || [s.decision, 'gris'])), ' ',
+    el('b', {}, MOTIFS_SIGNAL[s.motif] || s.motif), ' · ', s.qui ? personne(s.qui) : (s.joueur || 'joueur introuvable'), el('div', { class: 'petit' }, s.note)));
+  const sanc = (d.sanctions || []).map(s => el('li', {}, pastille(s.type === 'avertissement' ? 'avertissement' : `suspension ${s.heures} h`, 'rouge'), ' ',
+    s.qui ? personne(s.qui) : s.joueur, ` — règle ${s.regle}`));
+  const regarder = (d.a_regarder || []).map(t => el('li', {}, t));
+  const spam = (av.spam || []).map(a => el('li', {}, `Avis #${a.id} caché (${a.raison}) : « ${a.texte} »`));
+  const etude = (av.a_etudier || []).map(a => el('li', {}, `Avis #${a.id} (${a.categorie}, ${a.votes} votes) → À étudier : « ${a.texte} »`));
+  const top = (av.top || []).map(a => el('li', {}, `${a.votes} 👍 · ${a.categorie} · « ${a.texte} »`));
+  const section = (titre, items) => (items.length ? [el('h3', {}, titre), el('ul', { class: 'liste-simple' }, items)] : []);
+  return el('details', { class: 'rapport-robot', open: ouvert ? true : null },
+    el('summary', {}, el('b', {}, date(r.cree_le)), ' · ', el('span', { class: 'petit' }, r.declenche || ''), el('div', {}, r.resume)),
+    ...section('👀 À regarder par un humain', regarder), ...section('⛔ Sanctions données', sanc), ...section('🚩 Signalements', sig),
+    ...section('🧹 Avis cachés (spam)', spam), ...section('📌 Avis passés « À étudier »', etude), ...section('🏆 Avis les plus votés', top),
+    !regarder.length && !sanc.length && !sig.length && !spam.length && !etude.length ? el('p', { class: 'vide' }, 'Rien à signaler ce jour-là.') : null);
+}
+async function vueRobot() {
+  const d = await api('GET', '/robot');
+  const peutRegler = PERM('robot.regler');
+  const actif = el('input', { type: 'checkbox', checked: d.reglages.actif, disabled: !peutRegler });
+  const suspendre = el('input', { type: 'checkbox', checked: d.reglages.peut_suspendre, disabled: !peutRegler });
+  const heure = choix(Object.fromEntries(Array.from({ length: 24 }, (_, h) => [h, `${h} h`])), d.reglages.heure, { disabled: !peutRegler });
+  const enregistrer = peutRegler ? el('button', { class: 'bouton principal' }, 'Enregistrer') : null;
+  if (enregistrer) enregistrer.onclick = async () => {
+    if (await action(enregistrer, () => api('POST', '/robot/reglages', { actif: actif.checked, peut_suspendre: suspendre.checked, heure: +heure.value }), 'Réglages du robot enregistrés.')) recharger();
+  };
+  const lancer = el('button', { class: 'bouton' }, '▶️ Le faire passer maintenant');
+  lancer.onclick = async () => { const r = await action(lancer, () => api('POST', '/robot/lancer', {})); if (r) { toast(r.resume); recharger(); } };
+  return [
+    el('header', { class: 'titre' }, el('h1', {}, 'Robot modérateur'), el('span', { class: 'compte' }, d.reglages.actif ? 'allumé' : 'éteint')),
+    el('div', { class: 'grille-2' },
+      panneau('🤖 Ce qu\'il fait',
+        el('p', { class: 'aide' }, `Il passe tout seul une fois par jour, à la première visite du jeu ou du panel après ${d.reglages.heure} h (dernier passage automatique : ${d.dernier_jour || 'jamais'}). Personne n'a besoin d'être connecté.`),
+        el('ul', { class: 'liste-simple' },
+          el('li', {}, 'Signalement de triche : il regarde les 30 dernières parties et les statistiques du joueur. Résultat impossible → sanction. Seulement suspect → il te le laisse.'),
+          el('li', {}, 'Insultes, anti-jeu : la discussion n\'est pas enregistrée, donc il attend que plusieurs joueurs DIFFÉRENTS signalent la même personne.'),
+          el('li', {}, 'Pseudo : il cherche les gros mots et les faux « admin / staff ».'),
+          el('li', {}, 'Avis : il cache le spam et met « À étudier » les bugs (3 votes) et les idées (5 votes).'),
+          el('li', {}, 'Échelle : avertissement → suspension 24 h → 3 jours. Jamais plus, jamais le staff, une seule sanction par joueur et par jour.')),
+        el('p', { class: 'aide' }, 'Tu peux lever n\'importe quelle sanction du robot dans ⛔ Sanctions. Tout ce qu\'il fait est dans le journal d\'audit (catégorie « robot »).'),
+        el('div', { class: 'actions' }, lancer)),
+      panneau('⚙️ Réglages', el('label', { class: 'ligne' }, actif, ' Robot allumé'), el('label', { class: 'ligne' }, suspendre, ' Il a le droit de suspendre (sinon : seulement des avertissements)'),
+        champ('Heure du passage', heure), enregistrer ? el('div', { class: 'actions' }, enregistrer) : el('p', { class: 'aide' }, 'Seuls les admins et super admins changent ces réglages.'),
+        el('h3', {}, '📜 Règles qu\'il applique'), el('ol', { class: 'liste-simple' }, d.regles.map(r => el('li', {}, r.titre))))),
+    panneau('🗓️ Rapports (les 30 derniers)', d.rapports.length ? d.rapports.map((r, i) => blocRapport(r, i === 0)) : el('p', { class: 'vide' }, 'Le robot n\'est pas encore passé.')),
+  ];
+}
+
 const etatSignal = { statut: 'nouveau' };
 async function vueSignalements() {
   const d = await api('GET', '/signalements?statut=' + etatSignal.statut);
@@ -461,7 +515,7 @@ async function vueSignalements() {
   });
   return [
     el('header', { class: 'titre' }, el('h1', {}, 'Signalements'), el('span', { class: 'compte' }, nombre(d.total))),
-    el('p', { class: 'aide' }, 'Envoyés depuis le jeu (bouton 🚩 du classement). Le joueur signalé est retrouvé par une référence anonyme.'),
+    el('p', { class: 'aide' }, "Envoyés depuis le jeu (bouton 🚩 du classement). Le joueur signalé est retrouvé par une référence anonyme. Le robot 🤖 les lit tous les jours : ses notes commencent par 🤖. Dès que tu enregistres un signalement toi-même, il n'y touche plus."),
     el('div', { class: 'filtres' }, filtre),
     tableau(['Date', 'Motif', 'Texte', 'Joueur signalé', 'Par', 'Traitement'], lignes, 'Aucun signalement.'),
   ];
@@ -1013,7 +1067,7 @@ async function vueJournal() {
   const q = el('input', { type: 'search', placeholder: 'Chercher une action ou une cible…', value: etatJournal.q, maxlength: 60 });
   let t; q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => maj('q', q.value), 400); });
   const admin = el('input', { placeholder: 'Identifiant admin', value: etatJournal.admin, maxlength: 60, onchange: e => maj('admin', e.target.value) });
-  const lignes = d.journal.map(j => el('tr', {}, el('td', {}, date(j.cree_le)), el('td', {}, j.identifiant || 'serveur'), el('td', {}, pastille(j.categorie || '—', 'gris')),
+  const lignes = d.journal.map(j => el('tr', {}, el('td', {}, date(j.cree_le)), el('td', {}, j.identifiant || (j.categorie === 'robot' ? '🤖 Robot' : 'serveur')), el('td', {}, pastille(j.categorie || '—', 'gris')),
     el('td', {}, j.action), el('td', { class: 'petit' }, j.cible_qui ? personne(j.cible_qui) : (j.cible || '')),
     el('td', {}, j.details ? el('details', {}, el('summary', {}, 'voir'), el('pre', { class: 'details' }, JSON.stringify(j.details, null, 1))) : '')));
   return [
