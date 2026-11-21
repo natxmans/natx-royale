@@ -79,7 +79,8 @@ export class Menus {
   }
 
   montrerPerso(cadrage = 'corps', look = this.profil.equipe, emote = null) {
-    this.apercu.montrer({ couleur: this.couleur, look: this.reglages.peau ? { ...look, peau: this.reglages.peau } : look, numero: this.reglages.numero || 0, cadrage, emote });
+    this.apercu.montrer({ couleur: this.couleur, look: { ...look, ...(this.reglages.peau ? { peau: this.reglages.peau } : {}), ...(Number.isInteger(this.reglages.coiffure) ? { coiffure: this.reglages.coiffure } : {}),
+      ...(this.reglages.cheveux ? { cheveux: this.reglages.cheveux } : {}) }, numero: this.reglages.numero || 0, cadrage, emote });
     $('#nomPodium').textContent = this.reglages.pseudo || 'Toi';
     // Le personnage des menus est en HD : ce qui n'est pas encore chargé (tenue en 512 px avec relief, objets des 250)
     // arrive juste après, et on le remontre une fois prêt.

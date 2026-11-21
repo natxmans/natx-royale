@@ -10,6 +10,13 @@ const PEAUX = ['#f6cfa6', '#e2a873', '#b07445', '#7d4b2b', '#f1c6a0', '#c98b5a']
 // couleur de peau choisie par le joueur (look.peau), sinon une teinte selon son numéro (bots)
 const peauDe = (look, numero) => (typeof look.peau === 'string' && /^#[0-9a-f]{6}$/i.test(look.peau) ? look.peau.toLowerCase() : PEAUX[numero % PEAUX.length]);
 const CHEVEUX = ['#3b2414', '#1c1c22', '#e0b54f', '#b5491f', '#6b4423', '#d9d3c7', '#2d1a0e'];
+// Cheveux choisis par le joueur (page Jouer) : look.coiffure = 0 à 4 (les 5 coiffures de personnage.glb) ou 5 = chauve,
+// look.cheveux = couleur. Sans choix (bots, anciennes versions du jeu) : selon le numéro du joueur, comme avant.
+export const CHAUVE = 5;
+export const coiffureParDefaut = numero => numero % 5;
+export const cheveuxParDefaut = numero => CHEVEUX[(numero * 3 + 1) % CHEVEUX.length];
+const coiffureDe = (look, numero) => (Number.isInteger(look.coiffure) && look.coiffure >= 0 && look.coiffure <= CHAUVE ? look.coiffure : coiffureParDefaut(numero));
+const cheveuxDe = (look, numero) => (typeof look.cheveux === 'string' && /^#[0-9a-f]{6}$/i.test(look.cheveux) ? look.cheveux.toLowerCase() : cheveuxParDefaut(numero));
 const YEUX = ['#3b2414', '#2b6cb0', '#2f855a', '#4a3423', '#1c1c22'];
 export const NEON = { cyan: '#22e8ff', rose: '#ff2e88', violet: '#b026ff', fond: '#0a0a14' };
 
@@ -733,7 +740,7 @@ function cheveux(style, couleur, sousChapeau) {
 
 function tete(look, numero, t, peau) {
   const g = new THREE.Group();
-  const coulCheveux = CHEVEUX[(numero * 3 + 1) % CHEVEUX.length];
+  const coulCheveux = cheveuxDe(look, numero);
   const crane = t.or ? METAL('#e8b923', 0.25) : t.robot ? METAL('#9aa3ad') : M(peau);
   const c = new THREE.Mesh(sphere(0.25, 18, 14), crane); c.scale.set(1, 1.07, 0.98);
   const cou = new THREE.Mesh(geo('cou', () => new THREE.CylinderGeometry(0.075, 0.085, 0.16, 10)), crane); cou.position.y = -0.24;
@@ -798,7 +805,7 @@ function creerPersonnageBlender(couleur, nom, numero, look, hd) {
   const peau = peauDe(look, numero);
   const t = tenue(look.tenue, couleur, peau, hd);
   const P = M(peau);
-  const coulCheveux = t.or ? null : CHEVEUX[(numero * 3 + 1) % CHEVEUX.length];
+  const coulCheveux = t.or ? null : cheveuxDe(look, numero);
   // matériaux de la tête selon la tenue (statue en or, robot en métal, ninja avec cagoule)
   const crane = t.or ? METAL('#e8b923', 0.25) : t.robot ? METAL('#9aa3ad') : t.masque ? M('#17181d') : P;
   const matCheveux = t.or ? METAL('#d4a017', 0.25) : t.masque ? M('#17181d') : M(coulCheveux);
@@ -833,7 +840,7 @@ function creerPersonnageBlender(couleur, nom, numero, look, hd) {
   }
   const ch = chapeau(look.chapeau, couleur, true);
   if (!ch.blender) ch.groupe.scale.setScalar(0.5);
-  const style = numero % 5;
+  const style = coiffureDe(look, numero); // 5 = chauve : aucune pièce de cheveux
   const sousChapeau = ch.cacheCheveux || (ch.couvre && COIFFURES_HAUTES.has(style));
   if (!t.robot && !t.masque && !t.cacheCheveux && !sousChapeau && CORPS['cheveux_' + style]) teteG.add(partieBlender('cheveux_' + style, { ...commun, haut: M(couleur) }));
   teteG.add(ch.groupe);
@@ -955,7 +962,8 @@ export function creerPersonnage(couleur, nom, numero = 0, lookRecu, { hd = false
   const T = tete(look, numero, t, peau);
   const teteG = T.groupe; teteG.position.y = 1.88;
   const ch = chapeau(look.chapeau, couleur);
-  if (!ch.cacheCheveux && !t.robot) teteG.add(cheveux(t.masque ? 0 : numero, t.or ? '#d4a017' : t.masque ? '#17181d' : T.couleurCheveux, ch.couvre));
+  const coiffure = coiffureDe(look, numero);
+  if (!ch.cacheCheveux && !t.robot && (coiffure !== CHAUVE || t.masque)) teteG.add(cheveux(t.masque ? 0 : coiffure, t.or ? '#d4a017' : t.masque ? '#17181d' : T.couleurCheveux, ch.couvre));
   teteG.add(ch.groupe);
   if (t.capuche) {
     const capuche = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 12, Math.PI * 0.1, Math.PI * 1.8, 0.3, Math.PI * 0.65), M(t.capuche, { side: THREE.DoubleSide }));

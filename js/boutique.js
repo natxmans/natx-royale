@@ -261,6 +261,9 @@ export function nettoyerLook(l) {
   const r = { ...LOOK_DEFAUT };
   if (l && typeof l === 'object') for (const c of Object.keys(LOOK_DEFAUT)) if (typeof l[c] === 'string' && (objet(c, l[c]) || estConnu250(c, l[c]))) r[c] = l[c];
   if (l && typeof l.peau === 'string' && /^#[0-9a-f]{6}$/i.test(l.peau)) r.peau = l.peau.toLowerCase(); // couleur de peau choisie
+  // cheveux choisis : coiffure 0 à 4, ou 5 = chauve ; couleur des cheveux
+  if (l && Number.isInteger(l.coiffure) && l.coiffure >= 0 && l.coiffure <= 5) r.coiffure = l.coiffure;
+  if (l && typeof l.cheveux === 'string' && /^#[0-9a-f]{6}$/i.test(l.cheveux)) r.cheveux = l.cheveux.toLowerCase();
   return r;
 }
 

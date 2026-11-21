@@ -123,6 +123,7 @@ export const NOUVEAUTES = [
     'Arbres, rochers et buissons redessinés, et 4 nouvelles maisons où l’on peut entrer : maison de village, chalet, grange et maison du désert',
     'Nouveau logo, nouvelles icônes dans les menus, et une image pour chaque page',
     'Boutique et casier plus rapides : les objets ont leur vignette toute prête',
+    'Tes cheveux se choisissent : 5 coiffures ou chauve, 12 couleurs ou celle que tu veux (page Jouer)',
     'Skins d’armes : 11 habillages pour toutes tes armes (bois, bonbon, jungle, glace, chrome, néon, lave, galaxie, or…), dans la Boutique et le Casier',
     '10 nouveaux esprits (15 en tout) : Braise, Givrette, Zap, Zephyr, Racine, Minuit, Tic-Tac, Goutte, Pépite et Lumi, chacun avec son bonus et son pouvoir',
   ]],

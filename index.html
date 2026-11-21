@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
@@ -101,6 +101,11 @@
         </div>
         <div class="champ">Ta peau
           <div id="peaux" class="couleurs peaux"></div>
+        </div>
+        <div class="champ">Tes cheveux
+          <div id="coiffures" class="coiffures"></div>
+          <div id="teintesCheveux" class="couleurs peaux"></div>
+          <p id="noteCheveux" class="petit-texte cache">Ton chapeau est caché ici pour que tu voies tes cheveux. En partie, il peut les couvrir.</p>
         </div>
         <div class="champ">Mode de jeu
           <div id="choixModes" class="choix-modes">
@@ -516,6 +521,6 @@
 <div id="chargement" class="ecran cache"><div class="boite"><img class="illustration" src="modeles/interface/illustrations/chargement_petit.webp" width="320" height="180" alt="" loading="lazy"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=16"></script>
+<script type="module" src="js/jeu.js?v=17"></script>
 </body>
 </html>

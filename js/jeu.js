@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Monde, DEMI, rayonBoite } from './monde.js';
 import { OBJETS, RARETES, modeleObjet, modelesPrets, remplacerModeleArme } from './armes.js';
-import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPret } from './personnage.js';
+import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPret, coiffureParDefaut, cheveuxParDefaut, CHAUVE } from './personnage.js';
 import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele, clipAnimation, prechargerCosmetiques, chargerCosmetiques, cosmetiquePret, ficheEmote, ficheTrainee, QUALITE_TENUES } from './modeles.js';
 import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, signalerJoueur, URL_API } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
@@ -49,8 +49,13 @@ reglages.touches = chargerTouches(reglages.touches); // touches personnalisées 
 // couleur de peau choisie (page Jouer) ; la première fois, celle que le menu montrait déjà
 const TEINTES_PEAU = ['#ffe0c7', '#f6cfa6', '#f1c6a0', '#e2a873', '#c98b5a', '#b07445', '#8d5a36', '#7d4b2b', '#5c3620', '#3f2416'];
 if (!/^#[0-9a-f]{6}$/i.test(reglages.peau || '')) reglages.peau = ['#f6cfa6', '#e2a873', '#b07445', '#7d4b2b', '#f1c6a0', '#c98b5a'][reglages.numero % 6];
-// mon style tel que les autres le voient : les objets équipés + ma couleur de peau
-const monLook = () => ({ ...profil.equipe, peau: reglages.peau });
+// cheveux choisis (page Jouer) : coiffure 0 à 4 ou 5 = chauve, et leur couleur ; la première fois, ceux que le menu montrait déjà
+const COIFFURES = ['En pics', 'Mèche', 'Queue de cheval', 'Bouclés', 'Crête', 'Chauve']; // dans l'ordre des pièces cheveux_0 … cheveux_4 de personnage.glb
+const TEINTES_CHEVEUX = ['#1c1c22', '#2d1a0e', '#3b2414', '#6b4423', '#b5491f', '#e0b54f', '#f3e3a8', '#d9d3c7', '#ff5fa2', '#b552ff', '#3d8dff', '#14e0a2'];
+if (!Number.isInteger(reglages.coiffure) || reglages.coiffure < 0 || reglages.coiffure > CHAUVE) reglages.coiffure = coiffureParDefaut(reglages.numero);
+if (!/^#[0-9a-f]{6}$/i.test(reglages.cheveux || '')) reglages.cheveux = cheveuxParDefaut(reglages.numero);
+// mon style tel que les autres le voient : les objets équipés + ma couleur de peau + mes cheveux
+const monLook = () => ({ ...profil.equipe, peau: reglages.peau, coiffure: reglages.coiffure, cheveux: reglages.cheveux });
 reglages.musique ??= 0.5; reglages.fov ??= 72; reglages.inverserY ??= false; reglages.sensiVisee ??= 0.7;
 reglages.couleurViseur ??= '#ffffff'; reglages.distance ??= 'normale'; reglages.chiffresDegats ??= true; reglages.fps ??= false; reglages.visuSons ??= true;
 const DISTANCES = { courte: 0.65, normale: 1, loin: 1.45 };
@@ -3741,6 +3746,42 @@ function initMenu() {
   champPeau.addEventListener('change', () => choisirPeau(champPeau.value));
   pp.appendChild(autre);
   for (const x of pp.children) x.classList.toggle('choisi', x.dataset.peau === reglages.peau || (x === autre && !TEINTES_PEAU.includes(reglages.peau)));
+  // cheveux : 5 coiffures + chauve, 12 couleurs + « 🎨 » pour en choisir une autre
+  const cf = $('#coiffures'), tc = $('#teintesCheveux');
+  const majCheveux = (fini = true) => {
+    sauverReglages();
+    for (const x of cf.children) x.classList.toggle('choisi', +x.dataset.coiffure === reglages.coiffure);
+    for (const x of tc.children) x.classList.toggle('choisi', x.dataset.cheveux === reglages.cheveux || (x.classList.contains('peau-perso') && !TEINTES_CHEVEUX.includes(reglages.cheveux)));
+    tc.classList.toggle('grise', reglages.coiffure === CHAUVE); // chauve : la couleur ne sert qu'aux sourcils
+    // gros plan sur la tête, sans le chapeau (il cacherait la coiffure qu'on est en train de choisir)
+    const avecChapeau = profil.equipe.chapeau && profil.equipe.chapeau !== 'aucun';
+    menus.montrerPerso('tete', avecChapeau ? { ...profil.equipe, chapeau: 'aucun' } : profil.equipe);
+    $('#noteCheveux').classList.toggle('cache', !avecChapeau);
+    if (fini) menus.surLook(); // dans un salon : les autres voient les nouveaux cheveux
+  };
+  COIFFURES.forEach((nom, i) => {
+    const b = document.createElement('button');
+    b.textContent = nom; b.dataset.coiffure = i; b.setAttribute('aria-label', 'Coiffure : ' + nom);
+    b.onclick = () => { reglages.coiffure = i; majCheveux(); };
+    cf.appendChild(b);
+  });
+  for (const c of TEINTES_CHEVEUX) {
+    const b = document.createElement('button');
+    b.style.background = c; b.title = 'Cheveux'; b.dataset.cheveux = c; b.setAttribute('aria-label', 'Couleur des cheveux ' + c);
+    b.onclick = () => { reglages.cheveux = c; majCheveux(); };
+    tc.appendChild(b);
+  }
+  const autreCheveux = document.createElement('label');
+  autreCheveux.className = 'peau-perso'; autreCheveux.title = 'Choisir une autre couleur';
+  autreCheveux.innerHTML = '<input type="color" aria-label="Autre couleur de cheveux">';
+  const champCheveux = autreCheveux.querySelector('input');
+  champCheveux.value = reglages.cheveux;
+  champCheveux.addEventListener('input', () => { reglages.cheveux = champCheveux.value.toLowerCase(); majCheveux(false); });
+  champCheveux.addEventListener('change', () => { reglages.cheveux = champCheveux.value.toLowerCase(); majCheveux(); });
+  tc.appendChild(autreCheveux);
+  for (const x of cf.children) x.classList.toggle('choisi', +x.dataset.coiffure === reglages.coiffure);
+  for (const x of tc.children) x.classList.toggle('choisi', x.dataset.cheveux === reglages.cheveux || (x === autreCheveux && !TEINTES_CHEVEUX.includes(reglages.cheveux)));
+  tc.classList.toggle('grise', reglages.coiffure === CHAUVE);
   $('#pseudo').addEventListener('input', () => { reglages.pseudo = $('#pseudo').value.trim().slice(0, 16); $('#nomPodium').textContent = reglages.pseudo || 'Toi'; sauverReglages(); });
   construireReglages($('#reglagesModal'));
   // Règles du jeu : bouton du menu, pause, lien du signalement ; montrées une fois (et à chaque nouvelle version)

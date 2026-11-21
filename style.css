@@ -842,3 +842,10 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
   #fin .illustration { display: none; }
   .logo.logo-image img { width: min(100%, 210px); }
 }
+
+/* Cheveux (page Jouer) : coiffures en petits boutons, couleurs en pastilles comme la peau */
+.coiffures { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+.coiffures button { font: inherit; font-size: 13px; font-weight: 800; padding: 6px 10px; border-radius: 10px; color: var(--doux); background: rgba(255, 255, 255, .06); border: 2px solid rgba(255, 255, 255, .12); cursor: pointer; transition: transform .12s, background .12s; }
+.coiffures button:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.coiffures button.choisi { color: #1d1300; background: linear-gradient(#ffe066, #ffb81f); border-color: #fff; }
+.couleurs.peaux.grise { opacity: .45; }
