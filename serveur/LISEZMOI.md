@@ -155,3 +155,39 @@ le changer plus tard.
 | GET | `/api/admin/catalogue` | objets offrables, lus dans `catalogue.json` (fait par `extraire_catalogue.py` depuis `js/boutique.js`) |
 
 Tests automatiques (serveur lancé) : `python -X utf8 .claude/tests/test_api.py` puis `.claude/tests/test_cadeaux.py`.
+
+---
+
+## Grande mise à jour (21 nov. 2026) — rôles, journal, sauvegardes, boîte de cadeaux, cargaisons
+
+Fichiers : `api.py` (base, sécurité, routes d'avant) + **`gestion.py`** (tout le reste, chargé par api.py). `deployer.sh` envoie les deux.
+Mise à niveau de la base : **toute seule** à la première requête (on ajoute des tables/colonnes, on ne supprime rien) ;
+le premier compte admin existant devient **super administrateur**.
+
+### Rôles (vérifiés par le serveur à chaque requête)
+| Rôle | Peut |
+|---|---|
+| Super administrateur | tout, y compris créer des comptes, donner les rôles, restaurer une sauvegarde |
+| Administrateur | tout sauf gérer les comptes admin et restaurer |
+| Modérateur | joueurs, sanctions, signalements, avis |
+| Gestionnaire de boutique | cadeaux, cosmétiques, boutique, promotions |
+| Gestionnaire d'événements | esprits, cargaisons et événements, annonce et bonus |
+La liste exacte est dans la page « Administrateurs » du panel (tableau des permissions).
+
+### Commandes (SSH sur le serveur)
+```bash
+python3 ~/natx-serveur/api.py creer-admin nathan                    # change le mot de passe (garde le rôle)
+python3 ~/natx-serveur/api.py creer-admin autre --role moderateur   # crée un compte avec un rôle
+python3 ~/natx-serveur/api.py sauvegarder                           # sauvegarde manuelle de la base
+```
+Les autres comptes se créent plutôt dans le panel (« Administrateurs ») : mot de passe provisoire affiché une fois, à changer.
+
+### Sauvegardes
+Dans `~/natx-serveur/donnees/sauvegardes/` : une automatique par jour (14 gardées), les manuelles (20 gardées),
+une « avant-restauration » à chaque restauration (10 gardées). Restauration : panel → Sauvegardes (super admin + mot de passe + date tapée).
+
+### Nouvelles routes du jeu
+`POST /api/boite`, `/api/boite/ouvrir`, `/api/boite/avertissement` (boîte de réception), `POST /api/profil` (profil déclaré),
+`POST /api/signalements`, `POST /api/cargaison` (l'hôte), `POST /api/cargaison/reclamer` (celui qui ouvre la caisse).
+`GET /api/jeu` renvoie aussi les réglages de la boutique, les promotions, les esprits disponibles et l'événement en cours.
+Tests : `python -X utf8 .claude/tests/test_gestion.py [ancienne_version_api.py]` (tout en local, bases temporaires).

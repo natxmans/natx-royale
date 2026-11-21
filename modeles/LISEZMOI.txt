@@ -501,3 +501,14 @@ Sources : sources/construire_maison_cottage_v002.py (part de house_cottage_v001.
     (corps + tête) ; pour les collisions, le poteau (rayon 0,12) et les pieds (croix de 0,95 m).
   - Source : sources/construire_entrainement.py, sources/entrainement_v001.blend ;
     rendus : sources/rendus/entrainement_face.png, entrainement_dos.png, entrainement_echelle.png.
+
+
+12) MISE À JOUR « 250 COSMÉTIQUES + CARGAISON + ESPRITS v002 » (novembre 2026) — voir RAPPORT-MODELISATION-250.md
+=======================================================================================================================
+Tous les détails (origines, tailles, matériaux, animations, problèmes connus, ce qui reste) sont dans
+modeles/RAPPORT-MODELISATION-250.md. Fichiers livrés (nouveaux, rien d'écrasé) :
+  cosm250_chapeaux_v001.glb (30)  cosm250_dos_v001.glb (35)  cosm250_pioches_v001.glb (35)
+  cosm250_deltaplanes_v001.glb (25)  tenues/<slug>.png + tenues_250_v001.glb/.json (50)
+  emotes_250_v001.glb/.json (50)  trainees_250_v001.png/.json (25)  cosm250_livraison.json (table des 250)
+  cargaison_v001.glb  transporteur_v001.glb  cargaison_v001.json  icones_cargaison_v001.png
+  esprits_v002.glb (mêmes nœuds et animations que la v001 + expressions et 4 animations par esprit)

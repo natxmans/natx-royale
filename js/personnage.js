@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { modeleObjet } from './armes.js';
-import { modeleGlb } from './modeles.js';
+import { modeleGlb, ficheTenue, ficheEmote, clipAnimation } from './modeles.js';
 import { LOOK_DEFAUT } from './boutique.js';
 
 const PEAUX = ['#f6cfa6', '#e2a873', '#b07445', '#7d4b2b', '#f1c6a0', '#c98b5a'];
@@ -46,7 +46,30 @@ function texte2k27(g, x, y, taille, contour = true) {
 
 // ---------- Tenues ----------
 // torse / bras (haut des bras) / avantBras / bas (bassin + cuisses) / tibias / pieds / mains / ceinture
+// Tenues des 250 (session modélisation) : une image 256×256 dont chaque case se plaque sur un morceau du corps
+function matTenue250(f, nomCase) {
+  return mat('t250' + f.slug + nomCase, () => {
+    const [x, y, w, h] = (f.cases || {})[nomCase] || [0, 0, 256, 256];
+    const t = f.texture.clone();
+    t.repeat.set(w / 256, h / 256); t.offset.set(x / 256, 1 - (y + h) / 256);
+    t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+    t.needsUpdate = true;
+    return new THREE.MeshLambertMaterial({ map: t });
+  });
+}
+function tenue250(f, peau) {
+  const P = M(peau);
+  return {
+    torse: matTenue250(f, 'torse'), bras: matTenue250(f, 'bras'), avantBras: f.avantbras === 'peau' ? P : matTenue250(f, 'avantbras'),
+    bas: matTenue250(f, 'bas'), tibias: f.tibias === 'peau' ? P : matTenue250(f, 'tibias'),
+    pieds: M(f.pieds || '#2a2a2a'), semelle: M(f.semelle || '#f3f3f3'), ceinture: M(f.ceinture || '#24262d'), mains: f.mains ? M(f.mains) : null,
+    pieces: f.pieces || [],
+  };
+}
+
 function tenue(id, c, peau) {
+  const f250 = ficheTenue(id);
+  if (f250) return tenue250(f250, peau);
   const P = M(peau);
   const pant = sombre(c, 0.42);
   switch (id) {
@@ -188,13 +211,15 @@ function tenue(id, c, peau) {
 // ---------- Chapeaux (par rapport au centre de la tête, rayon ≈ 0.25) ----------
 // Chapeaux faits dans Blender (cosmetiques.glb) : posés sur le crâne du perso Blender
 const CHAPEAUX_COUVRANTS = new Set(['casquette', 'bonnet', 'cowboy', 'toque', 'hautdeforme', 'viking', 'tricorne', 'helice', 'sorcier', 'casquepompier']);
+// casques et capuches qui enveloppent toute la tête (rapport de la session modélisation) : cheveux cachés
+const CHAPEAUX_CACHE_CHEVEUX = new Set(['heaume', 'heaume_des_ruines', 'casque_polaire', 'casque_retro', 'capuche_nuageuse', 'capuche_sylvestre', 'capuche_lunaire']);
 function chapeau(id, c, blender = false) {
   if (blender) {
     const bl = modeleGlb('chapeau_' + id);
     if (bl) {
       const g = new THREE.Group(); g.add(bl);
       if (id === 'aureole') bl.userData.flotte2 = 0.001;
-      return { groupe: g, cacheCheveux: id === 'heaume', couvre: CHAPEAUX_COUVRANTS.has(id), blender: true };
+      return { groupe: g, cacheCheveux: CHAPEAUX_CACHE_CHEVEUX.has(id), couvre: CHAPEAUX_COUVRANTS.has(id), blender: true };
     }
   }
   const g = new THREE.Group();
@@ -685,7 +710,7 @@ function creerPersonnageBlender(couleur, nom, numero, look) {
     const hanche = new THREE.Group(); hanche.position.set(0.11 * s, 1.0, 0);
     hanche.add(partieBlender('cuisse_' + c, { ...commun, bas: t.bas }));
     const genou = new THREE.Group(); genou.position.y = -0.48;
-    genou.add(partieBlender('tibia_' + c, { ...commun, bas: t.tibias || t.bas, pieds: t.pieds }));
+    genou.add(partieBlender('tibia_' + c, { ...commun, bas: t.tibias || t.bas, pieds: t.pieds, ...(t.semelle ? { semelle: t.semelle } : {}) }));
     hanche.add(genou);
     return { hanche, genou };
   };
@@ -735,11 +760,21 @@ function creerPersonnageBlender(couleur, nom, numero, look) {
   else { dos.scale.setScalar(0.75); dos.position.set(0, 1.42, -0.09); }
 
   racine.add(JG.hanche, JD.hanche, bassin, torse, teteG, BG.epaule, BD.epaule, dos);
+  // Pièces 3D des tenues des 250 (épaulettes, capes, ceintures…) : chacune sur son articulation
+  if (t.pieces && t.pieces.length) {
+    const ancres = { racine, bassin, torse, tete: teteG, epaule_G: BG.epaule, epaule_D: BD.epaule, coude_G: BG.coude, coude_D: BD.coude,
+      hanche_G: JG.hanche, hanche_D: JD.hanche, genou_G: JG.genou, genou_D: JD.genou };
+    for (const p of t.pieces) { const o = modeleGlb(p.objet); const a = ancres[p.ancre]; if (o && a) a.add(o); }
+  }
   return finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, dos, ch, look, nom, couleur });
 }
 
 // Ombre, deltaplane, détails cachés de loin, étiquette du nom
 function finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, dos, ch, look, nom, couleur }) {
+  // noms des articulations = noms des pistes des clips d'émotes (emotes_250_v001.glb)
+  racine.name = 'racine'; teteG.name = 'tete';
+  JG.hanche.name = 'hanche_G'; JD.hanche.name = 'hanche_D'; JG.genou.name = 'genou_G'; JD.genou.name = 'genou_D';
+  BG.epaule.name = 'epaule_G'; BD.epaule.name = 'epaule_D'; BG.coude.name = 'coude_G'; BD.coude.name = 'coude_D';
   const delta = modeleDeltaplane(look.deltaplane, couleur);
   delta.visible = false;
   g.add(delta);
@@ -971,6 +1006,19 @@ function poseEmote(u, id, t) {
   }
 }
 
+// Émotes des 250 : clips d'animation livrés (pistes sur les articulations nommées ci-dessus)
+function jouerClipEmote(g, u, clip, f) {
+  if (!u.mixer) u.mixer = new THREE.AnimationMixer(g);
+  if (!u.action250 || u.action250.getClip() !== clip) {
+    if (u.action250) u.action250.stop();
+    u.action250 = u.mixer.clipAction(clip);
+    u.action250.play();
+  }
+  const d = clip.duration || f.duree || 1;
+  u.action250.time = f.boucle ? u.emoteT % d : Math.min(u.emoteT, d);
+  u.mixer.update(0);
+}
+
 function remettre(u) {
   u.racine.position.set(0, 0, 0); u.racine.rotation.set(0, 0, 0);
   u.tete.rotation.set(0, 0, 0);
@@ -990,9 +1038,13 @@ export function animerPersonnage(g, dt, etat) {
   if (etat.emote && etat.auSol !== false) {
     if (u.emote !== etat.emote) { u.emote = etat.emote; u.emoteT = 0; u.mainArme.visible = false; }
     u.emoteT += dt;
-    poseEmote(u, etat.emote, u.emoteT);
+    const f = ficheEmote(etat.emote);
+    const clip = f && clipAnimation(f.clip);
+    if (clip) jouerClipEmote(g, u, clip, f);
+    else poseEmote(u, etat.emote, u.emoteT);
   } else {
     if (u.emote) { u.emote = null; u.mainArme.visible = true; }
+    if (u.action250) { u.action250.stop(); u.action250 = null; }
     if (!etat.auSol) {
       u.jg.rotation.x = 0.5; u.jd.rotation.x = -0.2;
       u.genouG.rotation.x = -0.9; u.genouD.rotation.x = -0.4;

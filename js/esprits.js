@@ -34,6 +34,46 @@ export const ESPRITS = {
 };
 export const TYPES_ESPRITS = Object.keys(ESPRITS);
 
+// Personnalités : quelques répliques (bulles et fil d'infos) ; elles ne changent rien aux pouvoirs
+export const PERSONNALITES = {
+  soin: { trait: 'Douce et attentionnée, elle pousse partout où elle passe.',
+    capture: ['On va se requinquer !', 'Une petite pousse, et ça repart !', 'Je veille sur toi.'],
+    pouvoir: ['Bourgeon !', 'Respire un grand coup !', 'Tout le monde reprend des couleurs !'],
+    repos: ['Tu as bu de l\'eau aujourd\'hui ?', 'J\'aime le soleil du matin.', 'Chut… j\'écoute l\'herbe pousser.'] },
+  mobilite: { trait: 'Pilote casse-cou qui ne tient jamais en place.',
+    capture: ['Accroche-toi, on décolle !', 'Plus vite que le vent !', 'Lunettes : OK. Départ !'],
+    pouvoir: ['Envol !', 'Wiiiiz !', 'Personne ne nous rattrape !'],
+    repos: ['On s\'ennuie, non ?', 'J\'ai compté 47 nuages.', 'Un tour de piste ?'] },
+  protection: { trait: 'Chevalier de cristal, sérieux et toujours prêt.',
+    capture: ['Bouclier levé, je suis là.', 'Rien ne passera.', 'Gardien au rapport.'],
+    pouvoir: ['Carapace !', 'Derrière moi !', 'Mur de cristal !'],
+    repos: ['Je monte la garde.', 'Mon armure brille ? Bien.', 'Toujours prêt.'] },
+  vision: { trait: 'Curieux et un peu fouineur : il voit TOUT.',
+    capture: ['Je les vois venir…', 'Rien ne m\'échappe !', 'Un œil sur tout le monde.'],
+    pouvoir: ['Œil perçant !', 'Je vous vois !', 'Coucou, derrière le mur !'],
+    repos: ['Tu as une miette sur la joue.', 'J\'ai vu un écureuil.', 'Je ne cligne jamais. Enfin… presque.'] },
+  batisseur: { trait: 'Petit ouvrier pressé qui adore construire.',
+    capture: ['Au boulot !', 'Casque mis, marteau prêt !', 'On construit quoi ?'],
+    pouvoir: ['Fort express !', 'Et hop, quatre murs !', 'Chantier terminé !'],
+    repos: ['Ce mur est un peu penché…', 'Toc toc toc.', 'J\'ai besoin de briques.'] },
+};
+export const replique = (type, quand) => { const l = PERSONNALITES[type]?.[quand] || ['…']; return l[Math.floor(Math.random() * l.length)]; };
+
+// Raretés de collection (gagnées dans les cargaisons) : SEULEMENT l'aspect (aura, étincelles, son) — les pouvoirs restent les mêmes
+export const RARETES_ESPRIT = {
+  commun: { nom: 'Commun', couleur: '#8fa3b8', aura: 0 },
+  rare: { nom: 'Rare', couleur: '#3d8dff', aura: 1 },
+  epique: { nom: 'Épique', couleur: '#b552ff', aura: 2 },
+  legendaire: { nom: 'Légendaire', couleur: '#ffad1f', aura: 3 },
+};
+export const ORDRE_RARETES = ['commun', 'rare', 'epique', 'legendaire'];
+// meilleure rareté possédée pour chaque type ({ soin: 'rare', … }) : envoyée à l'hôte pour que les autres voient l'aura
+export function meilleuresRaretes(collection) {
+  const r = {};
+  for (const e of collection || []) if (ESPRITS[e.type] && RARETES_ESPRIT[e.rarete] && ORDRE_RARETES.indexOf(e.rarete) > ORDRE_RARETES.indexOf(r[e.type] || '')) r[e.type] = e.rarete;
+  return r;
+}
+
 // Réglages des effets (partagés par l'hôte et les joueurs)
 export const RECHARGE_SANCTUAIRE = 75;      // secondes avant qu'un nouvel esprit apparaisse sur l'autel
 export const PORTEE_CAPTURE = 3.2;          // mètres
@@ -48,10 +88,13 @@ export const ECHELLE_AUTEL = 1.6;           // l'autel livré fait 0,94 m : un p
 
 // ---------- Placement des autels (fait par l'hôte, envoyé à tout le monde) ----------
 // Sur la terre ferme, à plat, à ciel ouvert (pas dans une maison ni sous un arbre), loin les uns des autres.
+let disponibles = null; // null = tous (pas de réglage reçu du serveur)
+export function reglerEspritsDisponibles(liste) { disponibles = Array.isArray(liste) && liste.length ? liste.filter(t => ESPRITS[t]) : null; }
 export function placerSanctuaires(monde, r, n, centre = null) {
   const liste = [];
   const types = [];
-  while (types.length < n) types.push(...TYPES_ESPRITS.slice().sort(() => r() - 0.5));
+  const choix = disponibles && disponibles.length ? disponibles : TYPES_ESPRITS;
+  while (types.length < n) types.push(...choix.slice().sort(() => r() - 0.5));
   const ecart = centre ? 12 : DEMI * 0.3;
   for (let essai = 0; liste.length < n && essai < n * 80; essai++) {
     const a = r() * Math.PI * 2;
@@ -109,24 +152,46 @@ function espritDeSecours(type, d) {
   return { g, accents, halo };
 }
 
-export function creerEsprit(type, echelle = 1) {
+// Aura de rareté : anneau lumineux + halo, plus grands et plus nombreux selon la rareté
+const GEO_AURA = { anneau: new THREE.TorusGeometry(0.4, 0.014, 6, 48), halo: new THREE.SphereGeometry(0.42, 16, 12) };
+function aura(rarete) {
+  const r = RARETES_ESPRIT[rarete];
+  if (!r || !r.aura) return null;
+  const g = new THREE.Group();
+  const coul = new THREE.Color(r.couleur);
+  for (let i = 0; i < r.aura; i++) {
+    const a = new THREE.Mesh(GEO_AURA.anneau, mat('aura' + rarete, () => new THREE.MeshBasicMaterial({ color: coul.clone().multiplyScalar(1.6), toneMapped: false, transparent: true, opacity: 0.6 })));
+    a.rotation.set(Math.PI / 2 + i * 0.7, i * 1.1, 0);
+    a.scale.setScalar(1 + i * 0.1);
+    g.add(a);
+  }
+  const h = new THREE.Mesh(GEO_AURA.halo, mat('halo' + rarete, () => new THREE.MeshBasicMaterial({ color: coul, transparent: true, opacity: 0.12 + r.aura * 0.04, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })));
+  g.add(h);
+  g.userData = { niveau: r.aura };
+  return g;
+}
+
+export function creerEsprit(type, echelle = 1, rarete = null) {
   const d = ESPRITS[type] || ESPRITS.soin;
   const g = new THREE.Group();
-  g.userData = { esprit: type, accents: null, halo: null, t: Math.random() * 6, mixer: null, actions: {} };
+  g.userData = { esprit: type, accents: null, halo: null, t: Math.random() * 6, mixer: null, actions: {}, rarete, aura: null, boucle: 'flotter', attenteT: 6 + Math.random() * 8 };
+  const au = aura(rarete);
+  if (au) { g.add(au); g.userData.aura = au; }
   const glb = modeleGlb('esprit_' + type);
   if (glb) {
     glb.traverse(o => { if (o.isMesh) o.castShadow = false; });
     g.add(glb);
     // animations livrées : flotter en boucle, activer / apparaître une fois
     const mixer = new THREE.AnimationMixer(glb);
-    for (const nom of ['flotter', 'activer', 'apparaitre']) {
+    for (const nom of ['flotter', 'activer', 'apparaitre', 'attente2', 'deplacer', 'content', 'surpris']) {
       const clip = clipAnimation(type + '_' + nom);
       if (clip) g.userData.actions[nom] = mixer.clipAction(clip);
     }
     const flotter = g.userData.actions.flotter;
     if (flotter) { flotter.setLoop(THREE.LoopRepeat, Infinity); flotter.time = Math.random() * 2; flotter.play(); }
     mixer.addEventListener('finished', () => {
-      const f = g.userData.actions.flotter;
+      const f = g.userData.actions[g.userData.boucle] || g.userData.actions.flotter;
+      g.userData.unique = null;
       if (f) { f.reset().setEffectiveWeight(1).fadeIn(0.2).play(); }
     });
     g.userData.mixer = mixer;
@@ -139,21 +204,41 @@ export function creerEsprit(type, echelle = 1) {
   return g;
 }
 
-// Joue une animation une fois (« activer » au pouvoir, « apparaitre » à la capture), puis reprend « flotter »
+// Joue une animation une fois (« activer », « apparaitre », « content », « surpris », « attente2 »), puis reprend la boucle
 export function jouerEsprit(g, nom) {
   const u = g && g.userData;
   const a = u && u.actions && u.actions[nom];
-  if (!a) return;
+  if (!a) return false;
+  const boucle = u.actions[u.boucle] || u.actions.flotter;
+  if (u.unique && u.unique !== a) u.unique.stop();
   a.reset().setLoop(THREE.LoopOnce, 1);
   a.clampWhenFinished = false;
-  if (u.actions.flotter) { a.crossFadeFrom(u.actions.flotter, 0.2, false); }
+  if (boucle) a.crossFadeFrom(boucle, 0.2, false);
   a.play();
+  u.unique = a;
+  return true;
+}
+// Boucle de fond : « flotter » à l'arrêt, « deplacer » quand son joueur court (fondu entre les deux)
+export function boucleEsprit(g, nom) {
+  const u = g && g.userData;
+  if (!u || !u.actions[nom] || u.boucle === nom) return;
+  const avant = u.actions[u.boucle], apres = u.actions[nom];
+  u.boucle = nom;
+  if (u.unique) return; // une animation « une fois » est en cours : la nouvelle boucle reprendra après
+  apres.reset().setLoop(THREE.LoopRepeat, Infinity).play();
+  if (avant) apres.crossFadeFrom(avant, 0.3, false);
 }
 
 export function animerEsprit(g, dt) {
   const u = g.userData;
   u.t += dt;
-  if (u.mixer) { u.mixer.update(dt); return; }
+  if (u.aura) { u.aura.rotation.y += dt * (0.8 + u.aura.userData.niveau * 0.4); u.aura.children[u.aura.children.length - 1].scale.setScalar(1 + Math.sin(u.t * 2.5) * 0.06); }
+  if (u.mixer) {
+    // de temps en temps, à l'arrêt : il regarde autour de lui (attente2)
+    if (u.boucle === 'flotter' && !u.unique) { u.attenteT -= dt; if (u.attenteT <= 0) { u.attenteT = 9 + Math.random() * 10; jouerEsprit(g, 'attente2'); } }
+    u.mixer.update(dt);
+    return;
+  }
   if (u.accents) u.accents.rotation.y += dt * (u.esprit === 'mobilite' ? 4 : u.esprit === 'batisseur' ? 1.2 : 1.6);
   if (u.halo) u.halo.scale.setScalar(1 + Math.sin(u.t * 3) * 0.08);
 }

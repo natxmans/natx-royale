@@ -1,5 +1,6 @@
 // Boutique : catalogue des objets (tous inventés), pièces, profil du joueur.
 import { hasard } from './outils.js';
+import { CATALOGUE_250, COLLECTIONS_250 } from './catalogue250.js';
 
 export const RARETES_COSM = {
   commun:     { nom: 'Commun',     couleur: '#8fa3b8', prix: 300 },
@@ -123,7 +124,78 @@ export const CATALOGUE = [
 
 export const COLLAB = CATALOGUE.filter(o => o.rarete === 'collab');
 export const objet = (cat, id) => CATALOGUE.find(o => o.cat === cat && o.id === id);
-export const prixDe = o => RARETES_COSM[o.rarete].prix;
+
+// ---------- Les 250 nouveaux cosmétiques (js/catalogue250.js) ----------
+// Ils n'entrent dans CATALOGUE (vente, casier, bots) qu'une fois leur contenu livré ET activé dans
+// modeles/integration.json : on ne vend jamais un objet qui ne s'affiche pas.
+export { COLLECTIONS_250 };
+const EN_ATTENTE = new Map(CATALOGUE_250.map(e => [e.cat + ':' + e.id, { ...e, nouveau250: true }]));
+export const estConnu250 = (cat, id) => EN_ATTENTE.has(cat + ':' + id) || CATALOGUE.some(o => o.cat === cat && o.id === id && o.nouveau250);
+export function activerCosmetiques(cles) {
+  let n = 0;
+  for (const cle of cles) {
+    const e = EN_ATTENTE.get(cle);
+    if (!e) continue;
+    EN_ATTENTE.delete(cle);
+    CATALOGUE.push(e);
+    n++;
+  }
+  return n;
+}
+export const nbDisponibles250 = () => CATALOGUE.filter(o => o.nouveau250).length;
+// ---------- Réglages de la boutique venus de l'espace admin (GET /api/jeu) ----------
+// nom, description, rareté, prix, « en vente » de chaque objet ; promotions ; rotation ; noms des collections.
+// Sans serveur : la boutique marche comme avant (valeurs du catalogue).
+const CONFIG = { cosmetiques: {}, promotions: [], boutique: {}, collections: {} };
+const ORIGINE = new Map();
+export function appliquerConfigBoutique(e) {
+  if (!e || typeof e !== 'object') return;
+  CONFIG.cosmetiques = e.cosmetiques || {};
+  CONFIG.promotions = Array.isArray(e.promotions) ? e.promotions : [];
+  CONFIG.boutique = e.boutique || {};
+  CONFIG.collections = e.collections || {};
+  for (const o of CATALOGUE) {
+    const cle = cleObjet(o);
+    if (!ORIGINE.has(cle)) ORIGINE.set(cle, { nom: o.nom, desc: o.desc, rarete: o.rarete, serie: o.serie });
+    const base = ORIGINE.get(cle), r = CONFIG.cosmetiques[cle] || {};
+    o.nom = r.nom || base.nom;
+    o.desc = r.desc || base.desc;
+    o.rarete = r.rarete && RARETES_COSM[r.rarete] ? r.rarete : base.rarete;
+    o.serie = Number.isInteger(r.collection) ? r.collection : base.serie;
+    o.horsVente = r.en_vente === 0;
+    o.prixAdmin = Number.isInteger(r.prix) ? r.prix : null;
+  }
+}
+const nomsCollections = () => COLLECTIONS_250.map(c => ({ ...c, nom: CONFIG.collections[c.n]?.nom || c.nom, visible: CONFIG.collections[c.n]?.visible !== false }));
+export const collectionsVisibles = () => nomsCollections().filter(c => c.visible);
+export const collectionDe = o => (o && o.serie ? nomsCollections().find(c => c.n === o.serie && c.visible) || null : null);
+// meilleure promotion en cours pour cet objet (null s'il n'y en a pas)
+export function promoDe(o) {
+  if (!o || o.gratuit) return null;
+  const cle = cleObjet(o), t = Date.now() / 1000;
+  let meilleure = null;
+  for (const p of CONFIG.promotions) {
+    if (p.fin && p.fin < t) continue;
+    const v = p.cible_valeurs || [];
+    const ok = p.cible_type === 'tout' || (p.cible_type === 'categorie' && v.includes(o.cat)) || (p.cible_type === 'rarete' && v.includes(o.rarete))
+      || (p.cible_type === 'collection' && v.map(Number).includes(o.serie)) || (p.cible_type === 'objets' && v.includes(cle));
+    if (ok && (!meilleure || p.reduction > meilleure.reduction)) meilleure = p;
+  }
+  return meilleure;
+}
+export const prixNormal = o => o.prixAdmin ?? RARETES_COSM[o.rarete].prix;
+export function prixDe(o) {
+  const p = prixNormal(o), r = promoDe(o);
+  return r ? Math.max(0, Math.round(p * (100 - r.reduction) / 1000) * 10) : p;
+}
+export const enVente = o => !!o && !o.gratuit && !o.horsVente;
+// cosmétiques ajoutés dans l'espace admin (leur modèle est un modèle livré, voir modeles.js enregistrerAjouts)
+export function ajouterCosmetiquesAdmin(liste) {
+  for (const a of Array.isArray(liste) ? liste : []) {
+    if (!a || !CATEGORIES.some(c => c.id === a.cat) || !RARETES_COSM[a.rarete] || objet(a.cat, a.id)) continue;
+    CATALOGUE.push({ id: a.id, cat: a.cat, nom: a.nom, desc: a.desc || '', rarete: a.rarete, ajout: true, prixAdmin: Number.isInteger(a.prix) ? a.prix : null });
+  }
+}
 export const cleObjet = o => o.cat + ':' + o.id;
 
 export const LOOK_DEFAUT = { tenue: 'classique', chapeau: 'casquette', dos: 'rien', pioche: 'classique', deltaplane: 'classique', trainee: 'aucune', emote: 'salut' };
@@ -131,7 +203,7 @@ export const LOOK_DEFAUT = { tenue: 'classique', chapeau: 'casquette', dos: 'rie
 // Vérifie un look reçu par le réseau
 export function nettoyerLook(l) {
   const r = { ...LOOK_DEFAUT };
-  if (l && typeof l === 'object') for (const c of Object.keys(LOOK_DEFAUT)) if (typeof l[c] === 'string' && objet(c, l[c])) r[c] = l[c];
+  if (l && typeof l === 'object') for (const c of Object.keys(LOOK_DEFAUT)) if (typeof l[c] === 'string' && (objet(c, l[c]) || estConnu250(c, l[c]))) r[c] = l[c];
   return r;
 }
 
@@ -156,6 +228,7 @@ export function chargerProfil() {
   for (const o of CATALOGUE) if (o.gratuit && !p.possedes.includes(cleObjet(o))) p.possedes.push(cleObjet(o));
   p.equipe = nettoyerLook(p.equipe);
   for (const c of Object.keys(p.equipe)) if (!p.possedes.includes(c + ':' + p.equipe[c])) p.equipe[c] = LOOK_DEFAUT[c];
+  // déséquiper = revenir à l'objet « de base » de la catégorie (on garde tout ce qu'on possède)
   p.stats = Object.assign({ parties: 0, victoires: 0, kills: 0, meilleur: 0, tirs: 0, touches: 0, temps: 0, degats: 0 }, p.stats || {});
   p.dernierBonus = p.dernierBonus || '';
   p.nouveautes = Array.isArray(p.nouveautes) ? p.nouveautes : [];
@@ -166,6 +239,11 @@ export function chargerProfil() {
   p.presets = Array.isArray(p.presets) ? p.presets.slice(0, 3) : [];
   while (p.presets.length < 3) p.presets.push(null);
   p.presets = p.presets.map(l => (l ? nettoyerLook(l) : null));
+  // cadeaux déjà ouverts / déjà annoncés (numéros du serveur) : un cadeau n'est jamais donné deux fois
+  p.cadeauxOuverts = Array.isArray(p.cadeauxOuverts) ? p.cadeauxOuverts.filter(Number.isInteger).slice(-400) : [];
+  p.cadeauxNotifies = Array.isArray(p.cadeauxNotifies) ? p.cadeauxNotifies.filter(Number.isInteger).slice(-400) : [];
+  // collection d'esprits : { type, rarete, n (combien de fois), le (date de la 1re fois) }
+  p.collectionEsprits = Array.isArray(p.collectionEsprits) ? p.collectionEsprits.filter(e => e && typeof e.type === 'string' && typeof e.rarete === 'string') : [];
   return p;
 }
 
@@ -260,10 +338,18 @@ export function lookPossedeAuHasard(p, r = Math.random) {
 export function sauverProfil(p) {
   try { localStorage.setItem(CLE, JSON.stringify(p)); } catch (e) { /* stockage plein ou bloqué */ }
 }
-export const possede = (p, o) => p.possedes.includes(cleObjet(o));
+export const possede = (p, o) => !!o && p.possedes.includes(cleObjet(o));
+export const estDeBase = o => !!o && LOOK_DEFAUT[o.cat] === o.id;
+export function desequiper(p, cat) {
+  if (!(cat in LOOK_DEFAUT) || p.equipe[cat] === LOOK_DEFAUT[cat]) return false;
+  p.equipe[cat] = LOOK_DEFAUT[cat];
+  sauverProfil(p);
+  return true;
+}
 
 export function acheter(p, o) {
   if (possede(p, o)) return { ok: false, raison: 'Tu l\'as déjà !' };
+  if (!enVente(o)) return { ok: false, raison: 'Cet objet n\'est pas en vente pour le moment.' };
   const prix = prixDe(o);
   if (p.pieces < prix) return { ok: false, raison: `Il te manque ${prix - p.pieces} 🪙` };
   p.pieces -= prix;
@@ -289,14 +375,19 @@ export function bonusDuJour(p) {
 
 // La boutique change tous les jours à minuit (pareille pour tout le monde)
 export function boutiqueDuJour(d = new Date()) {
-  const graine = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const cfg = CONFIG.boutique || {};
+  const graine = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() + (cfg.melange || 0) * 7;
   const r = hasard(graine * 7919);
-  const payants = CATALOGUE.filter(o => !o.gratuit && o.rarete !== 'collab');
+  const retires = new Set(cfg.retires || []);
+  const payants = CATALOGUE.filter(o => enVente(o) && o.rarete !== 'collab' && !retires.has(cleObjet(o)));
   const melange = payants.map(o => [r(), o]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
-  const vedettes = [];
-  for (const o of melange) if (vedettes.length < 2 && (o.rarete === 'legendaire' || o.rarete === 'epique') && !vedettes.some(v => v.cat === o.cat)) vedettes.push(o);
+  const nbV = Math.min(4, Math.max(1, cfg.vedettes || 2)), nbQ = Math.min(16, Math.max(4, cfg.quotidiens || 8));
+  // « à la une » choisis par l'admin d'abord, puis le hasard du jour
+  const vedettes = (cfg.epingles || []).map(c => payants.find(o => cleObjet(o) === c)).filter(Boolean).slice(0, nbV);
+  for (const o of melange) if (vedettes.length < nbV && (o.rarete === 'legendaire' || o.rarete === 'epique') && !vedettes.includes(o) && !vedettes.some(v => v.cat === o.cat)) vedettes.push(o);
   const quotidiens = [];
-  for (const o of melange) if (quotidiens.length < 8 && !vedettes.includes(o) && !quotidiens.some(q => q.cat === o.cat && q.rarete === o.rarete)) quotidiens.push(o);
+  for (const o of melange) if (quotidiens.length < nbQ && !vedettes.includes(o) && !quotidiens.some(q => q.cat === o.cat && q.rarete === o.rarete)) quotidiens.push(o);
+  for (const o of melange) if (quotidiens.length < nbQ && !vedettes.includes(o) && !quotidiens.includes(o)) quotidiens.push(o);
   const minuit = new Date(d); minuit.setHours(24, 0, 0, 0);
   return { vedettes, quotidiens, finDans: minuit - d };
 }

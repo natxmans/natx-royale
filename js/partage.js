@@ -94,6 +94,23 @@ export const COUT_CONSTR = 10;
 
 // ---------- Ravitaillements (caisse qui descend en parachute) ----------
 export const VITESSE_RAVITO = 6;
+// ---------- Cargaison (événement) : un cargo volant traverse l'île et largue une caisse au parachute ----------
+export const CARGO = { altitude: 72, vitesseVol: 26, demiTrajet: 420, vitesseChute: 4.5, portee: 3.4 };
+export function posCargaison(c, t) {
+  const dx = Math.sin(c.cap), dz = Math.cos(c.cap);
+  const u = (t - c.tLargage) * CARGO.vitesseVol; // distance (signée) au point de largage
+  const vol = { x: c.x + dx * u, z: c.z + dz * u, y: CARGO.altitude, visible: Math.abs(u) <= CARGO.demiTrajet };
+  const yLargage = CARGO.altitude - 1.8; // point de largage sous la soute (livraison F)
+  let caisse;
+  if (t < c.tLargage) caisse = { etat: 'soute', x: vol.x, z: vol.z, y: yLargage };
+  else {
+    const y = yLargage - (t - c.tLargage) * CARGO.vitesseChute;
+    caisse = y <= c.sol ? { etat: 'posee', x: c.x, z: c.z, y: c.sol } : { etat: 'chute', x: c.x, z: c.z, y };
+  }
+  return { vol, caisse };
+}
+export const debutCargaison = c => c.tLargage - CARGO.demiTrajet / CARGO.vitesseVol;
+
 export function posRavito(r, t) {
   const y = r.y0 - Math.max(0, t - r.t0) * VITESSE_RAVITO;
   return y <= r.sol ? { y: r.sol, pose: true } : { y, pose: false };

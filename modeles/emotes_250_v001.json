@@ -1,0 +1,823 @@
+{
+ "_aide": "Emotes des 250 cosmétiques (session Modélisation). Clips « emote_<slug> » de emotes_250_v001.glb : quaternion sur tete, epaule_G/D, coude_G/D, hanche_G/D, genou_G/D et racine, position sur racine (mètres, three.js). Les nœuds du fichier ont les positions de repos de creerPersonnageBlender. boucle = jouer en boucle (LoopRepeat), sinon une fois. effets = particules à lancer au temps t (s) à l'ancre indiquée.",
+ "fichier": "emotes_250_v001.glb",
+ "fps_source": 24,
+ "noeuds": [
+  "racine",
+  "hanche_G",
+  "hanche_D",
+  "genou_G",
+  "genou_D",
+  "tete",
+  "epaule_G",
+  "epaule_D",
+  "coude_G",
+  "coude_D"
+ ],
+ "emotes": [
+  {
+   "id_catalogue": "natx_emote_salut_cosmique_001",
+   "slug": "salut_cosmique",
+   "nom": "Salut Cosmique",
+   "rarete": "commun",
+   "clip": "emote_salut_cosmique",
+   "duree": 2.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.5,
+     "type": "etoiles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_pas_du_pingouin_002",
+   "slug": "pas_du_pingouin",
+   "nom": "Pas du Pingouin",
+   "rarete": "rare",
+   "clip": "emote_pas_du_pingouin",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_réglage_express_003",
+   "slug": "reglage_express",
+   "nom": "Réglage Express",
+   "rarete": "epique",
+   "clip": "emote_reglage_express",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 2.6,
+     "type": "eclat",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_petit_jardin_004",
+   "slug": "petit_jardin",
+   "nom": "Petit Jardin",
+   "rarete": "rare",
+   "clip": "emote_petit_jardin",
+   "duree": 4.2,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 1.4,
+     "type": "lucioles",
+     "ancre": "coude_D"
+    },
+    {
+     "t": 3.0,
+     "type": "eclat",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_étoile_filante_005",
+   "slug": "etoile_filante",
+   "nom": "Étoile Filante",
+   "rarete": "legendaire",
+   "clip": "emote_etoile_filante",
+   "duree": 3.2,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.5,
+     "type": "etoiles",
+     "ancre": "coude_D"
+    },
+    {
+     "t": 2.4,
+     "type": "eclat",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_pose_du_samouraï_006",
+   "slug": "pose_du_samourai",
+   "nom": "Pose du Samouraï",
+   "rarete": "commun",
+   "clip": "emote_pose_du_samourai",
+   "duree": 3.4,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 2.0,
+     "type": "eclat",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_brume_mystérieuse_007",
+   "slug": "brume_mysterieuse",
+   "nom": "Brume Mystérieuse",
+   "rarete": "rare",
+   "clip": "emote_brume_mysterieuse",
+   "duree": 2.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.3,
+     "type": "brume",
+     "ancre": "racine"
+    },
+    {
+     "t": 1.6,
+     "type": "brume",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_danse_du_corsaire_008",
+   "slug": "danse_du_corsaire",
+   "nom": "Danse du Corsaire",
+   "rarete": "epique",
+   "clip": "emote_danse_du_corsaire",
+   "duree": 4.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_vague_océane_009",
+   "slug": "vague_oceane",
+   "nom": "Vague Océane",
+   "rarete": "rare",
+   "clip": "emote_vague_oceane",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 1.0,
+     "type": "bulles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_plongée_imaginaire_010",
+   "slug": "plongee_imaginaire",
+   "nom": "Plongée Imaginaire",
+   "rarete": "legendaire",
+   "clip": "emote_plongee_imaginaire",
+   "duree": 3.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 1.2,
+     "type": "bulles",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_sommet_atteint_011",
+   "slug": "sommet_atteint",
+   "nom": "Sommet Atteint",
+   "rarete": "commun",
+   "clip": "emote_sommet_atteint",
+   "duree": 2.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.75,
+     "type": "eclat",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_champignon_disco_012",
+   "slug": "champignon_disco",
+   "nom": "Champignon Disco",
+   "rarete": "rare",
+   "clip": "emote_champignon_disco",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.2,
+     "type": "lucioles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_lucioles_en_fête_013",
+   "slug": "lucioles_en_fete",
+   "nom": "Lucioles en Fête",
+   "rarete": "epique",
+   "clip": "emote_lucioles_en_fete",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.2,
+     "type": "lucioles",
+     "ancre": "racine"
+    },
+    {
+     "t": 1.5,
+     "type": "lucioles",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_décollage_comète_014",
+   "slug": "decollage_comete",
+   "nom": "Décollage Comète",
+   "rarete": "rare",
+   "clip": "emote_decollage_comete",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 1.9,
+     "type": "etoiles",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_joystick_rétro_015",
+   "slug": "joystick_retro",
+   "nom": "Joystick Rétro",
+   "rarete": "legendaire",
+   "clip": "emote_joystick_retro",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_marche_du_désert_016",
+   "slug": "marche_du_desert",
+   "nom": "Marche du Désert",
+   "rarete": "commun",
+   "clip": "emote_marche_du_desert",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_danse_des_marées_017",
+   "slug": "danse_des_marees",
+   "nom": "Danse des Marées",
+   "rarete": "rare",
+   "clip": "emote_danse_des_marees",
+   "duree": 4.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 1.0,
+     "type": "bulles",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_feuille_au_vent_018",
+   "slug": "feuille_au_vent",
+   "nom": "Feuille au Vent",
+   "rarete": "epique",
+   "clip": "emote_feuille_au_vent",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_gardien_du_phare_019",
+   "slug": "gardien_du_phare",
+   "nom": "Gardien du Phare",
+   "rarete": "rare",
+   "clip": "emote_gardien_du_phare",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.8,
+     "type": "eclat",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_potion_parfaite_020",
+   "slug": "potion_parfaite",
+   "nom": "Potion Parfaite",
+   "rarete": "legendaire",
+   "clip": "emote_potion_parfaite",
+   "duree": 4.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 1.0,
+     "type": "bulles",
+     "ancre": "coude_G"
+    },
+    {
+     "t": 3.1,
+     "type": "eclat",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_engrenage_humain_021",
+   "slug": "engrenage_humain",
+   "nom": "Engrenage Humain",
+   "rarete": "commun",
+   "clip": "emote_engrenage_humain",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_livraison_réussie_022",
+   "slug": "livraison_reussie",
+   "nom": "Livraison Réussie",
+   "rarete": "rare",
+   "clip": "emote_livraison_reussie",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 2.0,
+     "type": "etoiles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_patinage_fantôme_023",
+   "slug": "patinage_fantome",
+   "nom": "Patinage Fantôme",
+   "rarete": "epique",
+   "clip": "emote_patinage_fantome",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.1,
+     "type": "flocons",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_solo_de_l_espace_024",
+   "slug": "solo_de_l_espace",
+   "nom": "Solo de l'Espace",
+   "rarete": "rare",
+   "clip": "emote_solo_de_l_espace",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.5,
+     "type": "etoiles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_réveil_des_ruines_025",
+   "slug": "reveil_des_ruines",
+   "nom": "Réveil des Ruines",
+   "rarete": "legendaire",
+   "clip": "emote_reveil_des_ruines",
+   "duree": 4.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 3.3,
+     "type": "eclat",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_éclat_cristallin_026",
+   "slug": "eclat_cristallin",
+   "nom": "Éclat Cristallin",
+   "rarete": "commun",
+   "clip": "emote_eclat_cristallin",
+   "duree": 2.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 1.2,
+     "type": "eclat",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_rêve_lunaire_027",
+   "slug": "reve_lunaire",
+   "nom": "Rêve Lunaire",
+   "rarete": "rare",
+   "clip": "emote_reve_lunaire",
+   "duree": 4.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 2.6,
+     "type": "etoiles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_pas_volcanique_028",
+   "slug": "pas_volcanique",
+   "nom": "Pas Volcanique",
+   "rarete": "epique",
+   "clip": "emote_pas_volcanique",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.5,
+     "type": "eclat",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_salut_saphir_029",
+   "slug": "salut_saphir",
+   "nom": "Salut Saphir",
+   "rarete": "rare",
+   "clip": "emote_salut_saphir",
+   "duree": 2.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.6,
+     "type": "eclat",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_pose_du_corsaire_030",
+   "slug": "pose_du_corsaire",
+   "nom": "Pose du Corsaire",
+   "rarete": "legendaire",
+   "clip": "emote_pose_du_corsaire",
+   "duree": 3.2,
+   "boucle": false,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_petit_dragon_031",
+   "slug": "petit_dragon",
+   "nom": "Petit Dragon",
+   "rarete": "commun",
+   "clip": "emote_petit_dragon",
+   "duree": 2.5,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_météore_express_032",
+   "slug": "meteore_express",
+   "nom": "Météore Express",
+   "rarete": "rare",
+   "clip": "emote_meteore_express",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 2.4,
+     "type": "etoiles",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_danse_pixel_033",
+   "slug": "danse_pixel",
+   "nom": "Danse Pixel",
+   "rarete": "epique",
+   "clip": "emote_danse_pixel",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_quatre_saisons_034",
+   "slug": "quatre_saisons",
+   "nom": "Quatre Saisons",
+   "rarete": "rare",
+   "clip": "emote_quatre_saisons",
+   "duree": 4.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.5,
+     "type": "lucioles",
+     "ancre": "racine"
+    },
+    {
+     "t": 1.5,
+     "type": "soleil",
+     "ancre": "tete"
+    },
+    {
+     "t": 2.7,
+     "type": "brume",
+     "ancre": "racine"
+    },
+    {
+     "t": 3.7,
+     "type": "flocons",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_carte_au_trésor_035",
+   "slug": "carte_au_tresor",
+   "nom": "Carte au Trésor",
+   "rarete": "legendaire",
+   "clip": "emote_carte_au_tresor",
+   "duree": 4.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 2.8,
+     "type": "eclat",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_coucou_mécanique_036",
+   "slug": "coucou_mecanique",
+   "nom": "Coucou Mécanique",
+   "rarete": "commun",
+   "clip": "emote_coucou_mecanique",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_nuage_de_joie_037",
+   "slug": "nuage_de_joie",
+   "nom": "Nuage de Joie",
+   "rarete": "rare",
+   "clip": "emote_nuage_de_joie",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.8,
+     "type": "brume",
+     "ancre": "tete"
+    },
+    {
+     "t": 1.4,
+     "type": "eclat",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_palette_vivante_038",
+   "slug": "palette_vivante",
+   "nom": "Palette Vivante",
+   "rarete": "epique",
+   "clip": "emote_palette_vivante",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 1.0,
+     "type": "arcenciel",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_vague_de_corail_039",
+   "slug": "vague_de_corail",
+   "nom": "Vague de Corail",
+   "rarete": "rare",
+   "clip": "emote_vague_de_corail",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.6,
+     "type": "bulles",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_satellite_en_orbite_040",
+   "slug": "satellite_en_orbite",
+   "nom": "Satellite en Orbite",
+   "rarete": "legendaire",
+   "clip": "emote_satellite_en_orbite",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.3,
+     "type": "etoiles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_citron_pressé_041",
+   "slug": "citron_presse",
+   "nom": "Citron Pressé",
+   "rarete": "commun",
+   "clip": "emote_citron_presse",
+   "duree": 2.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 1.15,
+     "type": "eclat",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_robot_arroseur_042",
+   "slug": "robot_arroseur",
+   "nom": "Robot Arroseur",
+   "rarete": "rare",
+   "clip": "emote_robot_arroseur",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.4,
+     "type": "bulles",
+     "ancre": "coude_D"
+    },
+    {
+     "t": 1.9,
+     "type": "bulles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_surf_imaginaire_043",
+   "slug": "surf_imaginaire",
+   "nom": "Surf Imaginaire",
+   "rarete": "epique",
+   "clip": "emote_surf_imaginaire",
+   "duree": 3.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 0.8,
+     "type": "bulles",
+     "ancre": "racine"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_valse_des_vagues_044",
+   "slug": "valse_des_vagues",
+   "nom": "Valse des Vagues",
+   "rarete": "rare",
+   "clip": "emote_valse_des_vagues",
+   "duree": 4.0,
+   "boucle": true,
+   "effets": []
+  },
+  {
+   "id_catalogue": "natx_emote_lanterne_magique_045",
+   "slug": "lanterne_magique",
+   "nom": "Lanterne Magique",
+   "rarete": "legendaire",
+   "clip": "emote_lanterne_magique",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 1.0,
+     "type": "eclat",
+     "ancre": "coude_D"
+    },
+    {
+     "t": 1.4,
+     "type": "lucioles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_réparation_éclair_046",
+   "slug": "reparation_eclair",
+   "nom": "Réparation Éclair",
+   "rarete": "commun",
+   "clip": "emote_reparation_eclair",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 1.0,
+     "type": "eclat",
+     "ancre": "coude_D"
+    },
+    {
+     "t": 2.3,
+     "type": "etoiles",
+     "ancre": "coude_D"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_flocon_tourbillonnant_047",
+   "slug": "flocon_tourbillonnant",
+   "nom": "Flocon Tourbillonnant",
+   "rarete": "rare",
+   "clip": "emote_flocon_tourbillonnant",
+   "duree": 2.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.3,
+     "type": "flocons",
+     "ancre": "racine"
+    },
+    {
+     "t": 1.4,
+     "type": "flocons",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_bonjour_soleil_048",
+   "slug": "bonjour_soleil",
+   "nom": "Bonjour Soleil",
+   "rarete": "epique",
+   "clip": "emote_bonjour_soleil",
+   "duree": 3.0,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 0.9,
+     "type": "soleil",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_regard_stellaire_049",
+   "slug": "regard_stellaire",
+   "nom": "Regard Stellaire",
+   "rarete": "rare",
+   "clip": "emote_regard_stellaire",
+   "duree": 4.0,
+   "boucle": true,
+   "effets": [
+    {
+     "t": 1.0,
+     "type": "etoiles",
+     "ancre": "tete"
+    }
+   ]
+  },
+  {
+   "id_catalogue": "natx_emote_arc_en_ciel_final_050",
+   "slug": "arc_en_ciel_final",
+   "nom": "Arc-en-ciel Final",
+   "rarete": "legendaire",
+   "clip": "emote_arc_en_ciel_final",
+   "duree": 3.6,
+   "boucle": false,
+   "effets": [
+    {
+     "t": 1.0,
+     "type": "arcenciel",
+     "ancre": "coude_G"
+    },
+    {
+     "t": 2.6,
+     "type": "eclat",
+     "ancre": "tete"
+    }
+   ]
+  }
+ ]
+}

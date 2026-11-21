@@ -1,6 +1,10 @@
 // Menus : onglets Jouer / Boutique / Casier, achats, équipement, récompenses.
 import { CATALOGUE, CATEGORIES, RARETES_COSM, COLLAB, objet, prixDe, possede, acheter, sauverProfil, boutiqueDuJour, cleObjet,
-  defisDuJour, texteDefi, xpPourNiveau, lookPossedeAuHasard, nettoyerLook, RECOMPENSE_DEFI } from './boutique.js';
+  defisDuJour, texteDefi, xpPourNiveau, lookPossedeAuHasard, nettoyerLook, RECOMPENSE_DEFI,
+  COLLECTIONS_250, collectionDe, collectionsVisibles, estDeBase, desequiper, LOOK_DEFAUT, promoDe, prixNormal, enVente } from './boutique.js';
+import { ESPRITS, TYPES_ESPRITS, PERSONNALITES, RARETES_ESPRIT, ORDRE_RARETES, meilleuresRaretes, replique } from './esprits.js';
+import { descriptionEsprit } from './cadeaux.js';
+import { chargerCosmetiques, cosmetiquePret } from './modeles.js';
 import { echapper } from './outils.js';
 import { NOUVEAUTES } from './nouveautes.js';
 import { dessinerIdees } from './avis.js';
@@ -40,6 +44,11 @@ export class Menus {
     this.page = 'jouer';
     this.categorie = 'tenue';
     this.selection = null;
+    // filtres du catalogue (Boutique) et du casier
+    this.filtres = { texte: '', cat: '', rarete: '', serie: '', possede: '' };
+    this.filtresCasier = { texte: '', rarete: '', serie: '', mes: false };
+    this.pageCatalogue = 0;
+    this.initFiltres();
     for (const b of document.querySelectorAll('.onglets button')) b.onclick = () => { this.son('clic'); this.montrerPage(b.dataset.page); };
     $('#btnVersCasier').onclick = () => this.montrerPage('casier');
     $('#btnHasard').onclick = () => this.styleHasard();
@@ -54,10 +63,11 @@ export class Menus {
   montrerPage(nom) {
     this.page = nom;
     for (const b of document.querySelectorAll('.onglets button')) b.classList.toggle('actif', b.dataset.page === nom);
-    for (const p of ['jouer', 'boutique', 'casier', 'nouveautes', 'idees']) $('#page' + p[0].toUpperCase() + p.slice(1)).classList.toggle('cache', p !== nom);
+    for (const p of ['jouer', 'boutique', 'casier', 'esprits', 'nouveautes', 'idees']) $('#page' + p[0].toUpperCase() + p.slice(1)).classList.toggle('cache', p !== nom);
     if (nom === 'jouer') { this.apercu.monter($('#sceneJouer')); this.montrerPerso(); this.majStats(); }
     if (nom === 'boutique') { this.dessinerBoutique(); this.profil.vuBoutique = boutiqueDuJour().finDans; this.majPastille(); }
     if (nom === 'casier') this.dessinerCasier();
+    if (nom === 'esprits') { this.apercu.monter($('#sceneEsprits')); this.dessinerEsprits(); }
     if (nom === 'nouveautes') this.dessinerNouveautes();
     if (nom === 'idees') dessinerIdees();
   }
@@ -162,12 +172,19 @@ export class Menus {
     d.className = 'carte r-' + o.rarete + (grand ? ' grande' : '') + (possede(this.profil, o) ? ' possede' : '');
     const cat = CATEGORIES.find(c => c.id === o.cat);
     const img = o.cat === 'trainee' ? imageTrainee(o.id) : '';
-    d.innerHTML = `<div class="carte-img">${img ? `<img src="${img}" alt="">` : '<span class="charge">…</span>'}</div>
-      <div class="carte-bas"><span class="carte-cat">${cat.icone} ${cat.un}</span><b>${echapper(o.nom)}</b>
-      ${possede(this.profil, o) ? '<span class="prix ok">✔ Possédé</span>' : `<span class="prix">🪙 ${prixDe(o)}</span>`}</div>`;
+    const serie = collectionDe(o);
+    d.innerHTML = `<div class="carte-img">${img ? `<img src="${img}" alt="">` : '<span class="charge">…</span>'}</div>${o.nouveau250 ? '<span class="pastille-nouv">NOUVEAU</span>' : ''}
+      <div class="carte-bas"><span class="carte-cat">${cat.icone} ${cat.un}${serie ? ` · <span class="carte-serie">📦 ${echapper(serie.nom)}</span>` : ''}</span><b>${echapper(o.nom)}</b>
+      ${possede(this.profil, o) ? '<span class="prix ok">✔ Possédé</span>' : !enVente(o) ? '<span class="prix">Pas en vente</span>' : this.textePrix(o)}</div>`;
     d.style.setProperty('--rarete', r.couleur);
     if (!img) this.chargerMiniature(d.querySelector('.carte-img'), o);
     return d;
+  }
+
+  // prix, avec l'ancien prix barré et la réduction quand une promotion de l'admin est en cours
+  textePrix(o) {
+    const p = promoDe(o);
+    return p ? `<span class="prix promo"><s>${prixNormal(o)}</s> 🪙 ${prixDe(o)} <em>-${p.reduction} %</em></span>` : `<span class="prix">🪙 ${prixDe(o)}</span>`;
   }
 
   chargerMiniature(el, o) {
@@ -179,14 +196,117 @@ export class Menus {
   suivanteMini() {
     const [el, o] = this.fileMini[0] || [];
     if (!el) return;
-    setTimeout(() => {
+    const file = this.fileMini;
+    const pret = cosmetiquePret(cleObjet(o)) ? Promise.resolve() : chargerCosmetiques([cleObjet(o)]);
+    pret.then(() => new Promise(r => setTimeout(r, 0))).then(() => {
+      if (file !== this.fileMini) return; // la page a changé entre-temps
       try {
         const url = this.apercu.miniatureCosmetique(o, this.couleur);
-        if (url) el.innerHTML = `<img src="${url}" alt="">`;
+        if (url) el.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
       } catch (e) { console.warn(e); }
       this.fileMini.shift();
       this.suivanteMini();
-    }, 0);
+    });
+  }
+
+  // Un objet des 250 : son modèle est chargé avant de l'essayer sur le personnage
+  essayer(cadrage, look, emote) {
+    const cles = Object.entries(look).map(([c, id]) => c + ':' + id).filter(k => !cosmetiquePret(k));
+    if (!cles.length) { this.montrerPerso(cadrage, look, emote); return; }
+    this.montrerPerso(cadrage, look, emote);
+    chargerCosmetiques(cles).then(() => this.montrerPerso(cadrage, look, emote));
+  }
+
+  // ---------- Collection d'esprits ----------
+  dessinerEsprits() {
+    const col = this.profil.collectionEsprits;
+    const meilleures = meilleuresRaretes(col);
+    const total = TYPES_ESPRITS.length * ORDRE_RARETES.length;
+    $('#progresEsprits').textContent = `${new Set(col.map(e => e.type + ':' + e.rarete)).size} / ${total} esprits dans ta collection`;
+    const g = $('#grilleEsprits');
+    g.innerHTML = '';
+    for (const t of TYPES_ESPRITS) {
+      const d = ESPRITS[t], miens = col.filter(e => e.type === t);
+      const b = document.createElement('button');
+      b.className = 'carte-esprit-jeu' + (miens.length ? '' : ' inconnu') + (t === this.espritChoisi ? ' choisie' : '');
+      b.style.setProperty('--couleur-esprit', d.couleur);
+      if (meilleures[t]) b.style.setProperty('--couleur-rarete', RARETES_ESPRIT[meilleures[t]].couleur);
+      b.innerHTML = `<span class="ico">${d.icone}</span><b>${echapper(d.nom)}</b><small>${echapper(d.role)}</small><span class="raretes">${ORDRE_RARETES.map(r => {
+        const e = miens.find(x => x.rarete === r);
+        return `<i class="r-${r}${e ? ' a' : ''}" title="${RARETES_ESPRIT[r].nom}${e ? ' × ' + e.n : ' (pas encore)'}"></i>`;
+      }).join('')}</span>`;
+      b.onclick = () => { this.son('clic'); this.choisirEsprit(t); };
+      g.appendChild(b);
+    }
+    this.choisirEsprit(this.espritChoisi || TYPES_ESPRITS[0]);
+  }
+  choisirEsprit(t) {
+    this.espritChoisi = t;
+    for (const c of document.querySelectorAll('#grilleEsprits .carte-esprit-jeu')) c.classList.toggle('choisie', c.querySelector('b').textContent === ESPRITS[t].nom);
+    const d = ESPRITS[t], p = PERSONNALITES[t];
+    const miens = this.profil.collectionEsprits.filter(e => e.type === t);
+    const meilleure = meilleuresRaretes(this.profil.collectionEsprits)[t] || null;
+    this.apercu.montrerEsprit(t, meilleure);
+    const perso = descriptionEsprit(t) || p.trait;
+    const el = $('#ficheEsprit');
+    el.innerHTML = `<span class="pastille-rarete" style="--r:${meilleure ? RARETES_ESPRIT[meilleure].couleur : '#5d6b85'}">${meilleure ? RARETES_ESPRIT[meilleure].nom : 'Pas encore dans ta collection'}</span>
+      <h2>${d.icone} ${echapper(d.nom)}</h2><p class="petit-texte">Esprit de ${echapper(d.role.toLowerCase())} · <i>${echapper(perso)}</i></p>
+      <p class="bulle-esprit" id="bulleEsprit">« ${echapper(replique(t, 'repos'))} »</p>
+      <p><b>Passif :</b> ${echapper(d.passif)}</p><p><b>Pouvoir « ${echapper(d.pouvoir)} » :</b> ${echapper(d.descPouvoir)} <small>(recharge ${d.recharge} s)</small></p>
+      <p class="petit-texte">${miens.length ? 'Dans ta collection : ' + miens.map(e => `${RARETES_ESPRIT[e.rarete].nom} × ${e.n}`).join(' · ') : 'Gagne-le en ouvrant une cargaison pendant un événement. En partie, tu peux aussi le capturer sur un autel (pour la partie seulement).'}</p>
+      <div class="boutons-esprit"><button class="petit" data-a="content">😊 Caresser</button><button class="petit" data-a="activer">✨ Pouvoir</button><button class="petit" data-a="surpris">😮 Surprise</button></div>`;
+    for (const b of el.querySelectorAll('[data-a]')) b.onclick = () => {
+      this.apercu.animerEspritApercu(b.dataset.a);
+      this.son('esprit_' + t);
+      if (b.dataset.a !== 'surpris' && meilleure && meilleure !== 'commun') setTimeout(() => this.son('esprit_rare'), 250);
+      $('#bulleEsprit').textContent = '« ' + replique(t, b.dataset.a === 'activer' ? 'pouvoir' : b.dataset.a === 'content' ? 'capture' : 'repos') + ' »';
+    };
+  }
+
+  // ---------- Filtres (catalogue de la Boutique et Casier) ----------
+  initFiltres() {
+    const remplir = (sel, options) => { for (const [v, t] of options) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); } };
+    const series = collectionsVisibles().map(c => [String(c.n), '📦 ' + c.nom]);
+    const raretes = Object.entries(RARETES_COSM).map(([k, r]) => [k, r.nom]);
+    remplir($('#filtreCat'), CATEGORIES.map(c => [c.id, c.icone + ' ' + c.nom]));
+    remplir($('#filtreRarete'), raretes); remplir($('#filtreSerie'), series);
+    remplir($('#casierRarete'), raretes); remplir($('#casierSerie'), series);
+    const surCatalogue = () => { this.pageCatalogue = 0; this.dessinerCatalogue(); };
+    let attente = null;
+    $('#filtreTexte').addEventListener('input', e => { clearTimeout(attente); attente = setTimeout(() => { this.filtres.texte = e.target.value.trim().toLowerCase(); surCatalogue(); }, 200); });
+    for (const [id, cle] of [['#filtreCat', 'cat'], ['#filtreRarete', 'rarete'], ['#filtreSerie', 'serie'], ['#filtrePossede', 'possede']]) $(id).onchange = e => { this.filtres[cle] = e.target.value; surCatalogue(); };
+    $('#catPrec').onclick = () => { this.pageCatalogue = Math.max(0, this.pageCatalogue - 1); this.dessinerCatalogue(); };
+    $('#catSuiv').onclick = () => { this.pageCatalogue++; this.dessinerCatalogue(); };
+    let attenteC = null;
+    $('#casierTexte').addEventListener('input', e => { clearTimeout(attenteC); attenteC = setTimeout(() => { this.filtresCasier.texte = e.target.value.trim().toLowerCase(); this.dessinerCasier(); }, 200); });
+    $('#casierRarete').onchange = e => { this.filtresCasier.rarete = e.target.value; this.dessinerCasier(); };
+    $('#casierSerie').onchange = e => { this.filtresCasier.serie = e.target.value; this.dessinerCasier(); };
+    $('#casierMes').onchange = e => { this.filtresCasier.mes = e.target.checked; this.dessinerCasier(); };
+  }
+  passeFiltre(o, f) {
+    if (f.texte && !(o.nom.toLowerCase().includes(f.texte) || (o.desc || '').toLowerCase().includes(f.texte) || (collectionDe(o)?.nom || '').toLowerCase().includes(f.texte))) return false;
+    if (f.cat && o.cat !== f.cat) return false;
+    if (f.rarete && o.rarete !== f.rarete) return false;
+    if (f.serie && String(o.serie || '') !== f.serie) return false;
+    if (f.possede === 'oui' && !possede(this.profil, o)) return false;
+    if (f.possede === 'non' && possede(this.profil, o)) return false;
+    return true;
+  }
+
+  // Tout le catalogue en vente (tous les objets disponibles, filtrés, par pages de 24)
+  dessinerCatalogue() {
+    const ordre = { commun: 0, rare: 1, epique: 2, legendaire: 3, collab: 4 };
+    const liste = CATALOGUE.filter(o => !o.gratuit && (enVente(o) || possede(this.profil, o)) && this.passeFiltre(o, this.filtres))
+      .sort((a, b) => (b.nouveau250 ? 1 : 0) - (a.nouveau250 ? 1 : 0) || ordre[a.rarete] - ordre[b.rarete] || a.nom.localeCompare(b.nom));
+    const parPage = 24, pages = Math.max(1, Math.ceil(liste.length / parPage));
+    this.pageCatalogue = Math.min(this.pageCatalogue, pages - 1);
+    const g = $('#grilleCatalogue');
+    g.innerHTML = '';
+    for (const o of liste.slice(this.pageCatalogue * parPage, (this.pageCatalogue + 1) * parPage)) { const c = this.carte(o); c.onclick = () => this.choisirBoutique(o); g.appendChild(c); }
+    $('#videCatalogue').classList.toggle('cache', liste.length > 0);
+    $('#infoCatalogue').textContent = `${liste.length} objet${liste.length > 1 ? 's' : ''} · page ${this.pageCatalogue + 1} / ${pages}`;
+    $('#catPrec').disabled = this.pageCatalogue <= 0;
+    $('#catSuiv').disabled = this.pageCatalogue + 1 >= pages;
   }
 
   // ---------- Boutique ----------
@@ -199,6 +319,7 @@ export class Menus {
     for (const o of b.vedettes) { const c = this.carte(o, true); c.onclick = () => this.choisirBoutique(o); gv.appendChild(c); }
     for (const o of b.quotidiens) { const c = this.carte(o); c.onclick = () => this.choisirBoutique(o); gj.appendChild(c); }
     this.majCompteur();
+    this.dessinerCatalogue();
     this.choisirBoutique(this.selection && [...COLLAB, ...b.vedettes, ...b.quotidiens].includes(this.selection) ? this.selection : COLLAB[1]);
   }
 
@@ -211,7 +332,7 @@ export class Menus {
     for (const c of document.querySelectorAll('#pageBoutique .carte')) c.classList.toggle('choisie', c.querySelector('b').textContent === o.nom);
     this.apercu.monter($('#sceneBoutique'));
     const essai = { ...this.profil.equipe, [o.cat]: o.id };
-    this.montrerPerso(this.cadragePour(o), essai, o.cat === 'emote' ? o.id : null);
+    this.essayer(this.cadragePour(o), essai, o.cat === 'emote' ? o.id : null);
     this.infosObjet($('#ficheInfos'), o, true);
   }
 
@@ -221,13 +342,28 @@ export class Menus {
     const equipe = this.profil.equipe[o.cat] === o.id;
     const prix = prixDe(o);
     let bouton;
+    const promo = promoDe(o);
     if (a) bouton = equipe ? '<button class="gros gris" disabled>✔ Équipé</button>' : '<button class="gros bleu" id="btnEquiper">Équiper</button>';
-    else if (this.profil.pieces >= prix) bouton = `<button class="gros jaune" id="btnAcheter">Acheter · 🪙 ${prix}</button>`;
+    else if (!enVente(o)) bouton = '<button class="gros gris" disabled>Pas en vente pour le moment</button>';
+    else if (this.profil.pieces >= prix) bouton = `<button class="gros jaune" id="btnAcheter">Acheter · 🪙 ${prix}${promo ? ` <small>(-${promo.reduction} % · ${echapper(promo.nom)})</small>` : ''}</button>`;
     else bouton = `<button class="gros gris" disabled>Il te manque 🪙 ${prix - this.profil.pieces}</button>`;
     const astuce = o.cat === 'emote' ? '<p class="petit-texte">En jeu, appuie sur <kbd>B</kbd> pour faire ton émote.</p>'
       : o.cat === 'trainee' ? '<p class="petit-texte">Elle apparaît derrière toi quand tu sautes du dirigeable.</p>' : '';
+    const serie = collectionDe(o);
+    let ligneSerie = '';
+    if (serie) {
+      const membres = CATALOGUE.filter(x => x.serie === serie.n);
+      ligneSerie = `<p class="ligne-serie">📦 Collection <b>${echapper(serie.nom)}</b> · ${membres.filter(x => possede(this.profil, x)).length}/${membres.length} en vente possédés</p>`;
+    }
+    if (a && equipe && !estDeBase(o)) bouton += '<button class="gros gris" id="btnDesequiper">Déséquiper</button>';
     el.innerHTML = `<span class="badge" style="--rarete:${r.couleur}">${r.nom}</span>
-      <h2>${echapper(o.nom)}</h2><p>${echapper(o.desc)}</p>${astuce}${bouton}`;
+      <h2>${echapper(o.nom)}</h2><p>${echapper(o.desc)}</p>${ligneSerie}${astuce}${bouton}`;
+    const bd = el.querySelector('#btnDesequiper');
+    if (bd) bd.onclick = () => {
+      if (!desequiper(this.profil, o.cat)) return;
+      this.son('clic'); toast(`${o.nom} déséquipé`); this.surLook();
+      if (boutique) this.choisirBoutique(o); else this.dessinerCasier();
+    };
     const ba = el.querySelector('#btnAcheter');
     if (ba) ba.onclick = () => {
       const res = acheter(this.profil, o);
@@ -267,8 +403,10 @@ export class Menus {
     const g = $('#grilleCasier');
     g.innerHTML = '';
     this.fileMini = [];
-    const liste = CATALOGUE.filter(o => o.cat === this.categorie);
-    const ordre = { commun: 0, rare: 1, epique: 2, legendaire: 3 };
+    const tous = CATALOGUE.filter(o => o.cat === this.categorie);
+    const f = this.filtresCasier;
+    const liste = tous.filter(o => this.passeFiltre(o, { texte: f.texte, rarete: f.rarete, serie: f.serie, possede: f.mes ? 'oui' : '' }));
+    const ordre = { commun: 0, rare: 1, epique: 2, legendaire: 3, collab: 4 };
     liste.sort((a, b) => (possede(this.profil, b) - possede(this.profil, a)) || ordre[a.rarete] - ordre[b.rarete]);
     for (const o of liste) {
       const c = this.carte(o);
@@ -280,18 +418,19 @@ export class Menus {
         for (const x of g.children) x.classList.remove('choisie');
         c.classList.add('choisie');
         this.apercu.monter($('#sceneCasier'));
-        this.montrerPerso(this.cadragePour(o), { ...this.profil.equipe, [o.cat]: o.id }, o.cat === 'emote' ? o.id : null);
+        this.essayer(this.cadragePour(o), { ...this.profil.equipe, [o.cat]: o.id }, o.cat === 'emote' ? o.id : null);
         this.infosObjet($('#casierInfos'), o, false);
         if (possede(this.profil, o) && this.profil.equipe[o.cat] !== o.id) { this.equiper(o); c.classList.add('equipe'); for (const x of g.children) if (x !== c) x.classList.remove('equipe'); this.infosObjet($('#casierInfos'), o, false); }
       };
       g.appendChild(c);
     }
-    const eq = objet(this.categorie, this.profil.equipe[this.categorie]);
+    const eq = objet(this.categorie, this.profil.equipe[this.categorie]) || objet(this.categorie, LOOK_DEFAUT[this.categorie]);
     this.apercu.monter($('#sceneCasier'));
-    this.montrerPerso(this.cadragePour(eq), this.profil.equipe, eq.cat === 'emote' ? eq.id : null);
+    this.essayer(this.cadragePour(eq), this.profil.equipe, eq.cat === 'emote' ? eq.id : null);
     this.infosObjet($('#casierInfos'), eq, false);
-    const poss = liste.filter(o => possede(this.profil, o)).length;
-    $('#titreCasier').textContent = `${CATEGORIES.find(c => c.id === this.categorie).nom} · ${poss}/${liste.length}`;
+    const poss = tous.filter(o => possede(this.profil, o)).length;
+    $('#titreCasier').textContent = `${CATEGORIES.find(c => c.id === this.categorie).nom} · ${poss}/${tous.length}`;
+    $('#videCasier').classList.toggle('cache', liste.length > 0);
   }
 }
 

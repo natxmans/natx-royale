@@ -3,8 +3,16 @@
 import { hasard, angleVers, arrondi, borner } from './outils.js';
 import { OBJETS, RARETES, tirerButin, LISTE_ARMES, butinRavitaillement } from './armes.js';
 import { rayonBoite, DEMI } from './monde.js';
-import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, REGAIN_SOLO, DEFIS_ENTRAINEMENT } from './partage.js';
+import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, REGAIN_SOLO, DEFIS_ENTRAINEMENT, posCargaison, CARGO } from './partage.js';
 import { nettoyerLook, lookAuHasard } from './boutique.js';
+// rareté de collection de chaque esprit (aspect seulement) et référence publique (signalements) : vérifiées ici
+const RARETES_OK = new Set(['commun', 'rare', 'epique', 'legendaire']);
+function nettoyerEsp(e) {
+  const r = {};
+  if (e && typeof e === 'object') for (const [t, v] of Object.entries(e)) if (typeof t === 'string' && t.length < 16 && RARETES_OK.has(v)) r[t] = v;
+  return r;
+}
+const nettoyerRef = r => (typeof r === 'string' && /^[0-9a-f]{12}$/.test(r) ? r : null);
 import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE } from './esprits.js';
 
 const NOMS_BOTS = ['Patate', 'Croquette', 'Tartiflette', 'Grumeau', 'Moustache', 'Biscotte', 'Pépito', 'Cornichon',
@@ -54,14 +62,15 @@ export class Hote {
       // deux joueurs avec le même pseudo : on ajoute un numéro
       const pris = new Set([...this.salon.values()].filter(p => p.id !== de).map(p => p.nom));
       if (pris.has(nom)) { let k = 2; while (pris.has(nom.slice(0, 13) + ' ' + k)) k++; nom = nom.slice(0, 13) + ' ' + k; }
-      this.salon.set(de, { id: de, nom, couleur: /^#[0-9a-f]{6}$/i.test(m.couleur) ? m.couleur : '#3498db', hote: de === this.reseau.monId, look: nettoyerLook(m.look) });
+      this.salon.set(de, { id: de, nom, couleur: /^#[0-9a-f]{6}$/i.test(m.couleur) ? m.couleur : '#3498db', hote: de === this.reseau.monId, look: nettoyerLook(m.look),
+        esp: nettoyerEsp(m.esp), ref: nettoyerRef(m.ref) });
       this.reseau.envoyerA(de, { t: 'bienvenue', id: de, enCours: this.enCours });
       this.diffuserSalon();
       return;
     }
     if (m.t === 'look') {
       const p = this.salon.get(de);
-      if (p) { p.look = nettoyerLook(m.look); if (/^#[0-9a-f]{6}$/i.test(m.couleur)) p.couleur = m.couleur; this.diffuserSalon(); }
+      if (p) { p.look = nettoyerLook(m.look); p.esp = nettoyerEsp(m.esp); if (/^#[0-9a-f]{6}$/i.test(m.couleur)) p.couleur = m.couleur; this.diffuserSalon(); }
       return;
     }
     if (m.t === 'ping') { this.reseau.envoyerA(de, { t: 'pong', c: +m.c || 0 }); return; }
@@ -112,6 +121,7 @@ export class Hote {
         if (j && j.vivant) this.blesser(de, borner(+m.deg || 0, 0, 100), null, 'chute');
         break;
       case 'ouvrirRavito': this.ouvrirRavito(de, m.id | 0); break;
+      case 'ouvrirCargo': this.ouvrirCargo(de, String(m.id || '')); break;
       case 'esprit': {
         const sa = this.sanctuaires && this.sanctuaires[m.id | 0];
         if (!j || !j.vivant || !sa || !sa.dispo) break;
@@ -183,7 +193,7 @@ export class Hote {
     // équipes : les joueurs du salon d'abord (les potes ensemble), puis les bots complètent
     const equipeDe = k => (taille > 1 ? 1 + Math.floor(k / taille) : 0);
     for (const p of this.salon.values()) {
-      const j = this.nouveauJoueur(p.id, p.nom, p.couleur, false, n); j.look = p.look; j.equipe = equipeDe(n); n++; this.joueurs.set(p.id, j);
+      const j = this.nouveauJoueur(p.id, p.nom, p.couleur, false, n); j.look = p.look; j.esp = p.esp || {}; j.ref = p.ref || null; j.equipe = equipeDe(n); n++; this.joueurs.set(p.id, j);
     }
     const noms = NOMS_BOTS.slice().sort(() => Math.random() - 0.5);
     for (let k = 0; k < this.options.bots; k++) {
@@ -210,6 +220,7 @@ export class Hote {
     this.dirigeable = creerDirigeable(r);
     this.zone = creerPlanZone(r, monde, this.options);
     this.ravitos = new Map(); this.prochainRavito = 1;
+    this.cargo = null;
     this.planRavitos = this.options.entrainement ? [25, 90, 160] : [70, 165, 260].map(t => t * ({ lente: 1.45, rapide: 0.62 }[this.options.vitesseZone] || 1));
     this.soinT = 0;
     this.constrPV = new Map();
@@ -238,7 +249,7 @@ export class Hote {
     this.reseau.diffuser({
       t: 'debut', graine, partieId: this.partieId, dirigeable: this.dirigeable, zone: this.zone, difficulte: o.difficulte,
       options: { mode: o.mode, entrainement: !!o.entrainement, matsDepart: o.entrainement ? 999 : o.matsDepart | 0, fete: !!o.fete, vitesseZone: o.vitesseZone },
-      joueurs: [...this.joueurs.values()].map(j => ({ id: j.id, nom: j.nom, couleur: j.couleur, bot: j.bot, n: j.n, look: j.look, equipe: j.equipe, mannequin: !!j.mannequin })),
+      joueurs: [...this.joueurs.values()].map(j => ({ id: j.id, nom: j.nom, couleur: j.couleur, bot: j.bot, n: j.n, look: j.look, equipe: j.equipe, mannequin: !!j.mannequin, ref: j.ref || null })),
       butins: listeButins,
       esprits: this.sanctuaires.map(sa => ({ id: sa.id, x: sa.x, y: sa.y, z: sa.z, type: sa.type, dispo: true })),
     });
@@ -323,6 +334,37 @@ export class Hote {
     rv.ouvert = true;
     this.reseau.diffuser({ t: 'ravitoX', id });
     this.eparpiller(butinRavitaillement(Math.random), rv.x, rv.sol, rv.z);
+  }
+
+  // ---------- Cargaison (événement de l'espace admin) ----------
+  // Le SERVEUR a déjà choisi l'esprit et la récompense (réponse de /api/cargaison) ; l'hôte choisit où et quand elle tombe,
+  // et qui l'ouvre en premier. Seul celui-là reçoit la signature pour réclamer sa récompense au serveur.
+  programmerCargaison(srv) {
+    if (!this.enCours || this.cargo || !srv || !/^[0-9a-f]{16}$/.test(String(srv.id))) return false;
+    const tLargage = this.temps + Math.max(30, Math.min(1500, +srv.delai || 120));
+    const z = etatZone(this.zone, tLargage + 20);
+    const p = this.pointTerre(Math.random, z.cx, z.cz, Math.max(12, Math.min(z.cr, DEMI) * 0.5));
+    const h = this.monde.lancerRayon(p.x, 160, p.z, 0, -1, 0, 320);
+    const sol = h ? h.y : this.monde.hauteurTerrain(p.x, p.z);
+    this.cargo = {
+      id: srv.id, sig: String(srv.sig || ''), x: arrondi(p.x), z: arrondi(p.z), sol: arrondi(sol), cap: arrondi(Math.random() * Math.PI * 2),
+      tLargage: arrondi(tLargage), esprit: ESPRITS[srv.esprit] ? srv.esprit : 'soin', rarete: srv.rarete || 'commun', nom: String(srv.nom || 'Cargaison').slice(0, 40), ouverte: false,
+    };
+    this.reseau.diffuser({ t: 'cargo', c: this.cargoPublic() });
+    return true;
+  }
+  cargoPublic() { const { sig, ...c } = this.cargo; return c; } // la signature ne part jamais à tout le monde
+  ouvrirCargo(de, id) {
+    const c = this.cargo, j = this.joueurs.get(de);
+    if (!c || c.id !== id || c.ouverte || !j || !j.vivant || j.bot) return;
+    if (posCargaison(c, this.temps).caisse.etat !== 'posee' || Math.hypot(j.x - c.x, j.z - c.z) > CARGO.portee + 2 || Math.abs(j.y - c.sol) > 4) return;
+    c.ouverte = true; c.par = de;
+    this.reseau.diffuser({ t: 'cargoX', id: c.id, par: de, esprit: c.esprit, rarete: c.rarete });
+    // l'esprit de la caisse rejoint celui qui l'a ouverte, pour la partie
+    j.esprit = { type: c.esprit, pret: this.temps + 3 };
+    this.reseau.diffuser({ t: 'esprit', s: -1, par: j.id, type: c.esprit, pret: arrondi(j.esprit.pret), rar: c.rarete });
+    if (de === this.reseau.monId) this.jeu.signatureCargo?.(c.id, c.sig);
+    else this.reseau.envoyerA(de, { t: 'cargoSig', id: c.id, sig: c.sig });
   }
 
   // ---------- Explosions (roquettes, grenades) ----------
@@ -769,7 +811,7 @@ export class Hote {
     sa.retour = this.temps + RECHARGE_SANCTUAIRE;
     // un seul esprit à la fois : l'ancien repart
     j.esprit = { type: sa.type, pret: this.temps + 3 };
-    this.reseau.diffuser({ t: 'esprit', s: sa.id, par: j.id, type: sa.type, pret: arrondi(j.esprit.pret) });
+    this.reseau.diffuser({ t: 'esprit', s: sa.id, par: j.id, type: sa.type, pret: arrondi(j.esprit.pret), rar: (j.esp && j.esp[sa.type]) || null });
     this.avancerDefi(j.id, 'esprit');
     return true;
   }

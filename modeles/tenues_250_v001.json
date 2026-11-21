@@ -1,0 +1,1736 @@
+{
+ "_aide": "Tenues des 250 cosmétiques (session Modélisation). Image 256x256 : chaque case se plaque sur les UV « en cylindre » du morceau de personnage.glb (U = 0,5 devant, V = 0 en bas). Pour un morceau : texture = image (flipY true), repeat = (w/256, h/256), offset = (x/256, 1 - (y+h)/256), x/y/w/h en pixels depuis le haut-gauche (CASES). torse -> case torse ; bras_G/D -> bras ; avantbras_G/D -> avantbras (ou la peau si avantbras = 'peau') ; bassin + cuisse_G/D -> bas ; tibia_G/D -> tibias (ou la peau si tibias = 'peau'). pieds / semelle / ceinture / mains = couleurs unies des matériaux du même nom (mains null = couleur de peau du joueur). Pièces 3D : objets de tenues_250_v001.glb, à remettre en position 0 puis à ajouter au groupe « ancre » (pivots ci-dessous, three.js).",
+ "taille_image": 256,
+ "cases": {
+  "torse": [
+   0,
+   0,
+   256,
+   96
+  ],
+  "bras": [
+   0,
+   96,
+   128,
+   48
+  ],
+  "avantbras": [
+   128,
+   96,
+   128,
+   48
+  ],
+  "bas": [
+   0,
+   144,
+   128,
+   64
+  ],
+  "tibias": [
+   128,
+   144,
+   128,
+   64
+  ]
+ },
+ "ancres": {
+  "racine": [
+   0,
+   0,
+   0
+  ],
+  "bassin": [
+   0,
+   0,
+   0
+  ],
+  "torse": [
+   0,
+   0,
+   0
+  ],
+  "tete": [
+   0,
+   1.86,
+   0
+  ],
+  "epaule_G": [
+   -0.25,
+   1.56,
+   0
+  ],
+  "epaule_D": [
+   0.25,
+   1.56,
+   0
+  ],
+  "coude_G": [
+   -0.25,
+   1.24,
+   0
+  ],
+  "coude_D": [
+   0.25,
+   1.24,
+   0
+  ],
+  "hanche_G": [
+   -0.11,
+   1.0,
+   0
+  ],
+  "hanche_D": [
+   0.11,
+   1.0,
+   0
+  ],
+  "genou_G": [
+   -0.11,
+   0.52,
+   0
+  ],
+  "genou_D": [
+   0.11,
+   0.52,
+   0
+  ]
+ },
+ "fichier_pieces": "tenues_250_v001.glb",
+ "tenues": [
+  {
+   "id_catalogue": "natx_tenue_gardien_des_nuages_001",
+   "slug": "gardien_des_nuages",
+   "nom": "Gardien des Nuages",
+   "rarete": "rare",
+   "image": "tenues/gardien_des_nuages.png",
+   "couleur_principale": "#8cc8f2",
+   "pieds": "#e9eef7",
+   "semelle": "#f3f3f3",
+   "ceinture": "#c9d2dc",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_gardien_des_nuages__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 320
+    },
+    {
+     "objet": "tenue_gardien_des_nuages__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 320
+    },
+    {
+     "objet": "tenue_gardien_des_nuages__torse",
+     "ancre": "torse",
+     "triangles": 112
+    }
+   ],
+   "triangles": 752,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_explorateur_polaire_002",
+   "slug": "explorateur_polaire",
+   "nom": "Explorateur Polaire",
+   "rarete": "epique",
+   "image": "tenues/explorateur_polaire.png",
+   "couleur_principale": "#ff7a2a",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#2a3550",
+   "mains": "#2a3550",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_explorateur_polaire__torse",
+     "ancre": "torse",
+     "triangles": 192
+    },
+    {
+     "objet": "tenue_explorateur_polaire__coude_G",
+     "ancre": "coude_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_explorateur_polaire__coude_D",
+     "ancre": "coude_D",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_explorateur_polaire__genou_G",
+     "ancre": "genou_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_explorateur_polaire__genou_D",
+     "ancre": "genou_D",
+     "triangles": 80
+    }
+   ],
+   "triangles": 512,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_astronome_de_minuit_003",
+   "slug": "astronome_de_minuit",
+   "nom": "Astronome de Minuit",
+   "rarete": "rare",
+   "image": "tenues/astronome_de_minuit.png",
+   "couleur_principale": "#1c2457",
+   "pieds": "#2a1e3a",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8b93a",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_astronome_de_minuit__bassin",
+     "ancre": "bassin",
+     "triangles": 328
+    },
+    {
+     "objet": "tenue_astronome_de_minuit__torse",
+     "ancre": "torse",
+     "triangles": 102
+    }
+   ],
+   "triangles": 430,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_mécano_des_étoiles_004",
+   "slug": "mecano_des_etoiles",
+   "nom": "Mécano des Étoiles",
+   "rarete": "epique",
+   "image": "tenues/mecano_des_etoiles.png",
+   "couleur_principale": "#5c6a80",
+   "pieds": "#3a2f28",
+   "semelle": "#f3f3f3",
+   "ceinture": "#3a2f28",
+   "mains": "#ff8a2a",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_mecano_des_etoiles__bassin",
+     "ancre": "bassin",
+     "triangles": 452
+    },
+    {
+     "objet": "tenue_mecano_des_etoiles__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 44
+    }
+   ],
+   "triangles": 496,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_jardinier_galactique_005",
+   "slug": "jardinier_galactique",
+   "nom": "Jardinier Galactique",
+   "rarete": "legendaire",
+   "image": "tenues/jardinier_galactique.png",
+   "couleur_principale": "#2e7d4a",
+   "pieds": "#5a3a1e",
+   "semelle": "#f3f3f3",
+   "ceinture": "#5a3a1e",
+   "mains": "#7fd35a",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_jardinier_galactique__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 144
+    },
+    {
+     "objet": "tenue_jardinier_galactique__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 144
+    },
+    {
+     "objet": "tenue_jardinier_galactique__bassin",
+     "ancre": "bassin",
+     "triangles": 324
+    }
+   ],
+   "triangles": 612,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_samouraï_de_jade_006",
+   "slug": "samourai_de_jade",
+   "nom": "Samouraï de Jade",
+   "rarete": "rare",
+   "image": "tenues/samourai_de_jade.png",
+   "couleur_principale": "#3fae7a",
+   "pieds": "#1f2a24",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8c75a",
+   "mains": "#1f2a24",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_samourai_de_jade__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 156
+    },
+    {
+     "objet": "tenue_samourai_de_jade__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 156
+    },
+    {
+     "objet": "tenue_samourai_de_jade__bassin",
+     "ancre": "bassin",
+     "triangles": 248
+    },
+    {
+     "objet": "tenue_samourai_de_jade__torse",
+     "ancre": "torse",
+     "triangles": 136
+    }
+   ],
+   "triangles": 696,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_chevalier_des_brumes_007",
+   "slug": "chevalier_des_brumes",
+   "nom": "Chevalier des Brumes",
+   "rarete": "epique",
+   "image": "tenues/chevalier_des_brumes.png",
+   "couleur_principale": "#9aa8bf",
+   "pieds": "#3a4252",
+   "semelle": "#f3f3f3",
+   "ceinture": "#c9d2dc",
+   "mains": "#c9d2dc",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_chevalier_des_brumes__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 214
+    },
+    {
+     "objet": "tenue_chevalier_des_brumes__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 214
+    },
+    {
+     "objet": "tenue_chevalier_des_brumes__torse",
+     "ancre": "torse",
+     "triangles": 196
+    }
+   ],
+   "triangles": 624,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_pirate_des_nuages_008",
+   "slug": "pirate_des_nuages",
+   "nom": "Pirate des Nuages",
+   "rarete": "rare",
+   "image": "tenues/pirate_des_nuages.png",
+   "couleur_principale": "#4f9bff",
+   "pieds": "#3a2f28",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ffd23f",
+   "mains": null,
+   "avantbras": "peau",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_pirate_des_nuages__torse",
+     "ancre": "torse",
+     "triangles": 284
+    },
+    {
+     "objet": "tenue_pirate_des_nuages__bassin",
+     "ancre": "bassin",
+     "triangles": 172
+    }
+   ],
+   "triangles": 456,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_capitaine_corail_009",
+   "slug": "capitaine_corail",
+   "nom": "Capitaine Corail",
+   "rarete": "epique",
+   "image": "tenues/capitaine_corail.png",
+   "couleur_principale": "#ff7f6e",
+   "pieds": "#2a1e1e",
+   "semelle": "#f3f3f3",
+   "ceinture": "#fff4e6",
+   "mains": "#ffffff",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_capitaine_corail__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 176
+    },
+    {
+     "objet": "tenue_capitaine_corail__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 176
+    },
+    {
+     "objet": "tenue_capitaine_corail__torse",
+     "ancre": "torse",
+     "triangles": 110
+    },
+    {
+     "objet": "tenue_capitaine_corail__bassin",
+     "ancre": "bassin",
+     "triangles": 192
+    }
+   ],
+   "triangles": 654,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_plongeur_abyssal_010",
+   "slug": "plongeur_abyssal",
+   "nom": "Plongeur Abyssal",
+   "rarete": "legendaire",
+   "image": "tenues/plongeur_abyssal.png",
+   "couleur_principale": "#1a2240",
+   "pieds": "#0d1020",
+   "semelle": "#f3f3f3",
+   "ceinture": "#2c3a52",
+   "mains": "#0d1020",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_plongeur_abyssal__torse",
+     "ancre": "torse",
+     "triangles": 248
+    },
+    {
+     "objet": "tenue_plongeur_abyssal__coude_G",
+     "ancre": "coude_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_plongeur_abyssal__coude_D",
+     "ancre": "coude_D",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_plongeur_abyssal__genou_G",
+     "ancre": "genou_G",
+     "triangles": 64
+    },
+    {
+     "objet": "tenue_plongeur_abyssal__genou_D",
+     "ancre": "genou_D",
+     "triangles": 64
+    }
+   ],
+   "triangles": 536,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_randonneur_des_cimes_011",
+   "slug": "randonneur_des_cimes",
+   "nom": "Randonneur des Cimes",
+   "rarete": "rare",
+   "image": "tenues/randonneur_des_cimes.png",
+   "couleur_principale": "#3f8f5a",
+   "pieds": "#6b4421",
+   "semelle": "#f3f3f3",
+   "ceinture": "#5a3a1e",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_randonneur_des_cimes__bassin",
+     "ancre": "bassin",
+     "triangles": 260
+    },
+    {
+     "objet": "tenue_randonneur_des_cimes__torse",
+     "ancre": "torse",
+     "triangles": 160
+    },
+    {
+     "objet": "tenue_randonneur_des_cimes__genou_G",
+     "ancre": "genou_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_randonneur_des_cimes__genou_D",
+     "ancre": "genou_D",
+     "triangles": 80
+    }
+   ],
+   "triangles": 580,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_roi_des_champignons_012",
+   "slug": "roi_des_champignons",
+   "nom": "Roi des Champignons",
+   "rarete": "epique",
+   "image": "tenues/roi_des_champignons.png",
+   "couleur_principale": "#d63a3a",
+   "pieds": "#7a4b24",
+   "semelle": "#f3f3f3",
+   "ceinture": "#fbefd5",
+   "mains": "#fbefd5",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_roi_des_champignons__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 190
+    },
+    {
+     "objet": "tenue_roi_des_champignons__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 190
+    },
+    {
+     "objet": "tenue_roi_des_champignons__torse",
+     "ancre": "torse",
+     "triangles": 574
+    }
+   ],
+   "triangles": 954,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_reine_des_lucioles_013",
+   "slug": "reine_des_lucioles",
+   "nom": "Reine des Lucioles",
+   "rarete": "rare",
+   "image": "tenues/reine_des_lucioles.png",
+   "couleur_principale": "#1f3a33",
+   "pieds": "#27402f",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8c75a",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_reine_des_lucioles__bassin",
+     "ancre": "bassin",
+     "triangles": 616
+    },
+    {
+     "objet": "tenue_reine_des_lucioles__torse",
+     "ancre": "torse",
+     "triangles": 96
+    }
+   ],
+   "triangles": 712,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_chasseur_de_comètes_014",
+   "slug": "chasseur_de_cometes",
+   "nom": "Chasseur de Comètes",
+   "rarete": "epique",
+   "image": "tenues/chasseur_de_cometes.png",
+   "couleur_principale": "#22306a",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#3a4252",
+   "mains": "#3a4252",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_chasseur_de_cometes__genou_G",
+     "ancre": "genou_G",
+     "triangles": 44
+    },
+    {
+     "objet": "tenue_chasseur_de_cometes__genou_D",
+     "ancre": "genou_D",
+     "triangles": 44
+    },
+    {
+     "objet": "tenue_chasseur_de_cometes__torse",
+     "ancre": "torse",
+     "triangles": 152
+    }
+   ],
+   "triangles": 240,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_pilote_rétro_015",
+   "slug": "pilote_retro",
+   "nom": "Pilote Rétro",
+   "rarete": "legendaire",
+   "image": "tenues/pilote_retro.png",
+   "couleur_principale": "#8a5228",
+   "pieds": "#3a2414",
+   "semelle": "#f3f3f3",
+   "ceinture": "#3a2414",
+   "mains": "#5a3a1e",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_pilote_retro__torse",
+     "ancre": "torse",
+     "triangles": 508
+    }
+   ],
+   "triangles": 508,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_champion_du_désert_016",
+   "slug": "champion_du_desert",
+   "nom": "Champion du Désert",
+   "rarete": "rare",
+   "image": "tenues/champion_du_desert.png",
+   "couleur_principale": "#e6c27a",
+   "pieds": "#a8703a",
+   "semelle": "#f3f3f3",
+   "ceinture": "#c9743a",
+   "mains": "#c9743a",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_champion_du_desert__coude_G",
+     "ancre": "coude_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_champion_du_desert__coude_D",
+     "ancre": "coude_D",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_champion_du_desert__torse",
+     "ancre": "torse",
+     "triangles": 308
+    },
+    {
+     "objet": "tenue_champion_du_desert__bassin",
+     "ancre": "bassin",
+     "triangles": 172
+    }
+   ],
+   "triangles": 640,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_gardienne_des_marées_017",
+   "slug": "gardienne_des_marees",
+   "nom": "Gardienne des Marées",
+   "rarete": "epique",
+   "image": "tenues/gardienne_des_marees.png",
+   "couleur_principale": "#2aa8c0",
+   "pieds": "#1f4f7a",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ffffff",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_gardienne_des_marees__bassin",
+     "ancre": "bassin",
+     "triangles": 328
+    },
+    {
+     "objet": "tenue_gardienne_des_marees__torse",
+     "ancre": "torse",
+     "triangles": 396
+    }
+   ],
+   "triangles": 724,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_gardien_de_la_forêt_018",
+   "slug": "gardien_de_la_foret",
+   "nom": "Gardien de la Forêt",
+   "rarete": "rare",
+   "image": "tenues/gardien_de_la_foret.png",
+   "couleur_principale": "#4a7a30",
+   "pieds": "#4a3020",
+   "semelle": "#f3f3f3",
+   "ceinture": "#6b4527",
+   "mains": "#4a3020",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_gardien_de_la_foret__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 144
+    },
+    {
+     "objet": "tenue_gardien_de_la_foret__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 144
+    },
+    {
+     "objet": "tenue_gardien_de_la_foret__bassin",
+     "ancre": "bassin",
+     "triangles": 168
+    }
+   ],
+   "triangles": 456,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_fantôme_du_phare_019",
+   "slug": "fantome_du_phare",
+   "nom": "Fantôme du Phare",
+   "rarete": "epique",
+   "image": "tenues/fantome_du_phare.png",
+   "couleur_principale": "#cfe6f2",
+   "pieds": "#8aa4b8",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8423f",
+   "mains": "#e6f2f8",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_fantome_du_phare__torse",
+     "ancre": "torse",
+     "triangles": 196
+    },
+    {
+     "objet": "tenue_fantome_du_phare__bassin",
+     "ancre": "bassin",
+     "triangles": 180
+    }
+   ],
+   "triangles": 376,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_alchimiste_doré_020",
+   "slug": "alchimiste_dore",
+   "nom": "Alchimiste Doré",
+   "rarete": "legendaire",
+   "image": "tenues/alchimiste_dore.png",
+   "couleur_principale": "#5a2a86",
+   "pieds": "#3a1e4a",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8b93a",
+   "mains": "#e8b93a",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_alchimiste_dore__bassin",
+     "ancre": "bassin",
+     "triangles": 400
+    },
+    {
+     "objet": "tenue_alchimiste_dore__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 24
+    },
+    {
+     "objet": "tenue_alchimiste_dore__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 24
+    }
+   ],
+   "triangles": 448,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_inventeur_farfelu_021",
+   "slug": "inventeur_farfelu",
+   "nom": "Inventeur Farfelu",
+   "rarete": "rare",
+   "image": "tenues/inventeur_farfelu.png",
+   "couleur_principale": "#f2f2ee",
+   "pieds": "#5a3a1e",
+   "semelle": "#f3f3f3",
+   "ceinture": "#3a4252",
+   "mains": "#ffd23f",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_inventeur_farfelu__bassin",
+     "ancre": "bassin",
+     "triangles": 416
+    },
+    {
+     "objet": "tenue_inventeur_farfelu__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 96
+    }
+   ],
+   "triangles": 512,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_facteur_express_022",
+   "slug": "facteur_express",
+   "nom": "Facteur Express",
+   "rarete": "epique",
+   "image": "tenues/facteur_express.png",
+   "couleur_principale": "#2f6fe0",
+   "pieds": "#1d2026",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ffd23f",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_facteur_express__torse",
+     "ancre": "torse",
+     "triangles": 176
+    }
+   ],
+   "triangles": 176,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_patineur_polaire_023",
+   "slug": "patineur_polaire",
+   "nom": "Patineur Polaire",
+   "rarete": "rare",
+   "image": "tenues/patineur_polaire.png",
+   "couleur_principale": "#e9f6ff",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#4f9bff",
+   "mains": "#4f9bff",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_patineur_polaire__genou_G",
+     "ancre": "genou_G",
+     "triangles": 64
+    },
+    {
+     "objet": "tenue_patineur_polaire__genou_D",
+     "ancre": "genou_D",
+     "triangles": 64
+    },
+    {
+     "objet": "tenue_patineur_polaire__coude_D",
+     "ancre": "coude_D",
+     "triangles": 64
+    },
+    {
+     "objet": "tenue_patineur_polaire__coude_G",
+     "ancre": "coude_G",
+     "triangles": 64
+    }
+   ],
+   "triangles": 256,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_musicien_cosmique_024",
+   "slug": "musicien_cosmique",
+   "nom": "Musicien Cosmique",
+   "rarete": "epique",
+   "image": "tenues/musicien_cosmique.png",
+   "couleur_principale": "#3a2a6c",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ff5fd0",
+   "mains": "#1c1436",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_musicien_cosmique__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 214
+    },
+    {
+     "objet": "tenue_musicien_cosmique__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 214
+    },
+    {
+     "objet": "tenue_musicien_cosmique__torse",
+     "ancre": "torse",
+     "triangles": 308
+    }
+   ],
+   "triangles": 736,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_gardien_des_ruines_025",
+   "slug": "gardien_des_ruines",
+   "nom": "Gardien des Ruines",
+   "rarete": "legendaire",
+   "image": "tenues/gardien_des_ruines.png",
+   "couleur_principale": "#b8a07a",
+   "pieds": "#5a4026",
+   "semelle": "#f3f3f3",
+   "ceinture": "#6b4527",
+   "mains": "#d9c7a0",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_gardien_des_ruines__torse",
+     "ancre": "torse",
+     "triangles": 278
+    },
+    {
+     "objet": "tenue_gardien_des_ruines__coude_G",
+     "ancre": "coude_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_gardien_des_ruines__coude_D",
+     "ancre": "coude_D",
+     "triangles": 80
+    }
+   ],
+   "triangles": 438,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_architecte_de_cristal_026",
+   "slug": "architecte_de_cristal",
+   "nom": "Architecte de Cristal",
+   "rarete": "rare",
+   "image": "tenues/architecte_de_cristal.png",
+   "couleur_principale": "#9fd8ff",
+   "pieds": "#5a7aa8",
+   "semelle": "#f3f3f3",
+   "ceinture": "#d8b6ff",
+   "mains": "#bfe9ff",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_architecte_de_cristal__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 108
+    },
+    {
+     "objet": "tenue_architecte_de_cristal__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 108
+    },
+    {
+     "objet": "tenue_architecte_de_cristal__torse",
+     "ancre": "torse",
+     "triangles": 170
+    }
+   ],
+   "triangles": 386,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_rêveur_lunaire_027",
+   "slug": "reveur_lunaire",
+   "nom": "Rêveur Lunaire",
+   "rarete": "epique",
+   "image": "tenues/reveur_lunaire.png",
+   "couleur_principale": "#2a3a7a",
+   "pieds": "#e8d5ae",
+   "semelle": "#c9b48a",
+   "ceinture": "#2a3a7a",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_reveur_lunaire__torse",
+     "ancre": "torse",
+     "triangles": 126
+    }
+   ],
+   "triangles": 126,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_randonneur_volcanique_028",
+   "slug": "randonneur_volcanique",
+   "nom": "Randonneur Volcanique",
+   "rarete": "rare",
+   "image": "tenues/randonneur_volcanique.png",
+   "couleur_principale": "#3a3232",
+   "pieds": "#1a1414",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ff5a3c",
+   "mains": "#2b2424",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_randonneur_volcanique__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 44
+    },
+    {
+     "objet": "tenue_randonneur_volcanique__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 44
+    }
+   ],
+   "triangles": 88,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_sentinelle_de_saphir_029",
+   "slug": "sentinelle_de_saphir",
+   "nom": "Sentinelle de Saphir",
+   "rarete": "epique",
+   "image": "tenues/sentinelle_de_saphir.png",
+   "couleur_principale": "#2f5fd0",
+   "pieds": "#1c2c5a",
+   "semelle": "#f3f3f3",
+   "ceinture": "#dfe6f2",
+   "mains": "#dfe6f2",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_sentinelle_de_saphir__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 250
+    },
+    {
+     "objet": "tenue_sentinelle_de_saphir__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 250
+    },
+    {
+     "objet": "tenue_sentinelle_de_saphir__torse",
+     "ancre": "torse",
+     "triangles": 102
+    },
+    {
+     "objet": "tenue_sentinelle_de_saphir__bassin",
+     "ancre": "bassin",
+     "triangles": 208
+    }
+   ],
+   "triangles": 810,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_corsaire_céleste_030",
+   "slug": "corsaire_celeste",
+   "nom": "Corsaire Céleste",
+   "rarete": "legendaire",
+   "image": "tenues/corsaire_celeste.png",
+   "couleur_principale": "#1c2760",
+   "pieds": "#2a1a10",
+   "semelle": "#f3f3f3",
+   "ceinture": "#b3263a",
+   "mains": "#f6efdc",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_corsaire_celeste__bassin",
+     "ancre": "bassin",
+     "triangles": 492
+    },
+    {
+     "objet": "tenue_corsaire_celeste__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 176
+    },
+    {
+     "objet": "tenue_corsaire_celeste__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 176
+    }
+   ],
+   "triangles": 844,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_vétérinaire_des_dragons_031",
+   "slug": "veterinaire_des_dragons",
+   "nom": "Vétérinaire des Dragons",
+   "rarete": "rare",
+   "image": "tenues/veterinaire_des_dragons.png",
+   "couleur_principale": "#4a7a3a",
+   "pieds": "#5a3a1e",
+   "semelle": "#f3f3f3",
+   "ceinture": "#7a4b24",
+   "mains": "#7a4b24",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_veterinaire_des_dragons__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 144
+    },
+    {
+     "objet": "tenue_veterinaire_des_dragons__torse",
+     "ancre": "torse",
+     "triangles": 76
+    },
+    {
+     "objet": "tenue_veterinaire_des_dragons__bassin",
+     "ancre": "bassin",
+     "triangles": 260
+    }
+   ],
+   "triangles": 480,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_apprenti_météore_032",
+   "slug": "apprenti_meteore",
+   "nom": "Apprenti Météore",
+   "rarete": "epique",
+   "image": "tenues/apprenti_meteore.png",
+   "couleur_principale": "#e86a2a",
+   "pieds": "#2b2424",
+   "semelle": "#f3f3f3",
+   "ceinture": "#2b2424",
+   "mains": "#2b2424",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_apprenti_meteore__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 44
+    },
+    {
+     "objet": "tenue_apprenti_meteore__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 44
+    },
+    {
+     "objet": "tenue_apprenti_meteore__bassin",
+     "ancre": "bassin",
+     "triangles": 164
+    }
+   ],
+   "triangles": 252,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_champion_pixel_033",
+   "slug": "champion_pixel",
+   "nom": "Champion Pixel",
+   "rarete": "rare",
+   "image": "tenues/champion_pixel.png",
+   "couleur_principale": "#7d5fff",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#1d1f2b",
+   "mains": "#ffd23f",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_champion_pixel__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 60
+    },
+    {
+     "objet": "tenue_champion_pixel__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 60
+    }
+   ],
+   "triangles": 120,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_gardienne_des_saisons_034",
+   "slug": "gardienne_des_saisons",
+   "nom": "Gardienne des Saisons",
+   "rarete": "epique",
+   "image": "tenues/gardienne_des_saisons.png",
+   "couleur_principale": "#6fd35a",
+   "pieds": "#8a5a2b",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8b93a",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_gardienne_des_saisons__torse",
+     "ancre": "torse",
+     "triangles": 590
+    }
+   ],
+   "triangles": 590,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_explorateur_miniature_035",
+   "slug": "explorateur_miniature",
+   "nom": "Explorateur Miniature",
+   "rarete": "legendaire",
+   "image": "tenues/explorateur_miniature.png",
+   "couleur_principale": "#a8935a",
+   "pieds": "#5a3a1e",
+   "semelle": "#f3f3f3",
+   "ceinture": "#5a3a1e",
+   "mains": null,
+   "avantbras": "peau",
+   "tibias": "peau",
+   "pieces": [
+    {
+     "objet": "tenue_explorateur_miniature__bassin",
+     "ancre": "bassin",
+     "triangles": 348
+    },
+    {
+     "objet": "tenue_explorateur_miniature__torse",
+     "ancre": "torse",
+     "triangles": 128
+    },
+    {
+     "objet": "tenue_explorateur_miniature__genou_G",
+     "ancre": "genou_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_explorateur_miniature__genou_D",
+     "ancre": "genou_D",
+     "triangles": 80
+    }
+   ],
+   "triangles": 636,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_roi_des_horloges_036",
+   "slug": "roi_des_horloges",
+   "nom": "Roi des Horloges",
+   "rarete": "rare",
+   "image": "tenues/roi_des_horloges.png",
+   "couleur_principale": "#7a4b24",
+   "pieds": "#3a2414",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8b93a",
+   "mains": "#e8b93a",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_roi_des_horloges__torse",
+     "ancre": "torse",
+     "triangles": 60
+    },
+    {
+     "objet": "tenue_roi_des_horloges__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 156
+    },
+    {
+     "objet": "tenue_roi_des_horloges__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 156
+    },
+    {
+     "objet": "tenue_roi_des_horloges__bassin",
+     "ancre": "bassin",
+     "triangles": 252
+    }
+   ],
+   "triangles": 624,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_dresseur_de_nuages_037",
+   "slug": "dresseur_de_nuages",
+   "nom": "Dresseur de Nuages",
+   "rarete": "epique",
+   "image": "tenues/dresseur_de_nuages.png",
+   "couleur_principale": "#cdb8ff",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ffb7d9",
+   "mains": "#ffffff",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_dresseur_de_nuages__torse",
+     "ancre": "torse",
+     "triangles": 448
+    },
+    {
+     "objet": "tenue_dresseur_de_nuages__coude_G",
+     "ancre": "coude_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_dresseur_de_nuages__coude_D",
+     "ancre": "coude_D",
+     "triangles": 80
+    }
+   ],
+   "triangles": 608,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_artiste_des_couleurs_038",
+   "slug": "artiste_des_couleurs",
+   "nom": "Artiste des Couleurs",
+   "rarete": "rare",
+   "image": "tenues/artiste_des_couleurs.png",
+   "couleur_principale": "#f6f4ec",
+   "pieds": "#2f6fe0",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8423f",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_artiste_des_couleurs__bassin",
+     "ancre": "bassin",
+     "triangles": 244
+    },
+    {
+     "objet": "tenue_artiste_des_couleurs__torse",
+     "ancre": "torse",
+     "triangles": 78
+    }
+   ],
+   "triangles": 322,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_gardien_des_récifs_039",
+   "slug": "gardien_des_recifs",
+   "nom": "Gardien des Récifs",
+   "rarete": "epique",
+   "image": "tenues/gardien_des_recifs.png",
+   "couleur_principale": "#1f8fa0",
+   "pieds": "#1f4f5a",
+   "semelle": "#f3f3f3",
+   "ceinture": "#fff4e6",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_gardien_des_recifs__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 130
+    },
+    {
+     "objet": "tenue_gardien_des_recifs__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 130
+    },
+    {
+     "objet": "tenue_gardien_des_recifs__bassin",
+     "ancre": "bassin",
+     "triangles": 224
+    }
+   ],
+   "triangles": 484,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_voyageuse_stellaire_040",
+   "slug": "voyageuse_stellaire",
+   "nom": "Voyageuse Stellaire",
+   "rarete": "legendaire",
+   "image": "tenues/voyageuse_stellaire.png",
+   "couleur_principale": "#eef2f8",
+   "pieds": "#c9d2dc",
+   "semelle": "#f3f3f3",
+   "ceinture": "#8a93a6",
+   "mains": "#c9d2dc",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_voyageuse_stellaire__torse",
+     "ancre": "torse",
+     "triangles": 216
+    },
+    {
+     "objet": "tenue_voyageuse_stellaire__genou_G",
+     "ancre": "genou_G",
+     "triangles": 44
+    },
+    {
+     "objet": "tenue_voyageuse_stellaire__genou_D",
+     "ancre": "genou_D",
+     "triangles": 44
+    },
+    {
+     "objet": "tenue_voyageuse_stellaire__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 96
+    },
+    {
+     "objet": "tenue_voyageuse_stellaire__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 96
+    }
+   ],
+   "triangles": 496,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_chevalier_citron_041",
+   "slug": "chevalier_citron",
+   "nom": "Chevalier Citron",
+   "rarete": "rare",
+   "image": "tenues/chevalier_citron.png",
+   "couleur_principale": "#ffe14a",
+   "pieds": "#c9d2dc",
+   "semelle": "#f3f3f3",
+   "ceinture": "#c9d2dc",
+   "mains": "#c9d2dc",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_chevalier_citron__torse",
+     "ancre": "torse",
+     "triangles": 252
+    },
+    {
+     "objet": "tenue_chevalier_citron__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 214
+    },
+    {
+     "objet": "tenue_chevalier_citron__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 214
+    },
+    {
+     "objet": "tenue_chevalier_citron__bassin",
+     "ancre": "bassin",
+     "triangles": 208
+    }
+   ],
+   "triangles": 888,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_robot_jardinier_042",
+   "slug": "robot_jardinier",
+   "nom": "Robot Jardinier",
+   "rarete": "epique",
+   "image": "tenues/robot_jardinier.png",
+   "couleur_principale": "#5a9a5a",
+   "pieds": "#6a7280",
+   "semelle": "#f3f3f3",
+   "ceinture": "#6a7280",
+   "mains": "#9aa3ad",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_robot_jardinier__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 124
+    },
+    {
+     "objet": "tenue_robot_jardinier__bassin",
+     "ancre": "bassin",
+     "triangles": 284
+    }
+   ],
+   "triangles": 408,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_surfeur_des_dunes_043",
+   "slug": "surfeur_des_dunes",
+   "nom": "Surfeur des Dunes",
+   "rarete": "rare",
+   "image": "tenues/surfeur_des_dunes.png",
+   "couleur_principale": "#ff9a3c",
+   "pieds": "#e8d5ae",
+   "semelle": "#c9743a",
+   "ceinture": "#c9743a",
+   "mains": null,
+   "avantbras": "peau",
+   "tibias": "peau",
+   "pieces": [
+    {
+     "objet": "tenue_surfeur_des_dunes__coude_G",
+     "ancre": "coude_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_surfeur_des_dunes__coude_D",
+     "ancre": "coude_D",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_surfeur_des_dunes__torse",
+     "ancre": "torse",
+     "triangles": 396
+    }
+   ],
+   "triangles": 556,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_mage_des_marées_044",
+   "slug": "mage_des_marees",
+   "nom": "Mage des Marées",
+   "rarete": "epique",
+   "image": "tenues/mage_des_marees.png",
+   "couleur_principale": "#1f4f9a",
+   "pieds": "#1a2a4a",
+   "semelle": "#f3f3f3",
+   "ceinture": "#3fd0c0",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_mage_des_marees__bassin",
+     "ancre": "bassin",
+     "triangles": 328
+    },
+    {
+     "objet": "tenue_mage_des_marees__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 130
+    },
+    {
+     "objet": "tenue_mage_des_marees__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 130
+    },
+    {
+     "objet": "tenue_mage_des_marees__torse",
+     "ancre": "torse",
+     "triangles": 110
+    }
+   ],
+   "triangles": 698,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_gardien_des_lanternes_045",
+   "slug": "gardien_des_lanternes",
+   "nom": "Gardien des Lanternes",
+   "rarete": "legendaire",
+   "image": "tenues/gardien_des_lanternes.png",
+   "couleur_principale": "#8a1f2a",
+   "pieds": "#2a1414",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8b93a",
+   "mains": "#2a1414",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_gardien_des_lanternes__bassin",
+     "ancre": "bassin",
+     "triangles": 336
+    },
+    {
+     "objet": "tenue_gardien_des_lanternes__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 52
+    },
+    {
+     "objet": "tenue_gardien_des_lanternes__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 52
+    }
+   ],
+   "triangles": 440,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_raccommodeur_de_robots_046",
+   "slug": "raccommodeur_de_robots",
+   "nom": "Raccommodeur de Robots",
+   "rarete": "rare",
+   "image": "tenues/raccommodeur_de_robots.png",
+   "couleur_principale": "#7a8494",
+   "pieds": "#2c313b",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ff8a2a",
+   "mains": "#ff8a2a",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_raccommodeur_de_robots__bassin",
+     "ancre": "bassin",
+     "triangles": 520
+    },
+    {
+     "objet": "tenue_raccommodeur_de_robots__torse",
+     "ancre": "torse",
+     "triangles": 316
+    },
+    {
+     "objet": "tenue_raccommodeur_de_robots__genou_G",
+     "ancre": "genou_G",
+     "triangles": 44
+    },
+    {
+     "objet": "tenue_raccommodeur_de_robots__genou_D",
+     "ancre": "genou_D",
+     "triangles": 44
+    }
+   ],
+   "triangles": 924,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_champion_des_flocons_047",
+   "slug": "champion_des_flocons",
+   "nom": "Champion des Flocons",
+   "rarete": "epique",
+   "image": "tenues/champion_des_flocons.png",
+   "couleur_principale": "#3f6fd0",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ffffff",
+   "mains": "#e9f6ff",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_champion_des_flocons__torse",
+     "ancre": "torse",
+     "triangles": 228
+    },
+    {
+     "objet": "tenue_champion_des_flocons__coude_G",
+     "ancre": "coude_G",
+     "triangles": 80
+    },
+    {
+     "objet": "tenue_champion_des_flocons__coude_D",
+     "ancre": "coude_D",
+     "triangles": 80
+    }
+   ],
+   "triangles": 388,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_messager_du_soleil_048",
+   "slug": "messager_du_soleil",
+   "nom": "Messager du Soleil",
+   "rarete": "rare",
+   "image": "tenues/messager_du_soleil.png",
+   "couleur_principale": "#ffb02e",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#ffffff",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_messager_du_soleil__torse",
+     "ancre": "torse",
+     "triangles": 142
+    },
+    {
+     "objet": "tenue_messager_du_soleil__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 24
+    },
+    {
+     "objet": "tenue_messager_du_soleil__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 24
+    }
+   ],
+   "triangles": 190,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_veilleur_des_étoiles_049",
+   "slug": "veilleur_des_etoiles",
+   "nom": "Veilleur des Étoiles",
+   "rarete": "epique",
+   "image": "tenues/veilleur_des_etoiles.png",
+   "couleur_principale": "#232a66",
+   "pieds": "#141a45",
+   "semelle": "#f3f3f3",
+   "ceinture": "#e8b93a",
+   "mains": null,
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_veilleur_des_etoiles__torse",
+     "ancre": "torse",
+     "triangles": 412
+    }
+   ],
+   "triangles": 412,
+   "fichier": "tenues_250_v001.glb"
+  },
+  {
+   "id_catalogue": "natx_tenue_inventrice_arc_en_ciel_050",
+   "slug": "inventrice_arc_en_ciel",
+   "nom": "Inventrice Arc-en-ciel",
+   "rarete": "legendaire",
+   "image": "tenues/inventrice_arc_en_ciel.png",
+   "couleur_principale": "#ff5fd0",
+   "pieds": "#ffffff",
+   "semelle": "#f3f3f3",
+   "ceinture": "#3a4252",
+   "mains": "#ffd23f",
+   "avantbras": "image",
+   "tibias": "image",
+   "pieces": [
+    {
+     "objet": "tenue_inventrice_arc_en_ciel__bassin",
+     "ancre": "bassin",
+     "triangles": 484
+    },
+    {
+     "objet": "tenue_inventrice_arc_en_ciel__torse",
+     "ancre": "torse",
+     "triangles": 316
+    },
+    {
+     "objet": "tenue_inventrice_arc_en_ciel__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 214
+    },
+    {
+     "objet": "tenue_inventrice_arc_en_ciel__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 214
+    }
+   ],
+   "triangles": 1228,
+   "fichier": "tenues_250_v001.glb"
+  }
+ ]
+}

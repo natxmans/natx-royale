@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { creerPersonnage, modelePioche, modeleDeltaplane, animerPersonnage, tenirObjet } from './personnage.js';
 import { modeleObjet } from './armes.js';
+import { creerEsprit, animerEsprit, jouerEsprit } from './esprits.js';
 
 export class Apercu {
   constructor() {
@@ -77,6 +78,7 @@ export class Apercu {
 
   // look = tenue, chapeau… ; cadrage = 'corps' | 'tete' | 'dos' | 'delta' | 'pioche'
   montrer({ couleur, look, numero = 0, cadrage = 'corps', emote = null }) {
+    if (this.esprit) { this.vue.remove(this.esprit); this.esprit = null; }
     if (this.perso) this.vue.remove(this.perso);
     this.perso = creerPersonnage(couleur, null, numero, look);
     this.vue.add(this.perso);
@@ -89,9 +91,31 @@ export class Apercu {
     this.ancienCadrage = cadrage;
   }
 
+  // Page « Esprits » : l'esprit seul sur le podium, avec l'aura de sa rareté
+  montrerEsprit(type, rarete) {
+    if (this.perso) { this.vue.remove(this.perso); this.perso = null; }
+    if (this.esprit) this.vue.remove(this.esprit);
+    this.esprit = creerEsprit(type, 2.6, rarete);
+    this.esprit.position.y = 1.35;
+    this.vue.add(this.esprit);
+    this.cadrage = 'esprit';
+    if (!jouerEsprit(this.esprit, 'content')) jouerEsprit(this.esprit, 'apparaitre');
+  }
+  animerEspritApercu(nom) { return this.esprit ? jouerEsprit(this.esprit, nom) : false; }
+
   rendre(dt) {
-    if (!this.canvas.isConnected || !this.perso || this.canvas.offsetParent === null) return;
+    if (!this.canvas.isConnected || (!this.perso && !this.esprit) || this.canvas.offsetParent === null) return;
     this.redim();
+    if (this.esprit) {
+      if (this.pause > 0) this.pause -= dt; else this.angle += dt * this.vitesseRot * 0.6;
+      this.vue.rotation.y = this.angle + Math.PI;
+      this.camera.position.set(0, 1.8, 5.2);
+      this.camera.lookAt(0, 1.45, 0);
+      this.esprit.position.y = 1.35 + Math.sin(performance.now() / 700) * 0.08;
+      animerEsprit(this.esprit, dt);
+      this.r.render(this.scene, this.camera);
+      return;
+    }
     if (this.pause > 0) this.pause -= dt; else this.angle += dt * this.vitesseRot;
     this.vue.rotation.y = this.angle + Math.PI; // le perso regarde vers -z : on le tourne vers la caméra
     const c = this.cadrage;

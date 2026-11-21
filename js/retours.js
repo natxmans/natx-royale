@@ -6,7 +6,7 @@
 // En local (localhost), le jeu parle au serveur de test http://localhost:8799 à la place.
 const URL_PRODUCTION = 'https://chrysalide.alwaysdata.net/natx/api';
 export const URL_API = ['localhost', '127.0.0.1'].includes(location.hostname) ? `http://${location.hostname}:8799/api` : URL_PRODUCTION;
-export const VERSION_JEU = '0.9';
+export const VERSION_JEU = '0.10';
 
 export const CATEGORIES_AVIS = [
   ['idee', '💡 Idée d\'amélioration'], ['contenu', '✨ Nouveau contenu'], ['gameplay', '🎮 Gameplay'],
@@ -107,6 +107,16 @@ export async function serveursRelais() {
 // ---------- Cadeaux de l'admin, annonce, bonus de pièces ----------
 export const chargerEtatJeu = () => appel('GET', '/jeu');
 export const recupererCadeaux = () => avecJeton(jeton => appel('POST', '/cadeaux', { jeton }));
+// Boîte de réception (le serveur décide de ce qui est livré et note chaque ouverture une seule fois)
+export const recupererBoite = () => avecJeton(jeton => appel('POST', '/boite', { jeton }));
+export const ouvrirCadeauServeur = id => avecJeton(jeton => appel('POST', '/boite/ouvrir', { jeton, id }));
+export const avertissementLu = id => avecJeton(jeton => appel('POST', '/boite/avertissement', { jeton, id }));
+// Ce que le jeu déclare (pseudo, niveau, inventaire…) pour la page « joueurs » de l'admin
+export const envoyerProfil = profil => avecJeton(jeton => appel('POST', '/profil', { jeton, profil }));
+export const signalerJoueur = d => avecJeton(jeton => appel('POST', '/signalements', { jeton, ...d }));
+// Cargaisons : l'hôte demande au serveur ce qu'il y a dedans ; celui qui l'ouvre réclame sa récompense
+export const demanderCargaison = d => avecJeton(jeton => appel('POST', '/cargaison', { jeton, ...d }));
+export const reclamerCargaison = d => avecJeton(jeton => appel('POST', '/cargaison/reclamer', { jeton, ...d }));
 export const utiliserCodeCadeau = code => avecJeton(jeton => appel('POST', '/cadeaux/code', { jeton, code }));
 // Code joueur à donner à l'admin pour recevoir un cadeau perso (8 premiers caractères de l'identité anonyme)
 export async function codeJoueur() {

@@ -174,10 +174,12 @@ function atlasParticules() {
 }
 
 export class Particules {
-  constructor(scene, max = 1500) {
+  // atlas : texture (par défaut les 4 formes dessinées ici) ; grille : cases par côté ;
+  // depuisHaut : cases numérotées depuis le haut-gauche (atlas livré par la session modélisation)
+  constructor(scene, max = 1500, { atlas = null, grille = 2, depuisHaut = false } = {}) {
     this.max = max;
     this.liste = [];
-    const atlas = atlasParticules();
+    atlas = atlas || atlasParticules();
     this.systemes = [false, true].map(additif => {
       const geo = new THREE.BufferGeometry();
       const pos = new Float32Array(max * 3), coul = new Float32Array(max * 3), taille = new Float32Array(max), alpha = new Float32Array(max), forme = new Float32Array(max);
@@ -187,7 +189,7 @@ export class Particules {
       geo.setAttribute('aAlpha', new THREE.BufferAttribute(alpha, 1).setUsage(THREE.DynamicDrawUsage));
       geo.setAttribute('aForme', new THREE.BufferAttribute(forme, 1).setUsage(THREE.DynamicDrawUsage));
       const m = new THREE.ShaderMaterial({
-        uniforms: { uAtlas: { value: atlas }, uEchelle: { value: 400 } },
+        uniforms: { uAtlas: { value: atlas }, uEchelle: { value: 400 }, uGrille: { value: grille }, uHaut: { value: depuisHaut ? 1 : 0 } },
         vertexShader: `
           attribute vec3 aCouleur; attribute float aTaille, aAlpha, aForme;
           uniform float uEchelle;
@@ -199,11 +201,13 @@ export class Particules {
             vCouleur = aCouleur; vAlpha = aAlpha; vForme = aForme;
           }`,
         fragmentShader: `
-          uniform sampler2D uAtlas;
+          uniform sampler2D uAtlas; uniform float uGrille, uHaut;
           varying vec3 vCouleur; varying float vAlpha, vForme;
           void main() {
-            vec2 o = vec2(mod(vForme, 2.0), floor(vForme / 2.0)) * 0.5;
-            vec2 uv = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y) * 0.5 + o;
+            float ligne = floor(vForme / uGrille + 0.001);
+            if (uHaut > 0.5) ligne = uGrille - 1.0 - ligne;
+            vec2 o = vec2(mod(vForme, uGrille), ligne) / uGrille;
+            vec2 uv = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y) / uGrille + o;
             vec4 t = texture2D(uAtlas, uv);
             float a = t.a * vAlpha;
             if (a < 0.01) discard;

@@ -10,6 +10,33 @@ async function optionsPeer() {
   return { debug: 0, config: { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }, ...relais] } };
 }
 
+// PeerJS (sérialisation « json ») refuse tout message de plus de ~16 Ko (« Message too big for JSON channel »)
+// et ferme alors la connexion : c'est ce qui arrivait au message « debut » (≈ 27 Ko avec 39 bots, butin et esprits).
+// Les gros messages sont donc découpés en morceaux de 5 000 caractères (≤ 15 Ko même en UTF-8), recollés à l'arrivée.
+const MORCEAU = 5000;
+let numMorceau = 0;
+function envoyerSur(c, msg, texte = null) {
+  const t = texte || JSON.stringify(msg);
+  if (t.length <= MORCEAU) { c.send(msg); return; }
+  const id = ++numMorceau, n = Math.ceil(t.length / MORCEAU);
+  for (let i = 0; i < n; i++) c.send({ t: '_m', id, i, n, d: t.slice(i * MORCEAU, (i + 1) * MORCEAU) });
+}
+function recolleur() {
+  const enCours = new Map();
+  return (m, suite) => {
+    if (!m || m.t !== '_m') { suite(m); return; }
+    if (!Number.isInteger(m.n) || m.n < 1 || m.n > 400 || !Number.isInteger(m.i) || m.i < 0 || m.i >= m.n || typeof m.d !== 'string') return;
+    let r = enCours.get(m.id);
+    if (!r) { r = { n: m.n, parts: new Array(m.n), recus: 0 }; enCours.set(m.id, r); if (enCours.size > 20) enCours.delete(enCours.keys().next().value); }
+    if (r.parts[m.i] === undefined) { r.parts[m.i] = m.d; r.recus++; }
+    if (r.recus < r.n) return;
+    enCours.delete(m.id);
+    let msg;
+    try { msg = JSON.parse(r.parts.join('')); } catch (e) { return; }
+    suite(msg);
+  };
+}
+
 export class Reseau {
   constructor() {
     this.peer = null;
@@ -43,7 +70,8 @@ export class Reseau {
       peer.on('connection', conn => {
         conn.on('open', () => {
           this.conns.set(conn.peer, conn);
-          conn.on('data', d => this.surMessageHote(conn.peer, d));
+          const recoller = recolleur();
+          conn.on('data', d => recoller(d, m => this.surMessageHote(conn.peer, m)));
         });
         conn.on('close', () => { this.conns.delete(conn.peer); this.surDepart(conn.peer); });
         conn.on('error', () => { this.conns.delete(conn.peer); this.surDepart(conn.peer); });
@@ -74,7 +102,8 @@ export class Reseau {
         const conn = peer.connect(PREFIXE + code, { reliable: true, serialization: 'json' });
         this.connHote = conn;
         conn.on('open', () => { clearTimeout(minuteur); this.code = code; ok(id); });
-        conn.on('data', d => this.surMessageClient(d));
+        const recoller = recolleur();
+        conn.on('data', d => recoller(d, m => this.surMessageClient(m)));
         conn.on('close', () => this.surPerteHote());
       });
     });
@@ -83,12 +112,13 @@ export class Reseau {
   // Invité → hôte (ou directement en local si on est l'hôte)
   versHote(msg) {
     if (this.estHote) { queueMicrotask(() => this.surMessageHote(this.monId, msg)); return; }
-    if (this.connHote && this.connHote.open) this.connHote.send(msg);
+    if (this.connHote && this.connHote.open) envoyerSur(this.connHote, msg);
   }
 
   // Hôte → tout le monde (lui compris)
   diffuser(msg) {
-    for (const c of this.conns.values()) if (c.open) c.send(msg);
+    let texte = null;
+    for (const c of this.conns.values()) if (c.open) { texte = texte || JSON.stringify(msg); envoyerSur(c, msg, texte); }
     queueMicrotask(() => this.surMessageClient(msg));
   }
 
@@ -96,7 +126,7 @@ export class Reseau {
   envoyerA(id, msg) {
     if (id === this.monId) { queueMicrotask(() => this.surMessageClient(msg)); return; }
     const c = this.conns.get(id);
-    if (c && c.open) c.send(msg);
+    if (c && c.open) envoyerSur(c, msg);
   }
 
   // Hôte : met un joueur à la porte

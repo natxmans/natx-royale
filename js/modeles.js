@@ -4,11 +4,12 @@
 // Si un fichier manque ou ne charge pas, le jeu garde ses modèles faits en code.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { activerCosmetiques } from './boutique.js';
 
 const VERSION = 2; // à augmenter quand un .glb change (évite le vieux cache du navigateur)
 const BIBLIO = {};           // nom de l'objet → Object3D (modèle d'origine, jamais affiché)
 const ANIMATIONS = {};       // nom de l'animation → AnimationClip (ex. soin_flotter, socle_tourner)
-export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [] };
+export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [], cosmetiques250: [], cargaisons: [] };
 const chargeur = new GLTFLoader();
 const dejaCharges = new Map(); // un fichier partagé (ex. esprits_v001.glb) n'est chargé qu'une fois
 
@@ -20,6 +21,7 @@ function chargerFichier(fichier, prefixe = '') {
       gltf.scene.updateMatrixWorld(true);
       for (const o of [...gltf.scene.children]) BIBLIO[prefixe + (o.userData.name || o.name)] = o;
       for (const a of gltf.animations || []) ANIMATIONS[a.name] = a;
+      appliquerAlias();
       resolve(gltf.scene);
     }, undefined, err => { console.warn(`Modèle ${fichier} pas chargé, on garde les modèles en code`, err?.message || err); resolve(null); });
   });
@@ -46,8 +48,30 @@ async function chargerIntegration() {
     const scene = await chargerFichier(a.fichier, 'arme:' + a.id + ':');
     if (scene) INTEGRATION.armes.push({ ...a, scene });
   }
+  // Les 250 nouveaux cosmétiques : chaque livraison validée liste ses objets (« chapeau_capuche_nuageuse »…).
+  // Ils sont en vente tout de suite ; les fichiers (.glb, images) ne sont chargés qu'au moment où on en a besoin.
+  // Tenues, émotes et traînées ont en plus une fiche JSON (image à plaquer, durée du clip, réglages des particules).
+  for (const e of man.cosmetiques250 || []) {
+    if (!e.actif || !e.fichier || !Array.isArray(e.objets)) continue;
+    const pref = e.categorie + '_';
+    let slugs = e.objets.map(o => (o.startsWith(pref) ? o.slice(pref.length) : o));
+    if (FICHES[e.categorie]) {
+      let doc = null;
+      try { const r = await fetch(`modeles/${e.fiche}?v=${VERSION}`); if (r.ok) doc = await r.json(); } catch (err) { doc = null; }
+      const liste = doc && (doc.tenues || doc.emotes || doc.trainees);
+      if (!Array.isArray(liste)) { console.warn('Fiche illisible :', e.fiche); continue; }
+      const parSlug = new Map(liste.map(f => [f.slug, f]));
+      slugs = slugs.filter(sl => parSlug.has(sl));
+      for (const sl of slugs) {
+        FICHES[e.categorie].set(sl, { ...parSlug.get(sl), fichier: e.fichier, cases: doc.cases, atlas: doc.atlas, colonnes: doc.colonnes, texture: null });
+      }
+    } else if (!CATEGORIES_MODELE.has(e.categorie)) continue;
+    INTEGRATION.cosmetiques250.push(e);
+    for (const sl of slugs) fichierDe.set(e.categorie + ':' + sl, e.fichier);
+    activerCosmetiques(slugs.map(sl => e.categorie + ':' + sl));
+  }
   // Esprits et autels : les objets gardent leur nom (esprit_soin, socle_esprit…) pour modeleGlb()
-  for (const cle of ['esprits', 'socles', 'lod', 'mannequins']) {
+  for (const cle of ['esprits', 'socles', 'lod', 'mannequins', 'cargaisons']) {
     for (const e of man[cle] || []) {
       if (!e.actif || !e.fichier) continue;
       const scene = await chargerFichier(e.fichier);
@@ -64,6 +88,75 @@ export const modelesDecorPrets = Promise.all([
 ]);
 
 export const aModele = nom => !!BIBLIO[nom];
+
+// ---------- Cosmétiques chargés à la demande ----------
+// chapeau, dos, pioche, deltaplane : un objet <categorie>_<slug> dans un .glb, affiché tel quel
+const CATEGORIES_MODELE = new Set(['chapeau', 'dos', 'pioche', 'deltaplane']);
+// tenue (image 256² + pièces 3D), emote (clip d'animation), trainee (case d'un atlas + réglages) : fiche JSON
+const FICHES = { tenue: new Map(), emote: new Map(), trainee: new Map() };
+const fichierDe = new Map(); // « chapeau:capuche_nuageuse » → « cosm250_chapeaux_v001.glb »
+const textures = new Map();
+const chargeurTex = new THREE.TextureLoader();
+function chargerTexture(chemin) {
+  if (!textures.has(chemin)) {
+    textures.set(chemin, chargeurTex.loadAsync(`modeles/${chemin}?v=${VERSION}`)
+      .then(t => { t.colorSpace = THREE.SRGBColorSpace; return t; })
+      .catch(err => { console.warn('Image pas chargée :', chemin, err?.message || err); return null; }));
+  }
+  return textures.get(chemin);
+}
+const ficheDe = cle => { const [c, s] = cle.split(':'); return FICHES[c] ? FICHES[c].get(s) : null; };
+function fichePrete(cat, f) {
+  if (cat === 'tenue') return !!f.texture && (f.pieces || []).every(p => BIBLIO[p.objet]);
+  if (cat === 'emote') return !!ANIMATIONS[f.clip];
+  return !!f.texture;
+}
+export function cosmetiquePret(cle) {
+  const f = ficheDe(cle);
+  if (f) return fichePrete(cle.split(':')[0], f);
+  return !fichierDe.has(cle) || !!BIBLIO[cle.replace(':', '_')];
+}
+// Fiches prêtes à l'emploi (null tant que l'image / le clip n'est pas chargé : le jeu garde l'objet de base)
+export const ficheTenue = slug => { const f = FICHES.tenue.get(slug); return f && fichePrete('tenue', f) ? f : null; };
+export const ficheEmote = slug => { const f = FICHES.emote.get(slug); return f && fichePrete('emote', f) ? f : null; };
+export const ficheTrainee = slug => { const f = FICHES.trainee.get(slug); return f && fichePrete('trainee', f) ? f : null; };
+function chargerFiche(cat, f) {
+  if (cat === 'tenue') {
+    return Promise.all([(f.pieces || []).length ? chargerFichier(f.fichier) : null,
+      chargerTexture(f.image).then(t => { f.texture = t; })]);
+  }
+  if (cat === 'emote') return chargerFichier(f.fichier);
+  return chargerTexture(f.atlas || f.fichier).then(t => { f.texture = t; });
+}
+export function chargerCosmetiques(cles) {
+  const taches = new Map();
+  for (const cle of cles) {
+    if (cosmetiquePret(cle)) continue;
+    const f = ficheDe(cle);
+    if (f) taches.set(cle, chargerFiche(cle.split(':')[0], f));
+    else if (fichierDe.has(cle)) taches.set(fichierDe.get(cle), chargerFichier(fichierDe.get(cle)));
+  }
+  return Promise.all(taches.values());
+}
+// Cosmétiques ajoutés par l'admin : un nouveau nom pour un modèle livré pas encore utilisé
+const alias = new Map(); // « chapeau_nouveau » → « chapeau_objet_livre »
+function appliquerAlias() { for (const [nom, obj] of alias) if (!BIBLIO[nom] && BIBLIO[obj]) BIBLIO[nom] = BIBLIO[obj]; }
+export function enregistrerAjouts(liste) {
+  const cles = [];
+  for (const a of Array.isArray(liste) ? liste : []) {
+    if (!a || !CATEGORIES_MODELE.has(a.cat) || typeof a.fichier !== 'string' || typeof a.objet !== 'string') continue;
+    fichierDe.set(a.cat + ':' + a.id, a.fichier);
+    alias.set(a.cat + '_' + a.id, a.objet);
+    cles.push(a.cat + ':' + a.id);
+  }
+  appliquerAlias();
+  return cles;
+}
+// Après le démarrage : on charge en douce tout ce qui est livré (pour les potes et les bots qui portent ces objets)
+export function prechargerCosmetiques() {
+  const cles = [...fichierDe.keys()];
+  return chargerCosmetiques(cles);
+}
 
 // Matériaux qui doivent briller (bloom) : néons, flammes, cristal, auréole…
 const LUMINEUX = /^(neon_|aureole|flamme|yeux_rouges|yeux_dragon|cristal|lumiere|taches_lumineuses|eau_soin|bouton_)/;

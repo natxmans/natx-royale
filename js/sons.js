@@ -77,6 +77,13 @@ export function son(nom, vol = 1) {
     case 'saut': rafale(0.4, 500, 0.5, 0.3 * vol); break;
     case 'zone': bip(110, 0.6, 0.2 * vol, 'sawtooth', 80); break;
     case 'clic': bip(800, 0.04, 0.1 * vol, 'square'); break;
+    case 'esprit_soin': [523, 659, 784].forEach((f, i) => plus(i * 90, () => bip(f, 0.3, 0.09 * vol, 'sine', f * 1.02))); break;
+    case 'esprit_mobilite': rafale(0.35, 2400, 1.6, 0.18 * vol, 'bandpass'); bip(600, 0.25, 0.08 * vol, 'sine', 1500); break;
+    case 'esprit_protection': bip(330, 0.6, 0.12 * vol, 'triangle'); plus(60, () => bip(495, 0.5, 0.08 * vol, 'triangle')); break;
+    case 'esprit_vision': bip(880, 0.45, 0.08 * vol, 'sine', 620); plus(200, () => bip(1320, 0.3, 0.05 * vol, 'sine', 990)); break;
+    case 'esprit_batisseur': bip(220, 0.06, 0.15 * vol, 'square', 140); plus(130, () => bip(220, 0.06, 0.15 * vol, 'square', 140)); plus(280, () => bip(1046, 0.25, 0.08 * vol, 'triangle')); break;
+    case 'esprit_rare': [1568, 2093, 2637].forEach((f, i) => plus(i * 60, () => bip(f, 0.18, 0.035 * vol, 'sine'))); break;
+    case 'cadeau': bip(1046, 0.12, 0.05 * vol, 'sine'); plus(110, () => bip(1397, 0.12, 0.045 * vol, 'sine')); plus(220, () => bip(2093, 0.22, 0.03 * vol, 'sine')); break;
     case 'message': bip(1180, 0.07, 0.08 * vol, 'sine'); plus(80, () => bip(1560, 0.09, 0.08 * vol, 'sine')); break;
     case 'arrivee': bip(660, 0.1, 0.12 * vol, 'triangle'); plus(110, () => bip(880, 0.16, 0.12 * vol, 'triangle')); break;
     case 'coeur': bip(62, 0.13, 0.4 * vol, 'sine', 40); plus(170, () => bip(55, 0.16, 0.32 * vol, 'sine', 38)); break;

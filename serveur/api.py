@@ -4,7 +4,8 @@
 Uniquement la bibliothèque standard de Python (3.9 ou plus) : WSGI + SQLite.
 
   Lancer en local (tests) :      python serveur/api.py serve 8799 [/prefixe]
-  Créer un compte admin :        python serveur/api.py creer-admin <identifiant>
+  Créer un compte admin :        python serveur/api.py creer-admin <identifiant> [--role super_admin|admin|moderateur|boutique|evenements]
+  Sauvegarder la base :          python serveur/api.py sauvegarder
   En ligne (hébergeur Python) :  serveur/wsgi.py expose « application »
 
 Variables d'environnement (voir serveur/LISEZMOI.md) :
@@ -42,7 +43,7 @@ PREFIXE = os.environ.get('NATX_PREFIXE', '').strip().rstrip('/')
 if PREFIXE and not PREFIXE.startswith('/'):
     PREFIXE = '/' + PREFIXE
 COOKIE_SECURE = os.environ.get('NATX_HTTPS') == '1'
-VERSION_API = 2
+VERSION_API = 3
 DUREE_SESSION = 12 * 3600
 
 CATEGORIES = {
@@ -87,6 +88,52 @@ CREATE TABLE IF NOT EXISTS cadeaux (
 CREATE TABLE IF NOT EXISTS cadeaux_recus (
   cadeau_id INTEGER NOT NULL, joueur_id TEXT NOT NULL, recu_le INTEGER NOT NULL, PRIMARY KEY (cadeau_id, joueur_id));
 CREATE TABLE IF NOT EXISTS reglages_jeu (cle TEXT PRIMARY KEY, valeur TEXT NOT NULL, maj_le INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS connexions_admin (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id INTEGER, identifiant TEXT, ok INTEGER NOT NULL, ip_hash TEXT,
+  navigateur TEXT, cree_le INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS actions_faites (cle TEXT PRIMARY KEY, cree_le INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS mesures (
+  heure TEXT PRIMARY KEY, requetes INTEGER NOT NULL DEFAULT 0, erreurs INTEGER NOT NULL DEFAULT 0,
+  refus INTEGER NOT NULL DEFAULT 0, total_ms INTEGER NOT NULL DEFAULT 0, max_ms INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS erreurs (id INTEGER PRIMARY KEY AUTOINCREMENT, cree_le INTEGER NOT NULL, route TEXT, type TEXT, message TEXT);
+CREATE TABLE IF NOT EXISTS connexions_joueurs (
+  joueur_id TEXT NOT NULL, jour TEXT NOT NULL, premiere INTEGER NOT NULL, derniere INTEGER NOT NULL, nb INTEGER NOT NULL DEFAULT 1,
+  PRIMARY KEY (joueur_id, jour));
+CREATE TABLE IF NOT EXISTS profils (
+  joueur_id TEXT PRIMARY KEY, pseudo TEXT, niveau INTEGER, xp INTEGER, pieces INTEGER, possedes TEXT, equipe TEXT,
+  esprits TEXT, stats TEXT, version TEXT, maj_le INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS profils_pseudo ON profils(pseudo);
+CREATE TABLE IF NOT EXISTS sanctions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, joueur_id TEXT NOT NULL, type TEXT NOT NULL, motif TEXT NOT NULL,
+  debut INTEGER NOT NULL, fin INTEGER, admin_id INTEGER, leve_le INTEGER, leve_par INTEGER, leve_motif TEXT, vu_le INTEGER);
+CREATE INDEX IF NOT EXISTS sanctions_joueur ON sanctions(joueur_id);
+CREATE TABLE IF NOT EXISTS signalements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, cree_le INTEGER NOT NULL, auteur_id TEXT NOT NULL, cible_id TEXT, cible_pseudo TEXT,
+  partie_id TEXT, motif TEXT NOT NULL, texte TEXT, statut TEXT NOT NULL DEFAULT 'nouveau', traite_par INTEGER, traite_le INTEGER, note TEXT);
+CREATE TABLE IF NOT EXISTS cosmetiques_reglages (
+  cle TEXT PRIMARY KEY, nom TEXT, description TEXT, rarete TEXT, prix INTEGER, en_vente INTEGER, collection INTEGER,
+  maj_le INTEGER NOT NULL, maj_par INTEGER);
+CREATE TABLE IF NOT EXISTS cosmetiques_ajouts (
+  cle TEXT PRIMARY KEY, cat TEXT NOT NULL, id TEXT NOT NULL, nom TEXT NOT NULL, description TEXT, rarete TEXT NOT NULL,
+  prix INTEGER, fichier TEXT NOT NULL, objet TEXT NOT NULL, actif INTEGER NOT NULL DEFAULT 1, cree_le INTEGER NOT NULL, cree_par INTEGER);
+CREATE TABLE IF NOT EXISTS promotions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT NOT NULL, reduction INTEGER NOT NULL, cible_type TEXT NOT NULL,
+  cible_valeurs TEXT NOT NULL DEFAULT '[]', debut INTEGER NOT NULL, fin INTEGER NOT NULL, actif INTEGER NOT NULL DEFAULT 1,
+  cree_le INTEGER NOT NULL, cree_par INTEGER);
+CREATE TABLE IF NOT EXISTS esprits_reglages (
+  type TEXT PRIMARY KEY, actif INTEGER NOT NULL DEFAULT 1, poids INTEGER NOT NULL DEFAULT 10, description TEXT,
+  maj_le INTEGER NOT NULL, maj_par INTEGER);
+CREATE TABLE IF NOT EXISTS esprits_obtenus (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, joueur_id TEXT NOT NULL, type TEXT NOT NULL, rarete TEXT NOT NULL,
+  source TEXT NOT NULL, cree_le INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS evenements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT NOT NULL DEFAULT 'cargaison', nom TEXT NOT NULL, description TEXT,
+  debut INTEGER NOT NULL, fin INTEGER NOT NULL, actif INTEGER NOT NULL DEFAULT 1, config TEXT NOT NULL DEFAULT '{}',
+  cree_le INTEGER NOT NULL, cree_par INTEGER, maj_le INTEGER);
+CREATE TABLE IF NOT EXISTS cargaisons (
+  id TEXT PRIMARY KEY, evenement_id INTEGER, partie_id TEXT NOT NULL, hote_id TEXT NOT NULL, cree_le INTEGER NOT NULL,
+  ouvrable_le INTEGER NOT NULL, expire_le INTEGER NOT NULL, recompense TEXT NOT NULL, reclame_par TEXT, reclame_le INTEGER, cadeau_id INTEGER);
+CREATE INDEX IF NOT EXISTS cargaisons_partie ON cargaisons(partie_id);
 """
 CIBLES = {'tous', 'joueur', 'code'}
 STYLES_ANNONCE = {'info', 'evenement', 'alerte'}
@@ -144,8 +191,47 @@ def connexion():
                 db.execute('ALTER TABLE joueurs ADD COLUMN bloque INTEGER NOT NULL DEFAULT 0')
             if 'vu_le' not in colonnes:
                 db.execute('ALTER TABLE joueurs ADD COLUMN vu_le INTEGER')
+            if 'ref' not in colonnes:
+                db.execute('ALTER TABLE joueurs ADD COLUMN ref TEXT')
+            migrer(db)
             _schema_ok = True
     return db
+
+
+def colonnes_de(db, table):
+    return {r[1] for r in db.execute(f'PRAGMA table_info({table})')}
+
+
+def ajouter_colonnes(db, table, colonnes):
+    deja = colonnes_de(db, table)
+    nouvelles = [c for c in colonnes if c.split()[0] not in deja]
+    for c in nouvelles:
+        db.execute(f'ALTER TABLE {table} ADD COLUMN {c}')
+    return [c.split()[0] for c in nouvelles]
+
+
+def migrer(db):
+    """Mise à niveau d'une base existante : on ajoute, on ne supprime jamais rien."""
+    nouvelles = ajouter_colonnes(db, 'cadeaux_recus', ['ouvert_le INTEGER', 'annule_le INTEGER', 'remplace_par INTEGER'])
+    if 'ouvert_le' in nouvelles:
+        # avant la boîte de réception, un cadeau livré était ouvert tout de suite par le jeu
+        db.execute('UPDATE cadeaux_recus SET ouvert_le = recu_le WHERE ouvert_le IS NULL')
+    ajouter_colonnes(db, 'cadeaux', ["expediteur TEXT", "origine TEXT NOT NULL DEFAULT 'admin'", 'esprit TEXT'])
+    ajouter_colonnes(db, 'admins', ['actif INTEGER NOT NULL DEFAULT 1', 'doit_changer_mdp INTEGER NOT NULL DEFAULT 0',
+                                    'cree_par INTEGER', 'derniere_connexion INTEGER'])
+    ajouter_colonnes(db, 'sessions', ['ip_hash TEXT', 'navigateur TEXT', 'vu_le INTEGER'])
+    ajouter_colonnes(db, 'journal', ['categorie TEXT', 'cible TEXT', 'details TEXT', 'ip_hash TEXT'])
+    # rôles : le tout premier compte (celui de Nathan) devient super administrateur s'il n'y en a pas encore
+    if not db.execute("SELECT 1 FROM admins WHERE role='super_admin'").fetchone():
+        premier = db.execute('SELECT id FROM admins ORDER BY id LIMIT 1').fetchone()
+        if premier:
+            db.execute("UPDATE admins SET role='super_admin' WHERE id=?", (premier['id'],))
+    # ancien « joueur bloqué » → sanctions muet + cadeaux (mêmes effets qu'avant), sans limite de durée
+    for l in db.execute('SELECT id FROM joueurs WHERE bloque=1').fetchall():
+        for type_ in ('muet', 'cadeaux'):
+            db.execute('INSERT INTO sanctions(joueur_id, type, motif, debut) VALUES (?,?,?,?)',
+                       (l['id'], type_, "Blocage fait avec l'ancien panel", maintenant()))
+        db.execute('UPDATE joueurs SET bloque=0 WHERE id=?', (l['id'],))
 
 
 def hacher_ip(ip):
@@ -234,13 +320,40 @@ def formater_code(code):
 
 
 def joueur_vu(db, jid):
-    db.execute('UPDATE joueurs SET vu_le=? WHERE id=?', (maintenant(), jid))
+    t = maintenant()
+    db.execute('UPDATE joueurs SET vu_le=? WHERE id=?', (t, jid))
+    # historique des connexions : une ligne par jour et par joueur
+    db.execute("""INSERT INTO connexions_joueurs(joueur_id, jour, premiere, derniere, nb) VALUES (?, date(?, 'unixepoch'), ?, ?, 1)
+        ON CONFLICT(joueur_id, jour) DO UPDATE SET derniere=excluded.derniere,
+        nb = nb + CASE WHEN excluded.derniere - derniere > 1800 THEN 1 ELSE 0 END""", (jid, t, t, t))
+
+
+TYPES_SANCTIONS = {
+    'avertissement': 'Avertissement (message au joueur)',
+    'muet': "Muet : plus d'avis, de votes ni de signalements",
+    'cadeaux': 'Privé de cadeaux, de codes et de cargaisons',
+    'suspension': 'Compte suspendu : tout le serveur + parties en ligne',
+}
+
+
+def sanction_active(db, jid, types):
+    t = maintenant()
+    marques = ','.join('?' * len(types))
+    return db.execute(f"""SELECT * FROM sanctions WHERE joueur_id=? AND type IN ({marques}) AND leve_le IS NULL AND debut <= ?
+        AND (fin IS NULL OR fin > ?) ORDER BY COALESCE(fin, 9999999999) DESC LIMIT 1""", (jid, *types, t, t)).fetchone()
+
+
+def texte_fin(fin):
+    return 'sans limite de durée' if not fin else 'jusqu\'au ' + time.strftime('%d/%m/%Y %H:%M', time.localtime(fin))
 
 
 def pas_bloque(db, jid):
     l = db.execute('SELECT bloque FROM joueurs WHERE id=?', (jid,)).fetchone()
     if l and l['bloque']:
         raise Erreur(403, 'Ce compte ne peut plus envoyer d\'avis ni voter.')
+    s = sanction_active(db, jid, ('muet', 'suspension'))
+    if s:
+        raise Erreur(403, f"Ton compte ne peut plus envoyer d'avis ni voter ({texte_fin(s['fin'])}). Motif : {s['motif']}")
 
 
 def lire_reglage(db, cle):
@@ -255,12 +368,24 @@ def ecrire_reglage(db, cle, valeur):
     db.execute('INSERT OR REPLACE INTO reglages_jeu(cle, valeur, maj_le) VALUES (?,?,?)', (cle, json.dumps(valeur, ensure_ascii=False), maintenant()))
 
 
+EXPEDITEUR_DEFAUT = "L'équipe NATX ROYALE"
+
+
 def contenu_cadeau(l):
     try:
         objets = json.loads(l['objets'] or '[]')
     except ValueError:
         objets = []
-    return {'id': l['id'], 'titre': l['titre'], 'message': l['message'] or '', 'pieces': l['pieces'], 'objets': objets}
+    cles = l.keys()
+    esprit = None
+    if 'esprit' in cles and l['esprit']:
+        try:
+            esprit = json.loads(l['esprit'])
+        except ValueError:
+            esprit = None
+    return {'id': l['id'], 'titre': l['titre'], 'message': l['message'] or '', 'pieces': l['pieces'], 'objets': objets,
+            'expediteur': (l['expediteur'] if 'expediteur' in cles else None) or EXPEDITEUR_DEFAUT,
+            'origine': (l['origine'] if 'origine' in cles else None) or 'admin', 'esprit': esprit}
 
 
 def limite(db, cle, maxi, fenetre):
@@ -536,7 +661,7 @@ def api_cadeaux(req, db):
         raise Erreur(429, 'Trop de demandes, réessaie plus tard.')
     joueur_vu(db, jid)
     l = db.execute('SELECT bloque FROM joueurs WHERE id=?', (jid,)).fetchone()
-    if l and l['bloque']:
+    if (l and l['bloque']) or sanction_active(db, jid, ('cadeaux', 'suspension')):
         return 200, {'cadeaux': []}
     t = maintenant()
     lignes = db.execute("""SELECT * FROM cadeaux c WHERE c.actif=1 AND (c.expire_le IS NULL OR c.expire_le > ?)
@@ -545,7 +670,7 @@ def api_cadeaux(req, db):
     donnes = []
     for l in lignes:
         # INSERT OR IGNORE : si le jeu est ouvert deux fois en même temps, le cadeau n'est donné qu'une fois
-        if db.execute('INSERT OR IGNORE INTO cadeaux_recus(cadeau_id, joueur_id, recu_le) VALUES (?,?,?)', (l['id'], jid, t)).rowcount:
+        if db.execute('INSERT OR IGNORE INTO cadeaux_recus(cadeau_id, joueur_id, recu_le, ouvert_le) VALUES (?,?,?,?)', (l['id'], jid, t, t)).rowcount:
             donnes.append(contenu_cadeau(l))
     return 200, {'cadeaux': donnes}
 
@@ -555,6 +680,9 @@ def api_code_cadeau(req, db):
     d = req.json()
     jid = joueur_obligatoire(req, d)
     pas_bloque(db, jid)
+    s = sanction_active(db, jid, ('cadeaux',))
+    if s:
+        raise Erreur(403, f"Ton compte ne peut plus recevoir de cadeaux ({texte_fin(s['fin'])}).")
     # contre ceux qui essaient des codes au hasard
     if not limite(db, 'code:' + jid, 8, 600) or not limite(db, 'code:ip:' + req.ip_hash, 20, 600):
         raise Erreur(429, 'Trop d\'essais. Attends 10 minutes.')
@@ -570,7 +698,8 @@ def api_code_cadeau(req, db):
             raise Erreur(409, 'Tu as déjà utilisé ce code !')
         if l['max_utilisations'] and db.execute('SELECT COUNT(*) FROM cadeaux_recus WHERE cadeau_id=?', (l['id'],)).fetchone()[0] >= l['max_utilisations']:
             raise Erreur(410, 'Ce code a déjà été utilisé le nombre de fois prévu.')
-        db.execute('INSERT INTO cadeaux_recus(cadeau_id, joueur_id, recu_le) VALUES (?,?,?)', (l['id'], jid, maintenant()))
+        t = maintenant()
+        db.execute('INSERT INTO cadeaux_recus(cadeau_id, joueur_id, recu_le, ouvert_le) VALUES (?,?,?,?)', (l['id'], jid, t, t))
         db.execute('COMMIT')
     except BaseException:
         db.execute('ROLLBACK')
@@ -580,21 +709,91 @@ def api_code_cadeau(req, db):
 
 
 # ---------------------------------------------------------------- espace admin
-def session_admin(req, db, ecriture=False):
+ROLES = {
+    'super_admin': 'Super administrateur', 'admin': 'Administrateur', 'moderateur': 'Modérateur',
+    'boutique': 'Gestionnaire de boutique', 'evenements': "Gestionnaire d'événements",
+}
+_TOUS = set(ROLES)
+_S, _A, _M, _B, _E = 'super_admin', 'admin', 'moderateur', 'boutique', 'evenements'
+PERMISSIONS = {
+    'tableau': _TOUS,
+    'retours': {_S, _A, _M},
+    'joueurs.voir': {_S, _A, _M},
+    'joueurs.sanctionner': {_S, _A, _M},
+    'signalements': {_S, _A, _M},
+    'cadeaux.voir': {_S, _A, _B},
+    'cadeaux.creer': {_S, _A, _B},
+    'cadeaux.reparer': {_S, _A},
+    'cadeaux.supprimer': {_S, _A},
+    'cosmetiques.voir': {_S, _A, _B, _E},
+    'cosmetiques.modifier': {_S, _A, _B},
+    'boutique.modifier': {_S, _A, _B},
+    'annonce': {_S, _A, _E},
+    'esprits.voir': {_S, _A, _E},
+    'esprits.modifier': {_S, _A, _E},
+    'evenements.voir': {_S, _A, _E},
+    'evenements.modifier': {_S, _A, _E},
+    'journal': {_S, _A},
+    'admins.voir': {_S, _A},
+    'admins.gerer': {_S},
+    'sauvegardes.voir': {_S, _A},
+    'sauvegardes.creer': {_S, _A},
+    'sauvegardes.restaurer': {_S},
+    'serveur': {_S, _A},
+}
+INACTIVITE_SESSION = 2 * 3600  # sans rien faire pendant 2 h : déconnecté
+
+
+def permissions_de(role):
+    return sorted(p for p, roles in PERMISSIONS.items() if role in roles)
+
+
+def session_admin(req, db, ecriture=False, permission=None, libre=False):
+    """Vérifie la session ET le droit demandé (permission = nom ou tuple de noms : un seul suffit)."""
     jeton = req.cookie('natx_admin')
     if not jeton:
         raise Erreur(401, 'Connexion nécessaire.')
     h = hashlib.sha256(jeton.encode()).hexdigest()
-    s = db.execute('SELECT s.admin_id, s.csrf, s.expire_le, a.identifiant, a.role FROM sessions s JOIN admins a ON a.id = s.admin_id WHERE s.jeton_hash=?', (h,)).fetchone()
-    if not s or s['expire_le'] < maintenant():
+    s = db.execute("""SELECT s.jeton_hash, s.admin_id, s.csrf, s.expire_le, s.vu_le, a.identifiant, a.role, a.actif, a.doit_changer_mdp
+        FROM sessions s JOIN admins a ON a.id = s.admin_id WHERE s.jeton_hash=?""", (h,)).fetchone()
+    t = maintenant()
+    if not s or s['expire_le'] < t or (s['vu_le'] and t - s['vu_le'] > INACTIVITE_SESSION) or not s['actif']:
         if s:
             db.execute('DELETE FROM sessions WHERE jeton_hash=?', (h,))
         raise Erreur(401, 'Session expirée, reconnecte-toi.')
-    if s['role'] != 'admin':
+    if s['role'] not in ROLES:
         raise Erreur(403, 'Accès refusé.')
     if ecriture and not hmac.compare_digest(req.entete('X-CSRF') or '', s['csrf']):
         raise Erreur(403, 'Requête refusée (jeton de sécurité manquant).')
+    if s['doit_changer_mdp'] and not libre:
+        raise Erreur(403, 'Change d\'abord ton mot de passe provisoire (menu « Mon compte »).')
+    if permission:
+        demandees = (permission,) if isinstance(permission, str) else permission
+        if not any(s['role'] in PERMISSIONS[p] for p in demandees):
+            raise Erreur(403, f"Ton rôle ({ROLES[s['role']]}) ne permet pas de faire ça.")
+    if not s['vu_le'] or t - s['vu_le'] >= 60:
+        db.execute('UPDATE sessions SET vu_le=? WHERE jeton_hash=?', (t, h))
     return s
+
+
+def journaliser(db, s, action, categorie='', cible=None, details=None, retour_id=None, req=None):
+    """Journal d'audit : qui a fait quoi, quand, sur quoi (et avant / après quand c'est utile)."""
+    db.execute('INSERT INTO journal(admin_id, action, retour_id, cree_le, categorie, cible, details, ip_hash) VALUES (?,?,?,?,?,?,?,?)',
+               (s['admin_id'] if s else None, action[:300], retour_id, maintenant(), categorie, cible,
+                json.dumps(details, ensure_ascii=False)[:4000] if details is not None else None, req.ip_hash if req else None))
+
+
+def exiger_confirmation(d, mot='CONFIRMER'):
+    if str(d.get('confirmation') or '').strip().upper() != mot.upper():
+        raise Erreur(428, f'Action sensible : tape « {mot} » pour confirmer.')
+
+
+def exiger_mdp(db, s, d):
+    """Pour les actions les plus graves, on redemande le mot de passe de l'admin connecté."""
+    a = db.execute('SELECT hash_mdp FROM admins WHERE id=?', (s['admin_id'],)).fetchone()
+    mdp = d.get('mot_de_passe') if isinstance(d.get('mot_de_passe'), str) else ''
+    if not a or not verifier_mdp(mdp, a['hash_mdp']):
+        raise Erreur(403, 'Mot de passe incorrect.')
 
 
 def cookie_session(req, valeur, age):
@@ -610,19 +809,25 @@ def admin_connexion(req, db):
     mdp = d.get('mot_de_passe') if isinstance(d.get('mot_de_passe'), str) else ''
     if not limite(db, 'login:ip:' + req.ip_hash, 8, 900) or not limite(db, 'login:id:' + hashlib.sha256(ident.encode()).hexdigest()[:16], 8, 900):
         raise Erreur(429, 'Trop d\'essais. Attends 15 minutes.')
-    a = db.execute('SELECT id, hash_mdp FROM admins WHERE identifiant=?', (ident,)).fetchone()
+    a = db.execute('SELECT id, hash_mdp, actif, doit_changer_mdp FROM admins WHERE identifiant=?', (ident,)).fetchone()
     if not _HASH_FACTICE:
         _HASH_FACTICE = hacher_mdp(secrets.token_hex(8))
     ok = verifier_mdp(mdp, a['hash_mdp'] if a else _HASH_FACTICE) and a is not None  # même durée si l'identifiant n'existe pas
+    t = maintenant()
+    navigateur = nettoyer(req.environ.get('HTTP_USER_AGENT'), 160)
+    db.execute('INSERT INTO connexions_admin(admin_id, identifiant, ok, ip_hash, navigateur, cree_le) VALUES (?,?,?,?,?,?)',
+               (a['id'] if a else None, ident[:60], 1 if ok and a['actif'] else 0, req.ip_hash, navigateur, t))
     if not ok:
         raise Erreur(401, 'Identifiant ou mot de passe incorrect.')
+    if not a['actif']:
+        raise Erreur(403, 'Ce compte administrateur est désactivé.')
     jeton, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
-    t = maintenant()
-    db.execute('DELETE FROM sessions WHERE expire_le < ?', (t,))
-    db.execute('INSERT INTO sessions(jeton_hash, admin_id, csrf, cree_le, expire_le) VALUES (?,?,?,?,?)',
-               (hashlib.sha256(jeton.encode()).hexdigest(), a['id'], csrf, t, t + DUREE_SESSION))
-    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (a['id'], 'connexion', t))
-    return 200, {'ok': True, 'csrf': csrf, 'identifiant': ident}, [cookie_session(req, jeton, DUREE_SESSION)]
+    db.execute('DELETE FROM sessions WHERE expire_le < ? OR vu_le < ?', (t, t - INACTIVITE_SESSION))
+    db.execute('INSERT INTO sessions(jeton_hash, admin_id, csrf, cree_le, expire_le, ip_hash, navigateur, vu_le) VALUES (?,?,?,?,?,?,?,?)',
+               (hashlib.sha256(jeton.encode()).hexdigest(), a['id'], csrf, t, t + DUREE_SESSION, req.ip_hash, navigateur, t))
+    db.execute('UPDATE admins SET derniere_connexion=? WHERE id=?', (t, a['id']))
+    db.execute('INSERT INTO journal(admin_id, action, cree_le, categorie, ip_hash) VALUES (?,?,?,?,?)', (a['id'], 'connexion', t, 'connexion', req.ip_hash))
+    return 200, {'ok': True, 'csrf': csrf, 'identifiant': ident, 'doit_changer_mdp': bool(a['doit_changer_mdp'])}, [cookie_session(req, jeton, DUREE_SESSION)]
 
 
 def admin_deconnexion(req, db):
@@ -633,12 +838,14 @@ def admin_deconnexion(req, db):
 
 
 def admin_moi(req, db):
-    s = session_admin(req, db)
-    return 200, {'identifiant': s['identifiant'], 'csrf': s['csrf'], 'categories': CATEGORIES, 'statuts': STATUTS}
+    s = session_admin(req, db, libre=True)
+    return 200, {'identifiant': s['identifiant'], 'csrf': s['csrf'], 'categories': CATEGORIES, 'statuts': STATUTS,
+                 'role': s['role'], 'role_nom': ROLES[s['role']], 'roles': ROLES, 'permissions': permissions_de(s['role']),
+                 'doit_changer_mdp': bool(s['doit_changer_mdp']), 'types_sanctions': TYPES_SANCTIONS}
 
 
 def admin_tableau(req, db):
-    session_admin(req, db)
+    session_admin(req, db, permission='tableau')
     un = lambda sql, *p: db.execute(sql, p).fetchone()[0]
     stats = {
         'parties': un('SELECT COUNT(DISTINCT partie_id) FROM parties'),
@@ -667,7 +874,7 @@ def admin_tableau(req, db):
 
 
 def admin_liste(req, db):
-    session_admin(req, db)
+    session_admin(req, db, permission='retours')
     q = req.query
     conds, params = [], []
     if q.get('categorie') in CATEGORIES:
@@ -708,7 +915,7 @@ def retour_existant(db, rid):
 
 
 def admin_detail(req, db, rid):
-    session_admin(req, db)
+    session_admin(req, db, permission='retours')
     r = dict(retour_existant(db, rid))
     r.pop('ip_hash', None)
     r['votes'] = db.execute('SELECT COUNT(*) FROM votes WHERE retour_id=?', (rid,)).fetchone()[0]
@@ -723,7 +930,7 @@ def admin_detail(req, db, rid):
 
 
 def admin_modifier(req, db, rid):
-    s = session_admin(req, db, ecriture=True)
+    s = session_admin(req, db, ecriture=True, permission='retours')
     retour_existant(db, rid)
     d = req.json()
     champs, params, actions = [], [], []
@@ -745,12 +952,12 @@ def admin_modifier(req, db, rid):
     champs.append('maj_le=?'); params.append(maintenant())
     db.execute(f'UPDATE retours SET {", ".join(champs)} WHERE id=?', params + [rid])
     for a in actions:
-        db.execute('INSERT INTO journal(admin_id, action, retour_id, cree_le) VALUES (?,?,?,?)', (s['admin_id'], a, rid, maintenant()))
+        journaliser(db, s, a, 'retours', f'retour:{rid}', retour_id=rid, req=req)
     return admin_detail(req, db, rid)
 
 
 def admin_note(req, db, rid):
-    s = session_admin(req, db, ecriture=True)
+    s = session_admin(req, db, ecriture=True, permission='retours')
     retour_existant(db, rid)
     texte = nettoyer(req.json().get('texte'), 2000)
     if len(texte) < 1:
@@ -760,33 +967,33 @@ def admin_note(req, db, rid):
 
 
 def admin_supprimer(req, db, rid):
-    s = session_admin(req, db, ecriture=True)
+    s = session_admin(req, db, ecriture=True, permission='retours')
     retour_existant(db, rid)
     db.execute('DELETE FROM votes WHERE retour_id=?', (rid,))
     db.execute('DELETE FROM notes_internes WHERE retour_id=?', (rid,))
     db.execute('DELETE FROM retours WHERE id=?', (rid,))
-    db.execute('INSERT INTO journal(admin_id, action, retour_id, cree_le) VALUES (?,?,?,?)', (s['admin_id'], 'supprimée', rid, maintenant()))
+    journaliser(db, s, 'supprimée', 'retours', f'retour:{rid}', retour_id=rid, req=req)
     return 200, {'ok': True}
 
 
 def admin_purger_spams(req, db):
-    s = session_admin(req, db, ecriture=True)
+    s = session_admin(req, db, ecriture=True, permission='retours')
     ids = [r[0] for r in db.execute('SELECT id FROM retours WHERE spam=1')]
     for rid in ids:
         db.execute('DELETE FROM votes WHERE retour_id=?', (rid,))
         db.execute('DELETE FROM notes_internes WHERE retour_id=?', (rid,))
     db.execute('DELETE FROM retours WHERE spam=1')
-    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'{len(ids)} spams supprimés', maintenant()))
+    journaliser(db, s, f'{len(ids)} spams supprimés', 'retours', req=req)
     return 200, {'ok': True, 'supprimes': len(ids)}
 
 
 def admin_catalogue(req, db):
-    session_admin(req, db)
+    session_admin(req, db, permission=('cosmetiques.voir', 'cadeaux.voir', 'evenements.voir'))
     return 200, catalogue()
 
 
 def admin_cadeaux(req, db):
-    session_admin(req, db)
+    session_admin(req, db, permission='cadeaux.voir')
     lignes = db.execute("""SELECT c.*, (SELECT COUNT(*) FROM cadeaux_recus r WHERE r.cadeau_id=c.id) AS recus,
         a.identifiant AS auteur FROM cadeaux c LEFT JOIN admins a ON a.id=c.admin_id ORDER BY c.id DESC LIMIT 200""").fetchall()
     sortie = []
@@ -800,7 +1007,7 @@ def admin_cadeaux(req, db):
 
 
 def admin_cadeau_creer(req, db):
-    s = session_admin(req, db, ecriture=True)
+    s = session_admin(req, db, ecriture=True, permission='cadeaux.creer')
     d = req.json()
     titre = nettoyer(d.get('titre'), 60)
     if len(titre) < 2:
@@ -845,9 +1052,11 @@ def admin_cadeau_creer(req, db):
     except (TypeError, ValueError):
         jours = 0
     expire = maintenant() + jours * 86400 if 0 < jours <= 365 else None
-    cur = db.execute("""INSERT INTO cadeaux(titre, message, pieces, objets, cible, joueur_id, code, max_utilisations, actif, expire_le, cree_le, admin_id)
-        VALUES (?,?,?,?,?,?,?,?,1,?,?,?)""", (titre, message, pieces, json.dumps(objets), cible, joueur_id, code, maxi, expire, maintenant(), s['admin_id']))
-    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'cadeau #{cur.lastrowid} créé ({cible})', maintenant()))
+    expediteur = nettoyer(d.get('expediteur'), 40) or EXPEDITEUR_DEFAUT
+    cur = db.execute("""INSERT INTO cadeaux(titre, message, pieces, objets, cible, joueur_id, code, max_utilisations, actif, expire_le, cree_le, admin_id, expediteur, origine)
+        VALUES (?,?,?,?,?,?,?,?,1,?,?,?,?,'admin')""", (titre, message, pieces, json.dumps(objets), cible, joueur_id, code, maxi, expire, maintenant(), s['admin_id'], expediteur))
+    journaliser(db, s, f'cadeau #{cur.lastrowid} créé ({cible})', 'cadeaux', f'cadeau:{cur.lastrowid}',
+                {'titre': titre, 'pieces': pieces, 'objets': objets, 'cible': cible, 'expediteur': expediteur}, req=req)
     return 201, {'ok': True, 'id': cur.lastrowid, 'code': formater_code(code)}
 
 
@@ -857,37 +1066,38 @@ def cadeau_existant(db, cid):
 
 
 def admin_cadeau_modifier(req, db, cid):
-    s = session_admin(req, db, ecriture=True)
+    s = session_admin(req, db, ecriture=True, permission='cadeaux.creer')
     cadeau_existant(db, cid)
     actif = 1 if req.json().get('actif') else 0
     db.execute('UPDATE cadeaux SET actif=? WHERE id=?', (actif, cid))
-    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'cadeau #{cid} ' + ('réactivé' if actif else 'arrêté'), maintenant()))
+    journaliser(db, s, f'cadeau #{cid} ' + ('réactivé' if actif else 'arrêté'), 'cadeaux', f'cadeau:{cid}', req=req)
     return 200, {'ok': True, 'actif': actif}
 
 
 def admin_cadeau_supprimer(req, db, cid):
-    s = session_admin(req, db, ecriture=True)
+    s = session_admin(req, db, ecriture=True, permission='cadeaux.supprimer')
+    exiger_confirmation(req.json())
     cadeau_existant(db, cid)
     db.execute('DELETE FROM cadeaux_recus WHERE cadeau_id=?', (cid,))
     db.execute('DELETE FROM cadeaux WHERE id=?', (cid,))
-    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'cadeau #{cid} supprimé', maintenant()))
+    journaliser(db, s, f'cadeau #{cid} supprimé', 'cadeaux', f'cadeau:{cid}', req=req)
     return 200, {'ok': True}
 
 
 def admin_jeu(req, db):
-    session_admin(req, db)
+    session_admin(req, db, permission='annonce')
     return 200, {'annonce': lire_reglage(db, 'annonce') or {}, 'bonus': lire_reglage(db, 'bonus') or {}, 'en_ligne': etat_jeu(db), 'maintenant': maintenant()}
 
 
 def admin_jeu_modifier(req, db):
-    s = session_admin(req, db, ecriture=True)
+    s = session_admin(req, db, ecriture=True, permission='annonce')
     d = req.json()
     if isinstance(d.get('annonce'), dict):
         a = d['annonce']
         texte = nettoyer(a.get('texte'), 200)
         style = a.get('style') if a.get('style') in STYLES_ANNONCE else 'info'
         ecrire_reglage(db, 'annonce', {'texte': texte, 'style': style, 'active': bool(a.get('active')) and bool(texte)})
-        db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], 'annonce ' + ('affichée' if a.get('active') and texte else 'cachée'), maintenant()))
+        journaliser(db, s, 'annonce ' + ('affichée' if a.get('active') and texte else 'cachée'), 'jeu', 'annonce', {'texte': texte, 'style': style}, req=req)
     if isinstance(d.get('bonus'), dict):
         b = d['bonus']
         try:
@@ -901,12 +1111,12 @@ def admin_jeu_modifier(req, db):
             raise Erreur(400, 'Durée du bonus : entre 1 heure et 14 jours.')
         bonus = {'multiplicateur': mult, 'fin': maintenant() + heures * 3600 if mult > 1 else 0, 'texte': nettoyer(b.get('texte'), 40)}
         ecrire_reglage(db, 'bonus', bonus)
-        db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'bonus pièces x{mult:g}' if mult > 1 else 'bonus arrêté', maintenant()))
+        journaliser(db, s, f'bonus pièces x{mult:g}' if mult > 1 else 'bonus arrêté', 'jeu', 'bonus', bonus, req=req)
     return admin_jeu(req, db)
 
 
 def admin_joueurs(req, db):
-    session_admin(req, db)
+    session_admin(req, db, permission='joueurs.voir')
     q = re.sub(r'[^0-9a-f]', '', (req.query.get('q') or '').lower())[:8]
     try:
         page = max(0, int(req.query.get('page') or 0))
@@ -928,12 +1138,20 @@ def admin_joueurs(req, db):
 
 
 def admin_joueur_bloquer(req, db):
-    s = session_admin(req, db, ecriture=True)
+    """Ancien bouton « bloquer » : muet + privé de cadeaux, sans limite (ou levée de ces sanctions)."""
+    s = session_admin(req, db, ecriture=True, permission='joueurs.sanctionner')
     d = req.json()
     jid = joueur_par_code(db, d.get('joueur'))
     bloque = 1 if d.get('bloque') else 0
-    db.execute('UPDATE joueurs SET bloque=? WHERE id=?', (bloque, jid))
-    db.execute('INSERT INTO journal(admin_id, action, cree_le) VALUES (?,?,?)', (s['admin_id'], f'joueur {code_court(jid)} ' + ('bloqué' if bloque else 'débloqué'), maintenant()))
+    t = maintenant()
+    if bloque:
+        for type_ in ('muet', 'cadeaux'):
+            if not sanction_active(db, jid, (type_,)):
+                db.execute('INSERT INTO sanctions(joueur_id, type, motif, debut, admin_id) VALUES (?,?,?,?,?)', (jid, type_, 'Bloqué', t, s['admin_id']))
+    else:
+        db.execute("""UPDATE sanctions SET leve_le=?, leve_par=?, leve_motif='Débloqué' WHERE joueur_id=? AND leve_le IS NULL
+            AND type IN ('muet','cadeaux','suspension')""", (t, s['admin_id'], jid))
+    journaliser(db, s, f'joueur {code_court(jid)} ' + ('bloqué' if bloque else 'débloqué'), 'sanctions', 'joueur:' + jid, req=req)
     return 200, {'ok': True, 'bloque': bloque}
 
 
@@ -971,6 +1189,8 @@ ROUTES = [
     ('POST', r'/api/admin/joueurs/bloquer', admin_joueur_bloquer, False),
 ]
 _compteur = [0]
+DEMARRE_LE = time.time()
+_durees = []  # dernières durées de réponse (ms), pour le 95e centile de la page « État du serveur »
 
 
 def servir_admin(req):
@@ -1000,14 +1220,42 @@ def application(environ, start_response):
             code, entetes, corps = traiter(req)
     except Exception as e:  # jamais de détails techniques vers le navigateur
         print('Erreur serveur :', repr(e), file=sys.stderr)
+        noter_erreur(req.chemin, e)
         code, entetes, corps = reponse_json(500, {'erreur': 'Erreur du serveur.'})
     raisons = {200: 'OK', 201: 'Created', 204: 'No Content', 302: 'Found', 400: 'Bad Request', 401: 'Unauthorized', 403: 'Forbidden',
-               404: 'Not Found', 405: 'Method Not Allowed', 409: 'Conflict', 410: 'Gone', 413: 'Payload Too Large', 429: 'Too Many Requests', 500: 'Internal Server Error'}
+               404: 'Not Found', 405: 'Method Not Allowed', 409: 'Conflict', 410: 'Gone', 413: 'Payload Too Large', 428: 'Precondition Required',
+               429: 'Too Many Requests', 500: 'Internal Server Error'}
     start_response(f'{code} {raisons.get(code, "OK")}', entetes)
     return corps
 
 
+def noter_erreur(route, e):
+    """Garde la trace d'une erreur (type + début du message, jamais de secret) pour la page « État du serveur »."""
+    try:
+        db = connexion()
+        try:
+            db.execute('INSERT INTO erreurs(cree_le, route, type, message) VALUES (?,?,?,?)',
+                       (maintenant(), re.sub(r'/\d+', '/N', route)[:80], type(e).__name__, str(e)[:160]))
+            db.execute('DELETE FROM erreurs WHERE id <= (SELECT MAX(id) - 500 FROM erreurs)')
+        finally:
+            db.close()
+    except Exception:
+        pass
+
+
+def mesurer(db, code, debut):
+    ms = int((time.perf_counter() - debut) * 1000)
+    _durees.append(ms)
+    del _durees[:-400]
+    heure = time.strftime('%Y-%m-%d %H', time.gmtime())
+    db.execute("""INSERT INTO mesures(heure, requetes, erreurs, refus, total_ms, max_ms) VALUES (?, 1, ?, ?, ?, ?)
+        ON CONFLICT(heure) DO UPDATE SET requetes = requetes + 1, erreurs = erreurs + excluded.erreurs, refus = refus + excluded.refus,
+        total_ms = total_ms + excluded.total_ms, max_ms = MAX(max_ms, excluded.max_ms)""",
+               (heure, 1 if code >= 500 else 0, 1 if 400 <= code < 500 else 0, ms, ms))
+
+
 def traiter(req):
+    debut = time.perf_counter()
     for methode, motif, fonction, public in ROUTES:
         m = re.fullmatch(motif, req.chemin)
         if not m:
@@ -1018,22 +1266,49 @@ def traiter(req):
         if not public and req.origine and urlparse(req.origine).netloc.lower() != (req.environ.get('HTTP_HOST') or '').lower():
             return reponse_json(403, {'erreur': 'Origine refusée.'})
         db = connexion()
+        code = 500
+        cle_action = None
         try:
             _compteur[0] += 1
             if _compteur[0] % 200 == 0:
                 db.execute('DELETE FROM limites WHERE debut < ?', (maintenant() - 86400,))
-            args = [int(g) for g in m.groups()]
+                db.execute('DELETE FROM actions_faites WHERE cree_le < ?', (maintenant() - 86400,))
+            if _compteur[0] % 50 == 1:
+                gestion.sauvegarde_auto_si_besoin()
+            # protection contre les doubles actions : un même clic (X-Action) n'est jamais exécuté deux fois
+            if not public and req.methode != 'GET':
+                cle_action = req.entete('X-Action')
+                if cle_action:
+                    if not re.fullmatch(r'[A-Za-z0-9-]{8,64}', cle_action):
+                        raise Erreur(400, 'Identifiant d\'action invalide.')
+                    if not db.execute('INSERT OR IGNORE INTO actions_faites(cle, cree_le) VALUES (?,?)', (cle_action, maintenant())).rowcount:
+                        cle_action = None
+                        raise Erreur(409, 'Cette action a déjà été faite (double clic ?). Actualise la page pour voir le résultat.')
+            args = [int(g) if g.isdigit() else g for g in m.groups()]
             res = fonction(req, db, *args)
             code, donnees = res[0], res[1]
             extra = res[2] if len(res) > 2 else []
             return reponse_json(code, donnees, (entetes_cors(req) if public else []) + extra)
         except Erreur as e:
+            code = e.code
+            if cle_action:  # l'action a échoué : on pourra la refaire
+                db.execute('DELETE FROM actions_faites WHERE cle=?', (cle_action,))
             return reponse_json(e.code, {'erreur': e.message}, entetes_cors(req) if public else [])
         finally:
+            try:
+                mesurer(db, code, debut)
+            except sqlite3.Error:
+                pass
             db.close()
     if any(re.fullmatch(motif, req.chemin) for _, motif, _, _ in ROUTES):
         return reponse_json(405, {'erreur': 'Méthode non autorisée.'}, entetes_cors(req))
     return reponse_json(404, {'erreur': 'Introuvable.'}, entetes_cors(req))
+
+
+# Le module gestion.py (rôles, journal, sauvegardes, joueurs, cadeaux, boutique, esprits, événements…)
+sys.modules.setdefault('api', sys.modules[__name__])  # « python api.py serve » : gestion.py retrouve ce module-ci
+import gestion  # noqa: E402
+ROUTES[:0] = gestion.ROUTES
 
 
 # ---------------------------------------------------------------- ligne de commande
@@ -1046,7 +1321,7 @@ class Silencieux(WSGIRequestHandler):
         sys.stderr.write('%s %s\n' % (self.command if hasattr(self, 'command') else '', fmt % args))
 
 
-def creer_admin(identifiant, mdp=None):
+def creer_admin(identifiant, mdp=None, role=None):
     identifiant = nettoyer(identifiant, 60).lower()
     if not re.fullmatch(r'[a-z0-9._-]{3,60}', identifiant):
         sys.exit('Identifiant : 3 à 60 caractères (lettres, chiffres, . _ -).')
@@ -1056,11 +1331,19 @@ def creer_admin(identifiant, mdp=None):
             sys.exit('Les deux mots de passe sont différents.')
     if len(mdp) < 12:
         sys.exit('Mot de passe trop court (12 caractères au moins).')
+    if role is not None and role not in ROLES:
+        sys.exit('Rôle inconnu : ' + ', '.join(ROLES))
     db = connexion()
-    db.execute('INSERT INTO admins(identifiant, hash_mdp, cree_le) VALUES (?,?,?) ON CONFLICT(identifiant) DO UPDATE SET hash_mdp=excluded.hash_mdp',
-               (identifiant, hacher_mdp(mdp), maintenant()))
+    premier = not db.execute('SELECT 1 FROM admins').fetchone()
+    role = role or ('super_admin' if premier else 'admin')
+    # compte existant : nouveau mot de passe, rôle gardé (sauf --role), compte réactivé
+    db.execute("""INSERT INTO admins(identifiant, hash_mdp, cree_le, role) VALUES (?,?,?,?) ON CONFLICT(identifiant)
+        DO UPDATE SET hash_mdp=excluded.hash_mdp, actif=1, doit_changer_mdp=0""", (identifiant, hacher_mdp(mdp), maintenant(), role))
+    if '--role' in sys.argv:
+        db.execute('UPDATE admins SET role=? WHERE identifiant=?', (role, identifiant))
     db.execute('DELETE FROM sessions WHERE admin_id=(SELECT id FROM admins WHERE identifiant=?)', (identifiant,))
-    print(f'Compte admin « {identifiant} » prêt.')
+    r = db.execute('SELECT role FROM admins WHERE identifiant=?', (identifiant,)).fetchone()['role']
+    print(f'Compte admin « {identifiant} » prêt ({ROLES.get(r, r)}).')
 
 
 if __name__ == '__main__':
@@ -1076,6 +1359,10 @@ if __name__ == '__main__':
             s.serve_forever()
     elif commande == 'creer-admin' and len(sys.argv) > 2:
         # mot de passe lu au clavier, ou depuis NATX_MDP_ADMIN (tests automatiques uniquement)
-        creer_admin(sys.argv[2], os.environ.get('NATX_MDP_ADMIN'))
+        role = sys.argv[sys.argv.index('--role') + 1] if '--role' in sys.argv and sys.argv.index('--role') + 1 < len(sys.argv) else None
+        creer_admin(sys.argv[2], os.environ.get('NATX_MDP_ADMIN'), role)
+    elif commande == 'sauvegarder':
+        connexion().close()
+        print('Sauvegarde :', gestion.faire_sauvegarde('manuelle'))
     else:
         print(__doc__)

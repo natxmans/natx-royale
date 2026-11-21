@@ -1,271 +1,626 @@
 {
-  "_aide": "Modèles Blender « en plus », branchés par la session Codage. actif:false = pas encore dans le jeu (en attente d'export ou de validation). Ce que le code attend : modeles/INTEGRATION-CODE.txt.",
-  "maisons": [
+ "_aide": "Modèles Blender « en plus », branchés par la session Codage. actif:false = pas encore dans le jeu (en attente d'export ou de validation). Ce que le code attend : modeles/INTEGRATION-CODE.txt.",
+ "maisons": [
+  {
+   "id": "cottage",
+   "actif": false,
+   "fichier": "house_cottage_v001.glb",
+   "objet": "maison_cottage",
+   "styles": [
+    "normal",
+    "chalet"
+   ],
+   "lieux": [
+    "quartier",
+    "ferme",
+    "chalets",
+    "isolee"
+   ],
+   "proportion": 0.35,
+   "taille": {
+    "w": 12.44,
+    "d": 14.65,
+    "h": 6.76
+   },
+   "collisions": [],
+   "rampes": [
     {
-      "id": "cottage",
-      "actif": false,
-      "fichier": "house_cottage_v001.glb",
-      "objet": "maison_cottage",
-      "styles": [
-        "normal",
-        "chalet"
-      ],
-      "lieux": [
-        "quartier",
-        "ferme",
-        "chalets",
-        "isolee"
-      ],
-      "proportion": 0.35,
-      "taille": {
-        "w": 12.44,
-        "d": 14.65,
-        "h": 6.76
-      },
-      "collisions": [],
-      "rampes": [
-        {
-          "nom": "marches avant",
-          "de": [
-            0.18,
-            0.0,
-            -7.03
-          ],
-          "a": [
-            0.18,
-            0.5,
-            -6.43
-          ],
-          "largeur": 3.16
-        },
-        {
-          "nom": "marches arriere",
-          "de": [
-            -0.16,
-            0.0,
-            5.62
-          ],
-          "a": [
-            -0.76,
-            0.5,
-            5.62
-          ],
-          "largeur": 2.3
-        }
-      ],
-      "coffre": [
-        3.2,
-        3.4
-      ],
-      "coffreY": 0.5,
-      "_livraison": "Exporté par la session Modélisation. Coordonnées three.js (x droite, y haut, z = -avant) relatives à l'origine de la maison (au sol, au centre). Collisions : 36 boîtes COL_… DANS le .glb (enfants de maison_cottage), d'où \"collisions\": []. Porte d'entrée face avant (-Z) : ouverture x -0,20..1,45, y 0,50..2,95 (1,65 x 2,45 m), plan du mur à z -3,73..-3,48, aucune boîte COL_ dedans. Sol intérieur et porche à y = 0,50. rampes = marches (de/a en three.js, largeur en m). coffre = [x, z] three.js, coffreY = hauteur du sol. 10 781 triangles visibles, 1,39 Mo, 2 textures 1024 px. Détails : LISEZMOI.txt section 6c.",
-      "licence": "« Free GameReady Cottage » par Gerhald3D (TurboSquid). Le fichier LISEZ-MOI du modèle dit : « Feel free to use for any purposes, except re-sale ». Usage dans le jeu OK ; créditer l'auteur ; ne pas publier le fichier d'origine (modeles/sources/fournis/).",
-      "_v002": "house_cottage_v002.glb : même objet maison_cottage, même taille, mêmes rampes, même coffre -> changer seulement « fichier ». Porche décoré (+ COL_banc, COL_buches, COL_pot_gauche, COL_pot_droite), un seul maillage à 5 matériaux (5 appels de dessin au lieu d'~30), 12 007 tri, 1,43 Mo. En plus : maison_cottage_loin (1 823 tri) pour THREE.LOD. Détails : LISEZMOI.txt section 10."
-    }
-  ],
-  "armes": [
-    {
-      "id": "futuriste",
-      "actif": true,
-      "fichier": "weapon_futuriste_v002.glb",
-      "objet": "fusil_futuriste",
-      "remplace": "fusil",
-      "avant": "-z",
-      "longueur": 1.35,
-      "poignee": [
-        0.259,
-        0.247,
-        0.616
-      ],
-      "materiauRarete": "rarete",
-      "materiauLueur": "lueur",
-      "_livraison": "Exporté par la session Modélisation : déjà à la bonne échelle (1,35 m) et orienté (canon -Z dans three.js) ; l'origine est déjà au milieu de la poignée (poignee = position de l'origine en fractions de la boîte). 6 324 triangles, 327 Ko, pas de texture. Bout du canon (three.js) : [0, 0.133, -0.832]. Détails : LISEZMOI.txt section 6a.",
-      "licence": "Modèle « concept » téléchargé : vérifier la licence et le crédit AVANT de publier le jeu.",
-      "_v002": "weapon_futuriste_v002.glb : même objet fusil_futuriste, EXACTEMENT la même boîte -> changer seulement « fichier » (longueur, poignee, avant inchangés). Bandes d'énergie, cœur du tambour et anneau du canon en « lueur ». 6 972 tri, 374 Ko. En plus : fusil_futuriste_loin (1 711 tri). Détails : LISEZMOI.txt section 9."
-    }
-  ],
-  "_esprits_aide": "Esprits élémentaires livrés par la session Modélisation (actif:false = pas encore dans le jeu). Racine = objet vide au centre du corps, jamais animée ; avant vers -Z ; déjà à l'échelle (1 = taille livrée). placement = position conseillée dans le repère du joueur (three.js). Animations dans gltf.animations (flotter en boucle, activer / apparaitre une fois). Détails : LISEZMOI.txt section 8.",
-  "esprits": [
-    {
-      "id": "soin",
-      "actif": true,
-      "fichier": "esprits_v001.glb",
-      "objet": "esprit_soin",
-      "nom": "Pousse",
-      "couleur": "#a8ff7a",
-      "animations": {
-        "flotter": "soin_flotter",
-        "activer": "soin_activer",
-        "apparaitre": "soin_apparaitre"
-      },
-      "durees": {
-        "flotter": 2.0,
-        "activer": 1.2,
-        "apparaitre": 0.8
-      },
-      "taille": {
-        "w": 0.4,
-        "h": 0.5,
-        "d": 0.37
-      },
-      "placement": [
-        -0.55,
-        1.85,
-        0.15
-      ],
-      "triangles": 3700
+     "nom": "marches avant",
+     "de": [
+      0.18,
+      0.0,
+      -7.03
+     ],
+     "a": [
+      0.18,
+      0.5,
+      -6.43
+     ],
+     "largeur": 3.16
     },
     {
-      "id": "mobilite",
-      "actif": true,
-      "fichier": "esprits_v001.glb",
-      "objet": "esprit_mobilite",
-      "nom": "Filou",
-      "couleur": "#5ff2ff",
-      "animations": {
-        "flotter": "mobilite_flotter",
-        "activer": "mobilite_activer",
-        "apparaitre": "mobilite_apparaitre"
-      },
-      "durees": {
-        "flotter": 2.0,
-        "activer": 1.0,
-        "apparaitre": 0.8
-      },
-      "taille": {
-        "w": 0.31,
-        "h": 0.26,
-        "d": 0.54
-      },
-      "placement": [
-        -0.55,
-        1.85,
-        0.15
-      ],
-      "triangles": 3528
-    },
-    {
-      "id": "protection",
-      "actif": true,
-      "fichier": "esprits_v001.glb",
-      "objet": "esprit_protection",
-      "nom": "Gardien",
-      "couleur": "#9ff0ff",
-      "animations": {
-        "flotter": "protection_flotter",
-        "activer": "protection_activer",
-        "apparaitre": "protection_apparaitre"
-      },
-      "durees": {
-        "flotter": 2.0,
-        "activer": 1.2,
-        "apparaitre": 0.8
-      },
-      "taille": {
-        "w": 0.55,
-        "h": 0.41,
-        "d": 0.48
-      },
-      "placement": [
-        -0.55,
-        1.85,
-        0.15
-      ],
-      "triangles": 3090
-    },
-    {
-      "id": "vision",
-      "actif": true,
-      "fichier": "esprits_v001.glb",
-      "objet": "esprit_vision",
-      "nom": "Zyeuto",
-      "couleur": "#ff6ef0",
-      "animations": {
-        "flotter": "vision_flotter",
-        "activer": "vision_activer",
-        "apparaitre": "vision_apparaitre"
-      },
-      "durees": {
-        "flotter": 2.0,
-        "activer": 1.5,
-        "apparaitre": 0.8
-      },
-      "taille": {
-        "w": 0.58,
-        "h": 0.39,
-        "d": 0.28
-      },
-      "placement": [
-        -0.55,
-        1.85,
-        0.15
-      ],
-      "triangles": 2456
-    },
-    {
-      "id": "batisseur",
-      "actif": true,
-      "fichier": "esprits_v001.glb",
-      "objet": "esprit_batisseur",
-      "nom": "Briquet",
-      "couleur": "#fff0a8",
-      "animations": {
-        "flotter": "batisseur_flotter",
-        "activer": "batisseur_activer",
-        "apparaitre": "batisseur_apparaitre"
-      },
-      "durees": {
-        "flotter": 2.0,
-        "activer": 1.2,
-        "apparaitre": 0.8
-      },
-      "taille": {
-        "w": 0.58,
-        "h": 0.3,
-        "d": 0.48
-      },
-      "placement": [
-        -0.55,
-        1.85,
-        0.15
-      ],
-      "triangles": 3622
+     "nom": "marches arriere",
+     "de": [
+      -0.16,
+      0.0,
+      5.62
+     ],
+     "a": [
+      -0.76,
+      0.5,
+      5.62
+     ],
+     "largeur": 2.3
     }
-  ],
-  "socles": [
-    {
-      "id": "esprit",
-      "actif": true,
-      "fichier": "esprits_v001.glb",
-      "objet": "socle_esprit",
-      "hauteurEsprit": 1.0,
-      "animation": "socle_tourner",
-      "taille": {
-        "w": 0.94,
-        "h": 0.67,
-        "d": 0.94
-      },
-      "_livraison": "Autel où l'on trouve un esprit : origine au sol ; l'esprit flotte à 1,0 m au-dessus. Boîte COL_socle dans le .glb. 1 120 tri."
-    }
-  ],
-  "lod": [
-    {
-      "id": "personnage_loin",
-      "actif": true,
-      "fichier": "personnage_loin_v001.glb",
-      "objet": "personnage_loin",
-      "distance": 65,
-      "_livraison": "Session Modélisation, 9 nov. : 670 tri, 2 matériaux (« tenue » recoloré par le jeu, vertexColors gardé). Utilisé au-delà de « distance » mètres, au sol."
-    }
-  ],
-  "mannequins": [
-    {
-      "id": "entrainement",
-      "actif": true,
-      "fichier": "entrainement_v001.glb",
-      "objet": "mannequin_entrainement",
-      "animation": "mannequin_touche",
-      "_livraison": "Session Modélisation, 9 nov. : 2 968 tri, cible vers -Z, animation mannequin_touche 0,5 s (LoopOnce, revient à la pose)."
-    }
-  ]
+   ],
+   "coffre": [
+    3.2,
+    3.4
+   ],
+   "coffreY": 0.5,
+   "_livraison": "Exporté par la session Modélisation. Coordonnées three.js (x droite, y haut, z = -avant) relatives à l'origine de la maison (au sol, au centre). Collisions : 36 boîtes COL_… DANS le .glb (enfants de maison_cottage), d'où \"collisions\": []. Porte d'entrée face avant (-Z) : ouverture x -0,20..1,45, y 0,50..2,95 (1,65 x 2,45 m), plan du mur à z -3,73..-3,48, aucune boîte COL_ dedans. Sol intérieur et porche à y = 0,50. rampes = marches (de/a en three.js, largeur en m). coffre = [x, z] three.js, coffreY = hauteur du sol. 10 781 triangles visibles, 1,39 Mo, 2 textures 1024 px. Détails : LISEZMOI.txt section 6c.",
+   "licence": "« Free GameReady Cottage » par Gerhald3D (TurboSquid). Le fichier LISEZ-MOI du modèle dit : « Feel free to use for any purposes, except re-sale ». Usage dans le jeu OK ; créditer l'auteur ; ne pas publier le fichier d'origine (modeles/sources/fournis/).",
+   "_v002": "house_cottage_v002.glb : même objet maison_cottage, même taille, mêmes rampes, même coffre -> changer seulement « fichier ». Porche décoré (+ COL_banc, COL_buches, COL_pot_gauche, COL_pot_droite), un seul maillage à 5 matériaux (5 appels de dessin au lieu d'~30), 12 007 tri, 1,43 Mo. En plus : maison_cottage_loin (1 823 tri) pour THREE.LOD. Détails : LISEZMOI.txt section 10."
+  }
+ ],
+ "armes": [
+  {
+   "id": "futuriste",
+   "actif": true,
+   "fichier": "weapon_futuriste_v002.glb",
+   "objet": "fusil_futuriste",
+   "remplace": "fusil",
+   "avant": "-z",
+   "longueur": 1.35,
+   "poignee": [
+    0.259,
+    0.247,
+    0.616
+   ],
+   "materiauRarete": "rarete",
+   "materiauLueur": "lueur",
+   "_livraison": "Exporté par la session Modélisation : déjà à la bonne échelle (1,35 m) et orienté (canon -Z dans three.js) ; l'origine est déjà au milieu de la poignée (poignee = position de l'origine en fractions de la boîte). 6 324 triangles, 327 Ko, pas de texture. Bout du canon (three.js) : [0, 0.133, -0.832]. Détails : LISEZMOI.txt section 6a.",
+   "licence": "Modèle « concept » téléchargé : vérifier la licence et le crédit AVANT de publier le jeu.",
+   "_v002": "weapon_futuriste_v002.glb : même objet fusil_futuriste, EXACTEMENT la même boîte -> changer seulement « fichier » (longueur, poignee, avant inchangés). Bandes d'énergie, cœur du tambour et anneau du canon en « lueur ». 6 972 tri, 374 Ko. En plus : fusil_futuriste_loin (1 711 tri). Détails : LISEZMOI.txt section 9."
+  }
+ ],
+ "_esprits_aide": "Esprits élémentaires livrés par la session Modélisation (actif:false = pas encore dans le jeu). Racine = objet vide au centre du corps, jamais animée ; avant vers -Z ; déjà à l'échelle (1 = taille livrée). placement = position conseillée dans le repère du joueur (three.js). Animations dans gltf.animations (flotter en boucle, activer / apparaitre une fois). Détails : LISEZMOI.txt section 8.",
+ "esprits": [
+  {
+   "id": "soin",
+   "actif": true,
+   "fichier": "esprits_v002.glb",
+   "objet": "esprit_soin",
+   "nom": "Pousse",
+   "couleur": "#a8ff7a",
+   "animations": {
+    "flotter": "soin_flotter",
+    "activer": "soin_activer",
+    "apparaitre": "soin_apparaitre",
+    "attente2": "soin_attente2",
+    "deplacer": "soin_deplacer",
+    "content": "soin_content",
+    "surpris": "soin_surpris"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.4,
+    "h": 0.5,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3700
+  },
+  {
+   "id": "mobilite",
+   "actif": true,
+   "fichier": "esprits_v002.glb",
+   "objet": "esprit_mobilite",
+   "nom": "Filou",
+   "couleur": "#5ff2ff",
+   "animations": {
+    "flotter": "mobilite_flotter",
+    "activer": "mobilite_activer",
+    "apparaitre": "mobilite_apparaitre",
+    "attente2": "mobilite_attente2",
+    "deplacer": "mobilite_deplacer",
+    "content": "mobilite_content",
+    "surpris": "mobilite_surpris"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.0,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.31,
+    "h": 0.26,
+    "d": 0.54
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3528
+  },
+  {
+   "id": "protection",
+   "actif": true,
+   "fichier": "esprits_v002.glb",
+   "objet": "esprit_protection",
+   "nom": "Gardien",
+   "couleur": "#9ff0ff",
+   "animations": {
+    "flotter": "protection_flotter",
+    "activer": "protection_activer",
+    "apparaitre": "protection_apparaitre",
+    "attente2": "protection_attente2",
+    "deplacer": "protection_deplacer",
+    "content": "protection_content",
+    "surpris": "protection_surpris"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.55,
+    "h": 0.41,
+    "d": 0.48
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3090
+  },
+  {
+   "id": "vision",
+   "actif": true,
+   "fichier": "esprits_v002.glb",
+   "objet": "esprit_vision",
+   "nom": "Zyeuto",
+   "couleur": "#ff6ef0",
+   "animations": {
+    "flotter": "vision_flotter",
+    "activer": "vision_activer",
+    "apparaitre": "vision_apparaitre",
+    "attente2": "vision_attente2",
+    "deplacer": "vision_deplacer",
+    "content": "vision_content",
+    "surpris": "vision_surpris"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.5,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.58,
+    "h": 0.39,
+    "d": 0.28
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2456
+  },
+  {
+   "id": "batisseur",
+   "actif": true,
+   "fichier": "esprits_v002.glb",
+   "objet": "esprit_batisseur",
+   "nom": "Briquet",
+   "couleur": "#fff0a8",
+   "animations": {
+    "flotter": "batisseur_flotter",
+    "activer": "batisseur_activer",
+    "apparaitre": "batisseur_apparaitre",
+    "attente2": "batisseur_attente2",
+    "deplacer": "batisseur_deplacer",
+    "content": "batisseur_content",
+    "surpris": "batisseur_surpris"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.58,
+    "h": 0.3,
+    "d": 0.48
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3622
+  }
+ ],
+ "socles": [
+  {
+   "id": "esprit",
+   "actif": true,
+   "fichier": "esprits_v002.glb",
+   "objet": "socle_esprit",
+   "hauteurEsprit": 1.0,
+   "animation": "socle_tourner",
+   "taille": {
+    "w": 0.94,
+    "h": 0.67,
+    "d": 0.94
+   },
+   "_livraison": "Autel où l'on trouve un esprit : origine au sol ; l'esprit flotte à 1,0 m au-dessus. Boîte COL_socle dans le .glb. 1 120 tri."
+  }
+ ],
+ "lod": [
+  {
+   "id": "personnage_loin",
+   "actif": true,
+   "fichier": "personnage_loin_v001.glb",
+   "objet": "personnage_loin",
+   "distance": 65,
+   "_livraison": "Session Modélisation, 9 nov. : 670 tri, 2 matériaux (« tenue » recoloré par le jeu, vertexColors gardé). Utilisé au-delà de « distance » mètres, au sol."
+  }
+ ],
+ "mannequins": [
+  {
+   "id": "entrainement",
+   "actif": true,
+   "fichier": "entrainement_v001.glb",
+   "objet": "mannequin_entrainement",
+   "animation": "mannequin_touche",
+   "_livraison": "Session Modélisation, 9 nov. : 2 968 tri, cible vers -Z, animation mannequin_touche 0,5 s (LoopOnce, revient à la pose)."
+  }
+ ],
+ "_cosmetiques250_aide": "Les 250 nouveaux cosmétiques livrés par la session modélisation. Un objet n'est en vente que si son fichier est ici avec actif:true (js/modeles.js). Contrôle : python -X utf8 cosmétique/verifier_catalogue.py",
+ "cosmetiques250": [
+  {
+   "actif": true,
+   "categorie": "chapeau",
+   "fichier": "cosm250_chapeaux_v001.glb",
+   "objets": [
+    "chapeau_capuche_nuageuse",
+    "chapeau_casque_polaire",
+    "chapeau_beret_astral",
+    "chapeau_visiere_de_mecano",
+    "chapeau_couronne_de_feuilles",
+    "chapeau_masque_de_jade",
+    "chapeau_diademe_brumeux",
+    "chapeau_bicorne_celeste",
+    "chapeau_casque_corail",
+    "chapeau_masque_des_abysses",
+    "chapeau_bonnet_des_cimes",
+    "chapeau_chapeau_champignon",
+    "chapeau_serre_tete_luciole",
+    "chapeau_visiere_comete",
+    "chapeau_casque_retro",
+    "chapeau_turban_du_desert",
+    "chapeau_couronne_des_marees",
+    "chapeau_capuche_sylvestre",
+    "chapeau_masque_du_phare",
+    "chapeau_lunettes_d_alchimiste",
+    "chapeau_casquette_inventeur",
+    "chapeau_casquette_express",
+    "chapeau_bonnet_glacier",
+    "chapeau_casque_audio_cosmique",
+    "chapeau_heaume_des_ruines",
+    "chapeau_diademe_cristallin",
+    "chapeau_capuche_lunaire",
+    "chapeau_masque_volcanique",
+    "chapeau_couronne_saphir",
+    "chapeau_bandeau_corsaire"
+   ],
+   "livre_le": "2026-11-11",
+   "verifie": "noms = catalogue, ≤ 1 500 triangles, matériaux cosm_couleurs / lumiere_* / verre_cosm"
+  },
+  {
+   "actif": true,
+   "categorie": "dos",
+   "fichier": "cosm250_dos_v001.glb",
+   "objets": [
+    "dos_mini_planetarium",
+    "dos_sac_a_dos_meteore",
+    "dos_jardin_portable",
+    "dos_boite_a_outils_stellaire",
+    "dos_terrarium_volant",
+    "dos_eventail_de_jade",
+    "dos_parchemin_des_brumes",
+    "dos_mini_voilier_celeste",
+    "dos_sac_corail",
+    "dos_reservoir_abyssal",
+    "dos_pic_de_randonnee",
+    "dos_panier_champignon",
+    "dos_bocal_a_lucioles",
+    "dos_sac_de_comete",
+    "dos_jetpack_retro",
+    "dos_baluchon_du_desert",
+    "dos_coquille_des_marees",
+    "dos_sac_feuillage",
+    "dos_lanterne_du_phare",
+    "dos_sacoche_d_alchimiste",
+    "dos_machine_a_idees",
+    "dos_sac_du_facteur",
+    "dos_planche_de_glace",
+    "dos_haut_parleur_cosmique",
+    "dos_relique_des_ruines",
+    "dos_prisme_cristallin",
+    "dos_oreiller_lunaire",
+    "dos_reacteur_volcanique",
+    "dos_ailes_saphir",
+    "dos_drapeau_corsaire",
+    "dos_oeuf_de_dragonnet",
+    "dos_boussole_meteore",
+    "dos_console_pixel",
+    "dos_horloge_des_saisons",
+    "dos_sac_explorateur"
+   ],
+   "livre_le": "2026-11-11",
+   "verifie": "noms = catalogue, ≤ 1 500 triangles, matériaux cosm_couleurs / lumiere_* / verre_cosm"
+  },
+  {
+   "actif": true,
+   "categorie": "pioche",
+   "fichier": "cosm250_pioches_v001.glb",
+   "objets": [
+    "pioche_maillet_nuage",
+    "pioche_piolet_polaire",
+    "pioche_baton_astral",
+    "pioche_cle_stellaire",
+    "pioche_serfouette_galactique",
+    "pioche_katana_de_jade",
+    "pioche_lance_des_brumes",
+    "pioche_sabre_celeste",
+    "pioche_marteau_corail",
+    "pioche_trident_abyssal",
+    "pioche_baton_de_marche",
+    "pioche_marteau_champignon",
+    "pioche_baguette_luciole",
+    "pioche_faucille_comete",
+    "pioche_masse_retro",
+    "pioche_coupe_sable",
+    "pioche_ancre_des_marees",
+    "pioche_branche_sylvestre",
+    "pioche_cloche_du_phare",
+    "pioche_mortier_d_alchimiste",
+    "pioche_cle_a_engrenages",
+    "pioche_tampon_express",
+    "pioche_patin_marteau",
+    "pioche_micro_cosmique",
+    "pioche_pique_des_ruines",
+    "pioche_maillet_cristal",
+    "pioche_baton_croissant",
+    "pioche_masse_volcanique",
+    "pioche_lame_saphir",
+    "pioche_sabre_corsaire",
+    "pioche_griffe_draconique",
+    "pioche_marteau_meteore",
+    "pioche_mallette_pixel",
+    "pioche_cle_des_saisons",
+    "pioche_pelle_d_explorateur"
+   ],
+   "livre_le": "2026-11-11",
+   "verifie": "noms = catalogue, ≤ 1 500 triangles, matériaux cosm_couleurs / lumiere_* / verre_cosm"
+  },
+  {
+   "actif": true,
+   "categorie": "deltaplane",
+   "fichier": "cosm250_deltaplanes_v001.glb",
+   "objets": [
+    "deltaplane_voile_des_nuages",
+    "deltaplane_aile_polaire",
+    "deltaplane_orbite_mobile",
+    "deltaplane_planeur_mecano",
+    "deltaplane_cerf_volant_botanique",
+    "deltaplane_dragon_de_jade",
+    "deltaplane_brume_portee",
+    "deltaplane_navire_des_etoiles",
+    "deltaplane_raie_corail",
+    "deltaplane_meduse_des_abysses",
+    "deltaplane_aile_des_cimes",
+    "deltaplane_parapluie_champignon",
+    "deltaplane_essaim_de_lucioles",
+    "deltaplane_comete_a_voile",
+    "deltaplane_aile_retro",
+    "deltaplane_voile_du_desert",
+    "deltaplane_vague_suspendue",
+    "deltaplane_aile_sylvestre",
+    "deltaplane_phare_volant",
+    "deltaplane_tapis_alchimique",
+    "deltaplane_planeur_engrenage",
+    "deltaplane_courrier_aerien",
+    "deltaplane_cristal_glissant",
+    "deltaplane_disque_cosmique",
+    "deltaplane_aile_des_ruines"
+   ],
+   "livre_le": "2026-11-18",
+   "verifie": "noms = catalogue, ≤ 2 500 triangles, barre au même endroit que les anciens"
+  },
+  {
+   "actif": true,
+   "categorie": "tenue",
+   "fichier": "tenues_250_v001.glb",
+   "fiche": "tenues_250_v001.json",
+   "objets": [
+    "tenue_alchimiste_dore",
+    "tenue_apprenti_meteore",
+    "tenue_architecte_de_cristal",
+    "tenue_artiste_des_couleurs",
+    "tenue_astronome_de_minuit",
+    "tenue_capitaine_corail",
+    "tenue_champion_des_flocons",
+    "tenue_champion_du_desert",
+    "tenue_champion_pixel",
+    "tenue_chasseur_de_cometes",
+    "tenue_chevalier_citron",
+    "tenue_chevalier_des_brumes",
+    "tenue_corsaire_celeste",
+    "tenue_dresseur_de_nuages",
+    "tenue_explorateur_miniature",
+    "tenue_explorateur_polaire",
+    "tenue_facteur_express",
+    "tenue_fantome_du_phare",
+    "tenue_gardien_de_la_foret",
+    "tenue_gardien_des_lanternes",
+    "tenue_gardien_des_nuages",
+    "tenue_gardien_des_recifs",
+    "tenue_gardien_des_ruines",
+    "tenue_gardienne_des_marees",
+    "tenue_gardienne_des_saisons",
+    "tenue_inventeur_farfelu",
+    "tenue_inventrice_arc_en_ciel",
+    "tenue_jardinier_galactique",
+    "tenue_mage_des_marees",
+    "tenue_mecano_des_etoiles",
+    "tenue_messager_du_soleil",
+    "tenue_musicien_cosmique",
+    "tenue_patineur_polaire",
+    "tenue_pilote_retro",
+    "tenue_pirate_des_nuages",
+    "tenue_plongeur_abyssal",
+    "tenue_raccommodeur_de_robots",
+    "tenue_randonneur_des_cimes",
+    "tenue_randonneur_volcanique",
+    "tenue_reine_des_lucioles",
+    "tenue_reveur_lunaire",
+    "tenue_robot_jardinier",
+    "tenue_roi_des_champignons",
+    "tenue_roi_des_horloges",
+    "tenue_samourai_de_jade",
+    "tenue_sentinelle_de_saphir",
+    "tenue_surfeur_des_dunes",
+    "tenue_veilleur_des_etoiles",
+    "tenue_veterinaire_des_dragons",
+    "tenue_voyageuse_stellaire"
+   ],
+   "livre_le": "2026-11-21",
+   "verifie": "50 images 256² + 147 pièces sur les articulations"
+  },
+  {
+   "actif": true,
+   "categorie": "emote",
+   "fichier": "emotes_250_v001.glb",
+   "fiche": "emotes_250_v001.json",
+   "objets": [
+    "emote_arc_en_ciel_final",
+    "emote_bonjour_soleil",
+    "emote_brume_mysterieuse",
+    "emote_carte_au_tresor",
+    "emote_champignon_disco",
+    "emote_citron_presse",
+    "emote_coucou_mecanique",
+    "emote_danse_des_marees",
+    "emote_danse_du_corsaire",
+    "emote_danse_pixel",
+    "emote_decollage_comete",
+    "emote_eclat_cristallin",
+    "emote_engrenage_humain",
+    "emote_etoile_filante",
+    "emote_feuille_au_vent",
+    "emote_flocon_tourbillonnant",
+    "emote_gardien_du_phare",
+    "emote_joystick_retro",
+    "emote_lanterne_magique",
+    "emote_livraison_reussie",
+    "emote_lucioles_en_fete",
+    "emote_marche_du_desert",
+    "emote_meteore_express",
+    "emote_nuage_de_joie",
+    "emote_palette_vivante",
+    "emote_pas_du_pingouin",
+    "emote_pas_volcanique",
+    "emote_patinage_fantome",
+    "emote_petit_dragon",
+    "emote_petit_jardin",
+    "emote_plongee_imaginaire",
+    "emote_pose_du_corsaire",
+    "emote_pose_du_samourai",
+    "emote_potion_parfaite",
+    "emote_quatre_saisons",
+    "emote_regard_stellaire",
+    "emote_reglage_express",
+    "emote_reparation_eclair",
+    "emote_reve_lunaire",
+    "emote_reveil_des_ruines",
+    "emote_robot_arroseur",
+    "emote_salut_cosmique",
+    "emote_salut_saphir",
+    "emote_satellite_en_orbite",
+    "emote_solo_de_l_espace",
+    "emote_sommet_atteint",
+    "emote_surf_imaginaire",
+    "emote_vague_de_corail",
+    "emote_vague_oceane",
+    "emote_valse_des_vagues"
+   ],
+   "livre_le": "2026-11-21",
+   "verifie": "50 clips sur les articulations nommées"
+  },
+  {
+   "actif": true,
+   "categorie": "trainee",
+   "fichier": "trainees_250_v001.png",
+   "fiche": "trainees_250_v001.json",
+   "objets": [
+    "trainee_anneaux_cosmiques",
+    "trainee_brume_menthe",
+    "trainee_bulles_corail",
+    "trainee_cristaux_de_glace",
+    "trainee_etincelles_mecaniques",
+    "trainee_etoiles_corsaires",
+    "trainee_feuillage_dansant",
+    "trainee_feuilles_de_jade",
+    "trainee_gouttes_des_marees",
+    "trainee_lettres_volantes",
+    "trainee_luciole_filante",
+    "trainee_lueurs_abyssales",
+    "trainee_lueurs_du_phare",
+    "trainee_neige_des_cimes",
+    "trainee_paillettes_astrales",
+    "trainee_petits_engrenages",
+    "trainee_pixels_retro",
+    "trainee_pollen_galactique",
+    "trainee_poussiere_comete",
+    "trainee_poussiere_d_alchimie",
+    "trainee_poussiere_polaire",
+    "trainee_runes_anciennes",
+    "trainee_sable_scintillant",
+    "trainee_spores_champignon",
+    "trainee_voile_brumeux"
+   ],
+   "livre_le": "2026-11-21",
+   "verifie": "atlas 8×8 + réglages"
+  }
+ ],
+ "_esprits_v002": "21 nov. 2026 : esprits_v002.glb (mêmes nœuds et animations que v001 + attente2, deplacer, content, surpris, yeux_joie). v001 gardé dans modeles/ pour revenir en arrière.",
+ "_cargaisons_aide": "Événement de cargaison (livraison F, 21 nov. 2026) : caisse « cargaison » (enfants corps/parachute/rayon/COL_caisse ; anim cargaison_descendre/atterrir/ouvrir/balise) et cargo volant « transporteur » (anim transporteur_voler/larguer, caisse lâchée à t=0,45 s en (0 ; -1,8 ; 0)).",
+ "cargaisons": [
+  {
+   "id": "caisse",
+   "actif": true,
+   "fichier": "cargaison_v001.glb",
+   "objet": "cargaison"
+  },
+  {
+   "id": "transporteur",
+   "actif": true,
+   "fichier": "transporteur_v001.glb",
+   "objet": "transporteur"
+  }
+ ]
 }

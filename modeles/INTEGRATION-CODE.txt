@@ -81,3 +81,52 @@ B. DEMANDES (par ordre d'importance) — même règles qu'avant : .glb, 1 unité
       une cible rouge et blanche sur la poitrine (matériau « cible »). Animation facultative
       « mannequin_touche » (0,5 s, il vacille quand on le touche). Design original.
    Livraison : prévenir la session Codage (noms, taille mesurée, triangles, animations) ; ne rien activer.
+
+
+=====================================================================================
+4) 11 → 21 NOVEMBRE 2026 — GRANDE MISE À JOUR : LISTE PRÉCISE DES MODÈLES (et ce qui est intégré)
+=====================================================================================
+(écrit par la session Développement ; la session Modélisation ne touche pas aux .js/.html/.css/serveur,
+ la session Développement ne touche à AUCUN .blend, source 3D, .glb ou texture source)
+
+Règles communes : .glb, 1 unité = 1 m, haut +Y, avant -Z dans three.js, nouveaux fichiers versionnés (_v001…),
+rien d'écrasé ni activé par la modélisation. Matériaux : « cosm_couleurs » (couleurs par sommet COLOR_0),
+« lumiere_<couleur> » (lueur, règle LUMINEUX de js/modeles.js), « verre_cosm » (transparent). Aucune texture
+sauf indication. Objet racine = <categorie>_<slug> ; slug = id du CSV sans « natx_<cat>_ », sans numéro,
+sans accents (œ → oe). Table commune : modeles/cosm250_livraison.json
+[{ id_catalogue, categorie, slug, fichier, objet, triangles }].
+
+| Fichier (dans modeles/)            | Contenu, dimensions, orientation, pivot                                  | Animations                      | État (21 nov.)            |
+|------------------------------------|--------------------------------------------------------------------------|---------------------------------|---------------------------|
+| cosm250_chapeaux_v001.glb          | 30 chapeau_<slug>, ≤ 1 500 tri, pivot = centre de la tête (≈ 0,5 m max)   | aucune                          | LIVRÉ, VÉRIFIÉ, ACTIF     |
+| cosm250_dos_v001.glb               | 35 dos_<slug>, ≤ 1 500 tri, pivot sur le dos, l'objet part vers +Z        | aucune                          | LIVRÉ, VÉRIFIÉ, ACTIF     |
+| cosm250_pioches_v001.glb           | 35 pioche_<slug>, ≤ 1 500 tri, pivot à la poignée, manche vers -Z (≈ 1 m) | aucune                          | LIVRÉ, VÉRIFIÉ, ACTIF     |
+| cosm250_deltaplanes_v001.glb       | 25 deltaplane_<slug>, ≤ 2 500 tri, pivot aux pieds, barre à 2,3 m / 0,45 m devant (≈ 4 m) | aucune      | LIVRÉ, VÉRIFIÉ, ACTIF     |
+| tenues/<slug>.png + tenues_250_v001.glb + tenues_250_v001.json | 50 images 256×256 (cases torse/bras/avantbras/bas/tibias) + 147 pièces tenue_<slug>__<ancre> (≤ 1 500 tri par tenue), posées à leur pivot (racine, bassin, torse, tete, epaule_G/D, coude_G/D, hanche_G/D, genou_G/D ; G = -X) | aucune | LIVRÉ, VÉRIFIÉ, ACTIF |
+| emotes_250_v001.glb + .json        | 50 clips emote_<slug> sur les nœuds racine, tete, epaule_G/D, coude_G/D, hanche_G/D, genou_G/D (positions de repos du personnage) ; fiche : duree, boucle, effets [{t, type, ancre}] | 50 clips | LIVRÉ, VÉRIFIÉ, ACTIF |
+| trainees_250_v001.png + .json      | atlas 512×512, cases 64 px (8 colonnes), formes blanches à teinter ; réglages couleurs/taille/vie/gravite/frein/alpha/additif/vitesse/dispersion/cadence/nombre | —  | LIVRÉ, VÉRIFIÉ, ACTIF |
+| cargaison_v001.glb                 | caisse 1,6 × 1,25 × 1,3 m, racine « cargaison » au sol au centre, avant -Z, ≤ 3 000 tri ; enfants cargaison_corps (couvercle, interieur, balise), cargaison_parachute, cargaison_rayon, COL_caisse | cargaison_descendre (boucle), _atterrir, _ouvrir, _balise (boucle) | LIVRÉ, VÉRIFIÉ, ACTIF |
+| transporteur_v001.glb              | cargo volant 12,2 × 4,5 × 14,3 m, racine « transporteur » au centre, avant -Z, ≤ 8 000 tri ; hélices, trappe ; caisse lâchée à t = 0,45 s en (0 ; -1,8 ; 0) | transporteur_voler (boucle), _larguer | LIVRÉ, VÉRIFIÉ, ACTIF |
+| esprits_v002.glb                   | mêmes 5 esprits + socle que v001 (mêmes nœuds), yeux « ^ ^ »              | v001 + <id>_attente2, _deplacer, _content, _surpris | LIVRÉ, ACTIF (remplace v001) |
+| icones_cargaison_v001.png          | 2 icônes 128 px (cargo, caisse)                                          | —                               | LIVRÉ, pas encore utilisé |
+
+Comment le code s'en sert (pour les prochaines livraisons) :
+- integration.json, tableau « cosmetiques250 » : une entrée par fichier { actif, categorie, fichier, fiche?, objets[] }.
+  Un objet n'est EN VENTE que si son fichier est là et actif ; contrôle : python -X utf8 cosmétique/verifier_catalogue.py
+  (21 nov. : 250 / 250). Les fichiers sont chargés à la demande (qualité basse : seulement ce qui est porté).
+- Tenues : chaque case de l'image est plaquée sur le morceau de personnage.glb ; pieds/semelle/ceinture/mains = couleurs
+  de la fiche ; pièces 3D ajoutées au groupe de leur articulation (jupes et capes fixées, voir le rapport de la modélisation).
+- Émotes : AnimationMixer sur le personnage (articulations nommées comme les nœuds) ; effets de la fiche joués au temps t ;
+  une émote qui ne boucle pas s'arrête seule à la fin du clip.
+- Traînées : 2e système de particules avec l'atlas (cases comptées depuis le haut-gauche).
+- Chapeaux qui couvrent toute la tête (cheveux cachés) : heaume_des_ruines, casque_polaire, casque_retro,
+  capuche_nuageuse, capuche_sylvestre, capuche_lunaire.
+- Cargaison : le cargo suit une ligne droite à 72 m d'altitude (26 m/s) qui passe au-dessus du point de largage ;
+  la caisse descend à 4,5 m/s ; voile cachée 1,2 s après l'atterrissage ; rayon visible tant que la caisse est fermée.
+- Esprits v002 : « deplacer » quand le joueur court (> 3,5 m/s), « flotter » sinon, « attente2 » de temps en temps à l'arrêt,
+  « content » à la capture (et dans la page Esprits), « surpris » quand le joueur est touché, « activer » au pouvoir.
+
+Demandes restantes (FACULTATIVES, rien ne bloque le jeu) :
+1) Si de nouveaux cosmétiques sont voulus hors des 250 : livrer le modèle (mêmes règles) puis l'admin peut créer
+   l'article dans « Cosmétiques → Ajouter » (il refuse un modèle déjà utilisé ou absent).
+2) personnage_v3 / décor de carte / animations propres aux pioches et deltaplanes : pas nécessaires au code actuel.

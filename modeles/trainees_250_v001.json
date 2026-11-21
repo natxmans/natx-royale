@@ -1,0 +1,811 @@
+{
+ "_aide": "Traînées des 250 cosmétiques (session Modélisation). atlas = image 512x512, cases de 64 px, 8 colonnes, case n à (n % 8, n // 8) depuis le haut-gauche. Formes blanches / grises : la couleur de la particule = une des « couleurs » (tirée au hasard), sauf teinter: false (garder les couleurs de l'image). « cases » = liste des formes à tirer au hasard (« case » = la première). Réglages au format de particules.ajouter (js/effets.js) : taille et tailleFin en m, vie en s, gravite en m/s² (positif = tombe, négatif = monte), frein (par seconde), alpha, additif ; pour l'émetteur : vitesse = vitesse aléatoire de départ (m/s), dispersion = écart autour du point d'émission (m), cadence = secondes entre deux émissions, nombre = particules par émission.",
+ "atlas": "trainees_250_v001.png",
+ "taille_atlas": 512,
+ "taille_case": 64,
+ "colonnes": 8,
+ "formes": {
+  "volute": 0,
+  "flocon": 1,
+  "etoile4": 2,
+  "etincelle": 3,
+  "grain": 4,
+  "feuille": 5,
+  "voile": 6,
+  "etoile5": 7,
+  "bulle": 8,
+  "point_doux": 9,
+  "flocon_simple": 10,
+  "spore": 11,
+  "luciole": 12,
+  "comete": 13,
+  "pixel": 14,
+  "grain_sable": 15,
+  "goutte": 16,
+  "feuille_large": 17,
+  "phare": 18,
+  "poussiere_magique": 19,
+  "engrenage": 20,
+  "enveloppe": 21,
+  "eclat_glace": 22,
+  "anneau": 23,
+  "rune_1": 24,
+  "rune_2": 25,
+  "rune_3": 26,
+  "rune_4": 27
+ },
+ "trainees": [
+  {
+   "id_catalogue": "natx_trainee_brume_menthe_001",
+   "slug": "brume_menthe",
+   "nom": "Brume Menthe",
+   "rarete": "commun",
+   "case": 0,
+   "cases": [
+    0
+   ],
+   "formes": [
+    "volute"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#9fffd8",
+    "#d6fff0",
+    "#7fe8c0"
+   ],
+   "taille": 0.7,
+   "tailleFin": 1.8,
+   "vie": 1.4,
+   "gravite": -0.3,
+   "frein": 0.8,
+   "alpha": 0.55,
+   "additif": false,
+   "vitesse": 0.4,
+   "dispersion": 0.5,
+   "cadence": 0.05,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_poussière_polaire_002",
+   "slug": "poussiere_polaire",
+   "nom": "Poussière Polaire",
+   "rarete": "rare",
+   "case": 1,
+   "cases": [
+    1,
+    10
+   ],
+   "formes": [
+    "flocon",
+    "flocon_simple"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ffffff",
+    "#d9f4ff",
+    "#a8e4ff"
+   ],
+   "taille": 0.35,
+   "tailleFin": 0.05,
+   "vie": 0.9,
+   "gravite": 0.6,
+   "frein": 0.5,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.8,
+   "dispersion": 0.7,
+   "cadence": 0.03,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_paillettes_astrales_003",
+   "slug": "paillettes_astrales",
+   "nom": "Paillettes Astrales",
+   "rarete": "epique",
+   "case": 2,
+   "cases": [
+    2,
+    4
+   ],
+   "formes": [
+    "etoile4",
+    "grain"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#fff3a8",
+    "#ffffff",
+    "#c8b6ff",
+    "#9fe0ff"
+   ],
+   "taille": 0.3,
+   "tailleFin": 0.02,
+   "vie": 1.0,
+   "gravite": 0.0,
+   "frein": 0.6,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.7,
+   "dispersion": 0.8,
+   "cadence": 0.02,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_étincelles_mécaniques_004",
+   "slug": "etincelles_mecaniques",
+   "nom": "Étincelles Mécaniques",
+   "rarete": "rare",
+   "case": 3,
+   "cases": [
+    3
+   ],
+   "formes": [
+    "etincelle"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ffd23f",
+    "#ffae1f",
+    "#e6ecf5"
+   ],
+   "taille": 0.35,
+   "tailleFin": 0.05,
+   "vie": 0.6,
+   "gravite": 3.0,
+   "frein": 0.2,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 2.2,
+   "dispersion": 0.4,
+   "cadence": 0.06,
+   "nombre": 3
+  },
+  {
+   "id_catalogue": "natx_trainee_pollen_galactique_005",
+   "slug": "pollen_galactique",
+   "nom": "Pollen Galactique",
+   "rarete": "legendaire",
+   "case": 4,
+   "cases": [
+    4,
+    9
+   ],
+   "formes": [
+    "grain",
+    "point_doux"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ff8af0",
+    "#8af0ff",
+    "#c88aff",
+    "#fff08a"
+   ],
+   "taille": 0.4,
+   "tailleFin": 0.15,
+   "vie": 1.6,
+   "gravite": -0.2,
+   "frein": 0.9,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.5,
+   "dispersion": 0.9,
+   "cadence": 0.03,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_feuilles_de_jade_006",
+   "slug": "feuilles_de_jade",
+   "nom": "Feuilles de Jade",
+   "rarete": "commun",
+   "case": 5,
+   "cases": [
+    5
+   ],
+   "formes": [
+    "feuille"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#3fbf8a",
+    "#7fe0b5",
+    "#2a9068"
+   ],
+   "taille": 0.45,
+   "tailleFin": 0.35,
+   "vie": 1.5,
+   "gravite": 0.9,
+   "frein": 1.2,
+   "alpha": 1.0,
+   "additif": false,
+   "vitesse": 0.9,
+   "dispersion": 0.6,
+   "cadence": 0.06,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_voile_brumeux_007",
+   "slug": "voile_brumeux",
+   "nom": "Voile Brumeux",
+   "rarete": "rare",
+   "case": 6,
+   "cases": [
+    6
+   ],
+   "formes": [
+    "voile"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#e6ecf5",
+    "#c9d6ee"
+   ],
+   "taille": 1.0,
+   "tailleFin": 1.8,
+   "vie": 1.2,
+   "gravite": -0.2,
+   "frein": 1.0,
+   "alpha": 0.45,
+   "additif": false,
+   "vitesse": 0.3,
+   "dispersion": 0.3,
+   "cadence": 0.05,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_étoiles_corsaires_008",
+   "slug": "etoiles_corsaires",
+   "nom": "Étoiles Corsaires",
+   "rarete": "epique",
+   "case": 7,
+   "cases": [
+    7
+   ],
+   "formes": [
+    "etoile5"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ffcf4a",
+    "#ffe27a",
+    "#e8b93a"
+   ],
+   "taille": 0.45,
+   "tailleFin": 0.1,
+   "vie": 1.2,
+   "gravite": 0.3,
+   "frein": 0.6,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.7,
+   "dispersion": 0.6,
+   "cadence": 0.045,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_bulles_corail_009",
+   "slug": "bulles_corail",
+   "nom": "Bulles Corail",
+   "rarete": "rare",
+   "case": 8,
+   "cases": [
+    8
+   ],
+   "formes": [
+    "bulle"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ffb7c9",
+    "#9fe8f2",
+    "#ffd6a8",
+    "#ffffff"
+   ],
+   "taille": 0.35,
+   "tailleFin": 0.55,
+   "vie": 1.3,
+   "gravite": -0.8,
+   "frein": 0.9,
+   "alpha": 0.9,
+   "additif": false,
+   "vitesse": 0.6,
+   "dispersion": 0.7,
+   "cadence": 0.04,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_lueurs_abyssales_010",
+   "slug": "lueurs_abyssales",
+   "nom": "Lueurs Abyssales",
+   "rarete": "legendaire",
+   "case": 9,
+   "cases": [
+    9
+   ],
+   "formes": [
+    "point_doux"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#3fe8ff",
+    "#4f9bff",
+    "#7ff6ff"
+   ],
+   "taille": 0.4,
+   "tailleFin": 0.1,
+   "vie": 1.5,
+   "gravite": 0.0,
+   "frein": 1.0,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.3,
+   "dispersion": 0.8,
+   "cadence": 0.03,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_neige_des_cimes_011",
+   "slug": "neige_des_cimes",
+   "nom": "Neige des Cimes",
+   "rarete": "commun",
+   "case": 10,
+   "cases": [
+    10
+   ],
+   "formes": [
+    "flocon_simple"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ffffff",
+    "#eef8ff"
+   ],
+   "taille": 0.3,
+   "tailleFin": 0.25,
+   "vie": 1.6,
+   "gravite": 0.5,
+   "frein": 0.8,
+   "alpha": 1.0,
+   "additif": false,
+   "vitesse": 0.5,
+   "dispersion": 0.9,
+   "cadence": 0.04,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_spores_champignon_012",
+   "slug": "spores_champignon",
+   "nom": "Spores Champignon",
+   "rarete": "rare",
+   "case": 11,
+   "cases": [
+    11
+   ],
+   "formes": [
+    "spore"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ff6f91",
+    "#ffd23f",
+    "#b56bff",
+    "#6fd35a"
+   ],
+   "taille": 0.3,
+   "tailleFin": 0.2,
+   "vie": 1.4,
+   "gravite": -0.4,
+   "frein": 1.0,
+   "alpha": 1.0,
+   "additif": false,
+   "vitesse": 0.6,
+   "dispersion": 0.7,
+   "cadence": 0.04,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_luciole_filante_013",
+   "slug": "luciole_filante",
+   "nom": "Luciole Filante",
+   "rarete": "epique",
+   "case": 12,
+   "cases": [
+    12
+   ],
+   "formes": [
+    "luciole"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ffe36a",
+    "#fff3b0",
+    "#c8ff6a"
+   ],
+   "taille": 0.4,
+   "tailleFin": 0.15,
+   "vie": 1.2,
+   "gravite": 0.0,
+   "frein": 0.3,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.2,
+   "dispersion": 0.15,
+   "cadence": 0.02,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_poussière_comète_014",
+   "slug": "poussiere_comete",
+   "nom": "Poussière Comète",
+   "rarete": "rare",
+   "case": 13,
+   "cases": [
+    13,
+    4
+   ],
+   "formes": [
+    "comete",
+    "grain"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ffd23f",
+    "#ff9a3c",
+    "#ffffff"
+   ],
+   "taille": 0.55,
+   "tailleFin": 0.1,
+   "vie": 0.8,
+   "gravite": 0.0,
+   "frein": 0.4,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.9,
+   "dispersion": 0.5,
+   "cadence": 0.035,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_pixels_rétro_015",
+   "slug": "pixels_retro",
+   "nom": "Pixels Rétro",
+   "rarete": "legendaire",
+   "case": 14,
+   "cases": [
+    14
+   ],
+   "formes": [
+    "pixel"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#ff5fd0",
+    "#3fe8ff",
+    "#ffd23f",
+    "#6fd35a",
+    "#7d5fff"
+   ],
+   "taille": 0.3,
+   "tailleFin": 0.3,
+   "vie": 0.9,
+   "gravite": 1.0,
+   "frein": 0.5,
+   "alpha": 1.0,
+   "additif": false,
+   "vitesse": 0.7,
+   "dispersion": 0.6,
+   "cadence": 0.04,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_sable_scintillant_016",
+   "slug": "sable_scintillant",
+   "nom": "Sable Scintillant",
+   "rarete": "commun",
+   "case": 15,
+   "cases": [
+    15,
+    2
+   ],
+   "formes": [
+    "grain_sable",
+    "etoile4"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#f1d79a",
+    "#ffe6a8",
+    "#ffffff"
+   ],
+   "taille": 0.25,
+   "tailleFin": 0.05,
+   "vie": 0.9,
+   "gravite": 0.8,
+   "frein": 0.6,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.6,
+   "dispersion": 0.6,
+   "cadence": 0.025,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_gouttes_des_marées_017",
+   "slug": "gouttes_des_marees",
+   "nom": "Gouttes des Marées",
+   "rarete": "rare",
+   "case": 16,
+   "cases": [
+    16
+   ],
+   "formes": [
+    "goutte"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#7fd3ff",
+    "#4fd0e0",
+    "#bfe9ff"
+   ],
+   "taille": 0.3,
+   "tailleFin": 0.15,
+   "vie": 0.9,
+   "gravite": 3.5,
+   "frein": 0.2,
+   "alpha": 0.85,
+   "additif": false,
+   "vitesse": 0.8,
+   "dispersion": 0.6,
+   "cadence": 0.04,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_feuillage_dansant_018",
+   "slug": "feuillage_dansant",
+   "nom": "Feuillage Dansant",
+   "rarete": "epique",
+   "case": 5,
+   "cases": [
+    5,
+    17
+   ],
+   "formes": [
+    "feuille",
+    "feuille_large"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#7fd35a",
+    "#ffb02e",
+    "#e8634f",
+    "#3fae4a"
+   ],
+   "taille": 0.5,
+   "tailleFin": 0.45,
+   "vie": 1.8,
+   "gravite": 0.6,
+   "frein": 1.5,
+   "alpha": 1.0,
+   "additif": false,
+   "vitesse": 1.0,
+   "dispersion": 0.8,
+   "cadence": 0.07,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_lueurs_du_phare_019",
+   "slug": "lueurs_du_phare",
+   "nom": "Lueurs du Phare",
+   "rarete": "rare",
+   "case": 18,
+   "cases": [
+    18
+   ],
+   "formes": [
+    "phare"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#fff2b0",
+    "#ffd96a"
+   ],
+   "taille": 0.6,
+   "tailleFin": 0.05,
+   "vie": 1.0,
+   "gravite": 0.0,
+   "frein": 0.8,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.2,
+   "dispersion": 0.4,
+   "cadence": 0.09,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_poussière_d_alchimie_020",
+   "slug": "poussiere_d_alchimie",
+   "nom": "Poussière d'Alchimie",
+   "rarete": "legendaire",
+   "case": 19,
+   "cases": [
+    19,
+    4
+   ],
+   "formes": [
+    "poussiere_magique",
+    "grain"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#b56bff",
+    "#e0a8ff",
+    "#ff8af0"
+   ],
+   "taille": 0.35,
+   "tailleFin": 0.05,
+   "vie": 1.3,
+   "gravite": -0.3,
+   "frein": 0.8,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.6,
+   "dispersion": 0.7,
+   "cadence": 0.025,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_petits_engrenages_021",
+   "slug": "petits_engrenages",
+   "nom": "Petits Engrenages",
+   "rarete": "commun",
+   "case": 20,
+   "cases": [
+    20
+   ],
+   "formes": [
+    "engrenage"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#c9d2dc",
+    "#e8b93a",
+    "#9aa3ad"
+   ],
+   "taille": 0.4,
+   "tailleFin": 0.3,
+   "vie": 1.0,
+   "gravite": 1.2,
+   "frein": 0.4,
+   "alpha": 1.0,
+   "additif": false,
+   "vitesse": 0.8,
+   "dispersion": 0.5,
+   "cadence": 0.06,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_lettres_volantes_022",
+   "slug": "lettres_volantes",
+   "nom": "Lettres Volantes",
+   "rarete": "rare",
+   "case": 21,
+   "cases": [
+    21
+   ],
+   "formes": [
+    "enveloppe"
+   ],
+   "teinter": false,
+   "couleurs": [
+    "#ffffff"
+   ],
+   "taille": 0.45,
+   "tailleFin": 0.4,
+   "vie": 1.6,
+   "gravite": -0.3,
+   "frein": 1.2,
+   "alpha": 1.0,
+   "additif": false,
+   "vitesse": 0.9,
+   "dispersion": 0.6,
+   "cadence": 0.09,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_cristaux_de_glace_023",
+   "slug": "cristaux_de_glace",
+   "nom": "Cristaux de Glace",
+   "rarete": "epique",
+   "case": 22,
+   "cases": [
+    22
+   ],
+   "formes": [
+    "eclat_glace"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#bfe9ff",
+    "#ffffff",
+    "#9fd0ff"
+   ],
+   "taille": 0.4,
+   "tailleFin": 0.1,
+   "vie": 0.8,
+   "gravite": 1.5,
+   "frein": 0.3,
+   "alpha": 0.95,
+   "additif": true,
+   "vitesse": 1.2,
+   "dispersion": 0.5,
+   "cadence": 0.04,
+   "nombre": 2
+  },
+  {
+   "id_catalogue": "natx_trainee_anneaux_cosmiques_024",
+   "slug": "anneaux_cosmiques",
+   "nom": "Anneaux Cosmiques",
+   "rarete": "rare",
+   "case": 23,
+   "cases": [
+    23
+   ],
+   "formes": [
+    "anneau"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#8af0ff",
+    "#c88aff",
+    "#ff8af0"
+   ],
+   "taille": 0.3,
+   "tailleFin": 1.4,
+   "vie": 1.0,
+   "gravite": 0.0,
+   "frein": 0.5,
+   "alpha": 0.9,
+   "additif": true,
+   "vitesse": 0.2,
+   "dispersion": 0.2,
+   "cadence": 0.12,
+   "nombre": 1
+  },
+  {
+   "id_catalogue": "natx_trainee_runes_anciennes_025",
+   "slug": "runes_anciennes",
+   "nom": "Runes Anciennes",
+   "rarete": "legendaire",
+   "case": 24,
+   "cases": [
+    24,
+    25,
+    26,
+    27
+   ],
+   "formes": [
+    "rune_1",
+    "rune_2",
+    "rune_3",
+    "rune_4"
+   ],
+   "teinter": true,
+   "couleurs": [
+    "#7dffd0",
+    "#a8ffe6",
+    "#ffd257"
+   ],
+   "taille": 0.5,
+   "tailleFin": 0.35,
+   "vie": 1.5,
+   "gravite": -0.3,
+   "frein": 1.0,
+   "alpha": 1.0,
+   "additif": true,
+   "vitesse": 0.3,
+   "dispersion": 0.5,
+   "cadence": 0.11,
+   "nombre": 1
+  }
+ ]
+}
