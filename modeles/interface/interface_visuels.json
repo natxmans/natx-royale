@@ -1,0 +1,521 @@
+{
+ "_aide": "Ressources graphiques des pages du JEU (session Modélisation). Aucune police ni image externe. Icônes : SVG 24 x 24, trait currentColor, à mettre en ligne ou via le sprite (<svg><use href=\"icones.svg#i-<id>\"/></svg>) pour que la couleur suive le CSS. « emoji » = l'émoji que l'icône peut remplacer dans index.html. Badges et cadres de rareté, vignettes des cosmétiques : communs avec le panel admin (modeles/admin/raretes, cadres, vignettes + vignettes.json).",
+ "logo": {
+  "large": "logo/logo_natx_royale.svg",
+  "large_png": "logo/logo_natx_royale_1024x357.png",
+  "carre": "logo/logo_natx_royale_carre.svg",
+  "carre_png": [
+   "logo/logo_natx_royale_512.png",
+   "logo/logo_natx_royale_192.png",
+   "logo/logo_natx_royale_64.png"
+  ]
+ },
+ "icones": {
+  "jouer": {
+   "fichier": "icones/jouer.svg",
+   "emoji": "🎮",
+   "usage": "onglet Jouer, Contrôles"
+  },
+  "boutique": {
+   "fichier": "icones/boutique.svg",
+   "emoji": "🛒",
+   "usage": "onglet Boutique"
+  },
+  "casier": {
+   "fichier": "icones/casier.svg",
+   "emoji": "🧳",
+   "usage": "onglet Casier"
+  },
+  "esprits": {
+   "fichier": "icones/esprits.svg",
+   "emoji": "✨",
+   "usage": "onglet Esprits"
+  },
+  "nouveautes": {
+   "fichier": "icones/nouveautes.svg",
+   "emoji": "📰",
+   "usage": "onglet Nouveautés"
+  },
+  "idees": {
+   "fichier": "icones/idees.svg",
+   "emoji": "💡",
+   "usage": "onglet Idées"
+  },
+  "ile": {
+   "fichier": "icones/ile.svg",
+   "emoji": "🏝️",
+   "usage": "logo / carte"
+  },
+  "niveau": {
+   "fichier": "icones/niveau.svg",
+   "emoji": "⭐",
+   "usage": "niveau du joueur"
+  },
+  "pieces": {
+   "fichier": "icones/pieces.svg",
+   "emoji": "🪙",
+   "usage": "pièces"
+  },
+  "cadeau": {
+   "fichier": "icones/cadeau.svg",
+   "emoji": "🎁",
+   "usage": "boîte de réception, cadeaux"
+  },
+  "parametres": {
+   "fichier": "icones/parametres.svg",
+   "emoji": "⚙️",
+   "usage": "réglages"
+  },
+  "plein_ecran": {
+   "fichier": "icones/plein_ecran.svg",
+   "emoji": "⛶",
+   "usage": "plein écran"
+  },
+  "couronne": {
+   "fichier": "icones/couronne.svg",
+   "emoji": "👑",
+   "usage": "hôte, premier"
+  },
+  "joueur": {
+   "fichier": "icones/joueur.svg",
+   "emoji": "👤",
+   "usage": "joueur, compte"
+  },
+  "joueurs": {
+   "fichier": "icones/joueurs.svg",
+   "emoji": "👥",
+   "usage": "joueurs, équipe"
+  },
+  "bouclier": {
+   "fichier": "icones/bouclier.svg",
+   "emoji": "🛡️",
+   "usage": "bouclier, staff"
+  },
+  "cible": {
+   "fichier": "icones/cible.svg",
+   "emoji": "🎯",
+   "usage": "objectif, précision"
+  },
+  "cle": {
+   "fichier": "icones/cle.svg",
+   "emoji": "🔑",
+   "usage": "rejoindre, code"
+  },
+  "regles": {
+   "fichier": "icones/regles.svg",
+   "emoji": "📜",
+   "usage": "règles du jeu"
+  },
+  "crayon": {
+   "fichier": "icones/crayon.svg",
+   "emoji": "✏️",
+   "usage": "changer de style"
+  },
+  "calendrier": {
+   "fichier": "icones/calendrier.svg",
+   "emoji": "🗓️",
+   "usage": "objets du jour"
+  },
+  "catalogue": {
+   "fichier": "icones/catalogue.svg",
+   "emoji": "📚",
+   "usage": "tout le catalogue"
+  },
+  "de": {
+   "fichier": "icones/de.svg",
+   "emoji": "🎲",
+   "usage": "style au hasard"
+  },
+  "feu": {
+   "fichier": "icones/feu.svg",
+   "emoji": "🔥",
+   "usage": "populaires"
+  },
+  "horloge": {
+   "fichier": "icones/horloge.svg",
+   "emoji": "🕘",
+   "usage": "récentes"
+  },
+  "proposer": {
+   "fichier": "icones/proposer.svg",
+   "emoji": "✍️",
+   "usage": "proposer une idée"
+  },
+  "copier": {
+   "fichier": "icones/copier.svg",
+   "emoji": "📋",
+   "usage": "copier le lien"
+  },
+  "fete": {
+   "fichier": "icones/fete.svg",
+   "emoji": "🎉",
+   "usage": "butin de fête"
+  },
+  "fusee": {
+   "fichier": "icones/fusee.svg",
+   "emoji": "🚀",
+   "usage": "lancer la partie"
+  },
+  "sablier": {
+   "fichier": "icones/sablier.svg",
+   "emoji": "⏳",
+   "usage": "en attente"
+  },
+  "position": {
+   "fichier": "icones/position.svg",
+   "emoji": "📍",
+   "usage": "position, repère"
+  },
+  "haut": {
+   "fichier": "icones/haut.svg",
+   "emoji": "⬆",
+   "usage": "flèche vers le haut"
+  },
+  "eliminations": {
+   "fichier": "icones/eliminations.svg",
+   "emoji": "💀",
+   "usage": "éliminations"
+  },
+  "chrono": {
+   "fichier": "icones/chrono.svg",
+   "emoji": "⏱️",
+   "usage": "temps"
+  },
+  "vie": {
+   "fichier": "icones/vie.svg",
+   "emoji": "❤️",
+   "usage": "points de vie"
+  },
+  "bois": {
+   "fichier": "icones/bois.svg",
+   "emoji": "🪵",
+   "usage": "bois, matériaux"
+  },
+  "pause": {
+   "fichier": "icones/pause.svg",
+   "emoji": "⏸️",
+   "usage": "pause"
+  },
+  "carte": {
+   "fichier": "icones/carte.svg",
+   "emoji": "🗺️",
+   "usage": "carte"
+  },
+  "trophee": {
+   "fichier": "icones/trophee.svg",
+   "emoji": "🏆",
+   "usage": "victoire, classement"
+  },
+  "discussion": {
+   "fichier": "icones/discussion.svg",
+   "emoji": "💬",
+   "usage": "discussion"
+  },
+  "emote": {
+   "fichier": "icones/emote.svg",
+   "emoji": "💃",
+   "usage": "emotes"
+  },
+  "poubelle": {
+   "fichier": "icones/poubelle.svg",
+   "emoji": "🗑️",
+   "usage": "jeter un objet"
+  },
+  "mur": {
+   "fichier": "icones/mur.svg",
+   "emoji": "🧱",
+   "usage": "construire un mur"
+  },
+  "rampe": {
+   "fichier": "icones/rampe.svg",
+   "emoji": "📐",
+   "usage": "construire une rampe"
+  },
+  "sol": {
+   "fichier": "icones/sol.svg",
+   "emoji": "⬛",
+   "usage": "construire un sol"
+  },
+  "arme": {
+   "fichier": "icones/arme.svg",
+   "emoji": "🔫",
+   "usage": "tirer, armes"
+  },
+  "sauter": {
+   "fichier": "icones/sauter.svg",
+   "emoji": "⤴",
+   "usage": "sauter"
+  },
+  "accroupir": {
+   "fichier": "icones/accroupir.svg",
+   "emoji": "🧎",
+   "usage": "s'accroupir"
+  },
+  "tourner_ecran": {
+   "fichier": "icones/tourner_ecran.svg",
+   "emoji": "📱",
+   "usage": "tourner l'écran"
+  },
+  "fermer": {
+   "fichier": "icones/fermer.svg",
+   "emoji": "✖",
+   "usage": "fermer, passer"
+  },
+  "reprendre": {
+   "fichier": "icones/reprendre.svg",
+   "emoji": "▶️",
+   "usage": "reprendre, lecture"
+  },
+  "envoyer": {
+   "fichier": "icones/envoyer.svg",
+   "emoji": "📨",
+   "usage": "envoyer un avis"
+  },
+  "valide": {
+   "fichier": "icones/valide.svg",
+   "emoji": "✅",
+   "usage": "c'est bon, envoyé"
+  },
+  "rejouer": {
+   "fichier": "icones/rejouer.svg",
+   "emoji": "🔁",
+   "usage": "nouvelle partie, réessayer"
+  },
+  "signaler": {
+   "fichier": "icones/signaler.svg",
+   "emoji": "🚩",
+   "usage": "signaler un joueur"
+  },
+  "avertissement": {
+   "fichier": "icones/avertissement.svg",
+   "emoji": "⚠️",
+   "usage": "message de l'équipe"
+  },
+  "image": {
+   "fichier": "icones/image.svg",
+   "emoji": "🖼️",
+   "usage": "réglages : image"
+  },
+  "touches": {
+   "fichier": "icones/touches.svg",
+   "emoji": "⌨️",
+   "usage": "réglages : touches"
+  },
+  "son": {
+   "fichier": "icones/son.svg",
+   "emoji": "🔊",
+   "usage": "réglages : son"
+  },
+  "ecran": {
+   "fichier": "icones/ecran.svg",
+   "emoji": "🧭",
+   "usage": "réglages : écran, interface"
+  },
+  "sauvegarde": {
+   "fichier": "icones/sauvegarde.svg",
+   "emoji": "☁️",
+   "usage": "sauvegarde en ligne"
+  },
+  "afficher": {
+   "fichier": "icones/afficher.svg",
+   "emoji": "👁️",
+   "usage": "afficher le code"
+  },
+  "recuperer": {
+   "fichier": "icones/recuperer.svg",
+   "emoji": "📥",
+   "usage": "récupérer mon compte"
+  }
+ },
+ "icones_communes_admin": {
+  "tenue": {
+   "fichier": "icones/tenue.svg",
+   "emoji": "👕"
+  },
+  "chapeau": {
+   "fichier": "icones/chapeau.svg",
+   "emoji": "🎩"
+  },
+  "dos": {
+   "fichier": "icones/dos.svg",
+   "emoji": "🎒"
+  },
+  "pioche": {
+   "fichier": "icones/pioche.svg",
+   "emoji": "⛏️"
+  },
+  "deltaplane": {
+   "fichier": "icones/deltaplane.svg",
+   "emoji": "🪁"
+  },
+  "trainee": {
+   "fichier": "icones/trainee.svg",
+   "emoji": "✨"
+  },
+  "rarete": {
+   "fichier": "icones/rarete.svg",
+   "emoji": "💎"
+  },
+  "cargaison": {
+   "fichier": "icones/cargaison.svg",
+   "emoji": "📦"
+  },
+  "robot": {
+   "fichier": "icones/robot.svg",
+   "emoji": "🤖"
+  }
+ },
+ "sprite": "icones/icones.svg",
+ "illustrations": {
+  "jouer": {
+   "grand": "illustrations/jouer.webp",
+   "petit": "illustrations/jouer_petit.webp"
+  },
+  "boutique": {
+   "grand": "illustrations/boutique.webp",
+   "petit": "illustrations/boutique_petit.webp"
+  },
+  "casier": {
+   "grand": "illustrations/casier.webp",
+   "petit": "illustrations/casier_petit.webp"
+  },
+  "esprits": {
+   "grand": "illustrations/esprits.webp",
+   "petit": "illustrations/esprits_petit.webp"
+  },
+  "nouveautes": {
+   "grand": "illustrations/nouveautes.webp",
+   "petit": "illustrations/nouveautes_petit.webp"
+  },
+  "idees": {
+   "grand": "illustrations/idees.webp",
+   "petit": "illustrations/idees_petit.webp"
+  },
+  "cadeaux": {
+   "grand": "illustrations/cadeaux.webp",
+   "petit": "illustrations/cadeaux_petit.webp"
+  },
+  "victoire": {
+   "grand": "illustrations/victoire.webp",
+   "petit": "illustrations/victoire_petit.webp"
+  },
+  "chargement": {
+   "grand": "illustrations/chargement.webp",
+   "petit": "illustrations/chargement_petit.webp"
+  }
+ },
+ "illustrations_tailles": {
+  "grand": [
+   640,
+   360
+  ],
+  "petit": [
+   320,
+   180
+  ]
+ },
+ "communs_avec_admin": {
+  "raretes": "../admin/raretes/badge_<rarete>.svg",
+  "cadres": "../admin/cadres/cadre_<rarete>.svg",
+  "vignettes": "../admin/vignettes.json"
+ },
+ "poids_ko": {
+  "icones/accroupir.svg": 0.3,
+  "icones/afficher.svg": 0.3,
+  "icones/arme.svg": 0.3,
+  "icones/avertissement.svg": 0.2,
+  "icones/bois.svg": 0.3,
+  "icones/bouclier.svg": 0.3,
+  "icones/boutique.svg": 0.3,
+  "icones/cadeau.svg": 0.4,
+  "icones/calendrier.svg": 0.3,
+  "icones/cargaison.svg": 0.3,
+  "icones/carte.svg": 0.3,
+  "icones/casier.svg": 0.3,
+  "icones/catalogue.svg": 0.4,
+  "icones/chapeau.svg": 0.3,
+  "icones/chrono.svg": 0.3,
+  "icones/cible.svg": 0.3,
+  "icones/cle.svg": 0.3,
+  "icones/copier.svg": 0.3,
+  "icones/couronne.svg": 0.3,
+  "icones/crayon.svg": 0.3,
+  "icones/de.svg": 0.3,
+  "icones/deltaplane.svg": 0.3,
+  "icones/discussion.svg": 0.3,
+  "icones/dos.svg": 0.3,
+  "icones/ecran.svg": 0.3,
+  "icones/eliminations.svg": 0.3,
+  "icones/emote.svg": 0.3,
+  "icones/envoyer.svg": 0.3,
+  "icones/esprits.svg": 0.3,
+  "icones/fermer.svg": 0.2,
+  "icones/fete.svg": 0.3,
+  "icones/feu.svg": 0.4,
+  "icones/fusee.svg": 0.4,
+  "icones/haut.svg": 0.2,
+  "icones/horloge.svg": 0.2,
+  "icones/icones.svg": 19.0,
+  "icones/idees.svg": 0.3,
+  "icones/ile.svg": 0.4,
+  "icones/image.svg": 0.3,
+  "icones/jouer.svg": 0.3,
+  "icones/joueur.svg": 0.3,
+  "icones/joueurs.svg": 0.3,
+  "icones/mur.svg": 0.3,
+  "icones/niveau.svg": 0.3,
+  "icones/nouveautes.svg": 0.3,
+  "icones/parametres.svg": 0.4,
+  "icones/pause.svg": 0.3,
+  "icones/pieces.svg": 0.3,
+  "icones/pioche.svg": 0.3,
+  "icones/plein_ecran.svg": 0.2,
+  "icones/position.svg": 0.3,
+  "icones/poubelle.svg": 0.3,
+  "icones/proposer.svg": 0.3,
+  "icones/rampe.svg": 0.2,
+  "icones/rarete.svg": 0.3,
+  "icones/recuperer.svg": 0.3,
+  "icones/regles.svg": 0.4,
+  "icones/rejouer.svg": 0.3,
+  "icones/reprendre.svg": 0.2,
+  "icones/robot.svg": 0.4,
+  "icones/sablier.svg": 0.3,
+  "icones/sauter.svg": 0.3,
+  "icones/sauvegarde.svg": 0.3,
+  "icones/signaler.svg": 0.3,
+  "icones/sol.svg": 0.2,
+  "icones/son.svg": 0.3,
+  "icones/tenue.svg": 0.3,
+  "icones/touches.svg": 0.4,
+  "icones/tourner_ecran.svg": 0.4,
+  "icones/trainee.svg": 0.3,
+  "icones/trophee.svg": 0.3,
+  "icones/valide.svg": 0.3,
+  "icones/vie.svg": 0.3,
+  "illustrations/boutique.webp": 13.9,
+  "illustrations/boutique_petit.webp": 5.6,
+  "illustrations/cadeaux.webp": 13.7,
+  "illustrations/cadeaux_petit.webp": 5.9,
+  "illustrations/casier.webp": 24.4,
+  "illustrations/casier_petit.webp": 9.9,
+  "illustrations/chargement.webp": 10.7,
+  "illustrations/chargement_petit.webp": 4.6,
+  "illustrations/esprits.webp": 18.9,
+  "illustrations/esprits_petit.webp": 7.9,
+  "illustrations/idees.webp": 11.0,
+  "illustrations/idees_petit.webp": 5.1,
+  "illustrations/jouer.webp": 14.0,
+  "illustrations/jouer_petit.webp": 5.6,
+  "illustrations/nouveautes.webp": 13.7,
+  "illustrations/nouveautes_petit.webp": 5.5,
+  "illustrations/victoire.webp": 17.6,
+  "illustrations/victoire_petit.webp": 7.2,
+  "logo/logo_natx_royale.svg": 10.3,
+  "logo/logo_natx_royale_1024x357.png": 23.2,
+  "logo/logo_natx_royale_192.png": 6.6,
+  "logo/logo_natx_royale_512.png": 14.1,
+  "logo/logo_natx_royale_64.png": 2.2,
+  "logo/logo_natx_royale_carre.svg": 4.1
+ }
+}

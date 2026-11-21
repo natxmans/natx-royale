@@ -82,6 +82,17 @@ export function son(nom, vol = 1) {
     case 'esprit_protection': bip(330, 0.6, 0.12 * vol, 'triangle'); plus(60, () => bip(495, 0.5, 0.08 * vol, 'triangle')); break;
     case 'esprit_vision': bip(880, 0.45, 0.08 * vol, 'sine', 620); plus(200, () => bip(1320, 0.3, 0.05 * vol, 'sine', 990)); break;
     case 'esprit_batisseur': bip(220, 0.06, 0.15 * vol, 'square', 140); plus(130, () => bip(220, 0.06, 0.15 * vol, 'square', 140)); plus(280, () => bip(1046, 0.25, 0.08 * vol, 'triangle')); break;
+    // les 10 esprits ajoutés
+    case 'esprit_feu': rafale(0.45, 700, 0.9, 0.2 * vol, 'lowpass'); bip(180, 0.3, 0.1 * vol, 'sawtooth', 90); break;
+    case 'esprit_glace': [1760, 2093, 2637, 3136].forEach((f, i) => plus(i * 55, () => bip(f, 0.2, 0.04 * vol, 'sine'))); break;
+    case 'esprit_foudre': rafale(0.12, 3000, 2, 0.25 * vol, 'highpass'); plus(70, () => bip(1400, 0.18, 0.1 * vol, 'sawtooth', 300)); break;
+    case 'esprit_vent': rafale(0.6, 1200, 0.8, 0.2 * vol, 'bandpass'); break;
+    case 'esprit_nature': bip(196, 0.12, 0.12 * vol, 'triangle', 147); plus(120, () => bip(262, 0.2, 0.1 * vol, 'triangle', 196)); break;
+    case 'esprit_ombre': bip(440, 0.5, 0.09 * vol, 'sine', 180); plus(120, () => bip(330, 0.4, 0.06 * vol, 'sine', 140)); break;
+    case 'esprit_temps': [988, 784, 988, 784].forEach((f, i) => plus(i * 80, () => bip(f, 0.07, 0.09 * vol, 'square'))); break;
+    case 'esprit_eau': bip(300, 0.25, 0.12 * vol, 'sine', 900); plus(160, () => bip(500, 0.2, 0.08 * vol, 'sine', 1200)); break;
+    case 'esprit_chance': [1319, 1568, 2093].forEach((f, i) => plus(i * 70, () => bip(f, 0.14, 0.08 * vol, 'triangle'))); break;
+    case 'esprit_etoile': bip(600, 0.35, 0.1 * vol, 'sine', 2400); plus(200, () => bip(2637, 0.25, 0.05 * vol, 'sine')); break;
     case 'esprit_rare': [1568, 2093, 2637].forEach((f, i) => plus(i * 60, () => bip(f, 0.18, 0.035 * vol, 'sine'))); break;
     case 'cadeau': bip(1046, 0.12, 0.05 * vol, 'sine'); plus(110, () => bip(1397, 0.12, 0.045 * vol, 'sine')); plus(220, () => bip(2093, 0.22, 0.03 * vol, 'sine')); break;
     case 'message': bip(1180, 0.07, 0.08 * vol, 'sine'); plus(80, () => bip(1560, 0.09, 0.08 * vol, 'sine')); break;

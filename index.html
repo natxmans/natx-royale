@@ -9,11 +9,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Natx Royale — bataille royale entre potes</title>
 <meta name="description" content="Bataille royale en 3D dans le navigateur : saute du dirigeable, ramasse des armes, construis des murs et des rampes, sois le dernier debout. Entre potes avec un code, ou en solo contre des bots.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏝️</text></svg>">
+<link rel="icon" type="image/png" href="modeles/interface/logo/logo_natx_royale_64.png">
+<link rel="apple-touch-icon" href="modeles/interface/logo/logo_natx_royale_192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
@@ -55,7 +56,7 @@
 <body class="demarrage">
 <canvas id="jeu"></canvas>
 <div id="demarrage">
-  <div class="boite"><div class="roue"></div><h2>Chargement de l'île…</h2>
+  <div class="boite"><img class="illustration" src="modeles/interface/illustrations/chargement_petit.webp" width="320" height="180" alt=""><div class="roue"></div><h2>Chargement de l'île…</h2>
     <div id="demarrageLent" class="cache">
       <p>Le jeu met longtemps à démarrer. Vérifie ta connexion, puis réessaie (en Wi-Fi si possible).</p>
       <p class="details petit-texte"></p>
@@ -67,7 +68,7 @@
 <!-- ===== MENU ===== -->
 <div id="menu" class="ecran menu">
   <header class="entete">
-    <div class="logo-petit">NATX<span>ROYALE</span></div>
+    <div class="logo-petit"><img src="modeles/interface/logo/logo_natx_royale.svg" width="120" height="42" alt="NATX ROYALE"></div>
     <nav class="onglets">
       <button data-page="jouer" class="actif">🎮 Jouer</button>
       <button data-page="boutique">🛒 Boutique <span id="pastilleBoutique" class="pastille-new cache">NOUVEAU</span></button>
@@ -90,7 +91,7 @@
   <section class="page" id="pageJouer">
     <div class="colonne">
       <div class="boite">
-        <h1 class="logo">NATX<span>ROYALE</span></h1>
+        <h1 class="logo logo-image"><img src="modeles/interface/logo/logo_natx_royale.svg" width="430" height="150" alt="NATX ROYALE"></h1>
         <p class="sous-titre">Saute, ramasse, construis… et sois le <b>dernier debout</b> !</p>
         <label class="champ">Ton pseudo
           <input id="pseudo" maxlength="16" placeholder="Ton pseudo" autocomplete="off">
@@ -112,7 +113,7 @@
           <p id="descMode" class="desc-mode"></p>
         </div>
         <div class="boutons">
-          <button id="btnSolo" class="gros vert">🎮 Jouer <small>avec des bots</small></button>
+          <button id="btnSolo" class="gros vert"><span id="btnSoloTexte">🎮 Jouer </span><small>avec des bots</small></button>
           <button id="btnCreer" class="gros bleu">👥 Créer une partie <small>entre potes, dans ce mode</small></button>
           <div class="rejoindre">
             <input id="codeRejoindre" maxlength="4" placeholder="CODE" autocomplete="off">
@@ -139,7 +140,7 @@
 
   <section class="page cache" id="pageBoutique">
     <div class="boutique-liste">
-      <div class="titre-boutique"><h2>🛒 Boutique du jour</h2><span id="compteBoutique"></span></div>
+      <div class="titre-boutique bandeau" style="--image: url('modeles/interface/illustrations/boutique.webp')"><h2>🛒 Boutique du jour</h2><span id="compteBoutique"></span></div>
       <div class="collab-entete"><span class="collab-logo">NATX <i>×</i> <b>2K27</b></span><span>Événement collab : les objets exclusifs du festival gaming 2K27</span></div>
       <div class="grille collab" id="grilleCollab"></div>
       <h3>⭐ À la une</h3>
@@ -171,6 +172,7 @@
   <section class="page cache" id="pageCasier">
     <nav class="categories" id="categoriesCasier"></nav>
     <div class="casier-liste">
+      <div class="bandeau mince" style="--image: url('modeles/interface/illustrations/casier.webp')"><h2>🧳 Mon casier</h2></div>
       <div class="barre-casier">
         <button class="petit" id="btnHasard">🎲 Style au hasard</button>
         <span>Mes styles :</span><div id="presets" class="presets"></div>
@@ -190,8 +192,8 @@
 
   <section class="page cache" id="pageEsprits">
     <div class="esprits-liste">
-      <h2>✨ Ma collection d'esprits</h2>
-      <p class="petit-texte" id="progresEsprits"></p>
+      <div class="bandeau" style="--image: url('modeles/interface/illustrations/esprits_15.webp')"><h2>✨ Ma collection d'esprits</h2>
+      <p class="petit-texte" id="progresEsprits"></p></div>
       <div class="grille-esprits-jeu" id="grilleEsprits"></div>
       <div class="boite raretes-legende">
         <b>Raretés</b> : <span class="r-commun">● Commun</span> <span class="r-rare">● Rare</span> <span class="r-epique">● Épique</span> <span class="r-legendaire">● Légendaire</span>
@@ -204,7 +206,7 @@
 
   <section class="page cache" id="pageIdees">
     <div class="boite large idees">
-      <div class="idees-tete">
+      <div class="idees-tete bandeau" style="--image: url('modeles/interface/illustrations/idees.webp')">
         <div><h2>💡 Les idées des joueurs</h2><p class="petit-texte">NATX ROYALE est un prototype : vote pour les idées que tu veux voir dans le jeu. Un vote par idée.</p></div>
         <div class="idees-actions">
           <div class="choix-tri" role="tablist"><button data-tri="populaires" class="actif">🔥 Populaires</button><button data-tri="recentes">🕘 Récentes</button></div>
@@ -217,8 +219,8 @@
 
   <section class="page cache" id="pageNouveautes">
     <div class="boite large nouveautes">
-      <h2>📰 Nouveautés : la grosse mise à jour</h2>
-      <p class="petit-texte">100 améliorations, des petits détails aux gros changements.</p>
+      <div class="bandeau" style="--image: url('modeles/interface/illustrations/nouveautes.webp')"><h2>📰 Nouveautés : la grosse mise à jour</h2>
+      <p class="petit-texte">100 améliorations, des petits détails aux gros changements.</p></div>
       <div id="listeNouveautes"></div>
       <p class="petit-texte credits">Crédits : arme futuriste d'après « Futuristic Weapon Concept High-poly » de 3DHaupt
         (<a href="https://blendswap.com/blend/11979" target="_blank" rel="noopener">BlendSwap</a>),
@@ -231,7 +233,7 @@
 <!-- ===== SALON ===== -->
 <div id="salon" class="ecran cache">
   <div class="boite large">
-    <h2>🏝️ Salon</h2>
+    <div class="bandeau mince" style="--image: url('modeles/interface/illustrations/jouer.webp')"><h2>🏝️ Salon</h2></div>
     <div id="blocCode" class="bloc-code">
       <div>Code de la partie</div>
       <div id="codePartie" class="code">----</div>
@@ -374,6 +376,7 @@
   <canvas id="confettis"></canvas>
   <div class="boite large">
     <h1 id="finTitre" class="logo"></h1>
+    <img id="finImage" class="illustration cache" src="modeles/interface/illustrations/victoire.webp" width="640" height="360" alt="" loading="lazy">
     <p id="finTexte"></p>
     <div id="finStats" class="stats"></div>
     <div id="finDetails" class="fin-details"></div>
@@ -454,7 +457,7 @@
 <!-- Boîte de réception des cadeaux -->
 <div id="fenetreBoite" class="ecran cache" role="dialog" aria-labelledby="titreBoite" data-onglet="attente">
   <div class="boite large boite-reception">
-    <h2 id="titreBoite">🎁 Boîte de réception</h2>
+    <div class="bandeau mince" style="--image: url('modeles/interface/illustrations/cadeaux.webp')"><h2 id="titreBoite">🎁 Boîte de réception</h2></div>
     <div class="onglets-boite" id="ongletsBoite"><button data-onglet="attente" class="actif">À ouvrir</button><button data-onglet="historique">Historique</button></div>
     <p id="infoBoite" class="petit-texte"></p>
     <ul id="listeBoite" class="liste-boite"></ul>
@@ -510,9 +513,9 @@
   </div>
 </div>
 
-<div id="chargement" class="ecran cache"><div class="boite"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
+<div id="chargement" class="ecran cache"><div class="boite"><img class="illustration" src="modeles/interface/illustrations/chargement_petit.webp" width="320" height="180" alt="" loading="lazy"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=13"></script>
+<script type="module" src="js/jeu.js?v=14"></script>
 </body>
 </html>

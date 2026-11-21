@@ -223,3 +223,13 @@ Le serveur sait utiliser trois sortes de relais (le premier réglé gagne) : **M
 - Metered : le serveur crée un accès valable 12 h (`POST https://<appli>.metered.live/api/v1/turn/credential?secretKey=…`), récupère la liste des relais (`GET …/credentials?apiKey=…`) et la garde en mémoire. Un accès tout neuf n'est donné aux joueurs qu'après 150 s (il met jusqu'à 2 minutes à marcher partout) : l'ancien sert en attendant.
 - Quota gratuit de Metered : leur page de tarifs dit 500 Mo par mois (« No credit card required »), leur page « Open Relay » dit 20 Go par mois. À vérifier dans leur tableau de bord. Quand le quota est fini, le relais s'arrête sans doute (pas confirmé) : le jeu continue alors comme sans relais.
 - `GET /api/relais` répond `{"iceServers": [...], "configure": true}` quand c'est réglé. La clé secrète ne quitte jamais le serveur et n'est jamais écrite dans les journaux.
+
+### Visuels du panel (21 nov. 2026)
+
+Le logo, les icônes, les badges et cadres de rareté, les illustrations et les vignettes des cosmétiques viennent de `modeles/admin/` (session modélisation).
+Le panel n'accepte que ses propres fichiers (règle CSP), donc `serveur/copier_visuels.py` les **copie** dans `serveur/admin/visuels/` :
+
+- `deployer.sh` lance la copie tout seul avant d'envoyer `admin/` ;
+- pour tester en local : `python -X utf8 serveur/copier_visuels.py` ;
+- les originaux de `modeles/admin/` ne sont jamais modifiés ; `serveur/admin/visuels/` est une copie qu'on peut effacer et refaire ;
+- si le dossier `visuels/` manque, le panel marche comme avant, avec ses émojis.

@@ -3379,7 +3379,7 @@
    "serie": 1,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_gardien_des_nuages",
    "triangles": null
   },
@@ -3394,7 +3394,7 @@
    "serie": 2,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_explorateur_polaire",
    "triangles": null
   },
@@ -3409,7 +3409,7 @@
    "serie": 3,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_astronome_de_minuit",
    "triangles": null
   },
@@ -3424,7 +3424,7 @@
    "serie": 4,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_mecano_des_etoiles",
    "triangles": null
   },
@@ -3439,7 +3439,7 @@
    "serie": 5,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_jardinier_galactique",
    "triangles": null
   },
@@ -3454,7 +3454,7 @@
    "serie": 6,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_samourai_de_jade",
    "triangles": null
   },
@@ -3469,7 +3469,7 @@
    "serie": 7,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_chevalier_des_brumes",
    "triangles": null
   },
@@ -3484,7 +3484,7 @@
    "serie": 8,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_pirate_des_nuages",
    "triangles": null
   },
@@ -3499,7 +3499,7 @@
    "serie": 9,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_capitaine_corail",
    "triangles": null
   },
@@ -3514,7 +3514,7 @@
    "serie": 10,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_plongeur_abyssal",
    "triangles": null
   },
@@ -3529,7 +3529,7 @@
    "serie": 11,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_randonneur_des_cimes",
    "triangles": null
   },
@@ -3544,7 +3544,7 @@
    "serie": 12,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_roi_des_champignons",
    "triangles": null
   },
@@ -3559,7 +3559,7 @@
    "serie": 13,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_reine_des_lucioles",
    "triangles": null
   },
@@ -3574,7 +3574,7 @@
    "serie": 14,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_chasseur_de_cometes",
    "triangles": null
   },
@@ -3589,7 +3589,7 @@
    "serie": 15,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_pilote_retro",
    "triangles": null
   },
@@ -3604,7 +3604,7 @@
    "serie": 16,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_champion_du_desert",
    "triangles": null
   },
@@ -3619,7 +3619,7 @@
    "serie": 17,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_gardienne_des_marees",
    "triangles": null
   },
@@ -3634,7 +3634,7 @@
    "serie": 18,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_gardien_de_la_foret",
    "triangles": null
   },
@@ -3649,7 +3649,7 @@
    "serie": 19,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_fantome_du_phare",
    "triangles": null
   },
@@ -3664,7 +3664,7 @@
    "serie": 20,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_alchimiste_dore",
    "triangles": null
   },
@@ -3679,7 +3679,7 @@
    "serie": 21,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_inventeur_farfelu",
    "triangles": null
   },
@@ -3694,7 +3694,7 @@
    "serie": 22,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_facteur_express",
    "triangles": null
   },
@@ -3709,7 +3709,7 @@
    "serie": 23,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_patineur_polaire",
    "triangles": null
   },
@@ -3724,7 +3724,7 @@
    "serie": 24,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_musicien_cosmique",
    "triangles": null
   },
@@ -3739,7 +3739,7 @@
    "serie": 25,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_gardien_des_ruines",
    "triangles": null
   },
@@ -3754,7 +3754,7 @@
    "serie": 26,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_architecte_de_cristal",
    "triangles": null
   },
@@ -3769,7 +3769,7 @@
    "serie": 27,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_reveur_lunaire",
    "triangles": null
   },
@@ -3784,7 +3784,7 @@
    "serie": 28,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_randonneur_volcanique",
    "triangles": null
   },
@@ -3799,7 +3799,7 @@
    "serie": 29,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_sentinelle_de_saphir",
    "triangles": null
   },
@@ -3814,7 +3814,7 @@
    "serie": 30,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_corsaire_celeste",
    "triangles": null
   },
@@ -3829,7 +3829,7 @@
    "serie": 31,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_veterinaire_des_dragons",
    "triangles": null
   },
@@ -3844,7 +3844,7 @@
    "serie": 32,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_apprenti_meteore",
    "triangles": null
   },
@@ -3859,7 +3859,7 @@
    "serie": 33,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_champion_pixel",
    "triangles": null
   },
@@ -3874,7 +3874,7 @@
    "serie": 34,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_gardienne_des_saisons",
    "triangles": null
   },
@@ -3889,7 +3889,7 @@
    "serie": 35,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_explorateur_miniature",
    "triangles": null
   },
@@ -3904,7 +3904,7 @@
    "serie": 36,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_roi_des_horloges",
    "triangles": null
   },
@@ -3919,7 +3919,7 @@
    "serie": 37,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_dresseur_de_nuages",
    "triangles": null
   },
@@ -3934,7 +3934,7 @@
    "serie": 38,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_artiste_des_couleurs",
    "triangles": null
   },
@@ -3949,7 +3949,7 @@
    "serie": 39,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_gardien_des_recifs",
    "triangles": null
   },
@@ -3964,7 +3964,7 @@
    "serie": 40,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_voyageuse_stellaire",
    "triangles": null
   },
@@ -3979,7 +3979,7 @@
    "serie": 41,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_chevalier_citron",
    "triangles": null
   },
@@ -3994,7 +3994,7 @@
    "serie": 42,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_robot_jardinier",
    "triangles": null
   },
@@ -4009,7 +4009,7 @@
    "serie": 43,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_surfeur_des_dunes",
    "triangles": null
   },
@@ -4024,7 +4024,7 @@
    "serie": 44,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_mage_des_marees",
    "triangles": null
   },
@@ -4039,7 +4039,7 @@
    "serie": 45,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_gardien_des_lanternes",
    "triangles": null
   },
@@ -4054,7 +4054,7 @@
    "serie": 46,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_raccommodeur_de_robots",
    "triangles": null
   },
@@ -4069,7 +4069,7 @@
    "serie": 47,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_champion_des_flocons",
    "triangles": null
   },
@@ -4084,7 +4084,7 @@
    "serie": 48,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_messager_du_soleil",
    "triangles": null
   },
@@ -4099,7 +4099,7 @@
    "serie": 49,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_veilleur_des_etoiles",
    "triangles": null
   },
@@ -4114,7 +4114,7 @@
    "serie": 50,
    "besoin": "modele",
    "livre": true,
-   "fichier": "tenues_250_v001.glb",
+   "fichier": "tenues_250_v002.glb",
    "objet": "tenue_inventrice_arc_en_ciel",
    "triangles": null
   },
@@ -8003,6 +8003,116 @@
    "pouvoir": "Fort express",
    "descPouvoir": "4 murs autour de toi, gratuits",
    "recharge": 28
+  },
+  "feu": {
+   "nom": "Braise",
+   "role": "Attaque",
+   "icone": "🔥",
+   "couleur": "#ff7a3d",
+   "clair": "#ffd9b8",
+   "passif": "+10 % de dégâts avec tes armes",
+   "pouvoir": "Boule de feu",
+   "descPouvoir": "Une boule de feu part droit devant et explose (jusqu’à 35 dégâts)",
+   "recharge": 20
+  },
+  "glace": {
+   "nom": "Givrette",
+   "role": "Glace",
+   "icone": "❄️",
+   "couleur": "#9fd8ff",
+   "clair": "#ffffff",
+   "passif": "Tes tirs ralentissent l’ennemi touché pendant 1 s",
+   "pouvoir": "Blizzard",
+   "descPouvoir": "Gèle les ennemis à 10 m pendant 3 s : ils avancent au ralenti",
+   "recharge": 28
+  },
+  "foudre": {
+   "nom": "Zap",
+   "role": "Foudre",
+   "icone": "⚡",
+   "couleur": "#ffe14d",
+   "clair": "#fff9c9",
+   "passif": "Chaque élimination te rend 20 de bouclier",
+   "pouvoir": "Éclair en chaîne",
+   "descPouvoir": "30 dégâts à l’ennemi le plus proche (25 m), puis 15 à deux autres",
+   "recharge": 30
+  },
+  "vent": {
+   "nom": "Zephyr",
+   "role": "Vent",
+   "icone": "🌪️",
+   "couleur": "#b8fff0",
+   "clair": "#ffffff",
+   "passif": "Tu sautes 50 % plus haut",
+   "pouvoir": "Bourrasque",
+   "descPouvoir": "Repousse fort les ennemis à 8 m",
+   "recharge": 22
+  },
+  "nature": {
+   "nom": "Racine",
+   "role": "Récolte",
+   "icone": "🍄",
+   "couleur": "#c9a25a",
+   "clair": "#f3e2bd",
+   "passif": "Tu récoltes 2 fois plus de matériaux",
+   "pouvoir": "Ronces",
+   "descPouvoir": "Pose un piège : l’ennemi qui marche dessus est bloqué 2 s (15 dégâts)",
+   "recharge": 25
+  },
+  "ombre": {
+   "nom": "Minuit",
+   "role": "Furtivité",
+   "icone": "🌙",
+   "couleur": "#8a6bff",
+   "clair": "#d9ceff",
+   "passif": "L’esprit Zyeuto ne te voit pas",
+   "pouvoir": "Clone",
+   "descPouvoir": "Un faux toi part en courant et les bots te perdent de vue",
+   "recharge": 30
+  },
+  "temps": {
+   "nom": "Tic-Tac",
+   "role": "Temps",
+   "icone": "⏰",
+   "couleur": "#c9b6ff",
+   "clair": "#ffffff",
+   "passif": "Tu recharges tes armes 30 % plus vite",
+   "pouvoir": "Retour",
+   "descPouvoir": "Te ramène où tu étais il y a 4 secondes",
+   "recharge": 25
+  },
+  "eau": {
+   "nom": "Goutte",
+   "role": "Eau",
+   "icone": "💧",
+   "couleur": "#4fb3ff",
+   "clair": "#d6efff",
+   "passif": "Tu nages aussi vite que tu cours",
+   "pouvoir": "Bulle",
+   "descPouvoir": "Pendant 6 s tu rebondis très haut, sans dégâts de chute",
+   "recharge": 20
+  },
+  "chance": {
+   "nom": "Pépite",
+   "role": "Trésor",
+   "icone": "🍀",
+   "couleur": "#ffc83d",
+   "clair": "#fff1c2",
+   "passif": "Les coffres fermés proches (40 m) sont sur ta mini-carte",
+   "pouvoir": "Jackpot",
+   "descPouvoir": "Un objet surprise tombe devant toi",
+   "recharge": 45
+  },
+  "etoile": {
+   "nom": "Lumi",
+   "role": "Étoile",
+   "icone": "🌟",
+   "couleur": "#fff27a",
+   "clair": "#ffffff",
+   "passif": "Une fois par partie, elle te sauve d’un coup mortel (il te reste 40 PV)",
+   "pouvoir": "Étoile filante",
+   "descPouvoir": "Tu fonces tout droit sur 14 m et tu fais 20 dégâts à ceux que tu traverses",
+   "recharge": 18
   }
  }
 }

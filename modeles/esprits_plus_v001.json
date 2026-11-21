@@ -1,0 +1,448 @@
+{
+ "_aide": "10 entrées prêtes pour le tableau « esprits » d'integration.json (actif:false), même format que les 5 d'esprits_v003.glb. Les clés qui commencent par « _ » sont des notes. _effets_caches = objets à l'échelle 0,001 au repos, montrés par « activer » et « obtention ».",
+ "esprits": [
+  {
+   "id": "feu",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_feu",
+   "nom": "Braise",
+   "couleur": "#ff7a3d",
+   "animations": {
+    "flotter": "feu_flotter",
+    "activer": "feu_activer",
+    "apparaitre": "feu_apparaitre",
+    "attente2": "feu_attente2",
+    "deplacer": "feu_deplacer",
+    "content": "feu_content",
+    "surpris": "feu_surpris",
+    "obtention": "feu_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.45,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2782,
+   "_role": "Attaque",
+   "_description": "petite braise, flamme sur la tête, étincelles ; activer : élan puis lancer vers l'avant ; effet : boule de feu qui part droit devant",
+   "_morceaux": [
+    "feu_flamme",
+    "feu_etincelles"
+   ],
+   "_effets_caches": [
+    "feu_boule"
+   ],
+   "_materiau_lumiere": "lumiere_feu"
+  },
+  {
+   "id": "glace",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_glace",
+   "nom": "Givrette",
+   "couleur": "#9fd8ff",
+   "animations": {
+    "flotter": "glace_flotter",
+    "activer": "glace_activer",
+    "apparaitre": "glace_apparaitre",
+    "attente2": "glace_attente2",
+    "deplacer": "glace_deplacer",
+    "content": "glace_content",
+    "surpris": "glace_surpris",
+    "obtention": "glace_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.47,
+    "h": 0.46,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3564,
+   "_role": "Glace",
+   "_description": "boule de neige à couronne de pointes de glace, flocons ; activer : elle gonfle puis souffle en tournant ; effet : blizzard tout autour",
+   "_morceaux": [
+    "glace_pointes",
+    "glace_flocons"
+   ],
+   "_effets_caches": [
+    "glace_blizzard"
+   ],
+   "_materiau_lumiere": "lumiere_glace"
+  },
+  {
+   "id": "foudre",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_foudre",
+   "nom": "Zap",
+   "couleur": "#ffe14d",
+   "animations": {
+    "flotter": "foudre_flotter",
+    "activer": "foudre_activer",
+    "apparaitre": "foudre_apparaitre",
+    "attente2": "foudre_attente2",
+    "deplacer": "foudre_deplacer",
+    "content": "foudre_content",
+    "surpris": "foudre_surpris",
+    "obtention": "foudre_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.0,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.5,
+    "h": 0.49,
+    "d": 0.47
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3572,
+   "_role": "Foudre",
+   "_description": "petit nuage d'orage, éclair qui pend dessous, étincelles ; activer : il se charge (il tremble, les étincelles s'affolent) puis lâche ; effet : trait de foudre vers l'avant",
+   "_morceaux": [
+    "foudre_eclair",
+    "foudre_etincelles"
+   ],
+   "_effets_caches": [
+    "foudre_trait"
+   ],
+   "_materiau_lumiere": "lumiere_foudre"
+  },
+  {
+   "id": "eau",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_eau",
+   "nom": "Goutte",
+   "couleur": "#4fb3ff",
+   "animations": {
+    "flotter": "eau_flotter",
+    "activer": "eau_activer",
+    "apparaitre": "eau_apparaitre",
+    "attente2": "eau_attente2",
+    "deplacer": "eau_deplacer",
+    "content": "eau_content",
+    "surpris": "eau_surpris",
+    "obtention": "eau_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.33,
+    "d": 0.44
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3922,
+   "_role": "Eau",
+   "_description": "goutte d'eau avec une bouée rayée, gouttelettes ; activer : elle gonfle comme une bulle et rebondit ; effet : bulle (3 cercles et un reflet) autour d'elle",
+   "_morceaux": [
+    "eau_bouee",
+    "eau_gouttes"
+   ],
+   "_effets_caches": [
+    "eau_bulle"
+   ],
+   "_materiau_lumiere": "lumiere_eau"
+  },
+  {
+   "id": "nature",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_nature",
+   "nom": "Racine",
+   "couleur": "#c9a25a",
+   "animations": {
+    "flotter": "nature_flotter",
+    "activer": "nature_activer",
+    "apparaitre": "nature_apparaitre",
+    "attente2": "nature_attente2",
+    "deplacer": "nature_deplacer",
+    "content": "nature_content",
+    "surpris": "nature_surpris",
+    "obtention": "nature_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.55,
+    "h": 0.41,
+    "d": 0.51
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3770,
+   "_role": "Récolte",
+   "_description": "petite bûche à visage, champignon, feuille, racines ; bois, pierre et métal en orbite ; activer : elle plonge vers le bas puis remonte ; effet : ronces à épines sous elle",
+   "_morceaux": [
+    "nature_feuille",
+    "nature_champignon",
+    "nature_recolte"
+   ],
+   "_effets_caches": [
+    "nature_ronces"
+   ],
+   "_materiau_lumiere": "lumiere_nature"
+  },
+  {
+   "id": "ombre",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_ombre",
+   "nom": "Minuit",
+   "couleur": "#8a6bff",
+   "animations": {
+    "flotter": "ombre_flotter",
+    "activer": "ombre_activer",
+    "apparaitre": "ombre_apparaitre",
+    "attente2": "ombre_attente2",
+    "deplacer": "ombre_deplacer",
+    "content": "ombre_content",
+    "surpris": "ombre_surpris",
+    "obtention": "ombre_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.43,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3788,
+   "_role": "Furtivité",
+   "_description": "petite ombre à capuche pointue, yeux lumineux, pans de cape ; lune et étoiles en orbite ; activer : petit tour sur elle-même ; effet : son double lumineux sort sur le côté",
+   "_morceaux": [
+    "ombre_voile_g",
+    "ombre_voile_d",
+    "ombre_lunes"
+   ],
+   "_effets_caches": [
+    "ombre_double"
+   ],
+   "_materiau_lumiere": "lumiere_ombre"
+  },
+  {
+   "id": "chance",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_chance",
+   "nom": "Pépite",
+   "couleur": "#ffc83d",
+   "animations": {
+    "flotter": "chance_flotter",
+    "activer": "chance_activer",
+    "apparaitre": "chance_apparaitre",
+    "attente2": "chance_attente2",
+    "deplacer": "chance_deplacer",
+    "content": "chance_content",
+    "surpris": "chance_surpris",
+    "obtention": "chance_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.43,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3468,
+   "_role": "Trésor",
+   "_description": "pièce d'or à visage, trèfle à 4 feuilles sur la tête, trèfle en relief au dos, éclats en orbite ; activer : elle tourne comme une pièce qu'on lance ; effet : un cadeau surprise tombe à côté",
+   "_morceaux": [
+    "chance_trefle",
+    "chance_eclats"
+   ],
+   "_effets_caches": [
+    "chance_cadeau"
+   ],
+   "_materiau_lumiere": "lumiere_chance"
+  },
+  {
+   "id": "temps",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_temps",
+   "nom": "Tic-Tac",
+   "couleur": "#c9b6ff",
+   "animations": {
+    "flotter": "temps_flotter",
+    "activer": "temps_activer",
+    "apparaitre": "temps_apparaitre",
+    "attente2": "temps_attente2",
+    "deplacer": "temps_deplacer",
+    "content": "temps_content",
+    "surpris": "temps_surpris",
+    "obtention": "temps_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.39,
+    "d": 0.17
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3880,
+   "_role": "Temps",
+   "_description": "petit réveil à deux cloches, cadran-visage, aiguilles, marteau, clé de remontoir ; activer : tout tourne à l'envers",
+   "_morceaux": [
+    "temps_aiguilles",
+    "temps_marteau",
+    "temps_cle",
+    "temps_sablier"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_temps"
+  },
+  {
+   "id": "vent",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_vent",
+   "nom": "Zephyr",
+   "couleur": "#b8fff0",
+   "animations": {
+    "flotter": "vent_flotter",
+    "activer": "vent_activer",
+    "apparaitre": "vent_apparaitre",
+    "attente2": "vent_attente2",
+    "deplacer": "vent_deplacer",
+    "content": "vent_content",
+    "surpris": "vent_surpris",
+    "obtention": "vent_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.0,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.55,
+    "h": 0.37,
+    "d": 0.36
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3536,
+   "_role": "Vent",
+   "_description": "petit tourbillon à pointe enroulée, écharpe qui vole, traits de vent, 2 feuilles emportées ; activer : il gonfle puis souffle en tournant ; effet : bourrasque en rond",
+   "_morceaux": [
+    "vent_echarpe",
+    "vent_anneaux",
+    "vent_feuilles"
+   ],
+   "_effets_caches": [
+    "vent_bourrasque"
+   ],
+   "_materiau_lumiere": "lumiere_vent"
+  },
+  {
+   "id": "etoile",
+   "actif": false,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_etoile",
+   "nom": "Lumi",
+   "couleur": "#fff27a",
+   "animations": {
+    "flotter": "etoile_flotter",
+    "activer": "etoile_activer",
+    "apparaitre": "etoile_apparaitre",
+    "attente2": "etoile_attente2",
+    "deplacer": "etoile_deplacer",
+    "content": "etoile_content",
+    "surpris": "etoile_surpris",
+    "obtention": "etoile_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.5,
+    "h": 0.36,
+    "d": 0.48
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3628,
+   "_role": "Munitions",
+   "_description": "étoile bombée à 5 branches arrondies, anneau de lumière, petites étoiles, cœur de lumière (etoile_coeur, à éteindre par le code) ; activer : elle file droit devant et revient ; effet : traînée d'étoile filante",
+   "_morceaux": [
+    "etoile_halo",
+    "etoile_poussiere"
+   ],
+   "_effets_caches": [
+    "etoile_trainee"
+   ],
+   "_materiau_lumiere": "lumiere_etoile"
+  }
+ ]
+}

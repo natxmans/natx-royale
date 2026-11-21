@@ -7,12 +7,12 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Monde, DEMI, rayonBoite } from './monde.js';
 import { OBJETS, RARETES, modeleObjet, modelesPrets, remplacerModeleArme } from './armes.js';
 import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPret } from './personnage.js';
-import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele, clipAnimation, prechargerCosmetiques, chargerCosmetiques, cosmetiquePret, ficheEmote, ficheTrainee } from './modeles.js';
+import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele, clipAnimation, prechargerCosmetiques, chargerCosmetiques, cosmetiquePret, ficheEmote, ficheTrainee, QUALITE_TENUES } from './modeles.js';
 import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, signalerJoueur, URL_API } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
 import { initCadeaux, bonusActif, texteMultiplicateur, synchroniserProfil, etatBoite, verifierBoite } from './cadeaux.js';
 import { initCompte } from './compte.js';
-import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, replique, RARETES_ESPRIT, meilleuresRaretes } from './esprits.js';
+import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, FEU, GLACE, NATURE, VENT, TEMPS, EAU, CHANCE, ETOILE, OMBRE, replique, RARETES_ESPRIT, meilleuresRaretes } from './esprits.js';
 import { Reseau } from './reseau.js';
 import { Hote } from './hote.js';
 import { etatZone, posDirigeable, cibleConstruction, COUT_CONSTR, posRavito, simulerGrenade, MODES, modeValide, DEFIS_ENTRAINEMENT, posCargaison, debutCargaison, CARGO } from './partage.js';
@@ -23,6 +23,7 @@ import { Apercu } from './apercu.js';
 import { htmlRegles, VERSION_REGLES } from './regles.js';
 import { ACTIONS, chargerTouches, touchesPerso, traduire, toucheDe, choisirTouche, touchesParDefaut, nomTouche, chargerDisposition } from './touches.js';
 import { Menus, toast } from './menus.js';
+import { activerIcones } from './icones.js';
 import { chargerProfil, sauverProfil, bonusDuJour, recompense, nettoyerLook, xpPartie, ajouterXP, avancerDefis, texteDefi, enregistrerPartie, RECOMPENSE_DEFI, xpPourNiveau, objet } from './boutique.js';
 
 const $ = s => document.querySelector(s);
@@ -62,6 +63,8 @@ const QUALITES = {
   basse: { ratio: 1, ombres: false, carteOmbre: 512, bloom: false, herbe: 0 },
 };
 const Q = () => QUALITES[reglages.qualite] || QUALITES.haute;
+// tenues en 512 px avec relief pour ton personnage et les menus ; en qualité basse, tout le monde a les images légères
+QUALITE_TENUES.hd = QUALITE_TENUES.base = reglages.qualite !== 'basse';
 
 // ---------- Rendu 3D ----------
 const canvas = $('#jeu');
@@ -101,6 +104,7 @@ composer.addPass(bloom);
 composer.addPass(new OutputPass());
 function appliquerQualite() {
   const q = Q();
+  QUALITE_TENUES.hd = QUALITE_TENUES.base = reglages.qualite !== 'basse';
   renderer.setPixelRatio(Math.min(devicePixelRatio, q.ratio));
   renderer.setSize(innerWidth, innerHeight, false);
   composer.setPixelRatio(Math.min(devicePixelRatio, q.ratio));
@@ -388,6 +392,7 @@ function viderJoueursEtButin() {
   etat.sanctuaires.clear();
   for (const o of etat.orbes.values()) scene.remove(o.mesh);
   etat.orbes.clear();
+  viderPouvoirs();
   for (const m of impacts) m.visible = false;
 }
 
@@ -397,7 +402,8 @@ function preparerMonde(graine) {
   if (etat.monde) liberer(etat.monde.groupe);
   liberer(etat.meshZone); liberer(etat.meshDirigeable);
   const m = new Monde(graine);
-  m.creerDecor({ ombres: Q().ombres, herbe: Q().herbe });
+  // en qualité basse (téléphones), les arbres gardent leurs formes légères faites en code : 4 fois moins de triangles
+  m.creerDecor({ ombres: Q().ombres, herbe: Q().herbe, vegetationFine: reglages.qualite !== 'basse' });
   etat.mer = creerMer(m);
   m.groupe.add(etat.mer);
   scene.add(m.groupe);
@@ -415,15 +421,16 @@ function preparerMonde(graine) {
 // Un pote (ou un bot) peut porter un objet dont le fichier n'est pas encore chargé chez toi :
 // on charge le fichier, puis on refait son personnage (position, bulle, repères gardés).
 const clesLook = look => Object.entries(look || {}).map(([c, id]) => c + ':' + id);
-const clesManquantes = look => clesLook(look).filter(k => !cosmetiquePret(k));
-function rhabiller(a, info) {
-  if (!clesManquantes(a.look).length || a.mannequin) return;
-  chargerCosmetiques(clesManquantes(a.look)).then(() => {
-    if (clesManquantes(a.look).length) return; // fichier introuvable : on garde le personnage tel quel
+// hd = ton personnage : sa tenue est chargée en 512 px avec relief (les autres : images légères)
+const clesManquantes = (look, hd = false) => clesLook(look).filter(k => !cosmetiquePret(k, hd));
+function rhabiller(a, info, hd = false) {
+  if (!clesManquantes(a.look, hd).length || a.mannequin) return;
+  chargerCosmetiques(clesManquantes(a.look, hd), hd).then(() => {
+    if (clesManquantes(a.look, hd).length) return; // fichier introuvable : on garde le personnage tel quel
     const estMoi = etat.moi === a;
     if (!estMoi && etat.autres.get(a.id) !== a) return; // parti entre-temps
     const ancien = a.modele;
-    const neuf = creerPersonnage(a.couleur, estMoi ? null : info.nom, info.n || 0, a.look);
+    const neuf = creerPersonnage(a.couleur, estMoi ? null : info.nom, info.n || 0, a.look, { hd });
     neuf.visible = ancien.visible; neuf.position.copy(ancien.position); neuf.rotation.copy(ancien.rotation);
     for (const k of ['marqueur', 'bulle', 'repereVision']) if (a[k]) neuf.add(a[k]);
     scene.remove(ancien); scene.add(neuf); a.modele = neuf;
@@ -432,7 +439,7 @@ function rhabiller(a, info) {
 
 // ---------- Joueurs ----------
 function nouveauMoi(info) {
-  const modele = creerPersonnage(info.couleur, null, info.n || 0, info.look || monLook());
+  const modele = creerPersonnage(info.couleur, null, info.n || 0, info.look || monLook(), { hd: true });
   scene.add(modele);
   return {
     id: info.id, nom: info.nom, couleur: info.couleur, modele,
@@ -446,7 +453,7 @@ function nouveauMoi(info) {
 }
 function nouveauMoiHabille(info) {
   const m = nouveauMoi(info);
-  rhabiller(m, info);
+  rhabiller(m, info, true);
   return m;
 }
 
@@ -570,8 +577,10 @@ function donnerEsprit(id, type, rarete = null) {
   retirerEsprit(id);
   const mesh = creerEsprit(type, 0.9, rarete);
   scene.add(mesh);
-  if (!jouerEsprit(mesh, 'content')) jouerEsprit(mesh, 'apparaitre');
+  // esprits v003 : arrivée en spirale + éclat de lumière (2,5 s) ; sinon l'ancienne animation
+  if (!jouerEsprit(mesh, 'obtention') && !jouerEsprit(mesh, 'content')) jouerEsprit(mesh, 'apparaitre');
   etat.orbes.set(id, { type, mesh, a: Math.random() * 6, place: false });
+  eteindreCoeur(id);
 }
 function retirerEsprit(id) {
   const o = etat.orbes.get(id);
@@ -617,6 +626,7 @@ function majEsprits(dt) {
       particules.ajouter({ x: q.x, y: q.y, z: q.z, vy: 0.4, couleur: ESPRITS[o.type].couleur, forme: 2, taille: 0.18, tailleFin: 0.02, vie: 0.6, additif: true });
     }
   }
+  majPouvoirs(dt);
   majVision();
   majHudEsprit();
 }
@@ -633,7 +643,7 @@ function majVision() {
   const moi = etat.moi;
   const actif = moi && moi.esprit && moi.esprit.type === 'vision' && etat.temps < (etat.visionJusqua || 0) && moi.ph !== 'mort';
   for (const a of etat.autres.values()) {
-    const voir = actif && a.vivant && a.cible && a.modele.visible && !coequipier(a.id) && Math.hypot(a.x - moi.x, a.z - moi.z) < VISION.pouvoir;
+    const voir = actif && a.vivant && a.cible && a.modele.visible && !coequipier(a.id) && etat.orbes.get(a.id)?.type !== 'ombre' && Math.hypot(a.x - moi.x, a.z - moi.z) < VISION.pouvoir;
     if (voir && !a.repereVision) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texVision, depthTest: false, transparent: true, fog: false }));
       s.position.y = 3.4; s.scale.set(0.9, 0.9, 1); s.renderOrder = 13;
@@ -682,8 +692,31 @@ function utiliserPouvoir() {
     moi.vy = ENVOL.haut; moi.vx = fx * ENVOL.avant; moi.vz = fz * ENVOL.avant;
     moi.auSol = false; moi.sansChute = true; moi.accroupi = false; moi.emote = null;
   }
+  const type = moi.esprit.type, plus = {};
+  if (type === 'temps') {
+    // Retour : où j'étais il y a 4 secondes (sinon le plus vieux point connu)
+    if (moi.ph !== 'sol') return;
+    const h = moi.historique || [];
+    let p = null;
+    for (const q of h) { if (etat.temps - q.t >= TEMPS.retour) p = q; }
+    if (!p && h.length && etat.temps - h[0].t >= 1.5) p = h[0];
+    if (!p) { annonceObjet('⏰ Attends encore un peu : Tic-Tac n\'a rien à rembobiner'); return; }
+    moi.x = p.x; moi.y = p.y; moi.z = p.z; moi.vx = moi.vy = moi.vz = 0; moi.sansChute = true; moi.accroupi = false; moi.emote = null;
+    moi.historique = [];
+    plus.a = [arrondi(p.x), arrondi(p.y), arrondi(p.z)];
+  } else if (type === 'eau') {
+    // Bulle : je rebondis très haut pendant 6 s
+    if (moi.ph !== 'sol') return;
+    moi.bulleJusqua = etat.temps + EAU.duree;
+    if (moi.auSol) { moi.vy = EAU.saut; moi.auSol = false; moi.accroupi = false; }
+  } else if (type === 'etoile') {
+    // Étoile filante : je fonce tout droit
+    if (moi.ph !== 'sol') return;
+    moi.dash = { fin: etat.temps + ETOILE.duree, fx: -Math.sin(moi.ry), fz: -Math.cos(moi.ry) };
+    moi.sansChute = true; moi.accroupi = false; moi.emote = null;
+  }
   moi.esprit.pret = etat.temps + d.recharge;
-  reseau.versHote({ t: 'pouvoir', ry: arrondi(moi.ry) });
+  reseau.versHote({ t: 'pouvoir', ry: arrondi(moi.ry), rx: arrondi(moi.rx), ...plus });
   vibrer(30);
 }
 // Ce que tout le monde voit quand quelqu'un utilise son pouvoir
@@ -700,6 +733,7 @@ function effetPouvoir(m) {
   if (moi && m.par === moi.id) { son('esprit_' + m.type, 0.8); ajouterFil(`${d.icone} <b style="color:${d.couleur}">${d.nom}</b> : « ${echapper(replique(m.type, 'pouvoir'))} »`); }
   const x = +m.x, y = +m.y, z = +m.z, dc = distCam(x, y, z);
   if (dc > 160) return;
+  if (effetPouvoirAjoute(m, d, x, y, z, dc)) return;
   if (m.type === 'soin') {
     for (let i = 0; i < 40; i++) {
       const a = Math.random() * Math.PI * 2, r = Math.random() * BOURGEON.rayon * 0.5;
@@ -731,6 +765,174 @@ function effetPouvoir(m) {
   }
 }
 
+// ---------- Les 10 esprits ajoutés : ce que l'on voit (boule de feu, éclair, ronces, clone, bulle…) ----------
+const effetsPouvoirs = { boules: [], clones: [], bulles: [], eclairs: [], pieges: new Map(), geles: new Map(), sauves: new Set() };
+function viderPouvoirs() {
+  for (const l of [effetsPouvoirs.boules, effetsPouvoirs.clones, effetsPouvoirs.eclairs]) { for (const e of l) scene.remove(e.mesh); l.length = 0; }
+  for (const b of effetsPouvoirs.bulles) b.mesh.removeFromParent();
+  effetsPouvoirs.bulles.length = 0;
+  for (const p of effetsPouvoirs.pieges.values()) scene.remove(p);
+  effetsPouvoirs.pieges.clear(); effetsPouvoirs.geles.clear(); effetsPouvoirs.sauves.clear();
+}
+const matBouleFeu = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff7a3d').multiplyScalar(2.4), toneMapped: false });
+const geoBouleFeu = new THREE.SphereGeometry(0.38, 14, 10);
+const matBulle = new THREE.MeshBasicMaterial({ color: '#9fdcff', transparent: true, opacity: 0.26, depthWrite: false, side: THREE.DoubleSide });
+const geoBulle = new THREE.SphereGeometry(1.25, 20, 14);
+const matEclair = new THREE.LineBasicMaterial({ color: new THREE.Color('#fff7a8').multiplyScalar(2.5), toneMapped: false });
+const matRonce = new THREE.MeshLambertMaterial({ color: '#3d6b2f' }), matEpine = new THREE.MeshLambertMaterial({ color: '#8a5a2b' });
+const geoRonce = new THREE.TorusGeometry(1.05, 0.09, 6, 18), geoEpine = new THREE.ConeGeometry(0.09, 0.42, 5);
+const modeleDe = id => (etat.moi && id === etat.moi.id ? etat.moi.modele : etat.autres.get(id)?.modele || null);
+const positionDe = id => (etat.moi && id === etat.moi.id ? etat.moi : etat.autres.get(id) || null);
+function creerPiege(p) {
+  if (!p || effetsPouvoirs.pieges.has(p.id)) return;
+  const g = new THREE.Group();
+  for (const [r, y] of [[1, 0.1], [0.62, 0.16]]) { const t = new THREE.Mesh(geoRonce, matRonce); t.rotation.x = Math.PI / 2; t.scale.setScalar(r); t.position.y = y; g.add(t); }
+  for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, e = new THREE.Mesh(geoEpine, matEpine); e.position.set(Math.cos(a) * (i % 2 ? 1.02 : 0.6), 0.3, Math.sin(a) * (i % 2 ? 1.02 : 0.6)); e.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5); g.add(e); }
+  g.position.set(+p.x, +p.y, +p.z);
+  scene.add(g);
+  effetsPouvoirs.pieges.set(p.id, g);
+}
+function retirerPiege(m) {
+  const g = effetsPouvoirs.pieges.get(m.id);
+  if (!g) return;
+  scene.remove(g); effetsPouvoirs.pieges.delete(m.id);
+  if (m.declenche && distCam(+m.x, +m.y, +m.z) < 120) {
+    for (let i = 0; i < 26; i++) particules.ajouter({ x: +m.x + (Math.random() - 0.5) * 2, y: +m.y + 0.2, z: +m.z + (Math.random() - 0.5) * 2, vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 3, vz: (Math.random() - 0.5) * 3, couleur: i % 2 ? '#3d6b2f' : '#8a5a2b', forme: 3, taille: 0.3, tailleFin: 0.08, vie: 0.8, gravite: 6 });
+    sonLoin('bois', distCam(+m.x, +m.y, +m.z) * 2);
+  }
+}
+// Lumi (étoile) vient de sauver quelqu'un d'un coup mortel
+function eteindreCoeur(id) { // le petit cœur de Lumi (nœud etoile_coeur du modèle) : éteint une fois sa chance utilisée
+  const o = etat.orbes.get(id);
+  const coeur = o && o.type === 'etoile' && effetsPouvoirs.sauves.has(id) ? o.mesh.getObjectByName('etoile_coeur') : null;
+  if (coeur) coeur.visible = false;
+}
+function effetSauve(m) {
+  const x = +m.x, y = +m.y + 1, z = +m.z, moi = etat.moi;
+  effetsPouvoirs.sauves.add(m.id); eteindreCoeur(m.id);
+  if (distCam(x, y, z) < 140) for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2; particules.ajouter({ x, y, z, vx: Math.cos(a) * 5, vy: 1.5 + (i % 5), vz: Math.sin(a) * 5, couleur: i % 2 ? '#fff27a' : '#ffffff', forme: 2, taille: 0.4, tailleFin: 0.05, vie: 0.9, additif: true }); }
+  if (moi && m.id === moi.id) { son('niveau'); banniere('🌟 LUMI T\'A SAUVÉ !', `Il te reste ${m.pv | 0} PV. Elle ne pourra plus le refaire dans cette partie.`); }
+  else if (etat.infos.has(m.id)) ajouterFil(`🌟 Lumi a sauvé <b>${echapper(nomDe(m.id))}</b>`);
+}
+// Les effets de chaque pouvoir ; renvoie true si c'est un des 10 esprits ajoutés
+function effetPouvoirAjoute(m, d, x, y, z, dc) {
+  const moi = etat.moi, aMoi = moi && m.par === moi.id;
+  const part = o => particules.ajouter({ forme: 2, taille: 0.35, tailleFin: 0.05, vie: 0.7, additif: true, ...o });
+  const anneau = (n, vit, coul1, coul2, h = 0.4, extra = {}) => { for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; part({ x: x + Math.cos(a) * 0.6, y: y + h, z: z + Math.sin(a) * 0.6, vx: Math.cos(a) * vit, vy: 0.5, vz: Math.sin(a) * vit, couleur: i % 2 ? coul1 : coul2, ...extra }); } };
+  switch (m.type) {
+    case 'feu': {
+      if (!Array.isArray(m.o) || !Array.isArray(m.b)) return true;
+      const mesh = new THREE.Mesh(geoBouleFeu, matBouleFeu);
+      mesh.position.set(+m.o[0], +m.o[1], +m.o[2]);
+      scene.add(mesh);
+      effetsPouvoirs.boules.push({ mesh, o: m.o.map(Number), b: m.b.map(Number), t: 0, duree: Math.max(0.05, +m.duree || 0.1) });
+      return true;
+    }
+    case 'glace':
+      anneau(60, GLACE.rayon * 1.6, d.couleur, d.clair, 0.6, { vie: 0.75, frein: 1.2, forme: 3 });
+      for (let i = 0; i < 30; i++) part({ x: x + (Math.random() - 0.5) * GLACE.rayon * 1.6, y: y + 3 + Math.random() * 2, z: z + (Math.random() - 0.5) * GLACE.rayon * 1.6, vy: -3, couleur: '#ffffff', vie: 1.1, taille: 0.2 });
+      return true;
+    case 'foudre': {
+      if (m.vide) { if (aMoi) annonceObjet('⚡ Aucun ennemi en vue à moins de 25 m'); return true; }
+      const pts = (Array.isArray(m.pts) ? m.pts : []).map(p => new THREE.Vector3(+p[0], +p[1], +p[2]));
+      if (pts.length < 2) return true;
+      // un trait en zigzag entre chaque cible
+      const zig = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        for (let k = 1; k <= 5; k++) zig.push(pts[i - 1].clone().lerp(pts[i], k / 6).add(new THREE.Vector3((Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2)));
+        zig.push(pts[i]);
+        for (let k = 0; k < 14; k++) part({ x: pts[i].x, y: pts[i].y, z: pts[i].z, vx: (Math.random() - 0.5) * 7, vy: Math.random() * 5, vz: (Math.random() - 0.5) * 7, couleur: k % 2 ? d.couleur : '#ffffff', vie: 0.4 });
+      }
+      const mesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(zig), matEclair);
+      scene.add(mesh);
+      effetsPouvoirs.eclairs.push({ mesh, t: 0 });
+      sonLoin('bouclierCasse', dc * 2);
+      return true;
+    }
+    case 'vent':
+      anneau(54, VENT.rayon * 2.2, d.couleur, d.clair, 0.8, { vie: 0.55, frein: 1.4 });
+      sonLoin('rebond', dc * 2);
+      return true;
+    case 'nature':
+      for (let i = 0; i < 18; i++) part({ x: x + (Math.random() - 0.5) * 2, y: y + 0.1, z: z + (Math.random() - 0.5) * 2, vy: 1 + Math.random() * 2, couleur: i % 2 ? '#7bd65a' : d.couleur, forme: 3, additif: false });
+      return true;
+    case 'ombre': {
+      anneau(30, 4, d.couleur, '#1b1033', 1, { vie: 0.6 });
+      const inf = etat.infos.get(m.par);
+      if (!inf || !etat.monde) return true;
+      const modele = creerPersonnage(inf.couleur, null, inf.n || 0, nettoyerLook(inf.look));
+      const ry = +m.ry || 0;
+      modele.position.set(x, y, z); modele.rotation.y = ry;
+      scene.add(modele);
+      effetsPouvoirs.clones.push({ mesh: modele, e: { x, y, z, vx: -Math.sin(ry) * OMBRE.vitesse, vy: 0, vz: -Math.cos(ry) * OMBRE.vitesse, auSol: true }, fin: etat.temps + OMBRE.duree });
+      return true;
+    }
+    case 'temps': {
+      const lieux = [[x, y, z]];
+      if (Array.isArray(m.a)) lieux.push(m.a.map(Number));
+      for (const [px, py, pz] of lieux) for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; part({ x: px + Math.cos(a) * 0.9, y: py + (i % 7) * 0.3, z: pz + Math.sin(a) * 0.9, vx: -Math.sin(a) * 3, vy: 0.4, vz: Math.cos(a) * 3, couleur: i % 2 ? d.couleur : d.clair, vie: 0.7 }); }
+      return true;
+    }
+    case 'eau': {
+      const cible = modeleDe(m.par);
+      if (cible) { const mesh = new THREE.Mesh(geoBulle, matBulle); mesh.position.y = 1.05; mesh.renderOrder = 6; cible.add(mesh); effetsPouvoirs.bulles.push({ mesh, fin: etat.temps + EAU.duree }); }
+      anneau(30, 5, d.couleur, d.clair, 0.3, { vie: 0.5 });
+      return true;
+    }
+    case 'chance':
+      for (let i = 0; i < 36; i++) part({ x: x - Math.sin(+m.ry || 0) * 2 + (Math.random() - 0.5), y: y + 0.3, z: z - Math.cos(+m.ry || 0) * 2 + (Math.random() - 0.5), vx: (Math.random() - 0.5) * 3, vy: 3 + Math.random() * 4, vz: (Math.random() - 0.5) * 3, couleur: i % 3 ? d.couleur : '#ffffff', forme: 3, vie: 1, gravite: 7 });
+      sonLoin('coffreDore', dc * 2);
+      return true;
+    case 'etoile': {
+      const fx = -Math.sin(+m.ry || 0), fz = -Math.cos(+m.ry || 0);
+      for (let i = 0; i < 46; i++) { const t = i / 46 * ETOILE.distance; part({ x: x + fx * t, y: y + 0.6 + Math.random() * 1.2, z: z + fz * t, vx: (Math.random() - 0.5) * 1.5, vy: 0.6, vz: (Math.random() - 0.5) * 1.5, couleur: i % 2 ? d.couleur : '#ffffff', vie: 0.5 + i / 46 * 0.5, taille: 0.4 }); }
+      return true;
+    }
+  }
+  return false;
+}
+// À chaque image : la boule de feu avance, le clone court, la bulle vit, les joueurs gelés ont du givre
+function majPouvoirs(dt) {
+  const E = effetsPouvoirs;
+  for (let i = E.boules.length - 1; i >= 0; i--) {
+    const b = E.boules[i];
+    b.t += dt;
+    const k = Math.min(1, b.t / b.duree);
+    b.mesh.position.set(b.o[0] + (b.b[0] - b.o[0]) * k, b.o[1] + (b.b[1] - b.o[1]) * k, b.o[2] + (b.b[2] - b.o[2]) * k);
+    const q = b.mesh.position;
+    particules.ajouter({ x: q.x, y: q.y, z: q.z, vy: 0.5, couleur: Math.random() < 0.5 ? '#ffd23f' : '#ff7a3d', forme: 2, taille: 0.45, tailleFin: 0.05, vie: 0.35, additif: true });
+    if (k >= 1) { scene.remove(b.mesh); E.boules.splice(i, 1); }
+  }
+  for (let i = E.eclairs.length - 1; i >= 0; i--) {
+    const e = E.eclairs[i];
+    e.t += dt; e.mesh.visible = Math.floor(e.t * 40) % 2 === 0;
+    if (e.t > 0.3) { scene.remove(e.mesh); e.mesh.geometry.dispose(); E.eclairs.splice(i, 1); }
+  }
+  for (let i = E.clones.length - 1; i >= 0; i--) {
+    const c = E.clones[i], e = c.e;
+    e.vy -= 25 * dt;
+    const vx = e.vx, vz = e.vz;
+    if (etat.monde) etat.monde.deplacer(e, dt);
+    e.vx = vx; e.vz = vz; // il court tout droit, même contre un mur
+    c.mesh.position.set(e.x, e.y, e.z);
+    animerPersonnage(c.mesh, dt, { vitesse: OMBRE.vitesse, auSol: true });
+    if (etat.temps >= c.fin) {
+      for (let k = 0; k < 24; k++) particules.ajouter({ x: e.x, y: e.y + Math.random() * 1.8, z: e.z, vx: (Math.random() - 0.5) * 4, vy: Math.random() * 2, vz: (Math.random() - 0.5) * 4, couleur: k % 2 ? '#8a6bff' : '#1b1033', forme: 2, taille: 0.4, tailleFin: 0.05, vie: 0.6, additif: true });
+      scene.remove(c.mesh); E.clones.splice(i, 1);
+    }
+  }
+  for (let i = E.bulles.length - 1; i >= 0; i--) {
+    const b = E.bulles[i];
+    b.mesh.scale.setScalar(1 + Math.sin(etat.temps * 9) * 0.04);
+    if (etat.temps >= b.fin || !b.mesh.parent) { b.mesh.removeFromParent(); E.bulles.splice(i, 1); }
+  }
+  for (const [id, g] of E.geles) {
+    if (etat.temps >= g.fin) { E.geles.delete(id); continue; }
+    const p = positionDe(id);
+    if (p && Math.random() < dt * 14 && distCam(p.x, p.y, p.z) < 70) particules.ajouter({ x: p.x + (Math.random() - 0.5) * 0.9, y: p.y + Math.random() * 1.8, z: p.z + (Math.random() - 0.5) * 0.9, vy: g.ronces ? 0.8 : -0.6, couleur: g.ronces ? '#3d6b2f' : '#cfeaff', forme: 3, taille: 0.22, tailleFin: 0.04, vie: 0.6, additif: !g.ronces });
+  }
+}
+
 // ---------- Messages venant de l'hôte ----------
 function recevoir(m) {
   if (!m || typeof m !== 'object') return;
@@ -744,6 +946,7 @@ function recevoir(m) {
     case 'debut': debutPartie(m); break;
     case 'snap': recevoirSnap(m); break;
     case 'pv': {
+      if (m.sauve) effetSauve(m);
       if (moi && m.id === moi.id) {
         const avant = moi.pv + moi.bouclier;
         moi.pv = m.pv; moi.bouclier = m.b;
@@ -853,6 +1056,17 @@ function recevoir(m) {
       break;
     }
     case 'pouvoir': effetPouvoir(m); break;
+    case 'gel': { // ralenti par Givrette (glace) ou pris dans les ronces de Racine
+      const fin = etat.temps + (+m.duree || 0), f = borner(+m.f || 1, 0.05, 1);
+      if (moi && m.id === moi.id) { moi.gelJusqua = fin; moi.gelFacteur = f; annonceObjet(f < 0.2 ? '🍄 Pris dans les ronces !' : '❄️ Tu es ralenti !'); }
+      effetsPouvoirs.geles.set(m.id, { fin, ronces: f < 0.2 });
+      break;
+    }
+    case 'pousse': // bourrasque de Zephyr (vent)
+      if (moi && m.id === moi.id && Array.isArray(m.v) && moi.ph === 'sol') { moi.vx = +m.v[0] || 0; moi.vy = +m.v[1] || 0; moi.vz = +m.v[2] || 0; moi.auSol = false; moi.sansChute = true; moi.accroupi = false; annonceObjet('🌪️ Emporté par une bourrasque !'); }
+      break;
+    case 'piege+': creerPiege(m.p); break;
+    case 'piege-': retirerPiege(m); break;
     case 'defis': {
       const avant = etat.defis ? DEFIS_ENTRAINEMENT.filter(x => etat.defis[x.id] >= x.n).length : 0;
       etat.defis = m.d && typeof m.d === 'object' ? m.d : etat.defis;
@@ -1097,6 +1311,7 @@ function recevoirFin(m) {
     document.exitPointerLock?.();
     $('#finTitre').innerHTML = m.entrainement ? (gagne ? 'ENTRAÎNEMENT<span>RÉUSSI</span>' : 'ENTRAÎNEMENT<span>TERMINÉ</span>')
       : gagne ? 'TOP 1 !<span>CHAMPION</span>' : (m.nom ? 'PARTIE<span>TERMINÉE</span>' : 'MATCH<span>NUL</span>');
+    $('#finImage')?.classList.toggle('cache', !gagne || !!m.entrainement); // illustration de victoire (podium)
     const duo = m.equipe && gagnants.length > 1;
     $('#finTexte').innerHTML = m.entrainement ? (gagne ? 'Tu as réussi les 3 défis. Prêt pour une vraie partie ! 🎉' : `<b>${echapper(m.nom || '?')}</b> a fini les défis en premier.`)
       : gagne ? (duo ? 'Ton équipe est la dernière debout. Bravo ! 🎉' : 'Tu es le dernier debout sur l\'île. Bravo ! 🎉')
@@ -1507,8 +1722,8 @@ function recharger() {
   const def = OBJETS[it.objet];
   if (def.type !== 'arme' || moi.rechargeT > 0 || it.mun >= def.chargeur) return;
   if (moi.munitions <= 0) { annonceObjet('Plus de munitions !'); son('vide'); return; }
-  moi.rechargeT = def.recharge;
-  moi.rechargeTotal = def.recharge;
+  moi.rechargeT = def.recharge * (moi.esprit && moi.esprit.type === 'temps' ? TEMPS.recharge : 1); // Tic-Tac (temps) : 30 % plus vite
+  moi.rechargeTotal = moi.rechargeT;
   son('recharge', 0.7);
 }
 
@@ -1676,14 +1891,16 @@ function coupPioche() {
   const b = h.boite;
   if (b && b.type === 'arbre') {
     reseau.versHote({ t: 'recolte', type: 'arbre', id: b.id, deg: 25 });
-    moi.mats = Math.min(999, moi.mats + 6);
+    const gain = 6 * (moi.esprit && moi.esprit.type === 'nature' ? NATURE.recolte : 1); // Racine (nature) : 2 fois plus
+    moi.mats = Math.min(999, moi.mats + gain);
     eclats(r.x, r.y, r.z, '#8a5a2b', 5, 4); son('bois');
-    annonceObjet('+6 🪵');
+    annonceObjet(`+${gain} 🪵`);
   } else if (b && b.type === 'rocher') {
     reseau.versHote({ t: 'recolte', type: 'rocher', id: b.id, deg: 25 });
-    moi.mats = Math.min(999, moi.mats + 8);
+    const gain = 8 * (moi.esprit && moi.esprit.type === 'nature' ? NATURE.recolte : 1);
+    moi.mats = Math.min(999, moi.mats + gain);
     eclats(r.x, r.y, r.z, '#9a9ea6', 5, 4); son('pierre');
-    annonceObjet('+8 🪵');
+    annonceObjet(`+${gain} 🪵`);
   } else if (b && b.type === 'constr') {
     reseau.versHote({ t: 'degatsConstr', cle: b.cle, deg: 50 });
     eclats(r.x, r.y, r.z, '#c8955a', 5, 4); son('bois');
@@ -1867,12 +2084,24 @@ function majMoi(dt) {
       if (moi.accroupi) vit = 3.8;
       if (moi.visee) vit = Math.min(vit, 4.4);
       if (moi.conso) vit = 3.2;
-      if (moi.dansEau) vit *= 0.55;
-      if (moi.esprit && moi.esprit.type === 'mobilite') vit *= VITESSE_MOBILITE;
+      const monEsprit = moi.esprit ? moi.esprit.type : null;
+      if (moi.dansEau && monEsprit !== 'eau') vit *= 0.55; // Goutte (eau) : on nage aussi vite qu'on court
+      if (monEsprit === 'mobilite') vit *= VITESSE_MOBILITE;
+      const gele = etat.temps < (moi.gelJusqua || 0) ? moi.gelFacteur : 1; // gelé par Givrette, ou pris dans des ronces
+      vit *= gele;
+      const bulle = etat.temps < (moi.bulleJusqua || 0);
+      // Tic-Tac (temps) : on note où l'on est, 4 fois par seconde, pour pouvoir y revenir
+      moi.histT = (moi.histT || 0) + dt;
+      if (moi.histT >= 0.25) { moi.histT = 0; (moi.historique = moi.historique || []).push({ t: etat.temps, x: moi.x, y: moi.y, z: moi.z }); while (moi.historique.length && etat.temps - moi.historique[0].t > 6) moi.historique.shift(); }
       const k = moi.auSol ? Math.min(1, dt * 14) : Math.min(1, dt * 3);
-      moi.vx += (dx * vit - moi.vx) * k;
-      moi.vz += (dz * vit - moi.vz) * k;
-      if (touches.has('Space') && moi.auSol) { moi.vy = 9.2; moi.auSol = false; moi.accroupi = false; }
+      if (moi.dash && etat.temps < moi.dash.fin) { moi.vx = moi.dash.fx * ETOILE.distance / ETOILE.duree; moi.vz = moi.dash.fz * ETOILE.distance / ETOILE.duree; if (moi.vy < 0) moi.vy = 0; } // Lumi : étoile filante
+      else {
+        if (moi.dash) { moi.dash = null; moi.vx *= 0.2; moi.vz *= 0.2; }
+        moi.vx += (dx * vit - moi.vx) * k;
+        moi.vz += (dz * vit - moi.vz) * k;
+      }
+      // saut : plus haut avec Zephyr (vent), très haut dans la bulle de Goutte ; impossible dans les ronces
+      if (touches.has('Space') && moi.auSol && gele > 0.2) { moi.vy = bulle ? EAU.saut : monEsprit === 'vent' ? VENT.saut : 9.2; moi.auSol = false; moi.accroupi = false; }
       // Filou (mobilité) : double saut (appuyer encore une fois en l'air)
       const espace = touches.has('Space');
       if (espace && !moi.espacePrec && !moi.auSol && !moi.sansChute && moi.esprit && moi.esprit.type === 'mobilite' && !moi.doubleSaut && moi.vy < 7) {
@@ -1884,7 +2113,8 @@ function majMoi(dt) {
       const etaitEnLair = !moi.auSol, vyAvant = moi.vy;
       moi.vy -= 25 * dt;
       monde.deplacer(moi, dt);
-      if (etaitEnLair && moi.auSol) {
+      if (etaitEnLair && moi.auSol && bulle && vyAvant < -6) { moi.vy = EAU.rebond; moi.auSol = false; moi.sansChute = true; son('saut', 0.5); poussiere(moi.x, moi.y, moi.z, 6); } // la bulle rebondit
+      else if (etaitEnLair && moi.auSol) {
         if (vyAvant < -9) poussiere(moi.x, moi.y, moi.z, 8);
         // dégâts de chute (sauf après un champignon)
         if (vyAvant < -17 && !moi.sansChute && !moi.dansEau && !etat.options.entrainement && !(moi.esprit && moi.esprit.type === 'mobilite')) { reseau.versHote({ t: 'chute', deg: Math.round((-vyAvant - 17) * 5) }); son('chute'); etat.secousse = Math.max(etat.secousse, 0.4); }
@@ -2324,9 +2554,17 @@ function dessinerCarte(cv, centreX, centreZ, vue, grand) {
   if (moi && moi.esprit && moi.esprit.type === 'vision' && moi.ph !== 'mort') {
     const loin = etat.temps < (etat.visionJusqua || 0) ? VISION.pouvoir : VISION.passif;
     for (const a of etat.autres.values()) {
-      if (!a.vivant || !a.cible || a.marqueur || Math.hypot(a.x - moi.x, a.z - moi.z) > loin) continue;
+      if (!a.vivant || !a.cible || a.marqueur || etat.orbes.get(a.id)?.type === 'ombre' || Math.hypot(a.x - moi.x, a.z - moi.z) > loin) continue;
       const [x, y] = P(a.x, a.z);
       g.fillStyle = '#ff6ef0'; g.strokeStyle = '#3a0636'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, grand ? 5 : 3.5, 0, 7); g.fill(); g.stroke();
+    }
+  }
+  // Pépite (chance) : les coffres encore fermés autour de moi
+  if (moi && moi.esprit && moi.esprit.type === 'chance' && moi.ph !== 'mort' && etat.monde) {
+    for (const c of etat.monde.coffres) {
+      if (c.ouvert || Math.hypot(c.x - moi.x, c.z - moi.z) > CHANCE.passif) continue;
+      const [x, y] = P(c.x, c.z), t = grand ? 4 : 3;
+      g.fillStyle = '#ffc83d'; g.strokeStyle = '#5a3d00'; g.lineWidth = 1.5; g.fillRect(x - t, y - t, t * 2, t * 2); g.strokeRect(x - t, y - t, t * 2, t * 2);
     }
   }
   for (const a of etat.autres.values()) {
@@ -3416,7 +3654,7 @@ function majChoixModes() {
   for (const b of document.querySelectorAll('#choixModes [data-mode]')) b.classList.toggle('choisi', b.dataset.mode === mode);
   const r = MODES[mode];
   $('#descMode').textContent = r.regle;
-  $('#btnSolo').firstChild.textContent = `${r.icone} Jouer en ${r.nom} `;
+  $('#btnSoloTexte').textContent = `${r.icone} Jouer en ${r.nom} `;
 }
 function majDefisEntrainement() {
   const el = $('#defisEntrainement');
@@ -3661,12 +3899,13 @@ afficherEcran('menu');
   if (oE) { menus.montrerPage('boutique'); menus.choisirBoutique(oE); }
 }
 document.body.classList.remove('demarrage');
+activerIcones(); // icônes livrées à la place des émojis des menus (si le fichier est là)
 const bonus = bonusDuJour(profil);
 if (bonus) setTimeout(() => { toast(`🎁 Bonus du jour : +${bonus} 🪙 !`, 4000); menus.majPieces(true); }, 900);
 initCadeaux({ profil, menus, son: n => { initSons(); son(n); }, toast, reglages, version: VERSION_JEU });
 initCompte({ profil, reglages, toast });
 // Les cosmétiques livrés (les 250 nouveaux) se chargent après l'écran d'accueil, sans ralentir le démarrage
-chargerCosmetiques(clesLook(profil.equipe)).then(() => { if (etat.ecran === 'menu' && menus.page === 'jouer') menus.montrerPerso(); }).catch(() => {});
+chargerCosmetiques(clesLook(profil.equipe), true).then(() => { if (etat.ecran === 'menu' && menus.page === 'jouer') { menus.montrerPerso(); menus.apercu.presenter(3); } }).catch(() => {});
 // tous les autres en douce un peu plus tard (pas en qualité basse : les téléphones chargent seulement ce qui sert)
 if (reglages.qualite !== 'basse') setTimeout(() => prechargerCosmetiques().catch(() => {}), 6000);
 preparerMonde(Math.floor(Math.random() * 1e9));
@@ -3674,7 +3913,7 @@ requestAnimationFrame(boucle);
 
 // Pour tester depuis la console
 window.natx = {
-  etat, reseau, get hote() { return hote; }, touches, recevoir, preparerMonde, camera, scene, renderer, version: 1,
+  etat, reseau, get hote() { return hote; }, touches, recevoir, preparerMonde, utiliserPouvoir, camera, scene, renderer, version: 1,
   // Avance le jeu de quelques secondes d'un coup (pour les tests)
   simuler(secondes, pas = 1 / 30) {
     const n = Math.round(secondes / pas);

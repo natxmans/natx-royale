@@ -5,6 +5,7 @@ import { CATALOGUE, CATEGORIES, RARETES_COSM, COLLAB, objet, prixDe, possede, ac
 import { ESPRITS, TYPES_ESPRITS, PERSONNALITES, RARETES_ESPRIT, ORDRE_RARETES, meilleuresRaretes, replique } from './esprits.js';
 import { descriptionEsprit } from './cadeaux.js';
 import { chargerCosmetiques, cosmetiquePret } from './modeles.js';
+import { vignette } from './icones.js';
 import { echapper } from './outils.js';
 import { NOUVEAUTES } from './nouveautes.js';
 import { dessinerIdees } from './avis.js';
@@ -80,6 +81,11 @@ export class Menus {
   montrerPerso(cadrage = 'corps', look = this.profil.equipe, emote = null) {
     this.apercu.montrer({ couleur: this.couleur, look: this.reglages.peau ? { ...look, peau: this.reglages.peau } : look, numero: this.reglages.numero || 0, cadrage, emote });
     $('#nomPodium').textContent = this.reglages.pseudo || 'Toi';
+    // Le personnage des menus est en HD : ce qui n'est pas encore chargé (tenue en 512 px avec relief, objets des 250)
+    // arrive juste après, et on le remontre une fois prêt.
+    const cles = Object.entries(look).map(([c, id]) => c + ':' + id).filter(k => !cosmetiquePret(k, true));
+    const jeton = this.jetonPerso = {};
+    if (cles.length) chargerCosmetiques(cles, true).then(() => { if (this.jetonPerso === jeton && cles.every(k => cosmetiquePret(k, true))) this.montrerPerso(cadrage, look, emote); }).catch(() => {});
   }
 
   // Style au hasard (parmi ce que tu possèdes)
@@ -188,6 +194,16 @@ export class Menus {
   }
 
   chargerMiniature(el, o) {
+    // vignette livrée (rendu du vrai modèle) : rien à charger ni à dessiner en 3D ; si l'image manque, on revient à la miniature 3D
+    const v = vignette(cleObjet(o));
+    if (v && !el.dataset.sansVignette) {
+      const img = new Image();
+      img.alt = ''; img.loading = 'lazy'; img.className = 'vignette';
+      img.onerror = () => { el.dataset.sansVignette = '1'; img.remove(); this.chargerMiniature(el, o); };
+      img.src = v;
+      el.replaceChildren(img);
+      return;
+    }
     // une miniature à la fois pour ne pas bloquer l'écran
     this.fileMini = this.fileMini || [];
     this.fileMini.push([el, o]);
@@ -211,10 +227,7 @@ export class Menus {
 
   // Un objet des 250 : son modèle est chargé avant de l'essayer sur le personnage
   essayer(cadrage, look, emote) {
-    const cles = Object.entries(look).map(([c, id]) => c + ':' + id).filter(k => !cosmetiquePret(k));
-    if (!cles.length) { this.montrerPerso(cadrage, look, emote); return; }
     this.montrerPerso(cadrage, look, emote);
-    chargerCosmetiques(cles).then(() => this.montrerPerso(cadrage, look, emote));
   }
 
   // ---------- Collection d'esprits ----------
@@ -231,10 +244,12 @@ export class Menus {
       b.className = 'carte-esprit-jeu' + (miens.length ? '' : ' inconnu') + (t === this.espritChoisi ? ' choisie' : '');
       b.style.setProperty('--couleur-esprit', d.couleur);
       if (meilleures[t]) b.style.setProperty('--couleur-rarete', RARETES_ESPRIT[meilleures[t]].couleur);
-      b.innerHTML = `<span class="ico">${d.icone}</span><b>${echapper(d.nom)}</b><small>${echapper(d.role)}</small><span class="raretes">${ORDRE_RARETES.map(r => {
+      // vignette livrée de l'esprit (rendu du vrai modèle) ; son émoji si l'image manque
+      b.innerHTML = `<span class="ico"><img src="modeles/admin/vignettes/esprit/${t}.webp?v=1" alt="" loading="lazy"></span><b>${echapper(d.nom)}</b><small>${echapper(d.role)}</small><span class="raretes">${ORDRE_RARETES.map(r => {
         const e = miens.find(x => x.rarete === r);
         return `<i class="r-${r}${e ? ' a' : ''}" title="${RARETES_ESPRIT[r].nom}${e ? ' × ' + e.n : ' (pas encore)'}"></i>`;
       }).join('')}</span>`;
+      { const img = b.querySelector('.ico img'); if (img) img.onerror = () => img.replaceWith(d.icone); }
       b.onclick = () => { this.son('clic'); this.choisirEsprit(t); };
       g.appendChild(b);
     }
@@ -254,12 +269,12 @@ export class Menus {
       <p class="bulle-esprit" id="bulleEsprit">« ${echapper(replique(t, 'repos'))} »</p>
       <p><b>Passif :</b> ${echapper(d.passif)}</p><p><b>Pouvoir « ${echapper(d.pouvoir)} » :</b> ${echapper(d.descPouvoir)} <small>(recharge ${d.recharge} s)</small></p>
       <p class="petit-texte">${miens.length ? 'Dans ta collection : ' + miens.map(e => `${RARETES_ESPRIT[e.rarete].nom} × ${e.n}`).join(' · ') : 'Gagne-le en ouvrant une cargaison pendant un événement. En partie, tu peux aussi le capturer sur un autel (pour la partie seulement).'}</p>
-      <div class="boutons-esprit"><button class="petit" data-a="content">😊 Caresser</button><button class="petit" data-a="activer">✨ Pouvoir</button><button class="petit" data-a="surpris">😮 Surprise</button></div>`;
+      <div class="boutons-esprit"><button class="petit" data-a="obtention">🎉 Arrivée</button><button class="petit" data-a="content">😊 Caresser</button><button class="petit" data-a="activer">✨ Pouvoir</button><button class="petit" data-a="surpris">😮 Surprise</button></div>`;
     for (const b of el.querySelectorAll('[data-a]')) b.onclick = () => {
       this.apercu.animerEspritApercu(b.dataset.a);
       this.son('esprit_' + t);
       if (b.dataset.a !== 'surpris' && meilleure && meilleure !== 'commun') setTimeout(() => this.son('esprit_rare'), 250);
-      $('#bulleEsprit').textContent = '« ' + replique(t, b.dataset.a === 'activer' ? 'pouvoir' : b.dataset.a === 'content' ? 'capture' : 'repos') + ' »';
+      $('#bulleEsprit').textContent = '« ' + replique(t, b.dataset.a === 'activer' ? 'pouvoir' : b.dataset.a === 'content' || b.dataset.a === 'obtention' ? 'capture' : 'repos') + ' »';
     };
   }
 
@@ -420,7 +435,7 @@ export class Menus {
         this.apercu.monter($('#sceneCasier'));
         this.essayer(this.cadragePour(o), { ...this.profil.equipe, [o.cat]: o.id }, o.cat === 'emote' ? o.id : null);
         this.infosObjet($('#casierInfos'), o, false);
-        if (possede(this.profil, o) && this.profil.equipe[o.cat] !== o.id) { this.equiper(o); c.classList.add('equipe'); for (const x of g.children) if (x !== c) x.classList.remove('equipe'); this.infosObjet($('#casierInfos'), o, false); }
+        if (possede(this.profil, o) && this.profil.equipe[o.cat] !== o.id) { this.equiper(o); if (o.cat === 'tenue') this.apercu.presenter(); c.classList.add('equipe'); for (const x of g.children) if (x !== c) x.classList.remove('equipe'); this.infosObjet($('#casierInfos'), o, false); }
       };
       g.appendChild(c);
     }

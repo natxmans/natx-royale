@@ -9,7 +9,7 @@ import { activerCosmetiques } from './boutique.js';
 const VERSION = 2; // à augmenter quand un .glb change (évite le vieux cache du navigateur)
 const BIBLIO = {};           // nom de l'objet → Object3D (modèle d'origine, jamais affiché)
 const ANIMATIONS = {};       // nom de l'animation → AnimationClip (ex. soin_flotter, socle_tourner)
-export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [], cosmetiques250: [], cargaisons: [] };
+export const INTEGRATION = { maisons: [], armes: [], esprits: [], socles: [], lod: [], mannequins: [], cosmetiques250: [], cargaisons: [], tenuesHD: false, vegetation: false };
 const chargeur = new GLTFLoader();
 const dejaCharges = new Map(); // un fichier partagé (ex. esprits_v001.glb) n'est chargé qu'une fois
 
@@ -40,7 +40,13 @@ async function chargerIntegration() {
   if (!man) return;
   for (const m of man.maisons || []) {
     if (!m.actif || !Array.isArray(m.collisions) || !m.taille) continue;
-    const scene = m.fichier ? await chargerFichier(m.fichier, 'maison:' + m.id + ':') : null;
+    // un fichier peut contenir plusieurs maisons (maisons_carte_v001.glb) : il n'est lu qu'une fois, chaque maison garde son nom « maison:<id>:<objet> »
+    let scene = null;
+    if (m.fichier && m.objet) {
+      scene = await chargerFichier(m.fichier, 'maison::');
+      if (scene && BIBLIO['maison::' + m.objet]) BIBLIO['maison:' + m.id + ':' + m.objet] = BIBLIO['maison::' + m.objet];
+      else scene = null;
+    } else if (m.fichier) scene = await chargerFichier(m.fichier, 'maison:' + m.id + ':');
     INTEGRATION.maisons.push({ ...m, scene });
   }
   for (const a of man.armes || []) {
@@ -63,13 +69,33 @@ async function chargerIntegration() {
       const parSlug = new Map(liste.map(f => [f.slug, f]));
       slugs = slugs.filter(sl => parSlug.has(sl));
       for (const sl of slugs) {
-        FICHES[e.categorie].set(sl, { ...parSlug.get(sl), fichier: e.fichier, cases: doc.cases, atlas: doc.atlas, colonnes: doc.colonnes, texture: null });
+        const f = { ...parSlug.get(sl), fichier: e.fichier, cases: doc.cases, atlas: doc.atlas, colonnes: doc.colonnes, texture: null };
+        FICHES[e.categorie].set(sl, e.categorie === 'tenue' ? preparerFicheTenue(f) : f);
       }
     } else if (!CATEGORIES_MODELE.has(e.categorie)) continue;
     INTEGRATION.cosmetiques250.push(e);
     for (const sl of slugs) fichierDe.set(e.categorie + ':' + sl, e.fichier);
     activerCosmetiques(slugs.map(sl => e.categorie + ':' + sl));
   }
+  // Tenues en version réaliste HD : UN index pour les 20 tenues de base, la Tenue Staff et les 50 du catalogue.
+  // Une tenue du catalogue n'y entre que si elle est déjà en vente (entrée « tenue » de cosmetiques250 active).
+  const hd = man.tenues_hd;
+  if (hd && hd.actif && hd.fiche) {
+    let doc = null;
+    try { const r = await fetch(`modeles/${hd.fiche}?v=${VERSION}`); if (r.ok) doc = await r.json(); } catch (err) { doc = null; }
+    if (doc && Array.isArray(doc.tenues) && doc.cases) {
+      for (const t of doc.tenues) {
+        if (!t || !t.slug || !t.image || !t.fichier) continue;
+        if (t.origine === 'catalogue_250' && !FICHES.tenue.has(t.slug)) continue;
+        FICHES.tenue.set(t.slug, preparerFicheTenue({ ...t, cases: doc.cases, taille: doc.taille_image || 512, hd: true }));
+      }
+      INTEGRATION.tenuesHD = true;
+    } else console.warn('Index des tenues HD illisible :', hd.fiche);
+  }
+  // Formes de la végétation (inst_tronc, inst_sapin, inst_rocher_1…) : js/monde.js les met dans ses InstancedMesh
+  if (man.vegetation && man.vegetation.actif && man.vegetation.fichier) INTEGRATION.vegetation = !!(await chargerFichier(man.vegetation.fichier));
+  // Animations du personnage (attente, présentation, pioche, deltaplane) : clips « perso_<nom> », lus par js/personnage.js
+  if (man.animations_perso && man.animations_perso.actif && man.animations_perso.fichier) await chargerFichier(man.animations_perso.fichier, 'anim:');
   // Esprits et autels : les objets gardent leur nom (esprit_soin, socle_esprit…) pour modeleGlb()
   for (const cle of ['esprits', 'socles', 'lod', 'mannequins', 'cargaisons']) {
     for (const e of man[cle] || []) {
@@ -88,52 +114,88 @@ export const modelesDecorPrets = Promise.all([
 ]);
 
 export const aModele = nom => !!BIBLIO[nom];
+// Géométrie d'un objet livré (pour les InstancedMesh du décor) ; null s'il n'est pas chargé
+export function geometrieGlb(nom) {
+  let g = null;
+  if (BIBLIO[nom]) BIBLIO[nom].traverse(o => { if (o.isMesh && !g) g = o.geometry; });
+  return g;
+}
 
 // ---------- Cosmétiques chargés à la demande ----------
 // chapeau, dos, pioche, deltaplane : un objet <categorie>_<slug> dans un .glb, affiché tel quel
 const CATEGORIES_MODELE = new Set(['chapeau', 'dos', 'pioche', 'deltaplane']);
-// tenue (image 256² + pièces 3D), emote (clip d'animation), trainee (case d'un atlas + réglages) : fiche JSON
+// tenue (image + pièces 3D ; voir « Tenues : deux niveaux d'image »), emote (clip d'animation), trainee (case d'un atlas + réglages) : fiche JSON
 const FICHES = { tenue: new Map(), emote: new Map(), trainee: new Map() };
 const fichierDe = new Map(); // « chapeau:capuche_nuageuse » → « cosm250_chapeaux_v001.glb »
 const textures = new Map();
 const chargeurTex = new THREE.TextureLoader();
-function chargerTexture(chemin) {
+function chargerTexture(chemin, lineaire = false) {
   if (!textures.has(chemin)) {
     textures.set(chemin, chargeurTex.loadAsync(`modeles/${chemin}?v=${VERSION}`)
-      .then(t => { t.colorSpace = THREE.SRGBColorSpace; return t; })
+      .then(t => { t.colorSpace = lineaire ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.anisotropy = 4; return t; })
       .catch(err => { console.warn('Image pas chargée :', chemin, err?.message || err); return null; }));
   }
   return textures.get(chemin);
 }
 const ficheDe = cle => { const [c, s] = cle.split(':'); return FICHES[c] ? FICHES[c].get(s) : null; };
-function fichePrete(cat, f) {
-  if (cat === 'tenue') return !!f.texture && (f.pieces || []).every(p => BIBLIO[p.objet]);
+// ---------- Tenues : deux niveaux d'image ----------
+// « hd » = image 512 px + carte de relief + carte de lueur (ton personnage, le salon, le casier) ;
+// « leger » = image 256 px sans relief (les autres joueurs, les miniatures, la qualité basse).
+// En qualité basse (téléphones) : pas de HD, et les 20 tenues de base gardent leur dessin fait en code (rien à télécharger).
+export const QUALITE_TENUES = { hd: true, base: true };
+const enCode = f => f.origine === 'base' && !QUALITE_TENUES.base;
+function preparerFicheTenue(f) {
+  const leger = f.image_256
+    ? { couleur: f.image_256, lueur: f.image_lueur_256, ombrage: f.image_ombrage_256 }
+    : { couleur: f.image, lueur: f.image_lueur, ombrage: f.image_ombrage };
+  const hd = f.hd ? { couleur: f.image, relief: f.image_relief, lueur: f.image_lueur, ombrage: f.image_ombrage } : null;
+  return { ...f, taille: f.taille || 256, images: { leger, hd }, tex: { leger: null, hd: null }, attente: { leger: null, hd: null } };
+}
+const niveauTenue = (f, hd) => (hd && QUALITE_TENUES.hd && f.images.hd ? 'hd' : 'leger');
+const piecesPretes = f => (f.pieces || []).every(p => BIBLIO[p.objet]);
+function chargerTenue(f, hd) {
+  if (enCode(f)) return Promise.resolve();
+  const n = niveauTenue(f, hd);
+  if (!f.attente[n]) {
+    const im = f.images[n];
+    const une = (chemin, lineaire) => (chemin ? chargerTexture(chemin, lineaire) : Promise.resolve(null));
+    f.attente[n] = Promise.all([une(im.couleur), une(im.relief, true), une(im.lueur), une(im.ombrage)])
+      .then(([couleur, relief, lueur, ombrage]) => { if (couleur && (!f.teinte || ombrage)) f.tex[n] = { couleur, relief, lueur, ombrage }; });
+  }
+  return Promise.all([(f.pieces || []).length ? chargerFichier(f.fichier) : null, f.attente[n]]);
+}
+function fichePrete(cat, f, hd = false) {
+  if (cat === 'tenue') return enCode(f) || (!!f.tex[niveauTenue(f, hd)] && piecesPretes(f));
   if (cat === 'emote') return !!ANIMATIONS[f.clip];
   return !!f.texture;
 }
-export function cosmetiquePret(cle) {
+export function cosmetiquePret(cle, hd = false) {
   const f = ficheDe(cle);
-  if (f) return fichePrete(cle.split(':')[0], f);
+  if (f) return fichePrete(cle.split(':')[0], f, hd);
   return !fichierDe.has(cle) || !!BIBLIO[cle.replace(':', '_')];
 }
 // Fiches prêtes à l'emploi (null tant que l'image / le clip n'est pas chargé : le jeu garde l'objet de base)
-export const ficheTenue = slug => { const f = FICHES.tenue.get(slug); return f && fichePrete('tenue', f) ? f : null; };
+// Tenue prête : { f, tex, niveau }. Si le niveau demandé n'est pas (encore) chargé, on prend l'autre plutôt que rien.
+export function ficheTenue(slug, hd = false) {
+  const f = FICHES.tenue.get(slug);
+  if (!f || enCode(f) || !piecesPretes(f)) return null;
+  const voulu = niveauTenue(f, hd);
+  const niveau = f.tex[voulu] ? voulu : f.tex.leger ? 'leger' : f.tex.hd ? 'hd' : null;
+  return niveau ? { f, tex: f.tex[niveau], niveau } : null;
+}
 export const ficheEmote = slug => { const f = FICHES.emote.get(slug); return f && fichePrete('emote', f) ? f : null; };
 export const ficheTrainee = slug => { const f = FICHES.trainee.get(slug); return f && fichePrete('trainee', f) ? f : null; };
-function chargerFiche(cat, f) {
-  if (cat === 'tenue') {
-    return Promise.all([(f.pieces || []).length ? chargerFichier(f.fichier) : null,
-      chargerTexture(f.image).then(t => { f.texture = t; })]);
-  }
+function chargerFiche(cat, f, hd = false) {
+  if (cat === 'tenue') return chargerTenue(f, hd);
   if (cat === 'emote') return chargerFichier(f.fichier);
   return chargerTexture(f.atlas || f.fichier).then(t => { f.texture = t; });
 }
-export function chargerCosmetiques(cles) {
+export function chargerCosmetiques(cles, hd = false) {
   const taches = new Map();
   for (const cle of cles) {
-    if (cosmetiquePret(cle)) continue;
+    if (cosmetiquePret(cle, hd)) continue;
     const f = ficheDe(cle);
-    if (f) taches.set(cle, chargerFiche(cle.split(':')[0], f));
+    if (f) taches.set(cle, chargerFiche(cle.split(':')[0], f, hd));
     else if (fichierDe.has(cle)) taches.set(fichierDe.get(cle), chargerFichier(fichierDe.get(cle)));
   }
   return Promise.all(taches.values());
@@ -153,8 +215,9 @@ export function enregistrerAjouts(liste) {
   return cles;
 }
 // Après le démarrage : on charge en douce tout ce qui est livré (pour les potes et les bots qui portent ces objets)
+// (les tenues de base et la Tenue Staff ont aussi une fiche : on les ajoute, en images légères)
 export function prechargerCosmetiques() {
-  const cles = [...fichierDe.keys()];
+  const cles = [...new Set([...fichierDe.keys(), ...[...FICHES.tenue.keys()].map(s => 'tenue:' + s)])];
   return chargerCosmetiques(cles);
 }
 

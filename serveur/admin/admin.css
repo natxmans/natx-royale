@@ -212,3 +212,38 @@ input.code-joueur { font-family: ui-monospace, Consolas, monospace; letter-spaci
 .rapport-robot summary div { font-weight: 800; margin-top: 2px; }
 .rapport-robot h3 { margin: 10px 0 4px; font-size: 14px; }
 .rapport-robot .petit { opacity: .85; margin-top: 2px; }
+
+/* ===== Visuels livrés par la session modélisation (dossier visuels/) ===== */
+/* icônes en trait : couleur et taille du texte autour */
+.ic { width: 1.2em; height: 1.2em; display: inline-block; vertical-align: -.22em; flex: none; overflow: visible; }
+.menu nav a .ic { margin-right: 8px; color: var(--cyan); }
+.menu nav a.actif .ic { color: #fff; }
+.titre h1 .ic { color: var(--cyan); }
+/* logo : l'image si elle est là, sinon le texte d'avant */
+.logo .logo-image { display: none; width: 100%; height: auto; max-width: 330px; margin: 0 auto; }
+.logo.petit .logo-image { max-width: 198px; margin: 0; }
+.barre-mobile .logo.petit .logo-image { max-width: 132px; }
+body.visuels .logo .logo-image { display: block; }
+body.visuels .logo .logo-texte { display: none; }
+.logo .logo-texte span { display: block; color: var(--cyan); text-shadow: 0 4px 0 #1b4fc4; }
+.logo.petit .logo-texte span { display: inline; margin-left: 6px; text-shadow: 0 2px 0 #1b4fc4; }
+/* en-tête de page avec son illustration */
+.titre.illustree { position: relative; min-height: 92px; padding: 10px 190px 10px 16px; border-radius: 16px; border: 1.5px solid var(--bord); background: var(--fond2); overflow: hidden; }
+.titre.illustree .illus-page { position: absolute; right: 0; top: 0; height: 100%; width: auto; opacity: .95; -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%); mask-image: linear-gradient(90deg, transparent, #000 45%); pointer-events: none; }
+.icone-esprit .vig-esprit { width: 0; height: 0; }
+.icone-esprit.avec-image { background: rgba(255, 255, 255, .06) !important; }
+.icone-esprit.avec-image .vig-esprit { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* tableau vide */
+body.visuels .vide.grand::before { content: ''; display: block; width: 160px; height: 90px; margin: 0 auto 8px; border-radius: 12px; background: url('visuels/illustrations/vide_petit.webp') center / cover no-repeat; opacity: .9; }
+/* cosmétiques : vignette dans la liste, badge de rareté, carte avec le cadre de rareté dans la fiche */
+.avec-vignette { display: flex; align-items: center; gap: 10px; }
+.vig { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; background: rgba(255, 255, 255, .05); }
+.badge-rarete { width: 20px; height: 20px; vertical-align: -.3em; margin-right: 5px; }
+.carte-cosm { position: relative; width: 200px; height: 260px; margin: 0 auto 6px; flex: none; }
+.carte-cosm-cadre { position: absolute; inset: 0; width: 100%; height: 100%; }
+.carte-cosm-image { position: absolute; left: 20px; top: 22px; width: 160px; height: 160px; object-fit: contain; }
+.carte-cosm-nom { position: absolute; left: 8px; right: 8px; top: 206px; height: 46px; display: flex; align-items: center; justify-content: center; text-align: center; font-family: 'Lilita One'; font-size: 16px; line-height: 1.05; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); }
+@media (max-width: 760px) {
+  .titre.illustree { padding-right: 16px; min-height: 0; }
+  .titre.illustree .illus-page { opacity: .22; }
+}

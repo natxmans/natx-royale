@@ -130,3 +130,68 @@ Demandes restantes (FACULTATIVES, rien ne bloque le jeu) :
 1) Si de nouveaux cosmétiques sont voulus hors des 250 : livrer le modèle (mêmes règles) puis l'admin peut créer
    l'article dans « Cosmétiques → Ajouter » (il refuse un modèle déjà utilisé ou absent).
 2) personnage_v3 / décor de carte / animations propres aux pioches et deltaplanes : pas nécessaires au code actuel.
+
+
+=====================================================================================
+5) 21 NOVEMBRE 2026 (soir) — TOUT LE LOT DU 21 NOV. EST BRANCHÉ (demande du créateur du jeu : « mets tous les modèles dans le jeu »)
+=====================================================================================
+(écrit par la session Développement ; aucun .glb, .blend, image ou source 3D n'a été modifié ni déplacé)
+
+| Livraison                                   | Où c'est branché                                                                                      |
+|---------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| esprits_v003.glb                            | integration.json « esprits » / « socles » ; <id>_obtention jouée quand un joueur reçoit un esprit et par le bouton « Arrivée » de la page Esprits |
+| tenues_hd_v001.json + tenues_hd/ + tenues_base_v001.glb + tenue_staff_v001.glb | integration.json « tenues_hd ». js/modeles.js (deux niveaux d'image) + js/personnage.js (tenueFiche) |
+| tenues_250_v002.glb / .json                 | entrée « tenue » de cosmetiques250 (pièces des 50) ; la v001 reste dans modeles/                     |
+| animations_perso_v001.glb                   | integration.json « animations_perso » ; js/personnage.js (animationsLivrees)                          |
+| vegetation_v001.glb                         | integration.json « vegetation » ; js/monde.js (InstancedMesh des arbres, rochers, buissons)           |
+| maisons_carte_v001.glb + .json              | integration.json « maisons » : quartier, chalet, adobe (1 maison sur 2 de leur style), grange (toujours, à la ferme) |
+| interface/ (logo, 72 icônes, 9 illustrations) | index.html + style.css + js/icones.js                                                               |
+| admin/ (logo, 27 icônes, badges, cadres, illustrations, vignettes) | serveur/admin/ (copie dans serveur/admin/visuels/ par serveur/copier_visuels.py) ; vignettes aussi dans la boutique et le casier du jeu |
+
+Comment le code s'en sert :
+- Tenues : niveau « hd » (image 512 + relief + lueur) pour le joueur local et les personnages des menus ; niveau « leger » (image_256,
+  image_lueur_256, sans relief) pour les autres joueurs et les miniatures. En qualité basse : pas de HD, et les 20 tenues de base restent
+  dessinées par le code (rien à télécharger). Tant qu'une image n'est pas chargée, le jeu montre la tenue du code puis rhabille.
+  teinte: true → canvas (couleur du joueur × image_ombrage, puis image) ; cosm_teinte → couleur du joueur ; metal / rugosite → MeshStandardMaterial
+  sur le corps, les mains, les pieds et la ceinture ; cache « cheveux » → pas de coiffure ; cache « visage » → yeux, pupilles et bouche cachés ;
+  robot et statue : tête de robot et peau dorée toujours faites par le code. « yeux » et « effets » ne sont pas utilisés (pour l'instant).
+  De loin (> 40 m) les pièces des épaules, coudes, hanches et genoux des autres joueurs sont cachées avec les petits détails.
+- Animations du perso : posées par-dessus la pose du code. attente_1 après 0,6 s sans bouger (attente_2 une boucle sur trois, sans objet en main ;
+  avec un objet en main, seul le bas du corps suit le clip) ; presentation_1..3 dans les menus (au démarrage et quand on équipe une tenue) ;
+  pioche_coup_1..3 qui alternent, joués en 0,42 s (cadence de la pioche), bras seulement si le joueur court ; deltaplane_vol + mélange vers
+  virage_G / virage_D selon la vitesse de rotation (pas pour le tapis volant).
+- Végétation : formes livrées en qualité haute et moyenne seulement (≈ 370 000 triangles sur l'île au lieu de 95 000) ; en qualité basse,
+  les formes du code. Les 3 rochers alternent.
+- Maisons : collisions et coffre lus dans integration.json. Vérifié sur 52 maisons (4 cartes, 4 orientations) : on entre par la porte,
+  les murs bloquent, le coffre est dedans. La maison « cottage » reste inactive (licence).
+- Icônes : les émojis connus des menus et des fenêtres sont remplacés par l'icône du sprite (js/icones.js, tableau PAR_EMOJI). Pas dans
+  l'affichage en partie (HUD), pas dans les textes des joueurs, pas pour « ✨ » (sauf l'onglet Esprits).
+
+Pas utilisés : icones_cargaison_v001.png, image_apercu des tenues teintées, champs « yeux » et « effets », cadres de rareté côté jeu
+(ils servent dans la fiche d'un cosmétique du panel).
+
+
+=====================================================================================
+6) 21 NOVEMBRE 2026 (nuit) — 15 ESPRITS : esprits_plus_v001.glb EST BRANCHÉ
+=====================================================================================
+(écrit par la session Développement ; aucun fichier 3D modifié)
+
+- integration.json « esprits » : les 10 entrées d'esprits_plus_v001.json sont ajoutées, actif:true (les clés « _… » retirées sauf _effets_caches).
+- Les animations servent comme pour les 5 premiers : flotter / deplacer en boucle, attente2 de temps en temps, activer au pouvoir,
+  content, surpris, obtention quand le joueur reçoit l'esprit. Les effets cachés (feu_boule, glace_blizzard…) sont laissés tels quels :
+  « activer » les montre, et le code ajoute ses propres effets dans le monde (boule de feu qui vole, éclair, ronces au sol, clone, bulle…).
+- etoile_coeur : caché par le code (visible = false) quand Lumi a déjà sauvé son joueur dans la partie.
+- Vignettes : modeles/admin/vignettes/esprit/<id>.webp dans la page Esprits du jeu et dans le panel ; illustration esprits_15.webp
+  dans le bandeau de la page Esprits (jeu et panel). vignettes_esprits.json est copié avec les autres visuels du panel.
+
+Les 10 pouvoirs (réglages dans js/esprits.js, décidés par l'hôte dans js/hote.js, affichés par js/jeu.js) :
+  feu Braise      +10 % de dégâts            | Boule de feu : explose à l'impact (35, rayon 4,5 m), 20 s
+  glace Givrette  ses tirs ralentissent 1 s  | Blizzard : ennemis à 10 m à 40 % de leur vitesse pendant 3 s, 28 s
+  foudre Zap      +20 bouclier par élimination | Éclair en chaîne : 30 puis 15 puis 15 (25 m, puis sauts de 14 m), 30 s
+  vent Zephyr     saute 50 % plus haut       | Bourrasque : repousse les ennemis à 8 m (5 dégâts), 22 s
+  nature Racine   récolte 2 fois plus        | Ronces : piège au sol, bloque 2 s et 15 dégâts (2 pièges au plus, 45 s), 25 s
+  ombre Minuit    invisible pour Zyeuto      | Clone : un faux joueur court 5 s, les bots perdent le vrai de vue 4 s, 30 s
+  temps Tic-Tac   recharge les armes 30 % plus vite | Retour : revient où il était il y a 4 s, 25 s
+  eau Goutte      nage aussi vite qu'il court | Bulle : rebondit très haut 6 s, sans dégâts de chute, 20 s
+  chance Pépite   coffres fermés à 40 m sur la mini-carte | Jackpot : une arme rare ou un soin tombe devant lui, 45 s
+  etoile Lumi     sauve d'un coup mortel une fois par partie (40 PV) | Étoile filante : fonce sur 14 m, 20 dégâts sur le trajet, 18 s

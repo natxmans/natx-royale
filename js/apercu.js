@@ -2,7 +2,7 @@
 // + petites images 3D des objets (miniatures).
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { creerPersonnage, modelePioche, modeleDeltaplane, animerPersonnage, tenirObjet } from './personnage.js';
+import { creerPersonnage, modelePioche, modeleDeltaplane, animerPersonnage, tenirObjet, presenterPersonnage } from './personnage.js';
 import { modeleObjet } from './armes.js';
 import { creerEsprit, animerEsprit, jouerEsprit } from './esprits.js';
 
@@ -80,8 +80,10 @@ export class Apercu {
   montrer({ couleur, look, numero = 0, cadrage = 'corps', emote = null }) {
     if (this.esprit) { this.vue.remove(this.esprit); this.esprit = null; }
     if (this.perso) this.vue.remove(this.perso);
-    this.perso = creerPersonnage(couleur, null, numero, look);
+    this.perso = creerPersonnage(couleur, null, numero, look, { hd: true });
     this.vue.add(this.perso);
+    // une présentation demandée juste avant (le personnage vient d'être refait, par ex. sa tenue HD est arrivée) reprend
+    if (this.pres && performance.now() - this.pres.t < 1500) presenterPersonnage(this.perso, this.pres.n);
     this.cadrage = cadrage;
     this.emote = emote;
     this.planeur = cadrage === 'delta';
@@ -157,6 +159,11 @@ export class Apercu {
     return url;
   }
 
+  // Le personnage se présente (animations livrées : saut et poing levé, tour sur lui-même, ou salut)
+  presenter(n = 1 + Math.floor(Math.random() * 3)) {
+    this.pres = { n, t: performance.now() };
+    if (this.perso) presenterPersonnage(this.perso, n);
+  }
   // Miniature d'un objet de la boutique
   miniatureCosmetique(o, couleur) {
     const cle = 'c:' + o.cat + ':' + o.id + ':' + couleur;

@@ -48,30 +48,75 @@ function texte2k27(g, x, y, taille, contour = true) {
 
 // ---------- Tenues ----------
 // torse / bras (haut des bras) / avantBras / bas (bassin + cuisses) / tibias / pieds / mains / ceinture
-// Tenues des 250 (session modélisation) : une image 256×256 dont chaque case se plaque sur un morceau du corps
-function matTenue250(f, nomCase) {
-  return mat('t250' + f.slug + nomCase, () => {
-    const [x, y, w, h] = (f.cases || {})[nomCase] || [0, 0, 256, 256];
-    const t = f.texture.clone();
-    t.repeat.set(w / 256, h / 256); t.offset.set(x / 256, 1 - (y + h) / 256);
-    t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
-    t.needsUpdate = true;
-    return new THREE.MeshLambertMaterial({ map: t });
+// Tenues livrées par la session modélisation (les 20 de base, la Tenue Staff, les 50 du catalogue) :
+// une image dont chaque case se plaque sur un morceau du corps (cases en proportion de la taille de l'image),
+// avec, en version HD, une carte de relief et une carte de lueur ; plus des pièces 3D sur les articulations.
+// F = { f: la fiche, tex: { couleur, relief, lueur, ombrage }, niveau: 'hd' | 'leger' } (js/modeles.js)
+// Tenues « à ta couleur » (classique, sportif) : ta couleur × l'image d'ombrage, puis les détails par-dessus.
+function imageTeintee(F, c) {
+  const { f, tex, niveau } = F;
+  return tex['teinte' + c] || (tex['teinte' + c] = (() => {
+    const img = tex.couleur.image, cv = document.createElement('canvas');
+    cv.width = img.width; cv.height = img.height;
+    const g = cv.getContext('2d');
+    g.fillStyle = c; g.fillRect(0, 0, cv.width, cv.height);
+    g.globalCompositeOperation = 'multiply'; g.drawImage(tex.ombrage.image, 0, 0, cv.width, cv.height);
+    g.globalCompositeOperation = 'source-over'; g.drawImage(img, 0, 0);
+    const t = new THREE.CanvasTexture(cv);
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.name = f.slug + ':' + niveau + ':' + c;
+    return t;
+  })());
+}
+function matTenue(F, nomCase, c) {
+  const { f, tex, niveau } = F;
+  return mat('tf' + f.slug + nomCase + niveau + (f.teinte ? c : ''), () => {
+    const T = f.taille || 256;
+    const [x, y, w, h] = (f.cases || {})[nomCase] || [0, 0, T, T];
+    const decoupe = source => {
+      const t = source.clone();
+      t.repeat.set(w / T, h / T); t.offset.set(x / T, 1 - (y + h) / T);
+      t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+      t.needsUpdate = true;
+      return t;
+    };
+    const p = { map: decoupe(f.teinte ? imageTeintee(F, c) : tex.couleur) };
+    if (tex.relief) p.normalMap = decoupe(tex.relief);
+    if (tex.lueur) { p.emissiveMap = decoupe(tex.lueur); p.emissive = new THREE.Color('#ffffff'); p.emissiveIntensity = 1.6; }
+    return f.metal != null ? new THREE.MeshStandardMaterial({ ...p, metalness: f.metal, roughness: f.rugosite ?? 0.4 }) : new THREE.MeshLambertMaterial(p);
   });
 }
-function tenue250(f, peau) {
+function tenueFiche(F, peau, c) {
+  const { f } = F;
   const P = M(peau);
+  // chevalier, robot, statue : le métal va aussi sur les mains, les pieds et la ceinture
+  const U = coul => (f.metal != null ? METAL(coul, f.rugosite ?? 0.35) : M(coul));
+  const cache = f.cache || [];
   return {
-    torse: matTenue250(f, 'torse'), bras: matTenue250(f, 'bras'), avantBras: f.avantbras === 'peau' ? P : matTenue250(f, 'avantbras'),
-    bas: matTenue250(f, 'bas'), tibias: f.tibias === 'peau' ? P : matTenue250(f, 'tibias'),
-    pieds: M(f.pieds || '#2a2a2a'), semelle: M(f.semelle || '#f3f3f3'), ceinture: M(f.ceinture || '#24262d'), mains: f.mains ? M(f.mains) : null,
-    pieces: f.pieces || [],
+    torse: matTenue(F, 'torse', c), bras: matTenue(F, 'bras', c), avantBras: f.avantbras === 'peau' ? P : matTenue(F, 'avantbras', c),
+    bas: matTenue(F, 'bas', c), tibias: f.tibias === 'peau' ? P : matTenue(F, 'tibias', c),
+    pieds: U(f.pieds || '#2a2a2a'), semelle: U(f.semelle || '#f3f3f3'), ceinture: U(f.ceinture || '#24262d'), mains: f.mains ? U(f.mains) : null,
+    pieces: f.pieces || [], cacheCheveux: cache.includes('cheveux'), cacheVisage: cache.includes('visage'),
+    // la tête de robot et la peau dorée de la statue restent faites par le code (notes de la fiche)
+    robot: f.slug === 'robot', or: f.slug === 'statue',
   };
 }
+// pièces en matériau « cosm_teinte » : elles prennent la couleur du joueur
+function teinterPiece(o, c) {
+  o.traverse(m => {
+    if (!m.isMesh) return;
+    const un = x => (x && x.name === 'cosm_teinte' ? mat('teinte' + x.uuid + c, () => { const k = x.clone(); k.color.set(c); return k; }) : x);
+    m.material = Array.isArray(m.material) ? m.material.map(un) : un(m.material);
+  });
+}
+const INVISIBLE = new THREE.MeshBasicMaterial({ visible: false });
+// tenues dessinées dans le code (elles servent encore tant que les images livrées ne sont pas chargées)
+const TENUES_CODE = new Set(['classique', 'mariniere', 'sportif', 'cuisinier', 'fermier', 'camouflage', 'pyjama', 'pirate', 'ninja', 'smoking', 'chevalier', 'robot',
+  'astronaute', 'lave', 'neon', 'pompier', 'sorcier', 'statue', 'sweat2k27', 'tee2k27', 'staff']);
 
-function tenue(id, c, peau) {
-  const f250 = ficheTenue(id);
-  if (f250) return tenue250(f250, peau);
+// hd = images en 512 px avec relief ; sansFiche = corps de secours fait en code (les cases des images ne lui vont pas)
+function tenue(id, c, peau, hd = false, sansFiche = false) {
+  const F = sansFiche && TENUES_CODE.has(id) ? null : ficheTenue(id, hd);
+  if (F) return tenueFiche(F, peau, c);
   const P = M(peau);
   const pant = sombre(c, 0.42);
   switch (id) {
@@ -720,9 +765,9 @@ function partieBlender(nom, mats) {
   return o;
 }
 
-function creerPersonnageBlender(couleur, nom, numero, look) {
+function creerPersonnageBlender(couleur, nom, numero, look, hd) {
   const peau = peauDe(look, numero);
-  const t = tenue(look.tenue, couleur, peau);
+  const t = tenue(look.tenue, couleur, peau, hd);
   const P = M(peau);
   const coulCheveux = t.or ? null : CHEVEUX[(numero * 3 + 1) % CHEVEUX.length];
   // matériaux de la tête selon la tenue (statue en or, robot en métal, ninja avec cagoule)
@@ -749,7 +794,8 @@ function creerPersonnageBlender(couleur, nom, numero, look) {
 
   // Tête + coiffure + chapeau
   const teteG = new THREE.Group(); teteG.position.y = 1.86;
-  teteG.add(partieBlender('tete', { ...commun, peau: crane }));
+  // cagoule ou masque intégral livré avec la tenue : yeux et bouche cachés dessous
+  teteG.add(partieBlender('tete', { ...commun, peau: crane, ...(t.cacheVisage ? { yeux: INVISIBLE, pupille: INVISIBLE, bouche: INVISIBLE } : {}) }));
   if (t.robot) {
     const visiere = new THREE.Mesh(new THREE.CylinderGeometry(0.128, 0.128, 0.05, 20, 1, true, Math.PI * 0.7, Math.PI * 0.6), LUEUR(NEON.cyan));
     visiere.position.y = 0.02; visiere.scale.z = 1.08; teteG.add(visiere);
@@ -760,7 +806,7 @@ function creerPersonnageBlender(couleur, nom, numero, look) {
   if (!ch.blender) ch.groupe.scale.setScalar(0.5);
   const style = numero % 5;
   const sousChapeau = ch.cacheCheveux || (ch.couvre && COIFFURES_HAUTES.has(style));
-  if (!t.robot && !t.masque && !sousChapeau && CORPS['cheveux_' + style]) teteG.add(partieBlender('cheveux_' + style, { ...commun, haut: M(couleur) }));
+  if (!t.robot && !t.masque && !t.cacheCheveux && !sousChapeau && CORPS['cheveux_' + style]) teteG.add(partieBlender('cheveux_' + style, { ...commun, haut: M(couleur) }));
   teteG.add(ch.groupe);
   if (t.capuche) {
     const capuche = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 12, Math.PI * 0.1, Math.PI * 1.8, 0.3, Math.PI * 0.65), M(t.capuche, { side: THREE.DoubleSide }));
@@ -789,17 +835,25 @@ function creerPersonnageBlender(couleur, nom, numero, look) {
   else { dos.scale.setScalar(0.75); dos.position.set(0, 1.42, -0.09); }
 
   racine.add(JG.hanche, JD.hanche, bassin, torse, teteG, BG.epaule, BD.epaule, dos);
+  const piecesLoin = [];
   // Pièces 3D des tenues des 250 (épaulettes, capes, ceintures…) : chacune sur son articulation
   if (t.pieces && t.pieces.length) {
     const ancres = { racine, bassin, torse, tete: teteG, epaule_G: BG.epaule, epaule_D: BD.epaule, coude_G: BG.coude, coude_D: BD.coude,
       hanche_G: JG.hanche, hanche_D: JD.hanche, genou_G: JG.genou, genou_D: JD.genou };
-    for (const p of t.pieces) { const o = modeleGlb(p.objet); const a = ancres[p.ancre]; if (o && a) a.add(o); }
+    for (const p of t.pieces) {
+      const o = modeleGlb(p.objet); const a = ancres[p.ancre];
+      if (!o || !a) continue;
+      teinterPiece(o, couleur);
+      a.add(o);
+      // de loin (autres joueurs) : les petites pièces des bras et des jambes sont cachées avec les détails
+      if (!hd && /^(epaule|coude|hanche|genou)_/.test(p.ancre)) piecesLoin.push(o);
+    }
   }
-  return finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, dos, ch, look, nom, couleur });
+  return finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, dos, ch, look, nom, couleur, piecesLoin });
 }
 
 // Ombre, deltaplane, détails cachés de loin, étiquette du nom
-function finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, dos, ch, look, nom, couleur }) {
+function finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, dos, ch, look, nom, couleur, piecesLoin = [] }) {
   // noms des articulations = noms des pistes des clips d'émotes (emotes_250_v002.glb : la v001 perdait les poses tenues, ex. mains sur les hanches)
   racine.name = 'racine'; teteG.name = 'tete';
   JG.hanche.name = 'hanche_G'; JD.hanche.name = 'hanche_D'; JG.genou.name = 'genou_G'; JD.genou.name = 'genou_D';
@@ -821,6 +875,7 @@ function finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, do
     if (taille < 0.06 && !delta.children.includes(o)) details.push(o);
     else o.castShadow = true;
   });
+  details.push(...piecesLoin);
   g.userData = {
     details, loin: false,
     racine, jg: JG.hanche, jd: JD.hanche, genouG: JG.genou, genouD: JD.genou, bg: BG.epaule, bd: BD.epaule, coudeG: BG.coude, coudeD: BD.coude,
@@ -835,11 +890,12 @@ function finirPersonnage(g, racine, { JG, JD, BG, BD, teteG, torse, mainArme, do
   return g;
 }
 
-export function creerPersonnage(couleur, nom, numero = 0, lookRecu) {
+// hd : true pour ton personnage et ceux des menus (images de tenue en 512 px avec relief), false pour les autres joueurs
+export function creerPersonnage(couleur, nom, numero = 0, lookRecu, { hd = false } = {}) {
   const look = { ...LOOK_DEFAUT, ...(lookRecu || {}) };
-  if (corpsBlender()) return creerPersonnageBlender(couleur, nom, numero, look);
+  if (corpsBlender()) return creerPersonnageBlender(couleur, nom, numero, look, hd);
   const peau = peauDe(look, numero);
-  const t = tenue(look.tenue, couleur, peau);
+  const t = tenue(look.tenue, couleur, peau, false, true);
   const P = M(peau);
   const mains = t.mains || P;
   const g = new THREE.Group();
@@ -1039,19 +1095,99 @@ function poseEmote(u, id, t) {
 // Les clips d'émotes sont appliqués à la main, piste par piste, à chaque image (sans AnimationMixer) :
 // le mixer de three.js ne réécrit pas une valeur qui n'a pas changé depuis l'image d'avant, alors que remettre()
 // ramène le perso au repos à chaque image. Résultat : une pose TENUE (mains sur les hanches) disparaissait.
-function jouerClipEmote(g, u, clip, f) {
-  if (u.clip250 !== clip) {
-    u.clip250 = clip;
-    u.pistes250 = [];
+// Clips livrés (émotes, animations du personnage) : appliqués piste par piste à chaque image.
+// (Pas d'AnimationMixer : il ne réécrit pas une valeur qui n'a pas changé, alors que remettre() remet la pose de repos à chaque image.)
+// poids < 1 = mélange avec la pose déjà calculée par le code (fondu) ; filtre = seulement certaines articulations.
+const _q = new THREE.Quaternion(), _v = new THREE.Vector3();
+function pistesDe(g, u, clip) {
+  if (!u.pistes) u.pistes = new Map();
+  let liste = u.pistes.get(clip);
+  if (!liste) {
+    liste = [];
     for (const piste of clip.tracks) {
       const { nodeName, propertyName } = THREE.PropertyBinding.parseTrackName(piste.name);
       const noeud = g.getObjectByName(nodeName);
-      if (noeud && (propertyName === 'quaternion' || propertyName === 'position')) u.pistes250.push({ noeud, prop: propertyName, interp: piste.createInterpolant() });
+      if (noeud && (propertyName === 'quaternion' || propertyName === 'position')) liste.push({ noeud, nom: nodeName, prop: propertyName, interp: piste.createInterpolant() });
     }
+    u.pistes.set(clip, liste);
   }
+  return liste;
+}
+function appliquerClip(g, u, clip, t, poids = 1, filtre = null) {
+  for (const p of pistesDe(g, u, clip)) {
+    if (filtre && !filtre.test(p.nom)) continue;
+    const val = p.interp.evaluate(t);
+    if (poids >= 1) p.noeud[p.prop].fromArray(val);
+    else if (p.prop === 'quaternion') p.noeud.quaternion.slerp(_q.fromArray(val), poids);
+    else p.noeud.position.lerp(_v.fromArray(val), poids);
+  }
+}
+function jouerClipEmote(g, u, clip, f) {
   const d = clip.duration || f.duree || 1;
-  const t = f.boucle ? u.emoteT % d : Math.min(u.emoteT, d);
-  for (const p of u.pistes250) p.noeud[p.prop].fromArray(p.interp.evaluate(t));
+  appliquerClip(g, u, clip, f.boucle ? u.emoteT % d : Math.min(u.emoteT, d));
+}
+
+// ---------- Animations livrées du personnage (modeles/animations_perso_v001.glb, facultatives) ----------
+// Elles se posent PAR-DESSUS la pose calculée par le code : attente à l'arrêt, présentation dans les menus,
+// coups de pioche, deltaplane. Si le fichier n'est pas chargé, il ne se passe rien de plus qu'avant.
+const clipPerso = nom => clipAnimation('perso_' + nom);
+const BRAS = /^(epaule|coude)_/, BAS_DU_CORPS = /^(racine|hanche_|genou_)/;
+const DUREE_COUP = 0.42; // la pioche frappe 2,2 fois par seconde : chaque clip est joué sur cette durée
+const fondu = (t, d, entree, sortie) => Math.max(0, Math.min(1, t / entree, (d - t) / sortie));
+// Dans les menus : le personnage se présente (saut et poing levé, tour sur lui-même, ou salut)
+export function presenterPersonnage(g, n = 1 + Math.floor(Math.random() * 3)) {
+  if (g && g.userData) g.userData.pres = { nom: 'presentation_' + n, t: 0 };
+}
+function animationsLivrees(g, u, dt, etat, vitesse) {
+  // vitesse de rotation (pour pencher le deltaplane dans les virages) : + = vers la gauche
+  const ry = g.rotation.y;
+  let dr = ry - (u.ryVu ?? ry); u.ryVu = ry;
+  dr = Math.atan2(Math.sin(dr), Math.cos(dr));
+  const voulu = dt > 0 ? Math.max(-1, Math.min(1, dr / dt / 1.6)) : 0;
+  u.virage = (u.virage || 0) + (voulu - (u.virage || 0)) * Math.min(1, dt * 4);
+  if (etat.planeur || etat.chute) {
+    u.calmeT = 0; u.attenteP = 0; u.coupT = null; u.pres = null;
+    const vol = etat.planeur && !u.delta.userData.tapis && clipPerso('deltaplane_vol');
+    if (!vol) return;
+    appliquerClip(g, u, vol, u.temps % vol.duration);
+    const cote = clipPerso(u.virage > 0 ? 'deltaplane_virage_G' : 'deltaplane_virage_D');
+    const p = Math.min(1, Math.abs(u.virage));
+    if (cote && p > 0.05) appliquerClip(g, u, cote, u.temps % cote.duration, p);
+    return;
+  }
+  const arme = !!etat.arme;
+  // 1. attente : à l'arrêt depuis un moment (avec un objet en main, seul le bas du corps bouge : les bras visent)
+  const calme = etat.auSol !== false && vitesse < 0.3 && !etat.accroupi;
+  u.calmeT = calme ? (u.calmeT || 0) + dt : 0;
+  u.attenteP = Math.max(0, Math.min(1, (u.attenteP || 0) + (calme && u.calmeT > 0.6 ? dt * 2.5 : -dt * 8)));
+  if (u.attenteP > 0) {
+    let clip = clipPerso(u.attenteNom || 'attente_1');
+    if (clip) {
+      u.attenteT = (u.attenteT || 0) + dt;
+      if (u.attenteT >= clip.duration) { // fin d'une boucle : de temps en temps, il regarde autour de lui (attente_2)
+        u.attenteT = 0; u.attenteN = (u.attenteN || 0) + 1;
+        u.attenteNom = !arme && u.attenteN % 3 === 2 ? 'attente_2' : 'attente_1';
+        clip = clipPerso(u.attenteNom) || clip;
+      }
+      appliquerClip(g, u, clip, Math.min(u.attenteT, clip.duration), u.attenteP, arme ? BAS_DU_CORPS : null);
+    }
+  } else u.attenteT = 0;
+  // 2. présentation (menus) : une fois, tant qu'il ne bouge pas
+  if (u.pres) {
+    const clip = calme && !arme && clipPerso(u.pres.nom);
+    if (!clip || u.pres.t >= clip.duration) u.pres = null;
+    else { appliquerClip(g, u, clip, u.pres.t, fondu(u.pres.t, clip.duration, 0.2, 0.3)); u.pres.t += dt; }
+  }
+  // 3. coup de pioche : trois gestes qui alternent ; en courant, seuls les bras frappent
+  if (etat.arme === 'pioche') {
+    if (u.coupNeuf) { u.coupNeuf = false; u.coupN = ((u.coupN || 0) % 3) + 1; u.coupT = 0; }
+    const clip = u.coupT != null && clipPerso('pioche_coup_' + u.coupN);
+    if (clip) {
+      appliquerClip(g, u, clip, u.coupT / DUREE_COUP * clip.duration, fondu(u.coupT, DUREE_COUP, 0.05, 0.1), vitesse > 0.5 || etat.accroupi ? BRAS : null);
+      u.coupT += dt;
+      if (u.coupT >= DUREE_COUP) u.coupT = null;
+    }
+  } else { u.coupT = null; u.coupNeuf = false; }
 }
 
 function remettre(u) {
@@ -1079,7 +1215,6 @@ export function animerPersonnage(g, dt, etat) {
     else poseEmote(u, etat.emote, u.emoteT);
   } else {
     if (u.emote) { u.emote = null; u.mainArme.visible = true; }
-    u.clip250 = null;
     if (!etat.auSol) {
       u.jg.rotation.x = 0.5; u.jd.rotation.x = -0.2;
       u.genouG.rotation.x = -0.9; u.genouD.rotation.x = -0.4;
@@ -1101,6 +1236,7 @@ export function animerPersonnage(g, dt, etat) {
       u.jg.rotation.x = 0.4; u.jd.rotation.x = -0.4; u.genouG.rotation.x = -0.8; u.genouD.rotation.x = -0.5;
       u.racine.rotation.x = 0.55;
     } else {
+      if (u.coup >= 1) u.coupNeuf = true; // un nouveau coup vient de partir (animations livrées)
       u.coup = Math.max(0, u.coup - dt * 5);
       const arme = etat.arme && etat.arme !== 'pioche' && !TENU_A_LA_MAIN.has(etat.arme);
       const pitch = etat.pitch || 0;
@@ -1127,6 +1263,7 @@ export function animerPersonnage(g, dt, etat) {
         u.tete.rotation.x -= 0.2;
       }
     }
+    animationsLivrees(g, u, dt, etat, vitesse);
   }
   // respiration
   u.torse.scale.set(1, 1 + Math.sin(u.temps * 2.2) * 0.012, 1);

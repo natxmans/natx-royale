@@ -5,7 +5,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { hasard, creerBruit, borner } from './outils.js';
 import { construireLieu, rampe } from './lieux.js';
 import { modeleBlender } from './armes.js';
-import { modeleGlb, INTEGRATION } from './modeles.js';
+import { modeleGlb, geometrieGlb, INTEGRATION } from './modeles.js';
 
 // Version abîmée (plus sombre) d'un matériau de construction Blender
 const matsAbimes = new Map();
@@ -517,6 +517,8 @@ export class Monde {
     const lieu = o.lieu || this.lieuCourant || 'isolee';
     const candidats = INTEGRATION.maisons.filter(e => (e.styles || ['normal']).includes(style) && (!e.lieux || e.lieux.includes(lieu)));
     if (candidats.length && !o.etage && !o.force && r() < (candidats[0].proportion ?? 0.35)) return this.ajouterMaisonModele(x, z, pick(candidats), o, style);
+    // maison placée à la main dans un lieu (la grange de la ferme) : le modèle seulement si le lieu le demande, sans tirage au sort
+    if (candidats.length && o.force && o.modele && (candidats[0].proportion ?? 0.35) >= 1) { const m = this.ajouterMaisonModele(x, z, candidats[0], o, style); if (m) return m; }
     const m = {
       x, z, w, d, x0, x1, z0, z1, h0: Math.max(h, 1.5), haut: P.grandePorte ? 5.5 : 4.5,
       porte: o.porte ?? Math.floor(r() * 4), style, P,
@@ -1351,7 +1353,7 @@ export class Monde {
   }
 
   // ---------- Création des objets 3D du décor ----------
-  creerDecor({ ombres = true, herbe = 1 } = {}) {
+  creerDecor({ ombres = true, herbe = 1, vegetationFine = true } = {}) {
     const r = hasard(this.graine + 11);
     // Terrain
     const pos = new Float32Array(N * N * 3), col = new Float32Array(N * N * 3);
@@ -1420,13 +1422,20 @@ export class Monde {
     { const p = palme.attributes.position, cc = new Float32Array(p.count * 3), v = new THREE.Color();
       for (let i = 0; i < p.count; i++) { v.set(p.getY(i) < -0.05 && Math.hypot(p.getX(i), p.getZ(i)) < 0.5 ? '#6b4423' : '#3f9a3a'); cc[i * 3] = v.r; cc[i * 3 + 1] = v.g; cc[i * 3 + 2] = v.b; }
       palme.setAttribute('color', new THREE.BufferAttribute(cc, 3)); }
-    const geos = { sapin: pin, sapinNeige: pinNeige, feuillu, cactus, palmier: palme };
+    // Formes modélisées (modeles/vegetation_v001.glb) à la place des formes faites en code : mêmes unités, donc mêmes
+    // échelles et mêmes teintes par instance. Leurs couleurs par sommet (gris clair = relief, ou vraies couleurs pour le
+    // palmier et le sapin enneigé) se multiplient par la teinte de l'instance.
+    // (≈ 370 000 triangles au lieu de 95 000 sur toute l'île : seulement en qualité haute ou moyenne)
+    const veg = INTEGRATION.vegetation && vegetationFine ? nom => geometrieGlb('inst_' + nom) : () => null;
+    const troncV = veg('tronc');
+    const geos = { sapin: veg('sapin') || pin, sapinNeige: veg('sapin_neige') || pinNeige, feuillu: veg('feuillu') || feuillu, cactus: veg('cactus') || cactus, palmier: veg('palmier') || palme };
+    const aCouleurs = g => !!g.attributes.color;
     const compte = {};
     for (const a of this.arbres) compte[a.espece] = (compte[a.espece] || 0) + 1;
-    this.iTroncs = new THREE.InstancedMesh(tronc, new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true }), Math.max(1, this.arbres.length));
+    this.iTroncs = new THREE.InstancedMesh(troncV || tronc, new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true, vertexColors: !!troncV && aCouleurs(troncV) }), Math.max(1, this.arbres.length));
     this.iCouronnes = {};
     for (const esp of Object.keys(geos)) {
-      const vc = esp === 'sapinNeige' || esp === 'palmier';
+      const vc = esp === 'sapinNeige' || esp === 'palmier' || aCouleurs(geos[esp]);
       this.iCouronnes[esp] = new THREE.InstancedMesh(geos[esp], new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true, vertexColors: vc, side: esp === 'palmier' ? THREE.DoubleSide : THREE.FrontSide }), Math.max(1, compte[esp] || 0));
     }
     const COULEURS = {
@@ -1454,19 +1463,25 @@ export class Monde {
     this.iSapins = this.iCouronnes.sapin; this.iFeuillus = this.iCouronnes.feuillu;
 
     // Rochers
-    this.iRochers = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true }), Math.max(1, this.rochers.length));
+    // (3 formes modélisées qui alternent ; sinon le dodécaèdre du code. ro.forme / ro.iRocher = sa place dans this.iRochersFormes)
+    const formesR = [veg('rocher_1'), veg('rocher_2'), veg('rocher_3')].filter(Boolean);
+    if (!formesR.length) formesR.push(new THREE.DodecahedronGeometry(1, 0));
+    const nbR = formesR.map(() => 0);
+    for (const ro of this.rochers) { ro.forme = ro.id % formesR.length; ro.iRocher = nbR[ro.forme]++; }
+    this.iRochersFormes = formesR.map((g, k) => new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true, vertexColors: aCouleurs(g) }), Math.max(1, nbR[k])));
+    this.iRochers = this.iRochersFormes[0];
     const GRIS = { prairie: ['#9a9ea6', '#8a8f98', '#a7a29a', '#7f858e'], desert: ['#c98b5a', '#b8774a', '#d49a68'], neige: ['#cfd6de', '#b9c2cc', '#dfe5ec'] };
     for (const ro of this.rochers) {
       e.set(0.3, ro.rot, 0.2); q.setFromEuler(e);
       m4.compose(v.set(ro.x, ro.y, ro.z), q, sc.set(ro.s * 1.1, ro.s * 0.85, ro.s));
-      this.iRochers.setMatrixAt(ro.id, m4);
+      const im = this.iRochersFormes[ro.forme];
+      im.setMatrixAt(ro.iRocher, m4);
       const l = GRIS[ro.biome] || GRIS.prairie;
-      this.iRochers.setColorAt(ro.id, c.set(l[Math.floor(ro.teinte * l.length)]));
+      im.setColorAt(ro.iRocher, c.set(l[Math.floor(ro.teinte * l.length)]));
     }
-    this.iRochers.castShadow = ombres; this.iRochers.receiveShadow = true;
-    this.groupe.add(this.iRochers);
+    for (const im of this.iRochersFormes) { im.castShadow = ombres; im.receiveShadow = true; this.groupe.add(im); }
 
-    this.creerVegetation(r, herbe, ombres);
+    this.creerVegetation(r, herbe, ombres, vegetationFine);
 
     // Coffres (le couvercle s'ouvre)
     this.matCoffre = new THREE.MeshLambertMaterial({ color: '#e0a91f', emissive: '#7a5200', emissiveIntensity: 0.9 });
@@ -1483,7 +1498,8 @@ export class Monde {
         let pivot = null;
         const parties = [];
         modele.traverse(o => {
-          if ((o.userData.name || o.name) === 'coffre_couvercle' && !pivot) pivot = o;
+          // (dans objets.glb le couvercle s'appelle « couvercle » ; « coffre_couvercle » dans les coffres livrés ensuite)
+          if (['coffre_couvercle', 'couvercle'].includes(o.userData.name || o.name) && !pivot) pivot = o;
           if (!o.isMesh) return;
           if (o.material.name === 'or_coffre') { o.material = this.matCoffre; parties.push(o); }
           else if (o.material.name === 'tresor') o.material = matTresor;
@@ -1688,7 +1704,7 @@ export class Monde {
     });
   }
 
-  creerVegetation(r, herbe, ombres) {
+  creerVegetation(r, herbe, ombres, vegetationFine = true) {
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), sc = new THREE.Vector3(), c = new THREE.Color();
     const place = (marge, hMin, hMax, biomes = ['prairie']) => {
       for (let k = 0; k < 20; k++) {
@@ -1702,7 +1718,8 @@ export class Monde {
     };
     // Buissons (verts dans la prairie, secs dans le désert)
     const nbB = 380;
-    const buissons = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true }), nbB);
+    const buissonV = INTEGRATION.vegetation && vegetationFine ? geometrieGlb('inst_buisson') : null; // forme modélisée, sinon l'icosaèdre du code
+    const buissons = new THREE.InstancedMesh(buissonV || new THREE.IcosahedronGeometry(1, 0), new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true, vertexColors: !!(buissonV && buissonV.attributes.color) }), nbB);
     let nb = 0;
     for (let i = 0; i < nbB; i++) {
       const p = place(2, 1.3, 20, ['prairie', 'desert']); if (!p) continue;
@@ -1816,7 +1833,7 @@ export class Monde {
     if (!r || !r.vivant) return;
     r.vivant = false;
     this.retirerBoite(r.boite);
-    if (this.iRochers) this.cacherInstance(this.iRochers, r.id);
+    if (this.iRochersFormes) this.cacherInstance(this.iRochersFormes[r.forme || 0], r.iRocher ?? r.id);
   }
   ouvrirCoffre(id) {
     const c = this.coffres[id];

@@ -116,4 +116,13 @@ export const NOUVEAUTES = [
     'Les bots foncent sur les ravitaillements',
     'Les bots difficiles visent mieux et s\'enferment dans des boîtes',
   ]],
+  ['🎨 Nouveau look (novembre)', [
+    'Toutes les tenues en version réaliste : coutures, plis, relief et accessoires en 3D (les 20 de base, les 50 du catalogue, la Tenue Staff)',
+    'Nouveaux gestes : le personnage bouge à l’arrêt, se présente dans le casier, donne 3 coups de pioche différents et tient vraiment son deltaplane',
+    'Les esprits arrivent en spirale avec un éclat de lumière quand tu en gagnes un',
+    'Arbres, rochers et buissons redessinés, et 4 nouvelles maisons où l’on peut entrer : maison de village, chalet, grange et maison du désert',
+    'Nouveau logo, nouvelles icônes dans les menus, et une image pour chaque page',
+    'Boutique et casier plus rapides : les objets ont leur vignette toute prête',
+    '10 nouveaux esprits (15 en tout) : Braise, Givrette, Zap, Zephyr, Racine, Minuit, Tic-Tac, Goutte, Pépite et Lumi, chacun avec son bonus et son pouvoir',
+  ]],
 ];

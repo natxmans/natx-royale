@@ -1,0 +1,170 @@
+{
+ "_aide": "Tenue Staff modélisée (session Modélisation), même système que tenues_250_v002.json mais image en 512 px : les cases sont en pixels de cette image (taille_image 512) ; en proportion elles sont IDENTIQUES aux tenues 256 px (repeat = w / taille_image, offset = x / taille_image, 1 - (y + h) / taille_image). image_lueur = carte d'émission (emissiveMap, couleur blanche + emissiveIntensity) ; image_relief = normal map (convention OpenGL, vert = haut). Pièces tenue_staff__<ancre> : origine au pivot de l'ancre, à remettre en position 0 dans le groupe <ancre>. Réservée au staff (id « staff », rareté « staff ») : jamais en vente.",
+ "taille_image": 512,
+ "cases": {
+  "torse": [
+   0,
+   0,
+   512,
+   192
+  ],
+  "bras": [
+   0,
+   192,
+   256,
+   96
+  ],
+  "avantbras": [
+   256,
+   192,
+   256,
+   96
+  ],
+  "bas": [
+   0,
+   288,
+   256,
+   128
+  ],
+  "tibias": [
+   256,
+   288,
+   256,
+   128
+  ]
+ },
+ "ancres": {
+  "racine": [
+   0,
+   0,
+   0
+  ],
+  "bassin": [
+   0,
+   0,
+   0
+  ],
+  "torse": [
+   0,
+   0,
+   0
+  ],
+  "tete": [
+   0,
+   1.86,
+   0
+  ],
+  "epaule_G": [
+   -0.25,
+   1.56,
+   0
+  ],
+  "epaule_D": [
+   0.25,
+   1.56,
+   0
+  ],
+  "coude_G": [
+   -0.25,
+   1.24,
+   0
+  ],
+  "coude_D": [
+   0.25,
+   1.24,
+   0
+  ],
+  "hanche_G": [
+   -0.11,
+   1.0,
+   0
+  ],
+  "hanche_D": [
+   0.11,
+   1.0,
+   0
+  ],
+  "genou_G": [
+   -0.11,
+   0.52,
+   0
+  ],
+  "genou_D": [
+   0.11,
+   0.52,
+   0
+  ]
+ },
+ "fichier_pieces": "tenue_staff_v001.glb",
+ "tenues": [
+  {
+   "id_catalogue": "staff",
+   "slug": "staff",
+   "nom": "Tenue Staff",
+   "rarete": "staff",
+   "famille": "staff",
+   "image": "tenues_v002/staff.png",
+   "image_lueur": "tenues_v002/staff_lueur.png",
+   "image_relief": "tenues_v002/staff_relief.png",
+   "couleur_principale": "#11161c",
+   "pieds": "#0b0f13",
+   "semelle": "#2a2f36",
+   "ceinture": "#0b0f13",
+   "mains": "#0b0f13",
+   "avantbras": "image",
+   "tibias": "image",
+   "cache": [],
+   "yeux": null,
+   "effets": [],
+   "pieces": [
+    {
+     "objet": "tenue_staff__tete",
+     "ancre": "tete",
+     "triangles": 248
+    },
+    {
+     "objet": "tenue_staff__torse",
+     "ancre": "torse",
+     "triangles": 774
+    },
+    {
+     "objet": "tenue_staff__bassin",
+     "ancre": "bassin",
+     "triangles": 508
+    },
+    {
+     "objet": "tenue_staff__epaule_G",
+     "ancre": "epaule_G",
+     "triangles": 144
+    },
+    {
+     "objet": "tenue_staff__epaule_D",
+     "ancre": "epaule_D",
+     "triangles": 84
+    },
+    {
+     "objet": "tenue_staff__coude_G",
+     "ancre": "coude_G",
+     "triangles": 172
+    },
+    {
+     "objet": "tenue_staff__coude_D",
+     "ancre": "coude_D",
+     "triangles": 172
+    },
+    {
+     "objet": "tenue_staff__genou_G",
+     "ancre": "genou_G",
+     "triangles": 172
+    },
+    {
+     "objet": "tenue_staff__genou_D",
+     "ancre": "genou_D",
+     "triangles": 172
+    }
+   ],
+   "triangles": 2446,
+   "fichier": "tenue_staff_v001.glb"
+  }
+ ]
+}

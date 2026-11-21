@@ -742,6 +742,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .carte-esprit-jeu.choisie { box-shadow: 0 0 0 3px var(--couleur-esprit); }
 .carte-esprit-jeu.inconnu { filter: grayscale(.85) brightness(.7); }
 .carte-esprit-jeu .ico { font-size: 40px; filter: drop-shadow(0 0 10px var(--couleur-esprit)); }
+.carte-esprit-jeu .ico img { display: block; width: 72px; height: 72px; object-fit: contain; }
+.carte-esprit-jeu.inconnu .ico img { filter: grayscale(1) brightness(.6); opacity: .7; }
 .carte-esprit-jeu small { color: rgba(255, 255, 255, .7); }
 .carte-esprit-jeu .raretes { display: flex; gap: 5px; margin-top: 4px; }
 .carte-esprit-jeu .raretes i { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--c); opacity: .35; }
@@ -809,3 +811,34 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
 .couleurs.peaux .peau-perso input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
 .couleurs.peaux .peau-perso:hover { transform: scale(1.1); }
 .couleurs.peaux .peau-perso.choisi { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 0 3px rgba(255, 255, 255, .25); }
+
+/* ===== Visuels livrés par la session modélisation (modeles/interface/) : logo, icônes, illustrations, vignettes ===== */
+/* icônes en trait : elles prennent la couleur et la taille du texte autour */
+.ic { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -.2em; flex: none; overflow: visible; }
+.pieces .ic, .prix .ic, .gain .ic, .niveau-pastille .ic { color: var(--jaune); }
+.choix-modes button span .ic { width: 1.3em; height: 1.3em; }
+.onglets button .ic { margin-right: 2px; }
+/* logo */
+.logo-petit img { display: block; height: 42px; width: auto; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .45)); }
+.logo.logo-image { text-shadow: none; line-height: 0; margin-bottom: 8px; }
+.logo.logo-image img { width: min(100%, 300px); height: auto; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .45)); }
+/* bandeau de page : le titre à gauche, l'illustration qui s'efface à droite */
+.bandeau { position: relative; border-radius: 16px; padding: 14px 18px; min-height: 96px; margin-bottom: 12px; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center; border: 2px solid rgba(255, 255, 255, .08);
+  background: linear-gradient(90deg, #0b1430 0%, rgba(11, 20, 48, .92) 38%, rgba(11, 20, 48, .25) 78%, rgba(11, 20, 48, .05) 100%), var(--image) right center / auto 130% no-repeat, #0b1430; }
+.bandeau h2 { margin: 0; }
+.bandeau > * { position: relative; }
+.bandeau.mince { min-height: 64px; padding: 8px 16px; background-size: auto, auto 190%, auto; }
+.titre-boutique.bandeau { flex-direction: row; justify-content: flex-start; align-items: center; }
+.idees-tete.bandeau { flex-direction: row; justify-content: space-between; align-items: center; }
+/* illustrations (chargement, victoire) */
+.illustration { display: block; width: min(100%, 320px); height: auto; margin: 0 auto 12px; border-radius: 14px; box-shadow: 0 10px 24px rgba(0, 0, 0, .45); }
+#fin .illustration { width: min(100%, 420px); }
+/* vignettes livrées : déjà détourées, un peu plus grandes que les miniatures 3D */
+.carte-img img.vignette { width: 100%; height: 100%; }
+@media (max-height: 560px), (max-width: 760px) {
+  .bandeau, .bandeau.mince { min-height: 0; padding: 6px 12px; background: rgba(11, 20, 48, .55); margin-bottom: 8px; }
+  .illustration { width: min(60%, 200px); margin-bottom: 8px; }
+  #fin .illustration { display: none; }
+  .logo.logo-image img { width: min(100%, 210px); }
+}

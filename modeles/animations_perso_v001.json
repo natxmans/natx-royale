@@ -1,0 +1,96 @@
+{
+ "_aide": "Animations de base du personnage (session Modélisation) — FACULTATIVES : le jeu les fait déjà en code. Même format que emotes_250_v001.glb : clips « perso_<nom> », quaternion sur tete, epaule_G/D, coude_G/D, hanche_G/D, genou_G/D et racine, position sur racine (mètres, three.js). boucle = LoopRepeat, sinon une fois (le clip finit à la pose de repos). Deltaplane : la racine ne tourne pas (les mains restent sur la barre, à 2,3 m de haut et 0,45 m devant).",
+ "fichier": "animations_perso_v001.glb",
+ "fps_source": 24,
+ "noeuds": [
+  "racine",
+  "hanche_G",
+  "hanche_D",
+  "genou_G",
+  "genou_D",
+  "tete",
+  "epaule_G",
+  "epaule_D",
+  "coude_G",
+  "coude_D"
+ ],
+ "animations": [
+  {
+   "nom": "attente_1",
+   "clip": "perso_attente_1",
+   "duree": 4.0,
+   "boucle": true,
+   "usage": "attente calme (lobby, casier, partie)"
+  },
+  {
+   "nom": "attente_2",
+   "clip": "perso_attente_2",
+   "duree": 6.0,
+   "boucle": true,
+   "usage": "attente variée : regarde autour, mains sur les hanches"
+  },
+  {
+   "nom": "presentation_1",
+   "clip": "perso_presentation_1",
+   "duree": 3.0,
+   "boucle": false,
+   "usage": "présentation : saut et poing levé"
+  },
+  {
+   "nom": "presentation_2",
+   "clip": "perso_presentation_2",
+   "duree": 3.2,
+   "boucle": false,
+   "usage": "présentation : tour sur soi-même, mains sur les hanches"
+  },
+  {
+   "nom": "presentation_3",
+   "clip": "perso_presentation_3",
+   "duree": 3.0,
+   "boucle": false,
+   "usage": "présentation : salut, puis pointe devant"
+  },
+  {
+   "nom": "pioche_coup_1",
+   "clip": "perso_pioche_coup_1",
+   "duree": 0.5,
+   "boucle": false,
+   "usage": "coup de pioche : par-dessus la tête"
+  },
+  {
+   "nom": "pioche_coup_2",
+   "clip": "perso_pioche_coup_2",
+   "duree": 0.55,
+   "boucle": false,
+   "usage": "coup de pioche : balayage de côté"
+  },
+  {
+   "nom": "pioche_coup_3",
+   "clip": "perso_pioche_coup_3",
+   "duree": 0.75,
+   "boucle": false,
+   "usage": "coup de pioche : à deux mains, lourd"
+  },
+  {
+   "nom": "deltaplane_vol",
+   "clip": "perso_deltaplane_vol",
+   "duree": 2.0,
+   "boucle": true,
+   "usage": "deltaplane : vol tout droit, jambes en arrière"
+  },
+  {
+   "nom": "deltaplane_virage_G",
+   "clip": "perso_deltaplane_virage_G",
+   "duree": 1.2,
+   "boucle": true,
+   "usage": "deltaplane : virage à gauche (pose tenue)"
+  },
+  {
+   "nom": "deltaplane_virage_D",
+   "clip": "perso_deltaplane_virage_D",
+   "duree": 1.2,
+   "boucle": true,
+   "usage": "deltaplane : virage à droite (pose tenue)"
+  }
+ ]
+}

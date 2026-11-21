@@ -1,3 +1,5 @@
 # Données du serveur : jamais dans Git ni en ligne avec le jeu
 donnees/
 __pycache__/
+# Copie des images du panel, refaite par copier_visuels.py à chaque mise en ligne (originaux : modeles/admin/)
+admin/visuels/

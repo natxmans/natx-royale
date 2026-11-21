@@ -26,6 +26,58 @@ function el(tag, attrs = {}, ...enfants) {
   return e;
 }
 const svg = (tag, attrs = {}) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); return e; };
+
+// ---------- Visuels livrés par la session modélisation (dossier visuels/ = copie de modeles/admin/, faite par copier_visuels.py) ----------
+// Logo, icônes en trait, badges et cadres de rareté, illustrations des pages, vignettes des cosmétiques.
+// Si le dossier n'est pas là, le panel garde ses émojis (VISUELS.ok reste faux) et marche comme avant.
+const VISUELS = { ok: false, dossier: 'visuels/', vignettes: {}, raretes: new Set(['commun', 'rare', 'epique', 'legendaire', 'collab', 'staff']),
+  icones: new Set(['tableau', 'joueurs', 'signalements', 'sanctions', 'retours', 'cadeaux', 'cosmetiques', 'boutique', 'esprits', 'evenements', 'annonce', 'admins', 'journal', 'sauvegardes', 'serveur', 'compte', 'robot',
+    'tenue', 'chapeau', 'dos', 'pioche', 'deltaplane', 'trainee', 'emote', 'rarete', 'cargaison', 'piece']),
+  // illustration de l'en-tête de chaque page
+  pages: { tableau: 'tableau', joueurs: 'joueurs', boutique: 'boutique', cadeaux: 'cadeaux', esprits: 'esprits_15', evenements: 'cargaisons', annonce: 'evenements', cosmetiques: 'raretes' } };
+let visuelsDemandes = null;
+function chargerVisuels() { // une seule fois (dès l'écran de connexion : ce ne sont que des images, sans donnée du jeu)
+  return visuelsDemandes || (visuelsDemandes = (async () => {
+    try {
+      const r = await fetch(VISUELS.dossier + 'vignettes.json?v=13');
+      if (!r.ok) return;
+      VISUELS.vignettes = (await r.json()).par_cle || {};
+      VISUELS.ok = true;
+      document.body.classList.add('visuels');
+    } catch (e) { /* pas de visuels : émojis */ }
+  })());
+}
+chargerVisuels();
+// icône en trait (elle prend la couleur du texte) ; null si l'icône n'existe pas
+function icone(id) {
+  if (!VISUELS.ok || !VISUELS.icones.has(id)) return null;
+  const s = svg('svg', { class: 'ic', viewBox: '0 0 24 24', 'aria-hidden': 'true' });
+  s.append(svg('use', { href: VISUELS.dossier + 'icones/icones.svg?v=13#i-' + id }));
+  return s;
+}
+const sansEmoji = titre => titre.replace(/^\S+\s/, '');
+// vignette d'un cosmétique (« tenue:ninja ») ; null s'il n'y en a pas
+function vignette(cle, classe = 'vig') {
+  const chemin = VISUELS.ok && VISUELS.vignettes[cle];
+  return chemin ? el('img', { class: classe, src: VISUELS.dossier + chemin + '?v=13', alt: '', loading: 'lazy', width: 256, height: 256 }) : null;
+}
+const badgeRarete = rarete => (VISUELS.ok && VISUELS.raretes.has(rarete) ? el('img', { class: 'badge-rarete', src: `${VISUELS.dossier}raretes/badge_${rarete}.svg?v=13`, alt: '', width: 20, height: 20 }) : null);
+// carte d'un cosmétique : le cadre de sa rareté, sa vignette dans la zone image, son nom en bas
+function carteCosmetique(o, rarete) {
+  const v = vignette(o.cle, 'carte-cosm-image');
+  if (!v || !VISUELS.raretes.has(rarete)) return null;
+  return el('div', { class: 'carte-cosm' }, el('img', { class: 'carte-cosm-cadre', src: `${VISUELS.dossier}cadres/cadre_${rarete}.svg?v=13`, alt: '', width: 200, height: 260 }), v, el('span', { class: 'carte-cosm-nom' }, o.nom));
+}
+// en-tête d'une page : son icône devant le titre, son illustration à droite
+function decorerPage(c, p) {
+  if (!VISUELS.ok) return;
+  const tete = c.querySelector(':scope > header.titre'), h1 = tete && tete.querySelector('h1');
+  if (!h1) return;
+  const i = icone(p.id);
+  if (i) h1.prepend(i, ' ');
+  const illus = VISUELS.pages[p.id];
+  if (illus) { tete.classList.add('illustree'); tete.append(el('img', { class: 'illus-page', src: `${VISUELS.dossier}illustrations/${illus}_petit.webp?v=13`, alt: '', width: 320, height: 180 })); }
+}
 const date = s => s ? new Date(s * 1000).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
 const jour = s => s ? new Date(s * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
 const duree = s => s < 60 ? s + ' s' : s < 3600 ? Math.round(s / 60) + ' min' : s < 86400 ? (s / 3600).toFixed(1) + ' h' : (s / 86400).toFixed(1) + ' j';
@@ -88,7 +140,7 @@ const carteStat = (titre, valeur, couleur = '', sous = '') => el('div', { class:
 const panneau = (titre, ...contenu) => el('section', { class: 'panneau' }, titre ? el('h2', {}, titre) : null, ...contenu);
 const tableau = (entetes, lignes, vide = 'Rien pour l\'instant.') => el('div', { class: 'table-cadre' },
   el('table', { class: 'table' }, el('thead', {}, el('tr', {}, entetes.map(h => el('th', {}, h)))), el('tbody', {}, lignes)),
-  lignes.length ? null : el('p', { class: 'vide' }, vide));
+  lignes.length ? null : el('p', { class: 'vide grand' }, vide));
 const pastille = (texte, type = '') => el('span', { class: 'badge ' + type }, texte);
 // Un joueur reconnaissable d'un coup d'œil : 🏷️ surnom (donné par les admins) · pseudo du jeu · code — clic = sa fiche
 function personne(q, code) {
@@ -193,7 +245,8 @@ function dessinerMenu() {
     if (p.groupe) { groupe = el('span', { class: 'separateur' }, p.groupe); continue; }
     if (p.perm && !PERM(p.perm)) continue;
     if (groupe) { nav.append(groupe); groupe = null; }
-    nav.append(el('a', { href: '#' + p.id, 'data-page': p.id }, p.titre));
+    const i = icone(p.id);
+    nav.append(i ? el('a', { href: '#' + p.id, 'data-page': p.id }, i, sansEmoji(p.titre)) : el('a', { href: '#' + p.id, 'data-page': p.id }, p.titre));
   }
 }
 function menuMobile(ouvrir) {
@@ -224,6 +277,7 @@ async function router() {
     const contenu = await p.f(c);
     if (moiVue !== vueActuelle) return; // l'admin a changé de page entre-temps
     if (contenu) c.replaceChildren(...[].concat(contenu).filter(x => x !== null && x !== undefined && x !== false)); // jamais « null » écrit dans la page
+    decorerPage(c, p);
   } catch (e) {
     if (moiVue === vueActuelle) c.replaceChildren(el('p', { class: 'erreur' }, e.message));
   }
@@ -242,7 +296,8 @@ function fermerTiroir() { $('#tiroir').classList.add('cache'); }
 async function demarrer() {
   MOI = await api('GET', '/moi');
   CSRF = MOI.csrf;
-  $('#nomAdmin').textContent = '👤 ' + MOI.identifiant;
+  await chargerVisuels();
+  $('#nomAdmin').replaceChildren(icone('compte') || '👤', ' ' + MOI.identifiant);
   $('#roleAdmin').textContent = MOI.role_nom;
   dessinerMenu();
   $('#ecranConnexion').classList.add('cache');
@@ -724,10 +779,12 @@ async function vueCosmetiques() {
     choix({ '': 'Toutes collections', ...Object.fromEntries(d.collections.map(c => [c.n, `${c.n}. ${c.nom}`])) }, etatCosm.collection, { onchange: e => maj('collection', e.target.value) }));
   const lignes = d.cosmetiques.map(o => {
     const r = d.raretes[o.rarete] || {};
-    const nomRar = el('span', { class: 'rarete' }, r.nom || o.rarete); nomRar.style.color = r.couleur || '';
+    const nomRar = el('span', { class: 'rarete' }, badgeRarete(o.rarete), r.nom || o.rarete); nomRar.style.color = r.couleur || '';
+    const nomCat = d.categories.find(c => c.id === o.cat)?.nom || o.cat, iCat = icone(o.cat);
     return el('tr', { class: 'cliquable', onclick: () => ficheCosmetique(o, d) },
-      el('td', {}, el('b', {}, o.nom), el('div', { class: 'petit' }, o.cle)), el('td', {}, cats[o.cat] || o.cat), el('td', {}, nomRar),
-      el('td', {}, o.prix != null ? '🪙 ' + o.prix : '—'), el('td', {}, o.collection ? (d.collections.find(c => c.n === o.collection)?.nom || o.collection) : '—'),
+      el('td', {}, el('div', { class: 'avec-vignette' }, vignette(o.cle), el('div', {}, el('b', {}, o.nom), el('div', { class: 'petit' }, o.cle)))),
+      el('td', {}, iCat ? [iCat, ' ' + nomCat] : (cats[o.cat] || o.cat)), el('td', {}, nomRar),
+      el('td', {}, o.prix != null ? [icone('piece') || '🪙', ' ' + o.prix] : '—'), el('td', {}, o.collection ? (d.collections.find(c => c.n === o.collection)?.nom || o.collection) : '—'),
       el('td', {}, o.livre ? pastille('✔ ' + (o.nouveau250 ? 'livré' : 'intégré'), 'vert') : pastille('modèle manquant', 'rouge')),
       el('td', {}, o.en_vente ? pastille('en vente', 'cyan') : pastille('hors vente', 'gris'), o.modifie ? pastille('modifié', 'jaune') : null, o.nouveau250 ? pastille('nouveau', 'violet') : null));
   });
@@ -765,7 +822,7 @@ function ficheCosmetique(o, d) {
   reinit.onclick = async () => {
     if (await action(reinit, () => api('POST', '/cosmetiques', { cle: o.cle, nom: o.nom_origine, description: '', rarete: o.rarete_origine, prix: null, en_vente: null, collection: null }), 'Valeurs d\'origine.')) { fermerTiroir(); recharger(); }
   };
-  ouvrirTiroir(o.nom,
+  ouvrirTiroir(o.nom, carteCosmetique(o, o.rarete),
     el('div', { class: 'meta' }, `${o.cle}${o.ref ? ' · CSV : ' + o.ref : ''}`),
     el('p', {}, 'Ressource : ', o.livre ? pastille(o.ressource, 'vert') : pastille(o.ressource, 'rouge'), o.triangles ? ` · ${o.triangles} triangles` : ''),
     o.livre ? el('p', {}, el('a', { class: 'bouton', href: JEU + '?essayer=' + encodeURIComponent(o.cle), target: '_blank', rel: 'noopener' }, '👁️ Prévisualiser dans le jeu')) : null,
@@ -889,6 +946,12 @@ async function vueEsprits() {
     const b = modif ? el('button', { class: 'bouton' }, 'Enregistrer') : null;
     if (b) b.onclick = async () => { if (await action(b, () => api('POST', '/esprits', { type: e.type, actif: actif.checked, poids: +poids.value, description: desc.value }), 'Esprit modifié.')) recharger(); };
     const icone = el('div', { class: 'icone-esprit' }, e.icone); icone.style.background = e.couleur;
+    if (VISUELS.ok) { // vignette livrée de l'esprit (son émoji revient si l'image manque)
+      const img = el('img', { class: 'vig-esprit', src: `${VISUELS.dossier}vignettes/esprit/${e.type}.webp?v=13`, alt: '', loading: 'lazy', width: 256, height: 256 });
+      img.addEventListener('error', () => img.remove());
+      img.addEventListener('load', () => { icone.replaceChildren(img); icone.classList.add('avec-image'); });
+      icone.append(img);
+    }
     return el('article', { class: 'carte-esprit' + (e.actif ? '' : ' eteint') },
       el('header', {}, icone, el('div', {}, el('h3', {}, e.nom), el('span', { class: 'petit' }, e.role))),
       el('p', {}, el('b', {}, 'Passif : '), e.passif), el('p', {}, el('b', {}, 'Pouvoir « ' + e.pouvoir + ' » : '), e.descPouvoir, ` (recharge ${e.recharge} s)`),
@@ -1124,7 +1187,8 @@ async function vueServeur() {
     panneau('🧩 Services', el('ul', { class: 'liste-simple' },
       el('li', {}, 'Base de données : ', ok(d.services.base)), el('li', {}, 'Catalogue des objets : ', ok(d.services.catalogue)),
       el('li', {}, 'Sauvegarde automatique (moins de 2 jours) : ', ok(d.services.sauvegarde_auto)),
-      el('li', {}, 'Relais pour la 4G (TURN) : ', d.services.relais_turn ? pastille('configuré (' + ({ metered: 'Metered', fixe: 'identifiants fixes', cloudflare: 'Cloudflare' }[d.services.relais_fournisseur] || '?') + ')', 'vert') : pastille('pas configuré (voir LISEZMOI du serveur)', 'jaune')))),
+      el('li', {}, 'Relais pour la 4G (TURN) : ', d.services.relais_turn ? pastille('configuré (' + ({ metered: 'Metered', fixe: 'identifiants fixes', cloudflare: 'Cloudflare' }[d.services.relais_fournisseur] || '?') + ')', 'vert') : pastille('pas configuré (voir LISEZMOI du serveur)', 'jaune'),
+        d.services.relais_erreur ? el('div', { class: 'petit' }, pastille('dernier refus du fournisseur', 'rouge'), ' ', date(d.services.relais_erreur.le), ' : ', d.services.relais_erreur.message) : null))),
     mes.length ? panneau('📈 Requêtes et temps de réponse (48 dernières heures)', barres([
       { nom: 'Requêtes', valeurs: mes.map(m => ({ x: m.heure.replace(' ', 'T'), y: m.requetes })) },
       { nom: 'Refusées (4xx)', valeurs: mes.map(m => ({ x: m.heure.replace(' ', 'T'), y: m.refus })) },

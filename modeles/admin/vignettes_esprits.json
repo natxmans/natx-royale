@@ -1,0 +1,125 @@
+{
+ "_aide": "Vignettes 256 x 256 (WebP, fond transparent) des 15 esprits : les 5 d'esprits_v003.glb puis les 10 d'esprits_plus_v001.glb.",
+ "esprits": [
+  {
+   "id": "soin",
+   "nom": "Pousse",
+   "role": "Soin",
+   "couleur": "#a8ff7a",
+   "fichier": "esprits_v003.glb",
+   "vignette": "vignettes/esprit/soin.webp"
+  },
+  {
+   "id": "mobilite",
+   "nom": "Filou",
+   "role": "Mobilité",
+   "couleur": "#5ff2ff",
+   "fichier": "esprits_v003.glb",
+   "vignette": "vignettes/esprit/mobilite.webp"
+  },
+  {
+   "id": "protection",
+   "nom": "Gardien",
+   "role": "Protection",
+   "couleur": "#9ff0ff",
+   "fichier": "esprits_v003.glb",
+   "vignette": "vignettes/esprit/protection.webp"
+  },
+  {
+   "id": "vision",
+   "nom": "Zyeuto",
+   "role": "Vision",
+   "couleur": "#ff6ef0",
+   "fichier": "esprits_v003.glb",
+   "vignette": "vignettes/esprit/vision.webp"
+  },
+  {
+   "id": "batisseur",
+   "nom": "Briquet",
+   "role": "Bâtisseur",
+   "couleur": "#fff0a8",
+   "fichier": "esprits_v003.glb",
+   "vignette": "vignettes/esprit/batisseur.webp"
+  },
+  {
+   "id": "feu",
+   "nom": "Braise",
+   "role": "Attaque",
+   "couleur": "#ff7a3d",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/feu.webp"
+  },
+  {
+   "id": "glace",
+   "nom": "Givrette",
+   "role": "Glace",
+   "couleur": "#9fd8ff",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/glace.webp"
+  },
+  {
+   "id": "foudre",
+   "nom": "Zap",
+   "role": "Foudre",
+   "couleur": "#ffe14d",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/foudre.webp"
+  },
+  {
+   "id": "eau",
+   "nom": "Goutte",
+   "role": "Eau",
+   "couleur": "#4fb3ff",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/eau.webp"
+  },
+  {
+   "id": "nature",
+   "nom": "Racine",
+   "role": "Récolte",
+   "couleur": "#c9a25a",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/nature.webp"
+  },
+  {
+   "id": "ombre",
+   "nom": "Minuit",
+   "role": "Furtivité",
+   "couleur": "#8a6bff",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/ombre.webp"
+  },
+  {
+   "id": "chance",
+   "nom": "Pépite",
+   "role": "Trésor",
+   "couleur": "#ffc83d",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/chance.webp"
+  },
+  {
+   "id": "temps",
+   "nom": "Tic-Tac",
+   "role": "Temps",
+   "couleur": "#c9b6ff",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/temps.webp"
+  },
+  {
+   "id": "vent",
+   "nom": "Zephyr",
+   "role": "Vent",
+   "couleur": "#b8fff0",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/vent.webp"
+  },
+  {
+   "id": "etoile",
+   "nom": "Lumi",
+   "role": "Munitions",
+   "couleur": "#fff27a",
+   "fichier": "esprits_plus_v001.glb",
+   "vignette": "vignettes/esprit/etoile.webp"
+  }
+ ]
+}

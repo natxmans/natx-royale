@@ -367,7 +367,7 @@ function new_shade(c) { const n = parseInt(c.slice(1), 16); const k = 0.8; retur
 function ferme(m, l) {
   const r = m.rng;
   const cx = l.x, cz = l.z;
-  m.ajouterMaison(cx - 7, cz - 5, { w: 14, d: 10, style: 'grange', porte: 1, force: true });
+  m.ajouterMaison(cx - 7, cz - 5, { w: 14, d: 10, style: 'grange', porte: 1, force: true, modele: true });
   m.ajouterMaison(cx + 11, cz + 8, { w: 10, d: 8, style: 'normal', porte: 2, force: true });
   // Silo
   const sx = cx + 5, sz = cz - 9, sh = m.hauteurTerrain(sx, sz);

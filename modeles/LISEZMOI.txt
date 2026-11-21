@@ -512,3 +512,107 @@ modeles/RAPPORT-MODELISATION-250.md. Fichiers livrés (nouveaux, rien d'écrasé
   emotes_250_v001.glb/.json (50)  trainees_250_v001.png/.json (25)  cosm250_livraison.json (table des 250)
   cargaison_v001.glb  transporteur_v001.glb  cargaison_v001.json  icones_cargaison_v001.png
   esprits_v002.glb (mêmes nœuds et animations que la v001 + expressions et 4 animations par esprit)
+
+
+13) DÉCOR DE LA CARTE, 1er LOT (21 novembre 2026) — RIEN N'EST BRANCHÉ, c'est la session Développement qui active
+==================================================================================================================
+vegetation_v001.glb (164 Ko, 2 233 triangles en tout) — formes à mettre DANS les InstancedMesh de js/monde.js, à la place
+des formes faites en code. Mêmes unités que ces formes : le code garde ses échelles, positions et teintes par instance.
+  inst_tronc (113 tri)  hauteur 0..1, base au sol           code : x s, x 3,6 s  (palmier : x 0,55 s, x 6,4 s)
+  inst_sapin (128)      couronne base rayon 1 à y = 0, haut 1,05   code : x 2,3 s, x 4,6 s, posée à 1,6 s
+  inst_sapin_neige (256) même forme, avec la neige dans les couleurs par sommet (vertexColors à garder)
+  inst_feuillu (300)    boule centrée, rayon 1 à 1,2         code : x 2,3 s, x 2,0 s, posée à 4,1 s
+  inst_palmier (396)    palmes autour de l'origine (≈ 2,9 m), couleurs par sommet   code : x s, posées à 6,3 s
+  inst_cactus (452)     en mètres, 3 m de haut, au sol       code : x s
+  inst_rocher_1..3 (80/160/80)  rayon ≈ 1, centré            code : x 1,1 s, x 0,85 s, x s
+  inst_buisson (268)    rayon ≈ 1, centré                    code : x 1,2 s, x 0,85 s, x 1,1 s
+  Un seul matériau « veg_couleurs » + couleurs par sommet COLOR_0. Les formes à teindre (tronc, sapin, feuillu, cactus,
+  rochers, buisson) ont des couleurs en gris clair -> blanc (relief) : avec vertexColors activé elles se multiplient
+  par la teinte setColorAt ; sans vertexColors, la teinte seule s'applique (rien ne casse). Prévu pour flatShading.
+  Source : sources/construire_vegetation.py, sources/vegetation_v001.blend ; rendu : sources/rendus/vegetation_v001.png
+
+maisons_carte_v001.glb (1,1 Mo) + maisons_carte_v001.json — 4 maisons cartoon pour le tableau « maisons »
+d'integration.json. Le .json contient les 4 entrées TOUTES PRÊTES (actif:false) : id, fichier, objet, styles, lieux,
+proportion, taille, collisions, rampes, coffre, coffreY, _livraison, licence.
+  id        objet             style    lieux                     taille l x p x h (m)    triangles  collisions
+  quartier  maison_quartier   normal   quartier, ville, isolee   10,0 x 9,4 x 5,9        3 080      13
+  chalet    maison_chalet     chalet   chalets, isolee           10,3 x 11,8 x 6,7       4 504      16
+  grange    maison_grange     grange   ferme                     13,1 x 11,1 x 8,9       1 956      11
+  adobe     maison_adobe      adobe    desert                    9,5 x 10,2 x 4,3        2 748      16
+  - Racine vide maison_<id> au sol, au centre ; enfants maison_<id>_maillage (+ boîtes COL_<id>_…, cachées par le jeu).
+  - Avant = -Z : porte ouverte au milieu de la façade avant (1,8 x 2,5 m ; grange 3,6 x 3,8 m), sans battant qui bloque.
+  - Sol intérieur à y = 0,02 (pas de marche) ; coffre posé au sol à l'intérieur (coffre = [x, z] du .json, coffreY 0,02).
+  - « collisions » en repère three.js { nom, min, max } : murs, sol, plafond + toit (2 marches), cheminée, meubles,
+    balcon du chalet, toit plat + parapets de l'adobe (on peut marcher dessus). Vérifié : mêmes boîtes que les COL_ du
+    .glb (écart 0), couloir de la porte libre pour un joueur de 0,7 x 1,8 m, aucun coffre dans une boîte.
+  - Matériaux : maisons_couleurs (couleurs par sommet), verre_cosm (vitres), lumiere_or / lumiere_orange (lanternes, feu).
+  - Source : sources/construire_maisons_carte.py, sources/maisons_carte_v001.blend ; rendus : sources/rendus/
+    maisons_carte_avant.png, _arriere.png, _collisions.png, _coupe.png (intérieurs), maison_<id>_34.png.
+
+
+14) LOT DU 21 NOVEMBRE 2026 « MODÉLISATION 3D ET DESIGN » — RIEN N'EST BRANCHÉ ; détails dans RAPPORT-MODELISATION-250.md (sections 9 à 15)
+==================================================================================================================
+Nouveaux fichiers (rien d'écrasé) :
+  tenues_250_v002.glb/.json + tenues_v002/<slug>.png   50 tenues PREMIUM, même format que la v001 (à charger À LA PLACE),
+                                                       champs en plus : famille, cache, yeux, effets ; 1 484 tri en moyenne
+  tenue_staff_v001.glb/.json + tenues_v002/staff.png, staff_lueur.png, staff_relief.png
+                                                       Tenue Staff réaliste (id « staff »), images en 512 px, 2 446 tri
+  esprits_v003.glb                                     v002 + <id>_obtention (2,5 s) + <id>_eclat (caché au repos)
+  animations_perso_v001.glb/.json                      11 clips perso_<nom> FACULTATIFS (attente, présentation, pioche, deltaplane)
+  emotes_250_v002.glb/.json                            CORRECTION des emotes : les poses tenues (51) ne sont plus perdues ;
+                                                       mêmes clips, mêmes noms, mêmes durées que la v001
+  admin/                                               ressources graphiques du panel admin (logo, 27 icônes, badges et cadres
+                                                       de rareté, 9 illustrations, 251 vignettes) + admin_visuels.json, vignettes.json
+Pas faits dans ce lot-là : animations propres à chaque pioche ou deltaplane. (Personnage v3, maisons pierre / entrepot et
+coffres : faits ensuite, voir section 16.)
+
+
+15) TOUS LES SKINS EN VERSION RÉALISTE HD + VISUELS DES PAGES DU JEU (21 novembre 2026) — RIEN N'EST BRANCHÉ
+==================================================================================================================
+Détails dans RAPPORT-MODELISATION-250.md, sections 16 à 18.
+  tenues_hd_v001.json     INDEX UNIQUE des 71 tenues en version réaliste (comme la Tenue Staff) : 20 de base du jeu, la Tenue
+                          Staff, les 50 du catalogue. Image 512 px + carte de relief + carte de lueur (18 tenues) + versions _256.
+  tenues_hd/              les images (14,5 Mo en tout, environ 200 Ko par tenue)
+  tenues_base_v001.glb    pièces 3D des 20 tenues de base (143 pièces, 648 à 2 140 triangles par tenue)
+                          classique et sportif = à la couleur du joueur (image de détails + image d'ombrage + matériau cosm_teinte)
+                          chevalier, robot, statue = champs metal / rugosite
+  interface/              logo du jeu, 72 icônes SVG (tout ce que le jeu montre avec un émoji), 9 illustrations de pages,
+                          index interface_visuels.json
+  admin/vignettes.json    271 vignettes maintenant (les 250 + les 20 tenues de base + la Tenue Staff)
+
+
+16) PERSONNAGE v3, MAISONS PIERRE / ENTREPOT, COFFRES (21 novembre 2026) — RIEN N'EST BRANCHÉ
+==============================================================================================
+Détails dans RAPPORT-MODELISATION-250.md, sections 19 à 22.
+  personnage_v3.glb        le héros refait en détaillé, à charger À LA PLACE de personnage.glb (qui ne change pas).
+                           Mêmes 16 morceaux, noms, origines, matériaux et UV en cylindre ; même silhouette.
+                           Visage sculpté, vrais yeux, mains à doigts, baskets, boules aux genoux et coudes, 5 coiffures.
+                           Matériaux en plus : iris, levres. 12 932 tri (corps + tête) ; 15 426 avec la coiffure la plus lourde.
+  personnage_v3.json       la fiche : origine, triangles, matériaux et boîte de chaque morceau.
+  maisons_carte_v002.glb   maison_donjon (style pierre, lieu chateau, terrasse à créneaux + rampe intérieure dans « rampes »)
+                           maison_entrepot (style entrepot, lieux port et usine, grande porte coulissante, rayonnages)
+  maisons_carte_v002.json  2 entrées prêtes pour « maisons » d'integration.json (actif:false), collisions et rampe en three.js.
+  coffres_v001.glb         coffre (enfant coffre_couvercle) et coffre_dore (enfant coffre_dore_couvercle), même origine,
+                           même charnière et même ouverture que le coffre d'objets.glb. Nouveaux matériaux fixes :
+                           email_coffre, gemme_coffre, rubis_coffre.
+  coffres_v001.json        la fiche.
+Vérifié dans three.js (noms, origines, triangles, collisions, porte, rampe, pivots des couvercles) et par des rendus
+(sources/rendus/personnage_v3_*.png, maisons_v002_*.png, coffres_v001_*.png). Rien n'a été testé dans le jeu.
+Pas faits : grands bâtiments (usine, phare, arène), animations propres à chaque pioche ou deltaplane, anciens cosmétiques
+de cosmetiques.glb en version HD.
+
+
+17) DIX ESPRITS EN PLUS (21 novembre 2026) — RIEN N'EST BRANCHÉ
+================================================================
+Détails dans RAPPORT-MODELISATION-250.md, section 23.
+  esprits_plus_v001.glb    10 esprits : feu Braise, glace Givrette, foudre Zap, eau Goutte, nature Racine, ombre Minuit,
+                           chance Pépite, temps Tic-Tac, vent Zephyr, etoile Lumi. 2 782 à 3 922 triangles, aucune texture.
+                           Mêmes règles et mêmes 8 animations par esprit que esprits_v003.glb (qui ne change pas).
+                           Effets de pouvoir cachés à 0,001, montrés par « activer » : feu_boule, glace_blizzard, foudre_trait,
+                           eau_bulle, nature_ronces, ombre_double, chance_cadeau, vent_bourrasque, etoile_trainee.
+                           etoile_coeur : cœur de lumière de Lumi, objet à part que le code peut éteindre.
+  esprits_plus_v001.json   10 entrées prêtes pour « esprits » d'integration.json (actif:false).
+  admin/vignettes/esprit/  15 vignettes 256 px (5 anciens + 10 nouveaux), index admin/vignettes_esprits.json.
+  admin/illustrations/esprits_15.webp et interface/illustrations/esprits_15.webp : les 15 esprits (les esprits.webp restent).
+Vérifié dans three.js (noms, 80 animations, durées, objets cachés, boucles, retour au repos). Rien n'a été testé dans le jeu.
+

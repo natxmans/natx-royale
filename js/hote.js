@@ -15,7 +15,8 @@ function nettoyerEsp(e) {
 }
 const nettoyerRef = r => (typeof r === 'string' && /^[0-9a-f]{12}$/.test(r) ? r : null);
 const nettoyerBadge = b => (typeof b === 'string' && /^[0-9a-f]{32}$/.test(b) ? b : null);
-import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE } from './esprits.js';
+import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE,
+  FEU, GLACE, FOUDRE, VENT, NATURE, OMBRE, ETOILE } from './esprits.js';
 
 const NOMS_BOTS = ['Patate', 'Croquette', 'Tartiflette', 'Grumeau', 'Moustache', 'Biscotte', 'Pépito', 'Cornichon',
   'Raclette', 'Chaussette', 'Gaufrette', 'Nougat', 'Saucisson', 'Crumble', 'Pistache', 'Bretzel', 'Kiwi', 'Radis',
@@ -259,6 +260,7 @@ export class Hote {
     this.sanctuaires = placerSanctuaires(monde, r, nbSanct, this.options.entrainement ? { x: 0, z: 0 } : null)
       .map(sa => ({ ...sa, dispo: true, retour: 0 }));
     this.espritT = 0;
+    this.pieges = []; this.prochainPiege = 1; this.differes = []; // ronces posées, effets de pouvoirs à venir
     this.temps = 0; this.envoiT = 0; this.zoneT = 0;
     this.enCours = true; this.fini = false;
     // Les bots : où et quand ils sautent, et leur arme
@@ -396,8 +398,7 @@ export class Hote {
   }
 
   // ---------- Explosions (roquettes, grenades) ----------
-  exploser(auteur, x, y, z, arme) {
-    const def = OBJETS[arme];
+  exploser(auteur, x, y, z, arme, def = OBJETS[arme]) {
     const R = def.rayon, M = this.monde;
     const a = this.joueurs.get(auteur);
     this.reseau.diffuser({ t: 'boum', x: arrondi(x), y: arrondi(y), z: arrondi(z), r: R, a: arme, par: auteur });
@@ -459,16 +460,25 @@ export class Hote {
     if (!j || !j.vivant || j.ph === 'dirigeable' || this.fini) return;
     // pas de tir ami entre coéquipiers
     if (auteur && auteur !== id && memeEquipe(this.joueurs.get(auteur), j)) return;
+    const tireur = auteur && auteur !== id ? this.joueurs.get(auteur) : null;
+    const avecArme = arme !== 'esprit'; // les bonus des esprits comptent pour les armes, pas pour les pouvoirs
+    // Braise (feu) : +10 % de dégâts
+    if (tireur && avecArme && tireur.esprit && tireur.esprit.type === 'feu') deg *= FEU.bonus;
     deg = Math.round(deg);
     if (deg <= 0) return;
     let reste = deg;
     const avaitBouclier = j.bouclier > 0;
     if (j.bouclier > 0) { const a = Math.min(j.bouclier, reste); j.bouclier -= a; reste -= a; }
     j.pv -= reste;
+    // Lumi (étoile) : une fois par partie, elle sauve son joueur d'un coup mortel
+    let sauve = false;
+    if (j.pv <= 0 && j.esprit && j.esprit.type === 'etoile' && !j.sauve && !this.options.entrainement) { j.sauve = sauve = true; j.pv = ETOILE.pv; }
     this.reseau.diffuser({
       t: 'pv', id, pv: Math.max(0, j.pv), b: j.bouclier, de: auteur, deg, tete: !!tete,
-      x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), casse: avaitBouclier && j.bouclier <= 0,
+      x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), casse: avaitBouclier && j.bouclier <= 0, ...(sauve ? { sauve: true } : {}),
     });
+    // Givrette (glace) : ses tirs ralentissent celui qui est touché
+    if (tireur && avecArme && j.pv > 0 && tireur.esprit && tireur.esprit.type === 'glace') this.ralentir(j, GLACE.touche, GLACE.facteurTouche);
     if (j.pv <= 0 && this.options.entrainement) { this.reapparaitre(j, auteur); return; }
     if (j.bot && auteur && auteur !== id) this.reactionBot(j, auteur);
     if (j.pv <= 0) this.eliminer(id, auteur, arme);
@@ -484,6 +494,11 @@ export class Hote {
     const k = auteur && auteur !== id ? this.joueurs.get(auteur) : null;
     if (k) {
       k.kills++;
+      // Zap (foudre) : chaque élimination rend du bouclier
+      if (k.vivant && k.esprit && k.esprit.type === 'foudre' && k.bouclier < 100) {
+        k.bouclier = Math.min(100, k.bouclier + FOUDRE.bouclier);
+        this.reseau.diffuser({ t: 'pv', id: k.id, pv: k.pv, b: k.bouclier });
+      }
       if (this.options.mode === 'solo' && k.vivant) {
         const pv = Math.min(REGAIN_SOLO, 100 - k.pv);
         k.pv += pv; k.bouclier = Math.min(100, k.bouclier + REGAIN_SOLO - pv);
@@ -508,6 +523,9 @@ export class Hote {
     dt = Math.min(dt, 0.1);
     this.temps += dt;
     for (const j of this.joueurs.values()) if (j.bot && j.vivant) this.majBot(j, dt);
+    // pouvoirs des esprits : ce qui arrive un instant plus tard (boule de feu, éclair qui saute), et les ronces posées
+    while (this.differes.length && this.temps >= this.differes[0].t) this.differes.shift().f();
+    if (this.pieges.length) this.majPieges();
     // Ravitaillements qui tombent du ciel
     while (this.planRavitos.length && this.temps >= this.planRavitos[0]) { this.planRavitos.shift(); this.lancerRavito(); }
     // Fontaines de soin : +3 PV toutes les demi-secondes
@@ -682,9 +700,11 @@ export class Hote {
     }
     // Contourner un obstacle
     if (b.detourT > 0) { b.detourT -= dt; const ox = mx; mx = -mz * b.cote; mz = ox * b.cote; }
-    const vit = (b.dansEau ? 3.5 : 6.3) * (b.esprit && b.esprit.type === 'mobilite' ? VITESSE_MOBILITE : 1);
+    const vit = (b.dansEau && !(b.esprit && b.esprit.type === 'eau') ? 3.5 : 6.3) * (b.esprit && b.esprit.type === 'mobilite' ? VITESSE_MOBILITE : 1)
+      * (this.temps < (b.gelJusqua || 0) ? b.gelFacteur : 1); // gelé par Givrette ou pris dans les ronces
     const n = Math.hypot(mx, mz);
-    if (n > 0.01) { b.vx = mx / n * vit; b.vz = mz / n * vit; } else { b.vx *= 0.8; b.vz *= 0.8; }
+    if (this.temps < (b.pousseJusqua || 0)) { /* emporté par une bourrasque : il ne dirige plus rien */ }
+    else if (n > 0.01) { b.vx = mx / n * vit; b.vz = mz / n * vit; } else { b.vx *= 0.8; b.vz *= 0.8; }
     b.vy -= 25 * dt;
     b.bloqueT += dt;
     if (b.bloqueT > 0.6) {
@@ -712,7 +732,10 @@ export class Hote {
     const t = b.cible ? this.joueurs.get(b.cible) : null;
     const d = t ? Math.hypot(t.x - b.x, t.z - b.z) : Infinity;
     const type = b.esprit.type;
-    if ((type === 'soin' && b.pv < 55) || (type === 'protection' && t && b.bouclier < 30) || (type === 'batisseur' && t && b.voit && d < 30 && b.auSol)) this.pouvoir(b, { ry: b.ry });
+    if ((type === 'soin' && b.pv < 55) || (type === 'protection' && t && b.bouclier < 30) || (type === 'batisseur' && t && b.voit && d < 30 && b.auSol)
+      || (type === 'feu' && t && b.voit && d > 6 && d < 35) || (type === 'glace' && t && d < 9) || (type === 'foudre' && t && b.voit && d < 22)
+      || (type === 'vent' && t && d < 6) || (type === 'nature' && t && d < 14 && b.auSol) || (type === 'ombre' && t && b.pv < 45)
+      || (type === 'etoile' && t && b.voit && d > 5 && d < 13 && b.auSol)) this.pouvoir(b, { ry: b.ry, rx: b.rx });
   }
 
   // Objectif du bot : un ravitaillement posé, ou un objet utile au sol
@@ -766,6 +789,7 @@ export class Hote {
     const portee = b.arme.objet === 'sniper' ? 130 : 80;
     for (const j of this.joueurs.values()) {
       if (j === b || !j.vivant || j.ph === 'dirigeable' || j.ph === 'chute' || memeEquipe(b, j)) continue;
+      if (this.temps < (j.leurreJusqua || 0)) continue; // Minuit (ombre) vient de laisser un clone : on l'a perdu de vue
       let d = Math.hypot(j.x - b.x, j.y - b.y, j.z - b.z);
       if (d > portee) continue;
       if (j.id === b.agresseur) d *= 0.5;
@@ -849,7 +873,11 @@ export class Hote {
     const type = j.esprit.type, def = ESPRITS[type];
     j.esprit.pret = this.temps + def.recharge;
     const ry = Number.isFinite(+(m && m.ry)) ? +m.ry : j.ry;
-    this.reseau.diffuser({ t: 'pouvoir', par: j.id, type, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), ry: arrondi(ry), pret: arrondi(j.esprit.pret) });
+    const rx = borner(Number.isFinite(+(m && m.rx)) ? +m.rx : j.rx || 0, -1.45, 1.45);
+    // Les 10 esprits ajoutés : ce que l'hôte calcule AVANT d'annoncer le pouvoir (les autres joueurs en ont besoin pour l'afficher)
+    const plus = this.preparerPouvoir(j, type, ry, rx, m);
+    if (plus && plus.vide) j.esprit.pret = this.temps + 4; // rien à viser : le pouvoir revient vite
+    this.reseau.diffuser({ t: 'pouvoir', par: j.id, type, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), ry: arrondi(ry), pret: arrondi(j.esprit.pret), ...(plus || {}) });
     if (type === 'soin') {
       // Bourgeon : soigne le joueur et ses coéquipiers proches
       for (const e of this.joueurs.values()) {
@@ -863,8 +891,153 @@ export class Hote {
     } else if (type === 'batisseur') {
       // Fort express : 4 murs autour du joueur (gratuits)
       for (let k = 0; k < 4; k++) this.construire(j.id, cibleConstruction(this.monde, 'mur', j.x, j.y, j.z, ry + k * Math.PI / 2, 0));
+    } else this.pouvoirAjoute(j, type, ry);
+    // Filou (mobilité), Tic-Tac (temps), Goutte (eau) : le joueur se déplace lui-même ; Zyeuto (vision) : seulement de l'affichage chez le joueur
+  }
+
+  // ---------- Les 10 esprits ajoutés (21 nov. 2026) ----------
+  // Ennemis vivants autour d'un joueur (pas ses coéquipiers, pas ceux encore dans le dirigeable)
+  ennemisAutour(j, rayon, x = j.x, y = j.y, z = j.z) {
+    const liste = [];
+    for (const e of this.joueurs.values()) {
+      if (e === j || !e.vivant || e.ph === 'dirigeable' || memeEquipe(j, e)) continue;
+      const d = Math.hypot(e.x - x, e.y - y, e.z - z);
+      if (d <= rayon) liste.push([d, e]);
     }
-    // Filou (mobilité) : le bond est fait par le joueur lui-même ; Zyeuto (vision) : seulement de l'affichage chez le joueur
+    return liste.sort((a, b) => a[0] - b[0]).map(c => c[1]);
+  }
+  // Ralentir quelqu'un (gel de Givrette, ronces de Racine) : son propre jeu applique le ralenti, l'hôte le fait pour les bots
+  ralentir(j, duree, facteur) {
+    if (!j || !j.vivant) return;
+    if (this.temps < (j.gelJusqua || 0) && j.gelFacteur <= facteur && j.gelJusqua >= this.temps + duree) return; // déjà plus ralenti que ça
+    j.gelJusqua = this.temps + duree; j.gelFacteur = facteur;
+    this.reseau.diffuser({ t: 'gel', id: j.id, duree, f: facteur });
+  }
+  // Pousser quelqu'un (bourrasque de Zephyr)
+  pousser(j, vx, vy, vz) {
+    if (j.bot) { j.vx = vx; j.vy = vy; j.vz = vz; j.auSol = false; j.pousseJusqua = this.temps + 0.7; }
+    this.reseau.diffuser({ t: 'pousse', id: j.id, v: [arrondi(vx), arrondi(vy), arrondi(vz)] });
+  }
+  differer(delai, f) {
+    this.differes.push({ t: this.temps + delai, f });
+    this.differes.sort((a, b) => a.t - b.t);
+  }
+  // Explosion d'un pouvoir (même calcul que les roquettes : à l'abri derrière un mur, on ne prend rien)
+  exploserPouvoir(auteur, x, y, z, rayon, degats) { this.exploser(auteur, x, y, z, 'esprit', { rayon, degats }); }
+
+  preparerPouvoir(j, type, ry, rx, m) {
+    const M = this.monde;
+    if (type === 'feu') {
+      // Boule de feu : droit devant, jusqu'au premier mur, au sol ou au premier ennemi
+      const ox = j.x, oy = j.y + 1.5, oz = j.z;
+      const dx = -Math.sin(ry) * Math.cos(rx), dy = Math.sin(rx), dz = -Math.cos(ry) * Math.cos(rx);
+      const h = M.lancerRayon(ox, oy, oz, dx, dy, dz, FEU.portee);
+      let dist = h ? Math.max(0.5, h.t - 0.3) : FEU.portee;
+      for (const e of this.ennemisAutour(j, FEU.portee)) {
+        const ex = e.x - ox, ey = e.y + 1 - oy, ez = e.z - oz;
+        const t = ex * dx + ey * dy + ez * dz; // distance le long du tir
+        if (t < 1 || t > dist) continue;
+        if (Math.hypot(ex - dx * t, ey - dy * t, ez - dz * t) < 1.1) dist = t;
+      }
+      const x = ox + dx * dist, y = oy + dy * dist, z = oz + dz * dist, duree = dist / FEU.vitesse;
+      this.differer(duree, () => this.exploserPouvoir(j.id, x, y, z, FEU.rayon, FEU.degats));
+      return { o: [arrondi(ox), arrondi(oy), arrondi(oz)], b: [arrondi(x), arrondi(y), arrondi(z)], duree: arrondi(duree) };
+    }
+    if (type === 'foudre') {
+      // Éclair en chaîne : le plus proche que l'on voit, puis il saute deux fois
+      const pts = [[arrondi(j.x), arrondi(j.y + 1.6), arrondi(j.z)]], touches = [];
+      let de = j, portee = FOUDRE.portee;
+      for (let k = 0; k < FOUDRE.degats.length; k++) {
+        const cible = this.ennemisAutour(j, portee, de.x, de.y, de.z).find(e => {
+          if (touches.includes(e)) return false;
+          if (k > 0) return true;
+          const ox = j.x, oy = j.y + 1.5, oz = j.z;
+          let dx = e.x - ox, dy = e.y + 1.2 - oy, dz = e.z - oz;
+          const L = Math.hypot(dx, dy, dz) || 1; dx /= L; dy /= L; dz /= L;
+          const h = M.lancerRayon(ox, oy, oz, dx, dy, dz, L);
+          return !h || h.t > L - 0.6;
+        });
+        if (!cible) break;
+        touches.push(cible);
+        pts.push([arrondi(cible.x), arrondi(cible.y + 1.2), arrondi(cible.z)]);
+        de = cible; portee = FOUDRE.saut;
+      }
+      if (!touches.length) return { vide: true };
+      touches.forEach((e, k) => this.differer(0.08 * k, () => this.blesser(e.id, FOUDRE.degats[k], j.id, 'esprit', false)));
+      return { pts };
+    }
+    if (type === 'temps') {
+      // Retour : le joueur s'est déjà déplacé lui-même ; on montre l'arrivée aux autres
+      const a = m && Array.isArray(m.a) ? m.a.slice(0, 3).map(Number) : null;
+      return a && a.every(Number.isFinite) ? { a: a.map(arrondi) } : null;
+    }
+    return null;
+  }
+
+  // Les effets décidés par l'hôte (après l'annonce du pouvoir)
+  pouvoirAjoute(j, type, ry) {
+    if (type === 'glace') {
+      for (const e of this.ennemisAutour(j, GLACE.rayon)) this.ralentir(e, GLACE.duree, GLACE.facteur);
+    } else if (type === 'vent') {
+      for (const e of this.ennemisAutour(j, VENT.rayon)) {
+        const d = Math.hypot(e.x - j.x, e.z - j.z) || 1;
+        this.pousser(e, (e.x - j.x) / d * VENT.force, VENT.haut, (e.z - j.z) / d * VENT.force);
+        this.blesser(e.id, VENT.degats, j.id, 'esprit', false);
+      }
+    } else if (type === 'nature') {
+      // Ronces : un piège à ses pieds (2 au plus par joueur, le plus vieux s'en va)
+      const miens = this.pieges.filter(p => p.par === j.id);
+      if (miens.length >= NATURE.max) this.retirerPiege(miens[0], false);
+      const p = { id: this.prochainPiege++, par: j.id, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), fin: this.temps + NATURE.vie, pret: this.temps + 0.8 };
+      this.pieges.push(p);
+      this.reseau.diffuser({ t: 'piege+', p: { id: p.id, par: p.par, x: p.x, y: p.y, z: p.z } });
+    } else if (type === 'ombre') {
+      // Clone : les bots perdent le vrai joueur de vue quelques secondes
+      j.leurreJusqua = this.temps + OMBRE.oubli;
+      for (const b of this.joueurs.values()) if (b.bot && b.cible === j.id) { b.cible = null; b.voit = false; b.agresseur = null; }
+    } else if (type === 'chance') {
+      // Jackpot : une arme rare ou plus, ou de quoi se soigner, tombe devant lui
+      const r = Math.random;
+      let it = tirerButin(r, true, true);
+      for (let k = 0; k < 8 && !['arme', 'soin'].includes(OBJETS[it.objet].type); k++) it = tirerButin(r, true, true);
+      if (OBJETS[it.objet].type === 'arme') it.rarete = Math.max(2, it.rarete | 0);
+      this.creerButin(it, j.x - Math.sin(ry) * 2, j.y + 0.1, j.z - Math.cos(ry) * 2);
+    } else if (type === 'etoile') {
+      // Étoile filante : ceux qui sont sur le trajet (14 m droit devant, jusqu'au premier mur) prennent 20
+      const dx = -Math.sin(ry), dz = -Math.cos(ry);
+      const h = this.monde.lancerRayon(j.x, j.y + 1, j.z, dx, 0, dz, ETOILE.distance);
+      const dist = h ? h.t : ETOILE.distance;
+      for (const e of this.ennemisAutour(j, ETOILE.distance + 2)) {
+        const t = (e.x - j.x) * dx + (e.z - j.z) * dz;
+        if (t < 0 || t > dist + 1 || Math.abs(e.y - j.y) > 3) continue;
+        if (Math.hypot(e.x - j.x - dx * t, e.z - j.z - dz * t) <= ETOILE.largeur) this.blesser(e.id, ETOILE.degats, j.id, 'esprit', false);
+      }
+      // un bot fonce vraiment (les joueurs se déplacent eux-mêmes)
+      if (j.bot) { j.vx = dx * 40; j.vz = dz * 40; j.pousseJusqua = this.temps + ETOILE.duree; }
+    }
+  }
+
+  retirerPiege(p, declenche) {
+    const i = this.pieges.indexOf(p);
+    if (i < 0) return;
+    this.pieges.splice(i, 1);
+    this.reseau.diffuser({ t: 'piege-', id: p.id, x: p.x, y: p.y, z: p.z, declenche: !!declenche });
+  }
+  // Les ronces attendent qu'un ennemi marche dessus
+  majPieges() {
+    for (const p of [...this.pieges]) {
+      if (this.temps >= p.fin) { this.retirerPiege(p, false); continue; }
+      if (this.temps < p.pret) continue;
+      const poseur = this.joueurs.get(p.par);
+      for (const e of this.joueurs.values()) {
+        if (!e.vivant || e.id === p.par || e.ph !== 'sol' || (poseur && memeEquipe(poseur, e))) continue;
+        if (Math.hypot(e.x - p.x, e.z - p.z) > NATURE.rayon || Math.abs(e.y - p.y) > 1.8) continue;
+        this.retirerPiege(p, true);
+        this.ralentir(e, NATURE.duree, NATURE.facteur);
+        this.blesser(e.id, NATURE.degats, p.par, 'esprit', false);
+        break;
+      }
+    }
   }
 
   // ---------- Entraînement ----------

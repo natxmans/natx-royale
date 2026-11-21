@@ -2,7 +2,8 @@
 # Met en ligne (ou met à jour) le serveur des avis de NATX ROYALE sur alwaysdata, puis le redémarre.
 # Lancer depuis Git Bash :  sh serveur/deployer.sh
 #
-# Ce qui part : api.py, gestion.py, robot.py, wsgi.py, admin/, LISEZMOI.md et les réglages (non secrets).
+# Ce qui part : api.py, gestion.py, robot.py, wsgi.py, admin/ (avec admin/visuels/, copie des images de modeles/admin/),
+# LISEZMOI.md et les réglages (non secrets).
 # Ce qui n'est JAMAIS touché en ligne : ~/natx-serveur/donnees/ (avis, votes, comptes admin,
 # clé secrète créée par le serveur lui-même).
 set -e
@@ -16,6 +17,7 @@ ADRESSE="https://chrysalide.alwaysdata.net/natx"
 # 1. pas de mise en ligne d'un fichier cassé ; catalogue des objets à jour (pour les cadeaux de l'espace admin)
 python -c "import ast; [ast.parse(open(f, encoding='utf-8').read()) for f in ('api.py', 'gestion.py', 'robot.py', 'wsgi.py')]"
 python -X utf8 extraire_catalogue.py
+python -X utf8 copier_visuels.py
 for f in admin/index.html admin/admin.js admin/admin.css reglages-alwaysdata.env catalogue.json; do
   [ -f "$f" ] || { echo "Fichier manquant : $f"; exit 1; }
 done

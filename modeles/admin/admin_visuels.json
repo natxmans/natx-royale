@@ -1,0 +1,226 @@
+{
+ "_aide": "Ressources graphiques du panel admin (session Modélisation). Aucune police ni image externe. Icônes : SVG 24x24, trait currentColor (la couleur vient du CSS : color: …), à insérer en <img> ou mieux en ligne / via le sprite icones/icones.svg (<svg><use href=\"icones.svg#i-<id>\"/></svg>). Couleurs de rareté = RARETES_COSM (js/boutique.js).",
+ "logo": {
+  "large": "logo/logo_admin.svg",
+  "large_png": "logo/logo_admin_1024x310.png",
+  "carre": "logo/logo_admin_carre.svg",
+  "carre_png": [
+   "logo/logo_admin_512.png",
+   "logo/logo_admin_192.png"
+  ]
+ },
+ "icones_pages": {
+  "tableau": "icones/tableau.svg",
+  "joueurs": "icones/joueurs.svg",
+  "signalements": "icones/signalements.svg",
+  "sanctions": "icones/sanctions.svg",
+  "retours": "icones/retours.svg",
+  "cadeaux": "icones/cadeaux.svg",
+  "cosmetiques": "icones/cosmetiques.svg",
+  "boutique": "icones/boutique.svg",
+  "esprits": "icones/esprits.svg",
+  "evenements": "icones/evenements.svg",
+  "annonce": "icones/annonce.svg",
+  "admins": "icones/admins.svg",
+  "journal": "icones/journal.svg",
+  "sauvegardes": "icones/sauvegardes.svg",
+  "serveur": "icones/serveur.svg",
+  "compte": "icones/compte.svg",
+  "robot": "icones/robot.svg"
+ },
+ "icones_categories": {
+  "tenue": "icones/tenue.svg",
+  "chapeau": "icones/chapeau.svg",
+  "dos": "icones/dos.svg",
+  "pioche": "icones/pioche.svg",
+  "deltaplane": "icones/deltaplane.svg",
+  "trainee": "icones/trainee.svg",
+  "emote": "icones/emote.svg"
+ },
+ "icones_extras": {
+  "rarete": "icones/rarete.svg",
+  "cargaison": "icones/cargaison.svg",
+  "piece": "icones/piece.svg"
+ },
+ "sprite": "icones/icones.svg",
+ "raretes": {
+  "commun": {
+   "badge": "raretes/badge_commun.svg",
+   "cadre": "cadres/cadre_commun.svg",
+   "couleur": "#8fa3b8"
+  },
+  "rare": {
+   "badge": "raretes/badge_rare.svg",
+   "cadre": "cadres/cadre_rare.svg",
+   "couleur": "#3d8dff"
+  },
+  "epique": {
+   "badge": "raretes/badge_epique.svg",
+   "cadre": "cadres/cadre_epique.svg",
+   "couleur": "#b552ff"
+  },
+  "legendaire": {
+   "badge": "raretes/badge_legendaire.svg",
+   "cadre": "cadres/cadre_legendaire.svg",
+   "couleur": "#ffad1f"
+  },
+  "collab": {
+   "badge": "raretes/badge_collab.svg",
+   "cadre": "cadres/cadre_collab.svg",
+   "couleur": "#ff2e88"
+  },
+  "staff": {
+   "badge": "raretes/badge_staff.svg",
+   "cadre": "cadres/cadre_staff.svg",
+   "couleur": "#14e0a2"
+  }
+ },
+ "cadre_zones": {
+  "image": [
+   20,
+   22,
+   160,
+   160
+  ],
+  "nom": [
+   0,
+   206,
+   200,
+   54
+  ],
+  "unite": "px dans le viewBox 200x260"
+ },
+ "illustrations": {
+  "tableau": {
+   "grand": "illustrations/tableau.webp",
+   "petit": "illustrations/tableau_petit.webp"
+  },
+  "joueurs": {
+   "grand": "illustrations/joueurs.webp",
+   "petit": "illustrations/joueurs_petit.webp"
+  },
+  "boutique": {
+   "grand": "illustrations/boutique.webp",
+   "petit": "illustrations/boutique_petit.webp"
+  },
+  "cadeaux": {
+   "grand": "illustrations/cadeaux.webp",
+   "petit": "illustrations/cadeaux_petit.webp"
+  },
+  "esprits": {
+   "grand": "illustrations/esprits.webp",
+   "petit": "illustrations/esprits_petit.webp"
+  },
+  "cargaisons": {
+   "grand": "illustrations/cargaisons.webp",
+   "petit": "illustrations/cargaisons_petit.webp"
+  },
+  "evenements": {
+   "grand": "illustrations/evenements.webp",
+   "petit": "illustrations/evenements_petit.webp"
+  },
+  "raretes": {
+   "grand": "illustrations/raretes.webp",
+   "petit": "illustrations/raretes_petit.webp"
+  },
+  "vide": {
+   "grand": "illustrations/vide.webp",
+   "petit": "illustrations/vide_petit.webp"
+  }
+ },
+ "illustrations_tailles": {
+  "grand": [
+   640,
+   360
+  ],
+  "petit": [
+   320,
+   180
+  ],
+  "usage": {
+   "tableau": "tableau de bord",
+   "joueurs": "page Joueurs",
+   "boutique": "page Boutique et promos",
+   "cadeaux": "page Cadeaux",
+   "esprits": "page Esprits",
+   "cargaisons": "cargaisons",
+   "evenements": "événements",
+   "raretes": "raretés des cosmétiques",
+   "vide": "état vide (aucun résultat)"
+  }
+ },
+ "vignettes": {
+  "index": "vignettes.json",
+  "dossier": "vignettes/<categorie>/<slug>.webp",
+  "taille": [
+   256,
+   256
+  ],
+  "note": "250 cosmétiques + la Tenue Staff, fond transparent"
+ },
+ "poids_ko": {
+  "cadres/cadre_collab.svg": 2.7,
+  "cadres/cadre_commun.svg": 1.3,
+  "cadres/cadre_epique.svg": 1.3,
+  "cadres/cadre_legendaire.svg": 2.1,
+  "cadres/cadre_rare.svg": 1.3,
+  "cadres/cadre_staff.svg": 2.1,
+  "icones/admins.svg": 0.3,
+  "icones/annonce.svg": 0.3,
+  "icones/boutique.svg": 0.3,
+  "icones/cadeaux.svg": 0.4,
+  "icones/cargaison.svg": 0.3,
+  "icones/chapeau.svg": 0.3,
+  "icones/compte.svg": 0.3,
+  "icones/cosmetiques.svg": 0.3,
+  "icones/deltaplane.svg": 0.3,
+  "icones/dos.svg": 0.3,
+  "icones/emote.svg": 0.3,
+  "icones/esprits.svg": 0.3,
+  "icones/evenements.svg": 0.4,
+  "icones/icones.svg": 7.5,
+  "icones/joueurs.svg": 0.3,
+  "icones/journal.svg": 0.3,
+  "icones/piece.svg": 0.3,
+  "icones/pioche.svg": 0.3,
+  "icones/rarete.svg": 0.3,
+  "icones/retours.svg": 0.3,
+  "icones/robot.svg": 0.4,
+  "icones/sanctions.svg": 0.2,
+  "icones/sauvegardes.svg": 0.3,
+  "icones/serveur.svg": 0.3,
+  "icones/signalements.svg": 0.3,
+  "icones/tableau.svg": 0.3,
+  "icones/tenue.svg": 0.3,
+  "icones/trainee.svg": 0.3,
+  "illustrations/boutique.webp": 12.2,
+  "illustrations/boutique_petit.webp": 5.1,
+  "illustrations/cadeaux.webp": 11.5,
+  "illustrations/cadeaux_petit.webp": 5.4,
+  "illustrations/cargaisons.webp": 11.3,
+  "illustrations/cargaisons_petit.webp": 4.5,
+  "illustrations/esprits.webp": 10.6,
+  "illustrations/esprits_petit.webp": 4.5,
+  "illustrations/evenements.webp": 10.8,
+  "illustrations/evenements_petit.webp": 4.4,
+  "illustrations/joueurs.webp": 26.5,
+  "illustrations/joueurs_petit.webp": 10.8,
+  "illustrations/raretes.webp": 10.8,
+  "illustrations/raretes_petit.webp": 4.8,
+  "illustrations/tableau.webp": 12.4,
+  "illustrations/tableau_petit.webp": 5.1,
+  "illustrations/vide.webp": 6.8,
+  "illustrations/vide_petit.webp": 3.1,
+  "logo/logo_admin.svg": 11.4,
+  "logo/logo_admin_1024x310.png": 23.2,
+  "logo/logo_admin_192.png": 6.6,
+  "logo/logo_admin_512.png": 14.1,
+  "logo/logo_admin_carre.svg": 4.1,
+  "raretes/badge_collab.svg": 0.8,
+  "raretes/badge_commun.svg": 0.6,
+  "raretes/badge_epique.svg": 0.7,
+  "raretes/badge_legendaire.svg": 0.8,
+  "raretes/badge_rare.svg": 0.7,
+  "raretes/badge_staff.svg": 0.8
+ }
+}

@@ -61,8 +61,861 @@
    "_livraison": "Exporté par la session Modélisation. Coordonnées three.js (x droite, y haut, z = -avant) relatives à l'origine de la maison (au sol, au centre). Collisions : 36 boîtes COL_… DANS le .glb (enfants de maison_cottage), d'où \"collisions\": []. Porte d'entrée face avant (-Z) : ouverture x -0,20..1,45, y 0,50..2,95 (1,65 x 2,45 m), plan du mur à z -3,73..-3,48, aucune boîte COL_ dedans. Sol intérieur et porche à y = 0,50. rampes = marches (de/a en three.js, largeur en m). coffre = [x, z] three.js, coffreY = hauteur du sol. 10 781 triangles visibles, 1,39 Mo, 2 textures 1024 px. Détails : LISEZMOI.txt section 6c.",
    "licence": "« Free GameReady Cottage » par Gerhald3D (TurboSquid). Le fichier LISEZ-MOI du modèle dit : « Feel free to use for any purposes, except re-sale ». Usage dans le jeu OK ; créditer l'auteur ; ne pas publier le fichier d'origine (modeles/sources/fournis/).",
    "_v002": "house_cottage_v002.glb : même objet maison_cottage, même taille, mêmes rampes, même coffre -> changer seulement « fichier ». Porche décoré (+ COL_banc, COL_buches, COL_pot_gauche, COL_pot_droite), un seul maillage à 5 matériaux (5 appels de dessin au lieu d'~30), 12 007 tri, 1,43 Mo. En plus : maison_cottage_loin (1 823 tri) pour THREE.LOD. Détails : LISEZMOI.txt section 10."
+  },
+  {
+   "id": "quartier",
+   "actif": true,
+   "fichier": "maisons_carte_v001.glb",
+   "objet": "maison_quartier",
+   "styles": [
+    "normal"
+   ],
+   "lieux": [
+    "quartier",
+    "ville",
+    "isolee"
+   ],
+   "proportion": 0.5,
+   "taille": {
+    "w": 10.0,
+    "d": 9.38,
+    "h": 5.85
+   },
+   "collisions": [
+    {
+     "nom": "COL_quartier_mur_arriere",
+     "min": [
+      -4.5,
+      0,
+      3.7
+     ],
+     "max": [
+      4.5,
+      3.2,
+      4.0
+     ]
+    },
+    {
+     "nom": "COL_quartier_mur_gauche",
+     "min": [
+      -4.5,
+      0,
+      -3.7
+     ],
+     "max": [
+      -4.2,
+      3.2,
+      3.7
+     ]
+    },
+    {
+     "nom": "COL_quartier_mur_droit",
+     "min": [
+      4.2,
+      0,
+      -3.7
+     ],
+     "max": [
+      4.5,
+      3.2,
+      3.7
+     ]
+    },
+    {
+     "nom": "COL_quartier_mur_avant_gauche",
+     "min": [
+      -4.5,
+      0,
+      -4.0
+     ],
+     "max": [
+      -0.9,
+      3.2,
+      -3.7
+     ]
+    },
+    {
+     "nom": "COL_quartier_mur_avant_droit",
+     "min": [
+      0.9,
+      0,
+      -4.0
+     ],
+     "max": [
+      4.5,
+      3.2,
+      -3.7
+     ]
+    },
+    {
+     "nom": "COL_quartier_mur_avant_dessus",
+     "min": [
+      -0.9,
+      2.5,
+      -4.0
+     ],
+     "max": [
+      0.9,
+      3.2,
+      -3.7
+     ]
+    },
+    {
+     "nom": "COL_quartier_sol",
+     "min": [
+      -4.2,
+      -0.1,
+      -3.7
+     ],
+     "max": [
+      4.2,
+      0.02,
+      3.7
+     ]
+    },
+    {
+     "nom": "COL_quartier_plafond_toit_bas",
+     "min": [
+      -4.5,
+      3.2,
+      -4.0
+     ],
+     "max": [
+      4.5,
+      4.35,
+      4.0
+     ]
+    },
+    {
+     "nom": "COL_quartier_toit_haut",
+     "min": [
+      -4.5,
+      4.35,
+      -2.0
+     ],
+     "max": [
+      4.5,
+      5.385,
+      2.0
+     ]
+    },
+    {
+     "nom": "COL_quartier_cheminee",
+     "min": [
+      2.25,
+      4.0,
+      1.05
+     ],
+     "max": [
+      2.95,
+      5.4,
+      1.75
+     ]
+    },
+    {
+     "nom": "COL_quartier_table",
+     "min": [
+      -0.9,
+      0.7,
+      -0.6
+     ],
+     "max": [
+      0.9,
+      0.78,
+      0.6
+     ]
+    },
+    {
+     "nom": "COL_quartier_lit",
+     "min": [
+      -4.1,
+      0.02,
+      1.6
+     ],
+     "max": [
+      -3.1,
+      0.55,
+      3.6
+     ]
+    },
+    {
+     "nom": "COL_quartier_armoire",
+     "min": [
+      3.3,
+      0.02,
+      -0.6
+     ],
+     "max": [
+      4.15,
+      1.9,
+      0.6
+     ]
+    }
+   ],
+   "rampes": [],
+   "coffre": [
+    3.2,
+    2.7
+   ],
+   "coffreY": 0.02,
+   "_livraison": "Session Modélisation. Coordonnées three.js relatives à l'origine (au sol, au centre). Porte au milieu de la façade avant (-Z) : 1.8 x 2.5 m, sans battant qui bloque. Sol intérieur à y = 0,02 (pas de marche, rampes vides). 13 boîtes de collision (ici ET en objets COL_ dans le .glb). 3080 triangles, couleurs par sommet (maisons_couleurs), verre_cosm, lumiere_*.",
+   "licence": "Design original NATX (session Modélisation), fait par script, aucune ressource externe.",
+   "_integration": "Branchée le 21 nov. 2026 par la session Développement. proportion = part des maisons de ce style remplacées par le modèle (la grange de la ferme : toujours)."
+  },
+  {
+   "id": "chalet",
+   "actif": true,
+   "fichier": "maisons_carte_v001.glb",
+   "objet": "maison_chalet",
+   "styles": [
+    "chalet"
+   ],
+   "lieux": [
+    "chalets",
+    "isolee"
+   ],
+   "proportion": 0.5,
+   "taille": {
+    "w": 10.28,
+    "d": 11.75,
+    "h": 6.65
+   },
+   "collisions": [
+    {
+     "nom": "COL_chalet_mur_arriere",
+     "min": [
+      -4.3,
+      0,
+      4.7
+     ],
+     "max": [
+      4.3,
+      3.0,
+      5.0
+     ]
+    },
+    {
+     "nom": "COL_chalet_mur_gauche",
+     "min": [
+      -4.3,
+      0,
+      -4.7
+     ],
+     "max": [
+      -4.0,
+      3.0,
+      4.7
+     ]
+    },
+    {
+     "nom": "COL_chalet_mur_droit",
+     "min": [
+      4.0,
+      0,
+      -4.7
+     ],
+     "max": [
+      4.3,
+      3.0,
+      4.7
+     ]
+    },
+    {
+     "nom": "COL_chalet_mur_avant_gauche",
+     "min": [
+      -4.3,
+      0,
+      -5.0
+     ],
+     "max": [
+      -0.9,
+      3.0,
+      -4.7
+     ]
+    },
+    {
+     "nom": "COL_chalet_mur_avant_droit",
+     "min": [
+      0.9,
+      0,
+      -5.0
+     ],
+     "max": [
+      4.3,
+      3.0,
+      -4.7
+     ]
+    },
+    {
+     "nom": "COL_chalet_mur_avant_dessus",
+     "min": [
+      -0.9,
+      2.5,
+      -5.0
+     ],
+     "max": [
+      0.9,
+      3.0,
+      -4.7
+     ]
+    },
+    {
+     "nom": "COL_chalet_sol",
+     "min": [
+      -4.0,
+      -0.1,
+      -4.7
+     ],
+     "max": [
+      4.0,
+      0.02,
+      4.7
+     ]
+    },
+    {
+     "nom": "COL_chalet_plafond_toit_bas",
+     "min": [
+      -4.3,
+      3.0,
+      -5.0
+     ],
+     "max": [
+      4.3,
+      4.65,
+      5.0
+     ]
+    },
+    {
+     "nom": "COL_chalet_toit_haut",
+     "min": [
+      -2.15,
+      4.65,
+      -5.0
+     ],
+     "max": [
+      2.15,
+      6.135,
+      5.0
+     ]
+    },
+    {
+     "nom": "COL_chalet_balcon",
+     "min": [
+      -2.2,
+      3.0,
+      -5.9
+     ],
+     "max": [
+      2.2,
+      3.12,
+      -5.0
+     ]
+    },
+    {
+     "nom": "COL_chalet_balcon_garde_corps",
+     "min": [
+      -2.2,
+      3.12,
+      -5.9
+     ],
+     "max": [
+      2.2,
+      3.92,
+      -5.78
+     ]
+    },
+    {
+     "nom": "COL_chalet_cheminee",
+     "min": [
+      -2.75,
+      3.6,
+      1.65
+     ],
+     "max": [
+      -2.05,
+      5.9,
+      2.35
+     ]
+    },
+    {
+     "nom": "COL_chalet_buches",
+     "min": [
+      4.3,
+      0,
+      2.4
+     ],
+     "max": [
+      5.0,
+      0.75,
+      3.6
+     ]
+    },
+    {
+     "nom": "COL_chalet_foyer",
+     "min": [
+      -4.0,
+      0.02,
+      1.4
+     ],
+     "max": [
+      -3.2,
+      1.2,
+      2.6
+     ]
+    },
+    {
+     "nom": "COL_chalet_table",
+     "min": [
+      -0.9,
+      0.7,
+      -0.6
+     ],
+     "max": [
+      0.9,
+      0.78,
+      0.6
+     ]
+    },
+    {
+     "nom": "COL_chalet_lit",
+     "min": [
+      -3.9,
+      0.02,
+      2.6
+     ],
+     "max": [
+      -2.9,
+      0.55,
+      4.6
+     ]
+    }
+   ],
+   "rampes": [],
+   "coffre": [
+    3.0,
+    3.7
+   ],
+   "coffreY": 0.02,
+   "_livraison": "Session Modélisation. Coordonnées three.js relatives à l'origine (au sol, au centre). Porte au milieu de la façade avant (-Z) : 1.8 x 2.5 m, sans battant qui bloque. Sol intérieur à y = 0,02 (pas de marche, rampes vides). 16 boîtes de collision (ici ET en objets COL_ dans le .glb). 4504 triangles, couleurs par sommet (maisons_couleurs), verre_cosm, lumiere_*.",
+   "licence": "Design original NATX (session Modélisation), fait par script, aucune ressource externe.",
+   "_integration": "Branchée le 21 nov. 2026 par la session Développement. proportion = part des maisons de ce style remplacées par le modèle (la grange de la ferme : toujours)."
+  },
+  {
+   "id": "grange",
+   "actif": true,
+   "fichier": "maisons_carte_v001.glb",
+   "objet": "maison_grange",
+   "styles": [
+    "grange"
+   ],
+   "lieux": [
+    "ferme"
+   ],
+   "proportion": 1,
+   "taille": {
+    "w": 13.1,
+    "d": 11.08,
+    "h": 8.92
+   },
+   "collisions": [
+    {
+     "nom": "COL_grange_mur_arriere",
+     "min": [
+      -6.0,
+      0,
+      4.7
+     ],
+     "max": [
+      6.0,
+      4.2,
+      5.0
+     ]
+    },
+    {
+     "nom": "COL_grange_mur_gauche",
+     "min": [
+      -6.0,
+      0,
+      -4.7
+     ],
+     "max": [
+      -5.7,
+      4.2,
+      4.7
+     ]
+    },
+    {
+     "nom": "COL_grange_mur_droit",
+     "min": [
+      5.7,
+      0,
+      -4.7
+     ],
+     "max": [
+      6.0,
+      4.2,
+      4.7
+     ]
+    },
+    {
+     "nom": "COL_grange_mur_avant_gauche",
+     "min": [
+      -6.0,
+      0,
+      -5.0
+     ],
+     "max": [
+      -1.8,
+      4.2,
+      -4.7
+     ]
+    },
+    {
+     "nom": "COL_grange_mur_avant_droit",
+     "min": [
+      1.8,
+      0,
+      -5.0
+     ],
+     "max": [
+      6.0,
+      4.2,
+      -4.7
+     ]
+    },
+    {
+     "nom": "COL_grange_mur_avant_dessus",
+     "min": [
+      -1.8,
+      3.8,
+      -5.0
+     ],
+     "max": [
+      1.8,
+      4.2,
+      -4.7
+     ]
+    },
+    {
+     "nom": "COL_grange_sol",
+     "min": [
+      -5.7,
+      -0.1,
+      -4.7
+     ],
+     "max": [
+      5.7,
+      0.02,
+      4.7
+     ]
+    },
+    {
+     "nom": "COL_grange_plafond_toit_bas",
+     "min": [
+      -6.0,
+      4.2,
+      -5.0
+     ],
+     "max": [
+      6.0,
+      5.9,
+      5.0
+     ]
+    },
+    {
+     "nom": "COL_grange_toit_haut",
+     "min": [
+      -6.0,
+      5.9,
+      -2.5
+     ],
+     "max": [
+      6.0,
+      7.43,
+      2.5
+     ]
+    },
+    {
+     "nom": "COL_grange_foin_gauche",
+     "min": [
+      -4.95,
+      0,
+      2.9
+     ],
+     "max": [
+      -2.5,
+      1.25,
+      4.0
+     ]
+    },
+    {
+     "nom": "COL_grange_foin_droit",
+     "min": [
+      3.5,
+      0,
+      1.5
+     ],
+     "max": [
+      4.8,
+      0.65,
+      3.7
+     ]
+    }
+   ],
+   "rampes": [],
+   "coffre": [
+    -4.5,
+    -1.5
+   ],
+   "coffreY": 0.02,
+   "_livraison": "Session Modélisation. Coordonnées three.js relatives à l'origine (au sol, au centre). Porte au milieu de la façade avant (-Z) : 3.6 x 3.8 m, sans battant qui bloque. Sol intérieur à y = 0,02 (pas de marche, rampes vides). 11 boîtes de collision (ici ET en objets COL_ dans le .glb). 1956 triangles, couleurs par sommet (maisons_couleurs), verre_cosm, lumiere_*.",
+   "licence": "Design original NATX (session Modélisation), fait par script, aucune ressource externe.",
+   "_integration": "Branchée le 21 nov. 2026 par la session Développement. proportion = part des maisons de ce style remplacées par le modèle (la grange de la ferme : toujours)."
+  },
+  {
+   "id": "adobe",
+   "actif": true,
+   "fichier": "maisons_carte_v001.glb",
+   "objet": "maison_adobe",
+   "styles": [
+    "adobe"
+   ],
+   "lieux": [
+    "desert",
+    "isolee"
+   ],
+   "proportion": 0.5,
+   "taille": {
+    "w": 9.46,
+    "d": 10.2,
+    "h": 4.34
+   },
+   "collisions": [
+    {
+     "nom": "COL_adobe_mur_arriere",
+     "min": [
+      -4.5,
+      0,
+      4.2
+     ],
+     "max": [
+      4.5,
+      3.4,
+      4.5
+     ]
+    },
+    {
+     "nom": "COL_adobe_mur_gauche",
+     "min": [
+      -4.5,
+      0,
+      -4.2
+     ],
+     "max": [
+      -4.2,
+      3.4,
+      4.2
+     ]
+    },
+    {
+     "nom": "COL_adobe_mur_droit",
+     "min": [
+      4.2,
+      0,
+      -4.2
+     ],
+     "max": [
+      4.5,
+      3.4,
+      4.2
+     ]
+    },
+    {
+     "nom": "COL_adobe_mur_avant_gauche",
+     "min": [
+      -4.5,
+      0,
+      -4.5
+     ],
+     "max": [
+      -0.9,
+      3.4,
+      -4.2
+     ]
+    },
+    {
+     "nom": "COL_adobe_mur_avant_droit",
+     "min": [
+      0.9,
+      0,
+      -4.5
+     ],
+     "max": [
+      4.5,
+      3.4,
+      -4.2
+     ]
+    },
+    {
+     "nom": "COL_adobe_mur_avant_dessus",
+     "min": [
+      -0.9,
+      2.5,
+      -4.5
+     ],
+     "max": [
+      0.9,
+      3.4,
+      -4.2
+     ]
+    },
+    {
+     "nom": "COL_adobe_sol",
+     "min": [
+      -4.2,
+      -0.1,
+      -4.2
+     ],
+     "max": [
+      4.2,
+      0.02,
+      4.2
+     ]
+    },
+    {
+     "nom": "COL_adobe_toit",
+     "min": [
+      -4.5,
+      3.4,
+      -4.5
+     ],
+     "max": [
+      4.5,
+      3.62,
+      4.5
+     ]
+    },
+    {
+     "nom": "COL_adobe_parapet_arriere",
+     "min": [
+      -4.5,
+      3.62,
+      4.25
+     ],
+     "max": [
+      4.5,
+      4.1,
+      4.5
+     ]
+    },
+    {
+     "nom": "COL_adobe_parapet_avant",
+     "min": [
+      -4.5,
+      3.62,
+      -4.5
+     ],
+     "max": [
+      4.5,
+      4.1,
+      -4.25
+     ]
+    },
+    {
+     "nom": "COL_adobe_parapet_gauche",
+     "min": [
+      -4.5,
+      3.62,
+      -4.25
+     ],
+     "max": [
+      -4.25,
+      4.1,
+      4.25
+     ]
+    },
+    {
+     "nom": "COL_adobe_parapet_droit",
+     "min": [
+      4.25,
+      3.62,
+      -4.25
+     ],
+     "max": [
+      4.5,
+      4.1,
+      4.25
+     ]
+    },
+    {
+     "nom": "COL_adobe_pots",
+     "min": [
+      -1.95,
+      0,
+      -5.25
+     ],
+     "max": [
+      -1.25,
+      0.6,
+      -4.55
+     ]
+    },
+    {
+     "nom": "COL_adobe_pots_droite",
+     "min": [
+      3.55,
+      0,
+      -5.25
+     ],
+     "max": [
+      4.25,
+      0.65,
+      -4.55
+     ]
+    },
+    {
+     "nom": "COL_adobe_table",
+     "min": [
+      -0.9,
+      0.7,
+      -0.6
+     ],
+     "max": [
+      0.9,
+      0.78,
+      0.6
+     ]
+    },
+    {
+     "nom": "COL_adobe_lit",
+     "min": [
+      -4.1,
+      0.02,
+      2.1
+     ],
+     "max": [
+      -3.1,
+      0.55,
+      4.1
+     ]
+    }
+   ],
+   "rampes": [],
+   "coffre": [
+    3.2,
+    3.2
+   ],
+   "coffreY": 0.02,
+   "_livraison": "Session Modélisation. Coordonnées three.js relatives à l'origine (au sol, au centre). Porte au milieu de la façade avant (-Z) : 1.8 x 2.5 m, sans battant qui bloque. Sol intérieur à y = 0,02 (pas de marche, rampes vides). 16 boîtes de collision (ici ET en objets COL_ dans le .glb). 2748 triangles, couleurs par sommet (maisons_couleurs), verre_cosm, lumiere_*.",
+   "licence": "Design original NATX (session Modélisation), fait par script, aucune ressource externe.",
+   "_integration": "Branchée le 21 nov. 2026 par la session Développement. proportion = part des maisons de ce style remplacées par le modèle (la grange de la ferme : toujours)."
   }
  ],
+ "_vegetation_aide": "Formes modélisées des arbres, rochers et buissons (21 nov. 2026) : elles remplacent les formes faites en code dans les InstancedMesh de js/monde.js (mêmes unités, mêmes échelles, mêmes teintes par instance). actif:false = formes en code.",
+ "vegetation": {
+  "actif": true,
+  "fichier": "vegetation_v001.glb"
+ },
  "armes": [
   {
    "id": "futuriste",
@@ -89,7 +942,7 @@
   {
    "id": "soin",
    "actif": true,
-   "fichier": "esprits_v002.glb",
+   "fichier": "esprits_v003.glb",
    "objet": "esprit_soin",
    "nom": "Pousse",
    "couleur": "#a8ff7a",
@@ -100,7 +953,8 @@
     "attente2": "soin_attente2",
     "deplacer": "soin_deplacer",
     "content": "soin_content",
-    "surpris": "soin_surpris"
+    "surpris": "soin_surpris",
+    "obtention": "soin_obtention"
    },
    "durees": {
     "flotter": 2.0,
@@ -122,7 +976,7 @@
   {
    "id": "mobilite",
    "actif": true,
-   "fichier": "esprits_v002.glb",
+   "fichier": "esprits_v003.glb",
    "objet": "esprit_mobilite",
    "nom": "Filou",
    "couleur": "#5ff2ff",
@@ -133,7 +987,8 @@
     "attente2": "mobilite_attente2",
     "deplacer": "mobilite_deplacer",
     "content": "mobilite_content",
-    "surpris": "mobilite_surpris"
+    "surpris": "mobilite_surpris",
+    "obtention": "mobilite_obtention"
    },
    "durees": {
     "flotter": 2.0,
@@ -155,7 +1010,7 @@
   {
    "id": "protection",
    "actif": true,
-   "fichier": "esprits_v002.glb",
+   "fichier": "esprits_v003.glb",
    "objet": "esprit_protection",
    "nom": "Gardien",
    "couleur": "#9ff0ff",
@@ -166,7 +1021,8 @@
     "attente2": "protection_attente2",
     "deplacer": "protection_deplacer",
     "content": "protection_content",
-    "surpris": "protection_surpris"
+    "surpris": "protection_surpris",
+    "obtention": "protection_obtention"
    },
    "durees": {
     "flotter": 2.0,
@@ -188,7 +1044,7 @@
   {
    "id": "vision",
    "actif": true,
-   "fichier": "esprits_v002.glb",
+   "fichier": "esprits_v003.glb",
    "objet": "esprit_vision",
    "nom": "Zyeuto",
    "couleur": "#ff6ef0",
@@ -199,7 +1055,8 @@
     "attente2": "vision_attente2",
     "deplacer": "vision_deplacer",
     "content": "vision_content",
-    "surpris": "vision_surpris"
+    "surpris": "vision_surpris",
+    "obtention": "vision_obtention"
    },
    "durees": {
     "flotter": 2.0,
@@ -221,7 +1078,7 @@
   {
    "id": "batisseur",
    "actif": true,
-   "fichier": "esprits_v002.glb",
+   "fichier": "esprits_v003.glb",
    "objet": "esprit_batisseur",
    "nom": "Briquet",
    "couleur": "#fff0a8",
@@ -232,7 +1089,8 @@
     "attente2": "batisseur_attente2",
     "deplacer": "batisseur_deplacer",
     "content": "batisseur_content",
-    "surpris": "batisseur_surpris"
+    "surpris": "batisseur_surpris",
+    "obtention": "batisseur_obtention"
    },
    "durees": {
     "flotter": 2.0,
@@ -250,13 +1108,381 @@
     0.15
    ],
    "triangles": 3622
+  },
+  {
+   "id": "feu",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_feu",
+   "nom": "Braise",
+   "couleur": "#ff7a3d",
+   "animations": {
+    "flotter": "feu_flotter",
+    "activer": "feu_activer",
+    "apparaitre": "feu_apparaitre",
+    "attente2": "feu_attente2",
+    "deplacer": "feu_deplacer",
+    "content": "feu_content",
+    "surpris": "feu_surpris",
+    "obtention": "feu_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.45,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2782,
+   "_effets_caches": [
+    "feu_boule"
+   ]
+  },
+  {
+   "id": "glace",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_glace",
+   "nom": "Givrette",
+   "couleur": "#9fd8ff",
+   "animations": {
+    "flotter": "glace_flotter",
+    "activer": "glace_activer",
+    "apparaitre": "glace_apparaitre",
+    "attente2": "glace_attente2",
+    "deplacer": "glace_deplacer",
+    "content": "glace_content",
+    "surpris": "glace_surpris",
+    "obtention": "glace_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.47,
+    "h": 0.46,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3564,
+   "_effets_caches": [
+    "glace_blizzard"
+   ]
+  },
+  {
+   "id": "foudre",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_foudre",
+   "nom": "Zap",
+   "couleur": "#ffe14d",
+   "animations": {
+    "flotter": "foudre_flotter",
+    "activer": "foudre_activer",
+    "apparaitre": "foudre_apparaitre",
+    "attente2": "foudre_attente2",
+    "deplacer": "foudre_deplacer",
+    "content": "foudre_content",
+    "surpris": "foudre_surpris",
+    "obtention": "foudre_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.0,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.5,
+    "h": 0.49,
+    "d": 0.47
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3572,
+   "_effets_caches": [
+    "foudre_trait"
+   ]
+  },
+  {
+   "id": "eau",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_eau",
+   "nom": "Goutte",
+   "couleur": "#4fb3ff",
+   "animations": {
+    "flotter": "eau_flotter",
+    "activer": "eau_activer",
+    "apparaitre": "eau_apparaitre",
+    "attente2": "eau_attente2",
+    "deplacer": "eau_deplacer",
+    "content": "eau_content",
+    "surpris": "eau_surpris",
+    "obtention": "eau_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.33,
+    "d": 0.44
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3922,
+   "_effets_caches": [
+    "eau_bulle"
+   ]
+  },
+  {
+   "id": "nature",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_nature",
+   "nom": "Racine",
+   "couleur": "#c9a25a",
+   "animations": {
+    "flotter": "nature_flotter",
+    "activer": "nature_activer",
+    "apparaitre": "nature_apparaitre",
+    "attente2": "nature_attente2",
+    "deplacer": "nature_deplacer",
+    "content": "nature_content",
+    "surpris": "nature_surpris",
+    "obtention": "nature_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.55,
+    "h": 0.41,
+    "d": 0.51
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3770,
+   "_effets_caches": [
+    "nature_ronces"
+   ]
+  },
+  {
+   "id": "ombre",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_ombre",
+   "nom": "Minuit",
+   "couleur": "#8a6bff",
+   "animations": {
+    "flotter": "ombre_flotter",
+    "activer": "ombre_activer",
+    "apparaitre": "ombre_apparaitre",
+    "attente2": "ombre_attente2",
+    "deplacer": "ombre_deplacer",
+    "content": "ombre_content",
+    "surpris": "ombre_surpris",
+    "obtention": "ombre_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.43,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3788,
+   "_effets_caches": [
+    "ombre_double"
+   ]
+  },
+  {
+   "id": "chance",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_chance",
+   "nom": "Pépite",
+   "couleur": "#ffc83d",
+   "animations": {
+    "flotter": "chance_flotter",
+    "activer": "chance_activer",
+    "apparaitre": "chance_apparaitre",
+    "attente2": "chance_attente2",
+    "deplacer": "chance_deplacer",
+    "content": "chance_content",
+    "surpris": "chance_surpris",
+    "obtention": "chance_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.43,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3468,
+   "_effets_caches": [
+    "chance_cadeau"
+   ]
+  },
+  {
+   "id": "temps",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_temps",
+   "nom": "Tic-Tac",
+   "couleur": "#c9b6ff",
+   "animations": {
+    "flotter": "temps_flotter",
+    "activer": "temps_activer",
+    "apparaitre": "temps_apparaitre",
+    "attente2": "temps_attente2",
+    "deplacer": "temps_deplacer",
+    "content": "temps_content",
+    "surpris": "temps_surpris",
+    "obtention": "temps_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.39,
+    "d": 0.17
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3880,
+   "_effets_caches": []
+  },
+  {
+   "id": "vent",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_vent",
+   "nom": "Zephyr",
+   "couleur": "#b8fff0",
+   "animations": {
+    "flotter": "vent_flotter",
+    "activer": "vent_activer",
+    "apparaitre": "vent_apparaitre",
+    "attente2": "vent_attente2",
+    "deplacer": "vent_deplacer",
+    "content": "vent_content",
+    "surpris": "vent_surpris",
+    "obtention": "vent_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.0,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.55,
+    "h": 0.37,
+    "d": 0.36
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3536,
+   "_effets_caches": [
+    "vent_bourrasque"
+   ]
+  },
+  {
+   "id": "etoile",
+   "actif": true,
+   "fichier": "esprits_plus_v001.glb",
+   "objet": "esprit_etoile",
+   "nom": "Lumi",
+   "couleur": "#fff27a",
+   "animations": {
+    "flotter": "etoile_flotter",
+    "activer": "etoile_activer",
+    "apparaitre": "etoile_apparaitre",
+    "attente2": "etoile_attente2",
+    "deplacer": "etoile_deplacer",
+    "content": "etoile_content",
+    "surpris": "etoile_surpris",
+    "obtention": "etoile_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.5,
+    "h": 0.36,
+    "d": 0.48
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3628,
+   "_effets_caches": [
+    "etoile_trainee"
+   ]
   }
  ],
  "socles": [
   {
    "id": "esprit",
    "actif": true,
-   "fichier": "esprits_v002.glb",
+   "fichier": "esprits_v003.glb",
    "objet": "socle_esprit",
    "hauteurEsprit": 1.0,
    "animation": "socle_tourner",
@@ -454,8 +1680,8 @@
   {
    "actif": true,
    "categorie": "tenue",
-   "fichier": "tenues_250_v001.glb",
-   "fiche": "tenues_250_v001.json",
+   "fichier": "tenues_250_v002.glb",
+   "fiche": "tenues_250_v002.json",
    "objets": [
     "tenue_alchimiste_dore",
     "tenue_apprenti_meteore",
@@ -509,7 +1735,7 @@
     "tenue_voyageuse_stellaire"
    ],
    "livre_le": "2026-11-21",
-   "verifie": "50 images 256² + 147 pièces sur les articulations"
+   "verifie": "v002 premium (21 nov.) : 50 images 256² + 274 pièces sur les articulations ; la v001 reste dans modeles/"
   },
   {
    "actif": true,
@@ -607,7 +1833,20 @@
    "verifie": "atlas 8×8 + réglages"
   }
  ],
+ "_tenues_hd_aide": "Tenues en version réaliste HD (21 nov. 2026) : UN index pour les 20 tenues de base, la Tenue Staff et les 50 du catalogue. hd = image 512 px + relief + lueur (ton personnage, les menus) ; images _256 sans relief pour les autres joueurs et la qualité basse. actif:false = le jeu reprend les tenues dessinées en code et les images 256 de la fiche des 250.",
+ "tenues_hd": {
+  "actif": true,
+  "fiche": "tenues_hd_v001.json"
+ },
+ "_animations_perso_aide": "Animations du personnage livrées le 21 nov. 2026 (facultatives, posées par-dessus les mouvements du code) : attente à l'arrêt, présentation dans les menus, 3 coups de pioche, deltaplane (vol + virages). actif:false = le jeu garde seulement ses mouvements en code.",
+ "animations_perso": {
+  "actif": true,
+  "fichier": "animations_perso_v001.glb",
+  "fiche": "animations_perso_v001.json"
+ },
  "_esprits_v002": "21 nov. 2026 : esprits_v002.glb (mêmes nœuds et animations que v001 + attente2, deplacer, content, surpris, yeux_joie). v001 gardé dans modeles/ pour revenir en arrière.",
+ "_esprits_v003": "21 nov. 2026 : esprits_v003.glb branché (v002 + <id>_obtention 2,5 s jouée quand un joueur reçoit un esprit, + <id>_eclat caché au repos). v002 gardé dans modeles/ pour revenir en arrière.",
+ "_esprits_plus": "21 nov. 2026 : les 10 esprits ajoutés (feu, glace, foudre, eau, nature, ombre, chance, temps, vent, etoile) viennent d'esprits_plus_v001.glb. Leurs pouvoirs sont dans js/esprits.js, js/hote.js et js/jeu.js. Sans ce fichier, le jeu les montre avec une forme de secours faite en code.",
  "_cargaisons_aide": "Événement de cargaison (livraison F, 21 nov. 2026) : caisse « cargaison » (enfants corps/parachute/rayon/COL_caisse ; anim cargaison_descendre/atterrir/ouvrir/balise) et cargo volant « transporteur » (anim transporteur_voler/larguer, caisse lâchée à t=0,45 s en (0 ; -1,8 ; 0)).",
  "cargaisons": [
   {

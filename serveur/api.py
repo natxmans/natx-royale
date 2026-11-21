@@ -626,7 +626,15 @@ TURN_API_METERED = os.environ.get('NATX_TURN_API_METERED', 'https://{app}.metere
 DUREE_RELAIS = 12 * 3600
 # un accès Metered tout neuf met jusqu'à 2 minutes à marcher partout : on le prépare à l'avance et on attend avant de le donner
 ATTENTE_RELAIS = {'metered': 150}
-_relais = {'serveurs': None, 'fin': 0, 'suivants': None, 'suivants_le': 0, 'suivants_fin': 0, 'echec_le': 0}
+_relais = {'serveurs': None, 'fin': 0, 'suivants': None, 'suivants_le': 0, 'suivants_fin': 0, 'echec_le': 0, 'erreur': None}
+
+
+class ErreurFournisseur(Exception):
+    """Le fournisseur du relais a refusé la demande : son code HTTP et le début de son message (jamais notre clé)."""
+
+    def __init__(self, code, detail=''):
+        super().__init__(f'HTTP {code}')
+        self.code, self.detail = code, detail
 _verrou_relais = threading.Lock()
 
 
@@ -662,11 +670,19 @@ def fournisseur_relais():
 
 def appel_json(url, methode='GET', corps=None, entetes=None):
     """Petit appel HTTPS vers le fournisseur du relais (remplacé par un faux dans les tests)."""
+    import urllib.error
     import urllib.request
     demande = urllib.request.Request(url, data=json.dumps(corps).encode() if corps is not None else None,
-                                     headers={'Content-Type': 'application/json', **(entetes or {})}, method=methode)
-    with urllib.request.urlopen(demande, timeout=6) as r:
-        return json.loads(r.read().decode('utf-8'))
+                                     headers={'Content-Type': 'application/json', 'User-Agent': 'natx-royale-serveur', **(entetes or {})}, method=methode)
+    try:
+        with urllib.request.urlopen(demande, timeout=6) as r:
+            return json.loads(r.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        try:
+            detail = e.read(600).decode('utf-8', 'replace')
+        except Exception:
+            detail = ''
+        raise ErreurFournisseur(e.code, detail) from None
 
 
 def acces_relais(fournisseur):
@@ -714,9 +730,15 @@ def serveurs_relais():
         try:
             nouveaux = acces_relais(f)
         except Exception as e:  # le jeu se débrouillera sans relais (on n'écrit jamais l'adresse appelée : elle contient la clé)
-            print('Relais TURN indisponible :', type(e).__name__, getattr(e, 'code', ''), file=sys.stderr)
+            message = f"{type(e).__name__} {getattr(e, 'code', '')} {getattr(e, 'detail', '') or e}"
+            jeton = os.environ.get('NATX_TURN_JETON', '')
+            for secret in {jeton, quote(jeton, safe='')} - {''}:  # par sécurité : la clé ne doit jamais apparaître dans un message
+                message = message.replace(secret, '•••')
+            r['erreur'] = {'message': ' '.join(message.split())[:300], 'le': t}
+            print('Relais TURN indisponible :', r['erreur']['message'], file=sys.stderr)
             r['echec_le'] = t
             return valables() or []
+        r['erreur'] = None
         if valables() and ATTENTE_RELAIS.get(f):
             r['suivants'], r['suivants_le'], r['suivants_fin'] = nouveaux, t, t + DUREE_RELAIS
         else:
