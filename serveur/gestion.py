@@ -65,6 +65,26 @@ def joueur_par_code(db, code):
     return api.joueur_par_code(db, code)
 
 
+# ---------- Reconnaître les joueurs : code + dernier pseudo + surnom donné par les admins ----------
+def qui_lot(db, jids):
+    jids = [j for j in dict.fromkeys(jids) if j]
+    if not jids:
+        return {}
+    res = {j: {'code': code_court(j), 'pseudo': None, 'surnom': None} for j in jids}
+    for i in range(0, len(jids), 400):
+        part = jids[i:i + 400]
+        marques = ','.join('?' * len(part))
+        for l in db.execute(f'SELECT joueur_id, pseudo FROM profils WHERE joueur_id IN ({marques})', part):
+            res[l['joueur_id']]['pseudo'] = l['pseudo'] or None
+        for l in db.execute(f'SELECT joueur_id, surnom FROM joueurs_notes WHERE joueur_id IN ({marques})', part):
+            res[l['joueur_id']]['surnom'] = l['surnom'] or None
+    return res
+
+
+def qui(db, jid):
+    return qui_lot(db, [jid]).get(jid) if jid else None
+
+
 # ================================================================ sauvegardes
 DOSSIER_SAUV = os.path.join(api.DONNEES, 'sauvegardes')
 RE_SAUV = re.compile(r'natx-(\d{8}-\d{6})-(auto|manuelle|avant-restauration)\.db')
@@ -347,6 +367,11 @@ def api_profil(req, db):
             esprits.append({'type': e['type'][:20], 'rarete': e['rarete'], 'n': entier(e.get('n'), 1, 999, 1)})
     stats = {k: entier(v, 0, 10 ** 7) for k, v in (p.get('stats') or {}).items() if isinstance(k, str) and len(k) < 20} \
         if isinstance(p.get('stats'), dict) else {}
+    pseudo = nettoyer(p.get('pseudo'), 20)
+    if pseudo:
+        t = maintenant()
+        db.execute("""INSERT INTO pseudos_joueurs(joueur_id, pseudo, premier, dernier) VALUES (?,?,?,?)
+            ON CONFLICT(joueur_id, pseudo) DO UPDATE SET dernier=excluded.dernier""", (jid, pseudo, t, t))
     db.execute("""INSERT OR REPLACE INTO profils(joueur_id, pseudo, niveau, xp, pieces, possedes, equipe, esprits, stats, version, maj_le)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)""", (jid, nettoyer(p.get('pseudo'), 20), entier(p.get('niveau'), 0, 9999), entier(p.get('xp'), 0, 10 ** 9),
                                            entier(p.get('pieces'), 0, 10 ** 8), json.dumps(possedes), json.dumps(equipe), json.dumps(esprits),
@@ -632,6 +657,7 @@ def admin_journal(req, db):
         e.pop('ip_hash', None)
         e['details'] = charger_json(e['details'], None)
         if e.get('cible', '') and str(e['cible']).startswith('joueur:'):
+            e['cible_qui'] = qui(db, e['cible'][7:])
             e['cible'] = 'joueur:' + code_court(e['cible'][7:])
         lignes.append(e)
     cats = [r[0] for r in db.execute('SELECT DISTINCT categorie FROM journal WHERE categorie IS NOT NULL AND categorie<>"" ORDER BY 1')]
@@ -784,7 +810,9 @@ def admin_joueurs(req, db):
         if len(hexa) >= 4 and re.fullmatch(r'[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{0,4}', q):
             conds.append('j.id LIKE ?'); params.append(hexa[:8] + '%')
         else:
-            conds.append("p.pseudo LIKE ? ESCAPE '\\'"); params.append(motif_like(q))
+            conds.append("""(p.pseudo LIKE ? ESCAPE '\\' OR EXISTS (SELECT 1 FROM joueurs_notes n WHERE n.joueur_id=j.id AND (n.surnom LIKE ? ESCAPE '\\' OR n.note LIKE ? ESCAPE '\\'))
+                OR EXISTS (SELECT 1 FROM pseudos_joueurs h WHERE h.joueur_id=j.id AND h.pseudo LIKE ? ESCAPE '\\'))""")
+            params += [motif_like(q)] * 4
     filtre = req.query.get('filtre')
     if filtre == 'connectes':
         conds.append('j.vu_le > ?'); params.append(t - 120)
@@ -804,10 +832,12 @@ def admin_joueurs(req, db):
         FROM joueurs j LEFT JOIN profils p ON p.joueur_id=j.id WHERE {where}
         ORDER BY COALESCE(j.vu_le, j.cree_le) DESC LIMIT 50 OFFSET ?""", params + [page_de(req) * 50]).fetchall()
     joueurs = []
+    noms = qui_lot(db, [l['id'] for l in lignes])
     for l in lignes:
         j = dict(l)
         j['sanctions'] = resume_sanctions(db, j['id'])
         j['connecte'] = bool(j['vu_le'] and j['vu_le'] > t - 120)
+        j['surnom'] = noms[j['id']]['surnom']
         j['code'] = code_court(j.pop('id'))
         joueurs.append(j)
     return 200, {'total': total, 'page': page_de(req), 'joueurs': joueurs}
@@ -843,6 +873,8 @@ def admin_joueur(req, db, code):
                      for l in db.execute('SELECT * FROM journal WHERE cible=? ORDER BY id DESC LIMIT 40', ('joueur:' + jid,))]
     return 200, {
         'code': code_court(jid), 'cree_le': j['cree_le'], 'vu_le': j['vu_le'], 'connecte': bool(j['vu_le'] and j['vu_le'] > maintenant() - 120),
+        'qui': qui(db, jid), 'note': (db.execute('SELECT note FROM joueurs_notes WHERE joueur_id=?', (jid,)).fetchone() or {'note': None})['note'],
+        'pseudos': [dict(l) for l in db.execute('SELECT pseudo, premier, dernier FROM pseudos_joueurs WHERE joueur_id=? ORDER BY dernier DESC LIMIT 20', (jid,))],
         'profil': profil, 'sanctions': sanctions, 'sanctions_actives': resume_sanctions(db, jid),
         'connexions': [dict(l) for l in db.execute('SELECT jour, premiere, derniere, nb FROM connexions_joueurs WHERE joueur_id=? ORDER BY jour DESC LIMIT 30', (jid,))],
         'parties': [dict(l) for l in db.execute('SELECT cree_le, mode, nb_joueurs, place, kills, duree FROM parties WHERE joueur_id=? ORDER BY cree_le DESC LIMIT 20', (jid,))],
@@ -856,6 +888,22 @@ def admin_joueur(req, db, code):
     }
 
 
+def admin_joueur_surnom(req, db, code):
+    """Surnom + note privée pour reconnaître un joueur (visibles seulement dans l'espace admin, jamais dans le jeu)."""
+    s = session_admin(req, db, ecriture=True, permission='joueurs.sanctionner')
+    jid = joueur_par_code(db, code[1:])
+    d = req.json()
+    surnom, note = nettoyer(d.get('surnom'), 30) or None, nettoyer(d.get('note'), 300) or None
+    avant = db.execute('SELECT surnom, note FROM joueurs_notes WHERE joueur_id=?', (jid,)).fetchone()
+    if surnom or note:
+        db.execute('INSERT OR REPLACE INTO joueurs_notes(joueur_id, surnom, note, maj_le, maj_par) VALUES (?,?,?,?,?)', (jid, surnom, note, maintenant(), s['admin_id']))
+    else:
+        db.execute('DELETE FROM joueurs_notes WHERE joueur_id=?', (jid,))
+    journaliser(db, s, f'surnom de {code_court(jid)} : « {surnom or "—"} »', 'joueurs', 'joueur:' + jid,
+                {'avant': dict(avant) if avant else None, 'apres': {'surnom': surnom, 'note': note}}, req=req)
+    return 200, {'ok': True, 'qui': qui(db, jid)}
+
+
 def admin_sanctions(req, db):
     session_admin(req, db, permission='joueurs.voir')
     t = maintenant()
@@ -865,8 +913,11 @@ def admin_sanctions(req, db):
         conds.append('s.leve_le IS NULL AND (s.fin IS NULL OR s.fin>?)'); params.append(t)
     ids_admins = {l['id']: l['identifiant'] for l in db.execute('SELECT id, identifiant FROM admins')}
     lignes = []
-    for l in db.execute(f"SELECT s.* FROM sanctions s WHERE {' AND '.join(conds)} ORDER BY s.id DESC LIMIT 100 OFFSET ?", params + [page_de(req) * 100]):
+    lignes_s = db.execute(f"SELECT s.* FROM sanctions s WHERE {' AND '.join(conds)} ORDER BY s.id DESC LIMIT 100 OFFSET ?", params + [page_de(req) * 100]).fetchall()
+    noms = qui_lot(db, [l['joueur_id'] for l in lignes_s])
+    for l in lignes_s:
         e = dict(l)
+        e['joueur_qui'] = noms.get(e['joueur_id'])
         e['joueur'] = code_court(e.pop('joueur_id'))
         e['par'], e['leve_par_nom'] = ids_admins.get(l['admin_id']), ids_admins.get(l['leve_par'])
         e['active'] = not l['leve_le'] and (not l['fin'] or l['fin'] > t)
@@ -920,8 +971,11 @@ def admin_signalements(req, db):
     where = ' AND '.join(conds)
     total = un(db, f'SELECT COUNT(*) FROM signalements WHERE {where}', *params)
     lignes = []
-    for l in db.execute(f'SELECT * FROM signalements WHERE {where} ORDER BY id DESC LIMIT 50 OFFSET ?', params + [page_de(req) * 50]):
+    brutes = db.execute(f'SELECT * FROM signalements WHERE {where} ORDER BY id DESC LIMIT 50 OFFSET ?', params + [page_de(req) * 50]).fetchall()
+    noms = qui_lot(db, [l['auteur_id'] for l in brutes] + [l['cible_id'] for l in brutes])
+    for l in brutes:
         e = dict(l)
+        e['auteur_qui'], e['cible_qui'] = noms.get(l['auteur_id']), noms.get(l['cible_id'])
         e['auteur'] = code_court(e.pop('auteur_id'))
         cible = e.pop('cible_id')
         e['cible'] = code_court(cible) if cible else None
@@ -973,8 +1027,10 @@ def admin_cadeaux(req, db):
         FROM cadeaux c LEFT JOIN admins a ON a.id=c.admin_id WHERE {where} ORDER BY c.id DESC LIMIT 100 OFFSET ?""",
                         params + [page_de(req) * 100]).fetchall()
     sortie = []
+    noms = qui_lot(db, [l['joueur_id'] for l in lignes])
     for l in lignes:
         c = api.contenu_cadeau(l)
+        c['joueur_qui'] = noms.get(l['joueur_id'])
         c.update({'cible': l['cible'], 'joueur_code': code_court(l['joueur_id']), 'code': api.formater_code(l['code']),
                   'max_utilisations': l['max_utilisations'], 'actif': l['actif'], 'expire_le': l['expire_le'], 'cree_le': l['cree_le'],
                   'recus': l['recus'], 'ouverts': l['ouverts'], 'en_attente': l['en_attente'], 'annules': l['annules'], 'auteur': l['auteur']})
@@ -985,10 +1041,11 @@ def admin_cadeaux(req, db):
 def admin_cadeau_livraisons(req, db, cid):
     session_admin(req, db, permission='cadeaux.voir')
     api.cadeau_existant(db, cid)
-    lignes = [{'joueur': code_court(l['joueur_id']), 'pseudo': l['pseudo'], 'recu_le': l['recu_le'], 'ouvert_le': l['ouvert_le'],
-               'annule_le': l['annule_le'], 'remplace_par': l['remplace_par']}
-              for l in db.execute("""SELECT r.*, p.pseudo FROM cadeaux_recus r LEFT JOIN profils p ON p.joueur_id=r.joueur_id
-                  WHERE r.cadeau_id=? ORDER BY r.recu_le DESC LIMIT 300""", (cid,))]
+    brutes = db.execute("""SELECT r.*, p.pseudo FROM cadeaux_recus r LEFT JOIN profils p ON p.joueur_id=r.joueur_id
+                  WHERE r.cadeau_id=? ORDER BY r.recu_le DESC LIMIT 300""", (cid,)).fetchall()
+    noms = qui_lot(db, [l['joueur_id'] for l in brutes])
+    lignes = [{'joueur': code_court(l['joueur_id']), 'pseudo': l['pseudo'], 'qui': noms.get(l['joueur_id']), 'recu_le': l['recu_le'], 'ouvert_le': l['ouvert_le'],
+               'annule_le': l['annule_le'], 'remplace_par': l['remplace_par']} for l in brutes]
     return 200, {'livraisons': lignes}
 
 
@@ -1036,7 +1093,7 @@ def admin_cadeaux_problemes(req, db):
         manque = [o for o in charger_json(l['objets'], []) if o not in vendables]
         if manque:
             inconnus.append({'id': l['id'], 'titre': l['titre'], 'objets': manque})
-    vieux = [{'cadeau': l['cadeau_id'], 'titre': l['titre'], 'joueur': code_court(l['joueur_id']), 'recu_le': l['recu_le']}
+    vieux = [{'cadeau': l['cadeau_id'], 'titre': l['titre'], 'joueur': code_court(l['joueur_id']), 'qui': qui(db, l['joueur_id']), 'recu_le': l['recu_le']}
              for l in db.execute("""SELECT r.*, c.titre FROM cadeaux_recus r JOIN cadeaux c ON c.id=r.cadeau_id
                  WHERE r.ouvert_le IS NULL AND r.annule_le IS NULL AND r.recu_le < ? ORDER BY r.recu_le LIMIT 100""", (t - 7 * 86400,))]
     expires = [{'cadeau': l['cadeau_id'], 'titre': l['titre'], 'joueur': code_court(l['joueur_id'])}
@@ -1437,6 +1494,7 @@ def admin_cargaisons(req, db):
     lignes = []
     for l in db.execute(f"SELECT * FROM cargaisons WHERE {' AND '.join(conds)} ORDER BY cree_le DESC LIMIT 100 OFFSET ?", params + [page_de(req) * 100]):
         lignes.append({'id': l['id'], 'evenement_id': l['evenement_id'], 'partie_id': l['partie_id'], 'hote': code_court(l['hote_id']),
+                       'hote_qui': qui(db, l['hote_id']), 'reclame_qui': qui(db, l['reclame_par']) if l['reclame_par'] else None,
                        'cree_le': l['cree_le'], 'recompense': charger_json(l['recompense'], {}),
                        'reclame_par': code_court(l['reclame_par']) if l['reclame_par'] else None, 'reclame_le': l['reclame_le'],
                        'etat': 'ouverte' if l['reclame_par'] else ('perdue' if l['expire_le'] < maintenant() else 'en jeu')})
@@ -1468,6 +1526,7 @@ ROUTES = [
     ('POST', r'/api/admin/sauvegardes/restaurer', admin_sauvegarde_restaurer, False),
     ('GET', r'/api/admin/joueurs', admin_joueurs, False),
     ('GET', r'/api/admin/joueurs/(j[0-9a-fA-F]{8})', admin_joueur, False),
+    ('POST', r'/api/admin/joueurs/(j[0-9a-fA-F]{8})/surnom', admin_joueur_surnom, False),
     ('GET', r'/api/admin/sanctions', admin_sanctions, False),
     ('POST', r'/api/admin/sanctions', admin_sanction_creer, False),
     ('POST', r'/api/admin/sanctions/(\d+)/lever', admin_sanction_lever, False),

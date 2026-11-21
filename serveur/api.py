@@ -134,6 +134,11 @@ CREATE TABLE IF NOT EXISTS cargaisons (
   id TEXT PRIMARY KEY, evenement_id INTEGER, partie_id TEXT NOT NULL, hote_id TEXT NOT NULL, cree_le INTEGER NOT NULL,
   ouvrable_le INTEGER NOT NULL, expire_le INTEGER NOT NULL, recompense TEXT NOT NULL, reclame_par TEXT, reclame_le INTEGER, cadeau_id INTEGER);
 CREATE INDEX IF NOT EXISTS cargaisons_partie ON cargaisons(partie_id);
+CREATE TABLE IF NOT EXISTS joueurs_notes (
+  joueur_id TEXT PRIMARY KEY, surnom TEXT, note TEXT, maj_le INTEGER NOT NULL, maj_par INTEGER);
+CREATE TABLE IF NOT EXISTS pseudos_joueurs (
+  joueur_id TEXT NOT NULL, pseudo TEXT NOT NULL, premier INTEGER NOT NULL, dernier INTEGER NOT NULL, PRIMARY KEY (joueur_id, pseudo));
+CREATE INDEX IF NOT EXISTS pseudos_recherche ON pseudos_joueurs(pseudo);
 """
 CIBLES = {'tous', 'joueur', 'code'}
 STYLES_ANNONCE = {'info', 'evenement', 'alerte'}
@@ -925,6 +930,7 @@ def admin_detail(req, db, rid):
         LEFT JOIN admins a ON a.id = j.admin_id WHERE j.retour_id=? ORDER BY j.cree_le DESC LIMIT 20""", (rid,))]
     r['autres_du_joueur'] = db.execute('SELECT COUNT(*) FROM retours WHERE joueur_id=? AND id<>?', (r['joueur_id'], rid)).fetchone()[0]
     r['joueur_code'] = code_court(r['joueur_id'])
+    r['joueur_qui'] = gestion.qui(db, r['joueur_id'])
     r.pop('joueur_id', None)
     return 200, r
 

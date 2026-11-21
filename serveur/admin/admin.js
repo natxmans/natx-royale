@@ -90,6 +90,15 @@ const tableau = (entetes, lignes, vide = 'Rien pour l\'instant.') => el('div', {
   el('table', { class: 'table' }, el('thead', {}, el('tr', {}, entetes.map(h => el('th', {}, h)))), el('tbody', {}, lignes)),
   lignes.length ? null : el('p', { class: 'vide' }, vide));
 const pastille = (texte, type = '') => el('span', { class: 'badge ' + type }, texte);
+// Un joueur reconnaissable d'un coup d'œil : 🏷️ surnom (donné par les admins) · pseudo du jeu · code — clic = sa fiche
+function personne(q, code) {
+  q = q || (code ? { code } : null);
+  if (!q || !q.code) return '—';
+  return el('a', { href: '#joueur/' + q.code, class: 'personne', title: 'Voir sa fiche' },
+    q.surnom ? el('b', { class: 'surnom' }, '🏷️ ' + q.surnom) : null,
+    q.pseudo ? el('span', { class: 'pseudo' }, q.pseudo) : null,
+    el('span', { class: 'code' }, q.code));
+}
 const champ = (libelle, input) => el('label', {}, libelle, input);
 const choix = (options, valeur, attrs = {}) => el('select', attrs, Object.entries(options).map(([k, v]) => el('option', { value: k, selected: k === String(valeur) ? true : null }, v)));
 function pages(total, page, parPage, aller) {
@@ -288,13 +297,13 @@ const NOMS_SANCTIONS = { avertissement: '⚠️ Avertissement', muet: '🔇 Muet
 async function vueJoueurs() {
   const p = new URLSearchParams({ q: etatJoueurs.q, filtre: etatJoueurs.filtre, page: etatJoueurs.page });
   const d = await api('GET', '/joueurs?' + p);
-  const recherche = el('input', { type: 'search', placeholder: 'Pseudo ou code joueur (ex. 80FD-FB83)…', value: etatJoueurs.q, maxlength: 40 });
+  const recherche = el('input', { type: 'search', placeholder: 'Surnom, pseudo (même ancien) ou code joueur (ex. 80FD-FB83)…', value: etatJoueurs.q, maxlength: 40 });
   let minuterie;
   recherche.addEventListener('input', () => { clearTimeout(minuterie); minuterie = setTimeout(() => { etatJoueurs.q = recherche.value; etatJoueurs.page = 0; recharger(); }, 350); });
   const filtre = choix({ '': 'Tous', connectes: '🟢 Connectés', nouveaux: '🆕 Nouveaux (24 h)', sanctionnes: '⛔ Sanctionnés', signales: '🚩 Signalés' }, etatJoueurs.filtre,
     { onchange: e => { etatJoueurs.filtre = e.target.value; etatJoueurs.page = 0; recharger(); } });
   const lignes = d.joueurs.map(j => el('tr', { class: 'cliquable', onclick: () => { location.hash = 'joueur/' + j.code; } },
-    el('td', {}, el('b', { class: 'code' }, j.code)), el('td', {}, j.pseudo || '—', j.connecte ? ' 🟢' : ''), el('td', {}, j.niveau ?? '—'),
+    el('td', {}, personne({ code: j.code, pseudo: j.pseudo, surnom: j.surnom }), j.connecte ? ' 🟢' : ''), el('td', {}, j.niveau ?? '—'),
     el('td', {}, jour(j.cree_le)), el('td', {}, date(j.vu_le)), el('td', {}, j.parties), el('td', {}, j.cadeaux),
     el('td', {}, j.signalements ? pastille('🚩 ' + j.signalements, 'rouge') : '—'),
     el('td', {}, j.sanctions.map(s => pastille(NOMS_SANCTIONS[s] || s, 'rouge')))));
@@ -304,7 +313,7 @@ async function vueJoueurs() {
     el('p', { class: 'aide' }, 'Les joueurs sont anonymes : un code joueur (visible dans la Boutique du jeu) et le pseudo que leur jeu déclare. ',
       'Le profil (niveau, inventaire, esprits) est celui envoyé par leur jeu : il est indicatif, pas vérifié.'),
     el('div', { class: 'filtres' }, recherche, filtre),
-    tableau(['Code', 'Pseudo', 'Niveau', 'Arrivé le', 'Vu le', 'Parties', 'Cadeaux', 'Signalé', 'Sanctions'], lignes, 'Aucun joueur.'),
+    tableau(['Joueur', 'Niveau', 'Arrivé le', 'Vu le', 'Parties', 'Cadeaux', 'Signalé', 'Sanctions'], lignes, 'Aucun joueur.'),
     pages(d.total, d.page, 50, n => { etatJoueurs.page = n; recharger(); }),
   ];
 }
@@ -314,7 +323,9 @@ async function vueFicheJoueur(code) {
   const d = await api('GET', '/joueurs/j' + c);
   const p = d.profil;
   const blocs = [];
-  blocs.push(el('header', { class: 'titre' }, el('h1', {}, (p?.pseudo || 'Joueur') + ' '), el('span', { class: 'code gros' }, d.code),
+  const q = d.qui || {};
+  blocs.push(el('header', { class: 'titre' }, el('h1', {}, (q.surnom ? '🏷️ ' + q.surnom : p?.pseudo || 'Joueur') + ' '),
+    q.surnom && p?.pseudo ? el('span', { class: 'pseudo gros' }, 'pseudo : ' + p.pseudo) : null, el('span', { class: 'code gros' }, d.code),
     d.connecte ? pastille('🟢 connecté', 'vert') : null, el('a', { class: 'bouton discret', href: '#joueurs' }, '← Tous les joueurs')));
   blocs.push(el('div', { class: 'cartes-stats' },
     carteStat('Arrivé le', jour(d.cree_le)), carteStat('Vu le', date(d.vu_le)), carteStat('Niveau', p ? p.niveau : '—', 'jaune'),
@@ -325,6 +336,7 @@ async function vueFicheJoueur(code) {
   if (PERM('cadeaux.creer')) actions.append(el('a', { class: 'bouton', href: '#cadeaux', onclick: () => { brouillonCadeau.cible = 'joueur'; brouillonCadeau.joueur = d.code; } }, '🎁 Offrir un cadeau'));
   if (PERM('joueurs.sanctionner')) actions.append(el('button', { class: 'bouton danger', onclick: () => formSanction(d.code) }, '⛔ Sanctionner'));
   blocs.push(actions);
+  blocs.push(panneauQuiEstCe(d));
   if (p) {
     const parCat = {};
     for (const o of p.possedes) (parCat[o.cle.split(':')[0]] ||= []).push(o.nom);
@@ -352,6 +364,22 @@ async function vueFicheJoueur(code) {
   blocs.push(panneau('📜 Historique des interventions', d.interventions.length ? el('ul', { class: 'journal' }, d.interventions.map(i => el('li', {}, el('time', {}, date(i.cree_le)), ' ', el('b', {}, i.par || 'serveur'), ' : ', i.action)))
     : el('p', { class: 'vide' }, 'Aucune intervention.')));
   return blocs;
+}
+
+// Surnom et note privés : pour que tous les admins sachent qui est derrière un code
+function panneauQuiEstCe(d) {
+  const modif = PERM('joueurs.sanctionner');
+  const surnom = el('input', { maxlength: 30, value: d.qui?.surnom || '', placeholder: 'Ex. : Amir (pote de Nathan)', disabled: !modif });
+  const note = el('input', { maxlength: 300, value: d.note || '', placeholder: 'Ex. : joue sur le Samsung de son frère', disabled: !modif });
+  const b = modif ? el('button', { class: 'bouton principal' }, 'Enregistrer') : null;
+  if (b) b.onclick = async () => { if (await action(b, () => api('POST', `/joueurs/j${d.code.replace('-', '').toLowerCase()}/surnom`, { surnom: surnom.value, note: note.value }), 'Surnom enregistré.')) recharger(); };
+  const pseudos = d.pseudos || [];
+  return panneau('🏷️ Qui est-ce ?',
+    el('p', { class: 'aide' }, 'Visible seulement par les admins, jamais dans le jeu. Le surnom s\'affiche partout dans le panel (joueurs, cadeaux, signalements, sanctions, journal) et sert à la recherche.'),
+    el('div', { class: 'form-grille' }, champ('Surnom', surnom), champ('Note privée', note)), b ? el('div', { class: 'actions' }, b) : null,
+    el('h3', {}, 'Pseudos utilisés dans le jeu'),
+    pseudos.length ? el('ul', { class: 'liste-simple' }, pseudos.map(x => el('li', {}, el('b', {}, x.pseudo), ` — du ${jour(x.premier)} au ${jour(x.dernier)}`)))
+      : el('p', { class: 'vide' }, 'Pas encore connu (le jeu l\'envoie avec le profil).'));
 }
 
 function formSanction(code) {
@@ -388,7 +416,7 @@ async function vueSanctions() {
     el('header', { class: 'titre' }, el('h1', {}, 'Journal des sanctions'),
       el('a', { class: 'bouton discret', href: actives === '1' ? '#sanctions/toutes' : '#sanctions' }, actives === '1' ? 'Voir aussi les anciennes' : 'Seulement celles en cours')),
     tableau(['Joueur', 'Type', 'Motif', 'Début', 'Fin', 'Par', 'État', ''], d.sanctions.map(s => el('tr', {},
-      el('td', {}, el('a', { href: '#joueur/' + s.joueur, class: 'code' }, s.joueur)), el('td', {}, NOMS_SANCTIONS[s.type] || s.type), el('td', {}, s.motif),
+      el('td', {}, personne(s.joueur_qui, s.joueur)), el('td', {}, NOMS_SANCTIONS[s.type] || s.type), el('td', {}, s.motif),
       el('td', {}, date(s.debut)), el('td', {}, s.fin ? date(s.fin) : 'sans limite'), el('td', {}, s.par || '—'),
       el('td', {}, s.active ? pastille('en cours', 'rouge') : pastille(s.leve_le ? 'levée' : 'terminée', 'gris')),
       el('td', {}, s.active && PERM('joueurs.sanctionner') ? el('button', { class: 'bouton discret', onclick: e => leverSanction(s.id, e.target) }, 'Lever') : null))), 'Aucune sanction.'),
@@ -405,9 +433,9 @@ async function vueSignalements() {
     const b = el('button', { class: 'bouton' }, 'Enregistrer');
     b.onclick = async () => { if (await action(b, () => api('POST', '/signalements/' + s.id, { statut: statut.value, note: note.value }), 'Signalement mis à jour.')) recharger(); };
     return el('tr', {}, el('td', {}, date(s.cree_le)), el('td', {}, s.motif_nom), el('td', {}, s.texte || '—'),
-      el('td', {}, s.cible ? el('a', { href: '#joueur/' + s.cible, class: 'code' }, s.cible) : (s.cible_pseudo || '?'), s.cible_pseudo ? ` (${s.cible_pseudo})` : '',
+      el('td', {}, s.cible ? personne(s.cible_qui, s.cible) : (s.cible_pseudo || '?'), s.cible_pseudo ? el('div', { class: 'petit' }, `pseudo dans la partie : ${s.cible_pseudo}`) : null,
         s.cible_deja_signale > 1 ? el('div', {}, pastille(`signalé ${s.cible_deja_signale} fois`, 'rouge')) : null),
-      el('td', {}, el('a', { href: '#joueur/' + s.auteur, class: 'code' }, s.auteur)),
+      el('td', {}, personne(s.auteur_qui, s.auteur)),
       el('td', {}, PERM('signalements') ? el('div', { class: 'ligne-form' }, statut, note, b) : s.statut));
   });
   return [
@@ -465,7 +493,7 @@ async function ouvrirRetour(id) {
   ajoutNote.onclick = async () => { if (await action(ajoutNote, () => api('POST', `/retours/${id}/notes`, { texte: note.value }), 'Note ajoutée.')) ouvrirRetour(id); };
   ouvrirTiroir(`Retour #${id}`,
     el('div', { class: 'meta' }, `${MOI.categories[r.categorie] || r.categorie} · ${date(r.cree_le)} · ${r.plateforme || '?'} · v${r.version_jeu || '?'} · joueur `,
-      el('a', { href: '#joueur/' + r.joueur_code, class: 'code' }, r.joueur_code), ` · ${r.votes} vote(s) · ${r.autres_du_joueur} autre(s) avis de ce joueur`),
+      personne(r.joueur_qui, r.joueur_code), ` · ${r.votes} vote(s) · ${r.autres_du_joueur} autre(s) avis de ce joueur`),
     el('blockquote', { class: 'texte' }, r.texte || '(pas de texte)'),
     el('div', { class: 'bloc' }, champ('Statut', statut), el('label', { class: 'ligne' }, publie, 'Publier pour que les joueurs votent'), champ('Texte affiché aux joueurs', textePublic),
       el('div', { class: 'actions' }, enregistrer, spam, suppr)),
@@ -488,7 +516,7 @@ async function vueCadeaux() {
   const origine = choix({ '': 'Toutes les origines', admin: 'Envoyés par l\'équipe', cargaison: 'Gagnés dans une cargaison' }, etatCadeaux.origine,
     { onchange: e => { etatCadeaux.origine = e.target.value; recharger(); } });
   const lignes = d.cadeaux.map(c => {
-    const pour = c.cible === 'tous' ? '🌍 Tout le monde' : c.cible === 'joueur' ? '👤 ' + c.joueur_code : `🔑 ${c.code}${c.max_utilisations ? ` (max ${c.max_utilisations})` : ''}`;
+    const pour = c.cible === 'tous' ? '🌍 Tout le monde' : c.cible === 'joueur' ? personne(c.joueur_qui, c.joueur_code) : `🔑 ${c.code}${c.max_utilisations ? ` (max ${c.max_utilisations})` : ''}`;
     const contenu = [c.pieces ? `🪙 ${c.pieces}` : null, c.objets.length ? `${c.objets.length} objet(s)` : null, c.esprit ? `✨ ${c.esprit.type} (${c.esprit.rarete})` : null].filter(Boolean).join(' · ');
     const boutons = el('div', { class: 'boutons-ligne' }, el('button', { class: 'bouton discret', onclick: () => livraisons(c) }, 'Livraisons'));
     if (PERM('cadeaux.creer')) boutons.append(el('button', { class: 'bouton discret', onclick: async e => { if (await action(e.target, () => api('POST', '/cadeaux/' + c.id, { actif: !c.actif }), c.actif ? 'Cadeau arrêté.' : 'Cadeau réactivé.')) recharger(); } }, c.actif ? 'Arrêter' : 'Réactiver'));
@@ -584,7 +612,7 @@ async function livraisons(c) {
         if (await action(e.target, () => api('POST', `/cadeaux/${c.id}/renvoyer`, corps), 'Copie envoyée.')) livraisons(c);
       } }, 'Renvoyer'));
     }
-    return el('tr', {}, el('td', {}, el('a', { href: '#joueur/' + l.joueur, class: 'code' }, l.joueur), l.pseudo ? ' ' + l.pseudo : ''), el('td', {}, date(l.recu_le)), el('td', {}, etat), el('td', {}, boutons));
+    return el('tr', {}, el('td', {}, personne(l.qui, l.joueur)), el('td', {}, date(l.recu_le)), el('td', {}, etat), el('td', {}, boutons));
   });
   ouvrirTiroir('Livraisons : ' + c.titre,
     el('p', { class: 'aide' }, 'Un cadeau n\'est livré qu\'une fois par joueur (protection côté serveur). « Renvoyer » crée une copie avec un nouveau numéro ; « Retirer » enlève un cadeau pas encore ouvert.'),
@@ -600,7 +628,7 @@ async function panneauProblemes() {
   items.push(el('li', {}, `${p.expires_non_ouverts.length} cadeau(x) expiré(s) ou arrêté(s) avant d'être ouvert(s) (utilise « Renvoyer » si c'est une erreur)`));
   items.push(el('li', {}, `${p.cargaisons_perdues} cargaison(s) jamais ouverte(s) (personne ne l'a atteinte, ou ouverte par un bot)`));
   return panneau('🩺 Problèmes de réception', el('ul', { class: 'liste-simple' }, items),
-    p.non_ouverts_7j.length ? tableau(['Cadeau', 'Joueur', 'Livré le'], p.non_ouverts_7j.slice(0, 20).map(x => el('tr', {}, el('td', {}, '#' + x.cadeau + ' ' + x.titre), el('td', {}, el('a', { href: '#joueur/' + x.joueur, class: 'code' }, x.joueur)), el('td', {}, date(x.recu_le))))) : null);
+    p.non_ouverts_7j.length ? tableau(['Cadeau', 'Joueur', 'Livré le'], p.non_ouverts_7j.slice(0, 20).map(x => el('tr', {}, el('td', {}, '#' + x.cadeau + ' ' + x.titre), el('td', {}, personne(x.qui, x.joueur)), el('td', {}, date(x.recu_le))))) : null);
 }
 
 // ================================================================ cosmétiques
@@ -815,9 +843,9 @@ async function vueEvenements() {
       el('button', { class: 'bouton discret', onclick: () => formEvenement(d, cat, e) }, 'Modifier'),
       el('button', { class: 'bouton discret', onclick: async ev => { if (await action(ev.target, () => api('POST', '/evenements/' + e.id, { actif: !e.actif }), 'OK.')) recharger(); } }, e.actif ? 'Désactiver' : 'Activer'),
       el('button', { class: 'bouton danger', onclick: async ev => { const conf = await demander({ titre: 'Supprimer l\'événement', texte: e.nom, mot: 'CONFIRMER' }); if (conf && await action(ev.target, () => api('DELETE', '/evenements/' + e.id, conf), 'Supprimé.')) recharger(); } }, 'Supprimer')) : null)));
-  const lignesC = c.cargaisons.map(x => el('tr', {}, el('td', {}, date(x.cree_le)), el('td', {}, el('span', { class: 'code' }, x.partie_id)), el('td', {}, el('a', { href: '#joueur/' + x.hote, class: 'code' }, x.hote)),
+  const lignesC = c.cargaisons.map(x => el('tr', {}, el('td', {}, date(x.cree_le)), el('td', {}, el('span', { class: 'code' }, x.partie_id)), el('td', {}, personne(x.hote_qui, x.hote)),
     el('td', {}, `✨ ${x.recompense.esprit} (${x.recompense.rarete}) · 🪙 ${x.recompense.pieces}${x.recompense.objet ? ' · ' + x.recompense.objet : ''}`),
-    el('td', {}, x.reclame_par ? el('a', { href: '#joueur/' + x.reclame_par, class: 'code' }, x.reclame_par) : '—'),
+    el('td', {}, x.reclame_par ? personne(x.reclame_qui, x.reclame_par) : '—'),
     el('td', {}, pastille(x.etat, x.etat === 'ouverte' ? 'vert' : x.etat === 'perdue' ? 'gris' : 'cyan'))));
   return [
     el('header', { class: 'titre' }, el('h1', {}, 'Cargaisons et événements'), modif ? el('button', { class: 'bouton principal', onclick: () => formEvenement(d, cat, null) }, '➕ Nouvel événement') : null),
@@ -959,7 +987,7 @@ async function vueJournal() {
   let t; q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => maj('q', q.value), 400); });
   const admin = el('input', { placeholder: 'Identifiant admin', value: etatJournal.admin, maxlength: 60, onchange: e => maj('admin', e.target.value) });
   const lignes = d.journal.map(j => el('tr', {}, el('td', {}, date(j.cree_le)), el('td', {}, j.identifiant || 'serveur'), el('td', {}, pastille(j.categorie || '—', 'gris')),
-    el('td', {}, j.action), el('td', { class: 'petit' }, j.cible || ''),
+    el('td', {}, j.action), el('td', { class: 'petit' }, j.cible_qui ? personne(j.cible_qui) : (j.cible || '')),
     el('td', {}, j.details ? el('details', {}, el('summary', {}, 'voir'), el('pre', { class: 'details' }, JSON.stringify(j.details, null, 1))) : '')));
   return [
     el('header', { class: 'titre' }, el('h1', {}, 'Journal d\'audit'), el('span', { class: 'compte' }, nombre(d.total))),

@@ -192,3 +192,11 @@ pre.details { white-space: pre-wrap; word-break: break-word; font-size: 12px; ba
   .stat b { font-size: 21px; }
   .boutons-ligne { justify-content: flex-start; }
 }
+
+/* Joueurs reconnaissables : surnom · pseudo · code */
+.personne { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 7px; text-decoration: none; color: var(--texte); }
+.personne:hover .pseudo, .personne:hover .surnom { text-decoration: underline; }
+.personne .surnom { color: #7dffb0; font-weight: 900; }
+.personne .pseudo { font-weight: 800; }
+.personne .code { font-size: 12px; opacity: .85; }
+.pseudo.gros { color: var(--doux); font-weight: 800; font-size: 16px; }
