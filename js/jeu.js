@@ -565,11 +565,26 @@ function retirerButin(id) {
 }
 
 // ---------- Esprits élémentaires : sanctuaires, esprits qui suivent les joueurs, pouvoirs ----------
+// L'esprit laissé par un joueur éliminé : pas d'autel, juste un rond de lumière au sol sous l'esprit
+function creerEspritTombe() {
+  const g = new THREE.Group();
+  const runes = new THREE.MeshBasicMaterial({ color: '#888888', toneMapped: false });
+  const cercle = new THREE.MeshBasicMaterial({ color: '#888888', transparent: true, opacity: 0.65, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false });
+  const rond = new THREE.Mesh(new THREE.RingGeometry(0.7, 1.0, 28), cercle);
+  rond.rotation.x = -Math.PI / 2; rond.position.y = 0.07;
+  g.add(rond);
+  g.userData = { runes, cercle, rond, hauteur: 0.9, mixer: null };
+  return g;
+}
+function retirerSanctuaire(sa) {
+  scene.remove(sa.mesh);
+  etat.sanctuaires.delete(sa.id);
+}
 function ajouterSanctuaire(s) {
-  const g = creerSanctuaire();
+  const g = s.tombe ? creerEspritTombe() : creerSanctuaire();
   g.position.set(s.x, s.y, s.z);
   scene.add(g);
-  const sa = { id: s.id, x: s.x, y: s.y, z: s.z, type: s.type, dispo: false, mesh: g, esprit: null };
+  const sa = { id: s.id, x: s.x, y: s.y, z: s.z, type: s.type, dispo: false, mesh: g, esprit: null, tombe: !!s.tombe };
   etat.sanctuaires.set(s.id, sa);
   majSanctuaire(sa, s.type, s.dispo !== false);
 }
@@ -1037,7 +1052,7 @@ function recevoir(m) {
       const sa = etat.sanctuaires.get(m.s);
       const d = ESPRITS[m.type];
       if (!d) break;
-      if (sa) { etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 30, 6); majSanctuaire(sa, m.type, false); sonLoin('coffreDore', distCam(sa.x, sa.y, sa.z) * 2); }
+      if (sa) { etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 30, 6); majSanctuaire(sa, m.type, false); sonLoin('coffreDore', distCam(sa.x, sa.y, sa.z) * 2); if (sa.tombe) retirerSanctuaire(sa); }
       const rar = RARETES_ESPRIT[m.rar] ? m.rar : null;
       donnerEsprit(m.par, m.type, rar);
       if (moi && m.par === moi.id) {
@@ -1053,6 +1068,19 @@ function recevoir(m) {
     case 'sanctuaire': {
       const sa = etat.sanctuaires.get(m.s);
       if (sa && ESPRITS[m.type]) { majSanctuaire(sa, m.type, true); etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 24, 5); }
+      break;
+    }
+    case 'sanctuaire+': { // l'esprit d'un joueur éliminé reste sur place
+      const s = m.s;
+      if (!s || !ESPRITS[s.type] || etat.sanctuaires.has(s.id) || ![s.x, s.y, s.z].every(Number.isFinite)) break;
+      ajouterSanctuaire({ id: s.id, x: s.x, y: s.y, z: s.z, type: s.type, dispo: true, tombe: true });
+      etincellesEsprit(s.x, s.y + 1, s.z, s.type, 24, 5);
+      if (moi && moi.ph !== 'mort' && distCam(s.x, s.y, s.z) < 45) ajouterFil(`${ESPRITS[s.type].icone} L’esprit <b style="color:${ESPRITS[s.type].couleur}">${ESPRITS[s.type].nom}</b> est resté sur place : va le prendre !`);
+      break;
+    }
+    case 'sanctuaire-': { // personne ne l'a pris : il s'en va
+      const sa = etat.sanctuaires.get(m.s);
+      if (sa && sa.tombe) { if (sa.dispo) etincellesEsprit(sa.x, sa.y + 1, sa.z, sa.type, 16, 3); retirerSanctuaire(sa); }
       break;
     }
     case 'espritLibre': {

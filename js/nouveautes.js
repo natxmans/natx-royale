@@ -150,5 +150,6 @@ export const NOUVEAUTES = [
     '🎉 Butin de fête : du butin rare partout sur l’île',
     '🎯 Mode vedette : XP × 2 dans le mode du moment (sa carte s’allume sur l’accueil)',
     'L’accueil annonce l’événement en cours ou le prochain ; clique dessus pour voir tout le programme',
+    'Un joueur éliminé (bot ou humain) laisse son esprit sur place : tu as une minute pour aller le prendre',
   ]],
 ];

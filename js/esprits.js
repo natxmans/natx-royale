@@ -157,6 +157,7 @@ export function meilleuresRaretes(collection) {
 
 // Réglages des effets (partagés par l'hôte et les joueurs)
 export const RECHARGE_SANCTUAIRE = 75;      // secondes avant qu'un nouvel esprit apparaisse sur l'autel
+export const DUREE_ESPRIT_TOMBE = 60;      // secondes pendant lesquelles l'esprit d'un joueur éliminé reste à prendre
 export const PORTEE_CAPTURE = 3.2;          // mètres
 export const VITESSE_MOBILITE = 1.12;
 export const ENVOL = { haut: 15, avant: 13 };

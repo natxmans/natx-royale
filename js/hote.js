@@ -15,7 +15,7 @@ function nettoyerEsp(e) {
 }
 const nettoyerRef = r => (typeof r === 'string' && /^[0-9a-f]{12}$/.test(r) ? r : null);
 const nettoyerBadge = b => (typeof b === 'string' && /^[0-9a-f]{32}$/.test(b) ? b : null);
-import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE,
+import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, DUREE_ESPRIT_TOMBE, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE,
   FEU, GLACE, FOUDRE, VENT, NATURE, OMBRE, ETOILE } from './esprits.js';
 
 const NOMS_BOTS = ['Patate', 'Croquette', 'Tartiflette', 'Grumeau', 'Moustache', 'Biscotte', 'Pépito', 'Cornichon',
@@ -507,7 +507,8 @@ export class Hote {
     const j = this.joueurs.get(id);
     if (!j || !j.vivant) return;
     j.vivant = false; j.pv = 0;
-    if (j.esprit) { j.esprit = null; this.reseau.diffuser({ t: 'espritLibre', id }); }
+    // son esprit le quitte… et reste là où il est tombé : le premier qui passe peut le prendre
+    if (j.esprit) { const type = j.esprit.type; j.esprit = null; this.reseau.diffuser({ t: 'espritLibre', id }); this.lacherEsprit(type, j.x, j.y, j.z); }
     let vivants = 0;
     for (const p of this.joueurs.values()) if (p.vivant) vivants++;
     const k = auteur && auteur !== id ? this.joueurs.get(auteur) : null;
@@ -569,6 +570,8 @@ export class Hote {
     if (this.espritT >= 1 && this.sanctuaires) {
       this.espritT -= 1;
       for (const sa of this.sanctuaires) {
+        // l'esprit d'un joueur éliminé que personne n'a pris s'en va au bout d'une minute
+        if (sa.tombe && sa.dispo && this.temps >= sa.expire) { sa.dispo = false; this.reseau.diffuser({ t: 'sanctuaire-', s: sa.id }); continue; }
         if (sa.dispo || this.temps < sa.retour) continue;
         sa.dispo = true;
         sa.type = TYPES_ESPRITS[Math.floor(Math.random() * TYPES_ESPRITS.length)];
@@ -878,10 +881,20 @@ export class Hote {
   }
 
   // ---------- Esprits élémentaires ----------
+  // L'esprit d'un joueur éliminé (bot ou humain) reste au sol, là où il est tombé. Il se prend comme sur un autel.
+  lacherEsprit(type, x, y, z) {
+    if (!this.sanctuaires || !ESPRITS[type]) return;
+    const h = this.monde.lancerRayon(x, y + 1.5, z, 0, -1, 0, 400);
+    const sol = Math.max(h ? h.y : this.monde.hauteurTerrain(x, z), 0); // jamais sous l'eau
+    const sa = { id: this.sanctuaires.length, x: arrondi(x), y: arrondi(sol), z: arrondi(z), type, dispo: true, retour: Infinity, tombe: true, expire: this.temps + DUREE_ESPRIT_TOMBE };
+    this.sanctuaires.push(sa);
+    this.reseau.diffuser({ t: 'sanctuaire+', s: { id: sa.id, x: sa.x, y: sa.y, z: sa.z, type, dispo: true, tombe: true } });
+  }
+
   capturer(j, sa) {
     if (!sa.dispo || !j.vivant) return false;
     sa.dispo = false;
-    sa.retour = this.temps + RECHARGE_SANCTUAIRE;
+    sa.retour = sa.tombe ? Infinity : this.temps + RECHARGE_SANCTUAIRE; // un esprit tombé ne revient pas : ce n'est pas un autel
     // un seul esprit à la fois : l'ancien repart
     j.esprit = { type: sa.type, pret: this.temps + 3 };
     this.reseau.diffuser({ t: 'esprit', s: sa.id, par: j.id, type: sa.type, pret: arrondi(j.esprit.pret), rar: (j.esp && j.esp[sa.type]) || null });

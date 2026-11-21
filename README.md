@@ -24,7 +24,7 @@ Une bataille royale cartoon à jouer entre potes, directement dans le navigateur
   au trésor** dont certaines n'ont aucune porte, des tours de guet, des ruines et des campements.
 - **15 esprits** : de petits compagnons flottent sur des autels. Capture-en un : il te suit, te donne un bonus
   et un pouvoir (🌱 Pousse, ☁️ Filou, 🛡️ Gardien, 👁️ Zyeuto, 🔨 Briquet, Braise, Givrette, Zap, Zephyr, Racine,
-  Minuit, Tic-Tac, Goutte, Pépite, Lumi).
+  Minuit, Tic-Tac, Goutte, Pépite, Lumi). Un joueur éliminé laisse son esprit sur place : le premier qui passe le prend.
 - **Ton personnage** : couleur, peau, coiffure et couleur des cheveux, plus 250 cosmétiques (tenues, chapeaux,
   sacs, pioches, deltaplanes, emotes, traînées) et des skins d'armes. Tout se gagne en jouant, avec les pièces
   du jeu.
