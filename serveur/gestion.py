@@ -314,7 +314,7 @@ def api_boite(req, db):
     susp = api.sanction_active(db, jid, ('suspension',))
     return 200, {'non_ouverts': non_ouverts, 'historique': historique, 'ref': ref_publique(db, jid), 'avertissements': avert,
                  'suspension': {'motif': susp['motif'], 'fin': susp['fin']} if susp else None,
-                 'prive_cadeaux': bool(prive), 'maintenant': t}
+                 'prive_cadeaux': bool(prive), 'maintenant': t, 'staff': infos_staff(db, jid), 'liaison': demande_liaison(db, jid)}
 
 
 def api_boite_ouvrir(req, db):
@@ -400,6 +400,93 @@ def api_signalement(req, db):
     db.execute('INSERT INTO signalements(cree_le, auteur_id, cible_id, cible_pseudo, partie_id, motif, texte) VALUES (?,?,?,?,?,?,?)',
                (maintenant(), jid, cible, nettoyer(d.get('pseudo'), 20), pid if RE_ID_PARTIE.fullmatch(pid) else None, motif, nettoyer(d.get('texte'), 300)))
     return 201, {'ok': True}
+
+
+# ---------- Compte : sauvegarde en ligne du profil + code de sauvegarde pour le retrouver ailleurs ----------
+# Le profil reste aussi dans le navigateur ; le serveur garde la version la plus récente (numéro « rev »).
+# Le code de sauvegarde n'est gardé qu'en empreinte (sha256) : impossible de le relire, seulement de le vérifier.
+ALPHABET_SAUVEGARDE = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+TAILLE_MAX_SAUVEGARDE = 120000
+
+
+def empreinte_code(code):
+    return api.hmac.new(api.secret(), ('sauvegarde:' + code).encode(), 'sha256').hexdigest()
+
+
+def normaliser_code_sauvegarde(code):
+    return re.sub(r'[^A-Z0-9]', '', str(code or '').upper())[:32]
+
+
+def formater_code_sauvegarde(code):
+    return '-'.join(code[i:i + 4] for i in range(0, len(code), 4))
+
+
+def nouveau_code_sauvegarde(db, jid):
+    code = ''.join(secrets.choice(ALPHABET_SAUVEGARDE) for _ in range(16))
+    db.execute("""INSERT INTO comptes(joueur_id, code_hash, code_cree_le) VALUES (?,?,?)
+        ON CONFLICT(joueur_id) DO UPDATE SET code_hash=excluded.code_hash, code_cree_le=excluded.code_cree_le""",
+               (jid, empreinte_code(code), maintenant()))
+    return formater_code_sauvegarde(code)
+
+
+def api_compte_charger(req, db):
+    """La sauvegarde en ligne de ce joueur (pour savoir si un autre appareil a joué plus récemment)."""
+    jid = api.joueur_obligatoire(req, req.json())
+    if not limite(db, 'compte:' + jid, 200, 3600):
+        raise Erreur(429, 'Trop de demandes.')
+    l = db.execute('SELECT * FROM comptes WHERE joueur_id=?', (jid,)).fetchone()
+    return 200, {'rev': l['rev'] if l else 0, 'maj_le': l['maj_le'] if l else None, 'a_un_code': bool(l and l['code_hash']),
+                 'profil': charger_json(l['sauvegarde'], None) if l and l['sauvegarde'] else None}
+
+
+def api_compte_sauvegarder(req, db):
+    """Le jeu envoie tout son profil ; refusé (409) si le serveur a déjà une version plus récente (autre appareil)."""
+    d = req.json(maxi=TAILLE_MAX_SAUVEGARDE + 4000)
+    jid = api.joueur_obligatoire(req, d)
+    if not limite(db, 'sauver:' + jid, 120, 3600):
+        raise Erreur(429, 'Trop de sauvegardes, réessaie plus tard.')
+    p = d.get('profil')
+    rev = entier(d.get('rev'), 0, 10 ** 9, -1)
+    if not isinstance(p, dict) or rev < 1:
+        raise Erreur(400, 'Sauvegarde illisible.')
+    texte = json.dumps(p, ensure_ascii=False, separators=(',', ':'))
+    if len(texte) > TAILLE_MAX_SAUVEGARDE:
+        raise Erreur(413, 'Profil trop gros.')
+    l = db.execute('SELECT rev FROM comptes WHERE joueur_id=?', (jid,)).fetchone()
+    if l and l['rev'] >= rev:
+        return 409, {'erreur': 'Une version plus récente de ton compte existe déjà.', 'rev': l['rev']}
+    db.execute("""INSERT INTO comptes(joueur_id, sauvegarde, rev, maj_le, taille) VALUES (?,?,?,?,?)
+        ON CONFLICT(joueur_id) DO UPDATE SET sauvegarde=excluded.sauvegarde, rev=excluded.rev, maj_le=excluded.maj_le, taille=excluded.taille""",
+               (jid, texte, rev, maintenant(), len(texte)))
+    api.joueur_vu(db, jid)
+    return 200, {'ok': True, 'rev': rev}
+
+
+def api_compte_code(req, db):
+    """Nouveau code de sauvegarde (l'ancien ne marche plus). Montré au joueur, jamais gardé en clair."""
+    jid = api.joueur_obligatoire(req, req.json())
+    if not limite(db, 'codesauv:' + jid, 10, 3600):
+        raise Erreur(429, 'Trop de nouveaux codes, réessaie plus tard.')
+    if api.sanction_active(db, jid, ('suspension',)):
+        raise Erreur(403, 'Ton compte est suspendu.')
+    return 200, {'code': nouveau_code_sauvegarde(db, jid)}
+
+
+def api_compte_recuperer(req, db):
+    """Sur un autre navigateur / téléphone : le code de sauvegarde redonne l'identité ET la sauvegarde du profil."""
+    d = req.json()
+    if not limite(db, 'recup:ip:' + req.ip_hash, 10, 3600):
+        raise Erreur(429, 'Trop d\'essais. Attends une heure.')
+    code = normaliser_code_sauvegarde(d.get('code'))
+    if len(code) != 16:
+        raise Erreur(400, 'Le code de sauvegarde a 16 lettres et chiffres (ex. ABCD-EFGH-JKLM-NPQR).')
+    l = db.execute('SELECT * FROM comptes WHERE code_hash=?', (empreinte_code(code),)).fetchone()
+    if not l:
+        raise Erreur(404, 'Code de sauvegarde inconnu. Vérifie les lettres, ou demande un nouveau code à un admin.')
+    jid = l['joueur_id']
+    api.joueur_vu(db, jid)
+    return 200, {'id': jid, 'jeton': jid + '.' + api.signer_joueur(jid), 'code_joueur': code_court(jid), 'rev': l['rev'],
+                 'profil': charger_json(l['sauvegarde'], None) if l['sauvegarde'] else None}
 
 
 # ---------- cargaisons : le serveur tire la récompense, la signe, et la donne à UN seul joueur ----------
@@ -524,7 +611,7 @@ def admin_compte(req, db):
                                               (s['admin_id'],))]
     return 200, {'identifiant': s['identifiant'], 'role': s['role'], 'role_nom': api.ROLES[s['role']],
                  'sessions': sessions_de(db, s['admin_id'], s['jeton_hash']), 'connexions': connexions,
-                 'doit_changer_mdp': bool(s['doit_changer_mdp'])}
+                 'doit_changer_mdp': bool(s['doit_changer_mdp']), 'liaison': infos_liaison(db, s['admin_id'])}
 
 
 def admin_mdp(req, db):
@@ -562,7 +649,8 @@ def admin_admins(req, db):
         admins.append({'id': l['id'], 'identifiant': l['identifiant'], 'role': l['role'], 'role_nom': api.ROLES.get(l['role'], l['role']),
                        'actif': bool(l['actif']), 'cree_le': l['cree_le'], 'derniere_connexion': l['derniere_connexion'],
                        'doit_changer_mdp': bool(l['doit_changer_mdp']), 'moi': l['id'] == s['admin_id'],
-                       'sessions': un(db, 'SELECT COUNT(*) FROM sessions WHERE admin_id=? AND expire_le>?', l['id'], t)})
+                       'sessions': un(db, 'SELECT COUNT(*) FROM sessions WHERE admin_id=? AND expire_le>?', l['id'], t),
+                       'joueur': qui(db, l['joueur_id']), 'liaison_le': l['liaison_le']})
     connexions = [dict(l) for l in db.execute('SELECT identifiant, ok, navigateur, cree_le FROM connexions_admin ORDER BY id DESC LIMIT 60')]
     return 200, {'admins': admins, 'roles': api.ROLES, 'permissions': {r: api.permissions_de(r) for r in api.ROLES},
                  'connexions': connexions, 'peut_gerer': s['role'] in api.PERMISSIONS['admins.gerer']}
@@ -609,13 +697,16 @@ def admin_admin_modifier(req, db, aid):
         raise Erreur(409, 'Tu ne peux pas désactiver ton propre compte.')
     db.execute('UPDATE admins SET role=?, actif=? WHERE id=?', (role, actif, aid))
     reponse = {'ok': True}
+    if d.get('delier'):
+        db.execute('UPDATE admins SET joueur_id=NULL, joueur_attente=NULL, liaison_demande_le=NULL, liaison_le=NULL WHERE id=?', (aid,))
     if d.get('reinitialiser'):
         provisoire = secrets.token_urlsafe(12)
         db.execute('UPDATE admins SET hash_mdp=?, doit_changer_mdp=1 WHERE id=?', (api.hacher_mdp(provisoire), aid))
         reponse['mot_de_passe_provisoire'] = provisoire
     if not actif or d.get('reinitialiser') or role != a['role']:
         db.execute('DELETE FROM sessions WHERE admin_id=?', (aid,))
-    journaliser(db, s, f"compte admin « {a['identifiant']} » modifié" + (' (mot de passe réinitialisé)' if d.get('reinitialiser') else ''),
+    journaliser(db, s, f"compte admin « {a['identifiant']} » modifié" + (' (mot de passe réinitialisé)' if d.get('reinitialiser') else '')
+                + (' (compte joueur délié)' if d.get('delier') and a['joueur_id'] else ''),
                 'admins', f'admin:{aid}', {'avant': avant, 'apres': {'role': role, 'actif': actif}}, req=req)
     return 200, reponse
 
@@ -635,6 +726,122 @@ def admin_admin_supprimer(req, db, aid):
     db.execute('DELETE FROM admins WHERE id=?', (aid,))
     journaliser(db, s, f"compte admin « {a['identifiant']} » supprimé", 'admins', f'admin:{aid}', req=req)
     return 200, {'ok': True}
+
+
+# ================================================================ liaison staff : compte admin <-> compte joueur
+# L'admin tape le code de SON compte joueur dans « Mon compte » ; le jeu de ce compte reçoit une demande et doit
+# l'accepter (sinon un admin pourrait lier le compte d'un autre). Une fois lié, le compte joueur porte la Tenue Staff,
+# tant que le compte admin existe et reste actif. Un compte joueur = au plus un compte admin.
+DUREE_DEMANDE_LIAISON = 7 * 86400
+
+
+def staff_de(db, jid):
+    """Nom du rôle si ce joueur est le compte joueur d'un admin actif, sinon None."""
+    l = db.execute('SELECT role FROM admins WHERE joueur_id=? AND actif=1', (jid,)).fetchone() if jid else None
+    return api.ROLES.get(l['role'], 'Staff') if l else None
+
+
+def badge_staff(ref):
+    """Preuve que le joueur de cette référence publique est du staff (le serveur seul sait la fabriquer)."""
+    return api.hmac.new(api.secret(), ('staff:' + ref).encode(), 'sha256').hexdigest()[:32]
+
+
+def demande_liaison(db, jid):
+    l = db.execute("""SELECT id, role, liaison_demande_le FROM admins WHERE joueur_attente=? AND actif=1 AND liaison_demande_le>?
+        ORDER BY liaison_demande_le LIMIT 1""", (jid, maintenant() - DUREE_DEMANDE_LIAISON)).fetchone()
+    return {'id': l['id'], 'role_nom': api.ROLES.get(l['role'], 'Staff'), 'demande_le': l['liaison_demande_le']} if l else None
+
+
+def infos_liaison(db, aid):
+    """Pour le panel : le compte joueur lié et la demande en attente."""
+    a = db.execute('SELECT joueur_id, joueur_attente, liaison_demande_le, liaison_le FROM admins WHERE id=?', (aid,)).fetchone()
+    if not a:
+        return None
+    attente = a['joueur_attente'] if a['joueur_attente'] and (a['liaison_demande_le'] or 0) > maintenant() - DUREE_DEMANDE_LIAISON else None
+    return {'joueur': qui(db, a['joueur_id']), 'liaison_le': a['liaison_le'],
+            'attente': qui(db, attente), 'demande_le': a['liaison_demande_le'] if attente else None}
+
+
+def admin_liaison_demander(req, db):
+    s = session_admin(req, db, ecriture=True)  # tous les rôles : chacun lie SON propre compte
+    d = req.json()
+    if not limite(db, f"liaison:{s['admin_id']}", 20, 3600):
+        raise Erreur(429, 'Trop de demandes, réessaie plus tard.')
+    jid = joueur_par_code(db, d.get('joueur'))
+    if db.execute('SELECT 1 FROM admins WHERE joueur_id=? AND id<>?', (jid, s['admin_id'])).fetchone():
+        raise Erreur(409, 'Ce compte joueur est déjà lié à un autre compte admin.')
+    a = db.execute('SELECT joueur_id FROM admins WHERE id=?', (s['admin_id'],)).fetchone()
+    if a['joueur_id'] == jid:
+        raise Erreur(409, 'Ton compte admin est déjà lié à ce compte joueur.')
+    db.execute('UPDATE admins SET joueur_attente=?, liaison_demande_le=? WHERE id=?', (jid, maintenant(), s['admin_id']))
+    journaliser(db, s, f'demande de liaison staff envoyée au compte joueur {code_court(jid)}', 'admins', 'joueur:' + jid, req=req)
+    return 200, {'ok': True, 'liaison': infos_liaison(db, s['admin_id'])}
+
+
+def admin_liaison_retirer(req, db):
+    """Annuler la demande en attente (quoi=demande) ou défaire la liaison (la Tenue Staff repart du compte joueur)."""
+    s = session_admin(req, db, ecriture=True, libre=True)
+    d = req.json()
+    a = db.execute('SELECT joueur_id, joueur_attente FROM admins WHERE id=?', (s['admin_id'],)).fetchone()
+    if d.get('quoi') == 'demande':
+        db.execute('UPDATE admins SET joueur_attente=NULL, liaison_demande_le=NULL WHERE id=?', (s['admin_id'],))
+        if a['joueur_attente']:
+            journaliser(db, s, f"demande de liaison staff annulée ({code_court(a['joueur_attente'])})", 'admins', 'joueur:' + a['joueur_attente'], req=req)
+    else:
+        if not a['joueur_id']:
+            raise Erreur(409, "Ton compte admin n'est lié à aucun compte joueur.")
+        db.execute('UPDATE admins SET joueur_id=NULL, liaison_le=NULL WHERE id=?', (s['admin_id'],))
+        journaliser(db, s, f"liaison staff retirée avec le compte joueur {code_court(a['joueur_id'])}", 'admins', 'joueur:' + a['joueur_id'], req=req)
+    return 200, {'ok': True, 'liaison': infos_liaison(db, s['admin_id'])}
+
+
+def api_liaison_repondre(req, db):
+    """Le joueur accepte ou refuse, dans le jeu, la demande de liaison d'un compte admin."""
+    d = req.json()
+    jid = api.joueur_obligatoire(req, d)
+    if not limite(db, 'liaison-rep:' + jid, 30, 3600):
+        raise Erreur(429, 'Trop de demandes, réessaie plus tard.')
+    aid = entier(d.get('id'), 1, 2 ** 31, 0)
+    t = maintenant()
+    a = db.execute('SELECT * FROM admins WHERE id=? AND joueur_attente=? AND actif=1 AND liaison_demande_le>?',
+                   (aid, jid, t - DUREE_DEMANDE_LIAISON)).fetchone()
+    if not a:
+        raise Erreur(404, "Cette demande de liaison n'existe plus.")
+    acteur = {'admin_id': aid}  # dans le journal, l'action apparaît sur le compte admin concerné
+    if d.get('accepter') is True:
+        if db.execute('SELECT 1 FROM admins WHERE joueur_id=? AND id<>?', (jid, aid)).fetchone():
+            raise Erreur(409, 'Ton compte joueur est déjà lié à un autre compte du staff.')
+        db.execute('UPDATE admins SET joueur_id=?, joueur_attente=NULL, liaison_demande_le=NULL, liaison_le=? WHERE id=?', (jid, t, aid))
+        journaliser(db, acteur, f'liaison staff acceptée dans le jeu : compte joueur {code_court(jid)} lié', 'admins', 'joueur:' + jid, req=req)
+    else:
+        db.execute('UPDATE admins SET joueur_attente=NULL, liaison_demande_le=NULL WHERE id=?', (aid,))
+        journaliser(db, acteur, f'demande de liaison refusée dans le jeu par {code_court(jid)}', 'admins', 'joueur:' + jid, req=req)
+    return 200, {'ok': True, 'staff': infos_staff(db, jid)}
+
+
+def infos_staff(db, jid):
+    role = staff_de(db, jid)
+    return {'role_nom': role, 'badge': badge_staff(ref_publique(db, jid))} if role else None
+
+
+def api_staff_verifier(req, db):
+    """L'hôte d'une partie vérifie que les joueurs qui portent la Tenue Staff sont vraiment du staff."""
+    d = req.json()
+    jid = api.joueur_obligatoire(req, d)
+    if not limite(db, 'staff-verif:' + jid, 300, 3600):
+        raise Erreur(429, 'Trop de demandes, réessaie plus tard.')
+    liste = d.get('liste') if isinstance(d.get('liste'), list) else []
+    ok = []
+    for e in liste[:32]:
+        if not isinstance(e, dict) or not isinstance(e.get('ref'), str) or not isinstance(e.get('badge'), str):
+            continue
+        ref = e['ref'][:24]
+        if not re.fullmatch(r'[0-9a-f]{6,24}', ref) or not api.hmac.compare_digest(e['badge'][:64], badge_staff(ref)):
+            continue
+        l = db.execute('SELECT id FROM joueurs WHERE ref=?', (ref,)).fetchone()
+        if l and staff_de(db, l['id']):
+            ok.append(ref)
+    return 200, {'staff': ok}
 
 
 # ================================================================ admin : journal, sauvegardes, état du serveur
@@ -873,7 +1080,12 @@ def admin_joueur(req, db, code):
                      for l in db.execute('SELECT * FROM journal WHERE cible=? ORDER BY id DESC LIMIT 40', ('joueur:' + jid,))]
     return 200, {
         'code': code_court(jid), 'cree_le': j['cree_le'], 'vu_le': j['vu_le'], 'connecte': bool(j['vu_le'] and j['vu_le'] > maintenant() - 120),
+        'staff': (lambda l: {'admin': l['identifiant'], 'role_nom': api.ROLES.get(l['role'], l['role']), 'actif': bool(l['actif'])} if l else None)(
+            db.execute('SELECT identifiant, role, actif FROM admins WHERE joueur_id=?', (jid,)).fetchone()),
         'qui': qui(db, jid), 'note': (db.execute('SELECT note FROM joueurs_notes WHERE joueur_id=?', (jid,)).fetchone() or {'note': None})['note'],
+        'compte': (lambda c: {'sauvegarde': bool(c and c['sauvegarde']), 'rev': c['rev'] if c else 0, 'maj_le': c['maj_le'] if c else None,
+                              'taille': c['taille'] if c else 0, 'code': bool(c and c['code_hash']), 'code_cree_le': c['code_cree_le'] if c else None})(
+            db.execute('SELECT * FROM comptes WHERE joueur_id=?', (jid,)).fetchone()),
         'pseudos': [dict(l) for l in db.execute('SELECT pseudo, premier, dernier FROM pseudos_joueurs WHERE joueur_id=? ORDER BY dernier DESC LIMIT 20', (jid,))],
         'profil': profil, 'sanctions': sanctions, 'sanctions_actives': resume_sanctions(db, jid),
         'connexions': [dict(l) for l in db.execute('SELECT jour, premiere, derniere, nb FROM connexions_joueurs WHERE joueur_id=? ORDER BY jour DESC LIMIT 30', (jid,))],
@@ -902,6 +1114,16 @@ def admin_joueur_surnom(req, db, code):
     journaliser(db, s, f'surnom de {code_court(jid)} : « {surnom or "—"} »', 'joueurs', 'joueur:' + jid,
                 {'avant': dict(avant) if avant else None, 'apres': {'surnom': surnom, 'note': note}}, req=req)
     return 200, {'ok': True, 'qui': qui(db, jid)}
+
+
+def admin_joueur_code_sauvegarde(req, db, code):
+    """Un joueur a perdu son code : l'admin en fait un nouveau (montré une fois). Donne accès au compte → super admin / admin."""
+    s = session_admin(req, db, ecriture=True, permission='joueurs.compte')
+    exiger_confirmation(req.json())
+    jid = joueur_par_code(db, code[1:])
+    nouveau = nouveau_code_sauvegarde(db, jid)
+    journaliser(db, s, f'nouveau code de sauvegarde pour {code_court(jid)}', 'joueurs', 'joueur:' + jid, req=req)
+    return 200, {'code': nouveau}
 
 
 def admin_sanctions(req, db):
@@ -1510,11 +1732,19 @@ ROUTES = [
     ('POST', r'/api/profil', api_profil, True),
     ('POST', r'/api/signalements', api_signalement, True),
     ('POST', r'/api/cargaison', api_cargaison, True),
+    ('POST', r'/api/compte/charger', api_compte_charger, True),
+    ('POST', r'/api/compte/sauvegarder', api_compte_sauvegarder, True),
+    ('POST', r'/api/compte/code', api_compte_code, True),
+    ('POST', r'/api/compte/recuperer', api_compte_recuperer, True),
     ('POST', r'/api/cargaison/reclamer', api_cargaison_reclamer, True),
+    ('POST', r'/api/boite/liaison', api_liaison_repondre, True),
+    ('POST', r'/api/staff/verifier', api_staff_verifier, True),
     ('GET', r'/api/admin/tableau', admin_tableau, False),
     ('GET', r'/api/admin/serveur', admin_serveur, False),
     ('GET', r'/api/admin/compte', admin_compte, False),
     ('POST', r'/api/admin/mdp', admin_mdp, False),
+    ('POST', r'/api/admin/liaison', admin_liaison_demander, False),
+    ('DELETE', r'/api/admin/liaison', admin_liaison_retirer, False),
     ('DELETE', r'/api/admin/sessions/(s[0-9a-f]{10})', admin_session_fermer, False),
     ('GET', r'/api/admin/admins', admin_admins, False),
     ('POST', r'/api/admin/admins', admin_admin_creer, False),
@@ -1527,6 +1757,7 @@ ROUTES = [
     ('GET', r'/api/admin/joueurs', admin_joueurs, False),
     ('GET', r'/api/admin/joueurs/(j[0-9a-fA-F]{8})', admin_joueur, False),
     ('POST', r'/api/admin/joueurs/(j[0-9a-fA-F]{8})/surnom', admin_joueur_surnom, False),
+    ('POST', r'/api/admin/joueurs/(j[0-9a-fA-F]{8})/code-sauvegarde', admin_joueur_code_sauvegarde, False),
     ('GET', r'/api/admin/sanctions', admin_sanctions, False),
     ('POST', r'/api/admin/sanctions', admin_sanction_creer, False),
     ('POST', r'/api/admin/sanctions/(\d+)/lever', admin_sanction_lever, False),

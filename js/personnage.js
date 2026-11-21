@@ -201,6 +201,33 @@ function tenue(id, c, peau) {
       };
       return { torse: WL('tee2k27b', (g, w, h) => d(g, w, h, false), (g, w, h) => d(g, w, h, true), 128, 64), bras: M('#0a0a14'), avantBras: M(peau), bas: M('#2c3e6b'), pieds: M('#f4f4f4'), ceinture: M('#1d1d2a') };
     }
+    case 'staff': { // Tenue Staff : réservée aux comptes liés au staff (jamais en vente)
+      const MENTHE = '#14e0a2', FOND = '#11161c';
+      const ecusson = (g, x, y, c) => { // petit bouclier
+        g.fillStyle = c; g.beginPath(); g.moveTo(x - 6, y - 7); g.lineTo(x + 6, y - 7); g.lineTo(x + 6, y + 1); g.quadraticCurveTo(x + 6, y + 6, x, y + 9);
+        g.quadraticCurveTo(x - 6, y + 6, x - 6, y + 1); g.closePath(); g.fill();
+      };
+      const d = (g, w, h, lueur) => {
+        rect(g, lueur ? '#000' : FOND, 0, 0, w, h);
+        rect(g, MENTHE, 0, h - 7, w, 3); // bas de la veste
+        rect(g, MENTHE, 0, 0, w, 2); // liseré des épaules
+        if (!lueur) { rect(g, '#2a333d', w / 2 - 1, 2, 2, h - 9); } // fermeture éclair
+        ecusson(g, w / 2 - 15, 15, MENTHE);
+        if (!lueur) { ecusson(g, w / 2 - 15, 15.5, FOND); g.font = "900 9px 'Lilita One', system-ui"; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = MENTHE; g.fillText('N', w / 2 - 15, 15); }
+        g.font = "900 9px 'Lilita One', system-ui"; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillStyle = lueur ? '#000' : '#f2f5f7'; g.fillText('STAFF', w / 2 + 15, 15); // devant, côté cœur
+        // dans le dos : STAFF en grand (le dos est coupé en deux sur les bords de l'image)
+        g.font = "900 17px 'Lilita One', system-ui";
+        g.lineWidth = 3; g.strokeStyle = lueur ? '#000' : MENTHE;
+        for (const x of [0, w]) { g.strokeText('STAFF', x, 27); g.fillStyle = lueur ? '#000' : '#f2f5f7'; g.fillText('STAFF', x, 27); }
+        rect(g, MENTHE, 0, 38, 22, 2); rect(g, MENTHE, w - 22, 38, 22, 2);
+      };
+      const t = WL('staffb', (g, w, h) => d(g, w, h, false), (g, w, h) => d(g, w, h, true), 128, 64);
+      const bande = (g, w, h, lueur) => { rect(g, lueur ? '#000' : FOND, 0, 0, w, h); rect(g, MENTHE, 0, 6, w, 3); };
+      const manche = WL('staffm', (g, w, h) => bande(g, w, h, false), (g, w, h) => bande(g, w, h, true), 32, 16);
+      const bottes = W('bottestaff', (g, w, h) => { rect(g, '#0b0f13', 0, 0, w, h); rect(g, MENTHE, 0, h - 4, w, 2); }, {}, 32, 16);
+      return { torse: t, bras: manche, avantBras: M(FOND), bas: M('#1b222b'), pieds: bottes, ceinture: M('#0b0f13'), mains: M('#0b0f13'), capuche: FOND };
+    }
     default: { // classique : ta couleur
       const t = W('cl' + c, (g, w, h) => { rect(g, c, 0, 0, w, h); rect(g, clair(c, 0.35), 24, 0, 16, 3); rect(g, sombre(c, 0.75), 31, 3, 2, h - 3); rect(g, sombre(c, 0.8), 22, 16, 7, 7); rect(g, sombre(c, 0.85), 0, h - 3, w, 3); });
       return { torse: t, bras: M(c), avantBras: M(peau), bas: M(pant), pieds: M('#24262d'), ceinture: M('#24262d') };

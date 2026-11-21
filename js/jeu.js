@@ -11,6 +11,7 @@ import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModel
 import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, signalerJoueur, URL_API } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
 import { initCadeaux, bonusActif, texteMultiplicateur, synchroniserProfil, etatBoite, verifierBoite } from './cadeaux.js';
+import { initCompte } from './compte.js';
 import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, replique, RARETES_ESPRIT, meilleuresRaretes } from './esprits.js';
 import { Reseau } from './reseau.js';
 import { Hote } from './hote.js';
@@ -3392,7 +3393,7 @@ function demarrerHote() {
   appliquerMode(reglages.mode);
   lireOptionsSalon();
   reseau.surMessageClient = recevoir;
-  reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: profil.equipe, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref });
+  reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: profil.equipe, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
 }
 
 function lirePseudo() {
@@ -3464,7 +3465,7 @@ function initMenu() {
     reseau.surPerteHote = () => { if (!etat.exclu) location.href = location.pathname + '?erreur=hote'; };
     try {
       await reseau.rejoindre(code);
-      reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: profil.equipe, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref });
+      reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: profil.equipe, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
     } catch (err) {
       reseau.fermer();
       afficherEcran('menu');
@@ -3548,7 +3549,7 @@ for (const a of INTEGRATION.armes) {
 const apercu = new Apercu();
 const menus = new Menus({
   apercu, profil, reglages, son: n => { initSons(); son(n); },
-  surLook: () => { if (etat.ecran === 'salon') reseau.versHote({ t: 'look', look: profil.equipe, couleur: reglages.couleur, esp: meilleuresRaretes(profil.collectionEsprits) }); },
+  surLook: () => { if (etat.ecran === 'salon') reseau.versHote({ t: 'look', look: profil.equipe, couleur: reglages.couleur, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null }); },
 });
 initMenu();
 afficherEcran('menu');
@@ -3563,6 +3564,7 @@ document.body.classList.remove('demarrage');
 const bonus = bonusDuJour(profil);
 if (bonus) setTimeout(() => { toast(`🎁 Bonus du jour : +${bonus} 🪙 !`, 4000); menus.majPieces(true); }, 900);
 initCadeaux({ profil, menus, son: n => { initSons(); son(n); }, toast, reglages, version: VERSION_JEU });
+initCompte({ profil, reglages, toast });
 // Les cosmétiques livrés (les 250 nouveaux) se chargent après l'écran d'accueil, sans ralentir le démarrage
 chargerCosmetiques(clesLook(profil.equipe)).then(() => { if (etat.ecran === 'menu' && menus.page === 'jouer') menus.montrerPerso(); }).catch(() => {});
 // tous les autres en douce un peu plus tard (pas en qualité basse : les téléphones chargent seulement ce qui sert)

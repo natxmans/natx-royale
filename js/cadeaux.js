@@ -2,17 +2,18 @@
 // Le SERVEUR décide de ce qui est livré à qui et note chaque ouverture une seule fois ;
 // le profil garde en plus la liste des cadeaux déjà ouverts (un cadeau n'est jamais donné deux fois).
 // Sans serveur joignable, rien ne change dans le jeu.
-import { objet, sauverProfil, RARETES_COSM, CATEGORIES, appliquerConfigBoutique, ajouterCosmetiquesAdmin } from './boutique.js';
+import { objet, sauverProfil, RARETES_COSM, CATEGORIES, appliquerConfigBoutique, ajouterCosmetiquesAdmin, appliquerStaff } from './boutique.js';
 import { enregistrerAjouts } from './modeles.js';
 import { ESPRITS, reglerEspritsDisponibles } from './esprits.js';
 import {
-  URL_API, chargerEtatJeu, recupererBoite, ouvrirCadeauServeur, avertissementLu, utiliserCodeCadeau, codeJoueur, envoyerProfil,
+  URL_API, chargerEtatJeu, recupererBoite, ouvrirCadeauServeur, avertissementLu, utiliserCodeCadeau, codeJoueur, envoyerProfil, repondreLiaison,
 } from './retours.js';
 
 const $ = s => document.querySelector(s);
 let etatJeu = { annonce: null, bonus: null };
 let ctx = null;
-let boite = { non_ouverts: [], historique: [], ref: null, suspension: null, avertissements: [], prive_cadeaux: false };
+let boite = { non_ouverts: [], historique: [], ref: null, suspension: null, avertissements: [], prive_cadeaux: false, staff: null, liaison: null };
+let equiperStaff = false; // vient d'accepter la liaison : on lui met la tenue tout de suite
 const aMontrer = []; // les cadeaux ouverts s'affichent un par un
 const RARETES_ESPRIT = { commun: 'Commun', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire' };
 const COULEURS_RARETE_ESPRIT = { commun: '#8fa3b8', rare: '#3d8dff', epique: '#b552ff', legendaire: '#ffad1f' };
@@ -39,7 +40,7 @@ export function appliquerCadeau(profil, c) {
     if (typeof cle !== 'string') continue;
     const [cat, id] = cle.split(':');
     const o = objet(cat, id);
-    if (!o || profil.possedes.includes(cle)) continue;
+    if (!o || o.reserve || profil.possedes.includes(cle)) continue; // la Tenue Staff ne s'offre pas
     profil.possedes.push(cle);
     profil.nouveautes.push(cle);
     nouveaux.push(o);
@@ -244,6 +245,48 @@ function montrerAvertissement() {
   };
 }
 
+// ---------- Liaison staff (demandée dans l'espace admin, acceptée ici) ----------
+// La Tenue Staff suit ce que dit le serveur : donnée si ce compte est lié à un compte admin actif, retirée sinon.
+function majStaff() {
+  const p = ctx.profil;
+  const r = appliquerStaff(p, !!boite.staff);
+  if (!r) return;
+  if (r === 'ajoutee' && equiperStaff) { p.equipe.tenue = 'staff'; equiperStaff = false; }
+  sauverProfil(p);
+  if (r === 'ajoutee') { ctx.son('ramasser'); ctx.toast('🛡️ Ton compte est lié au staff : tu as reçu la Tenue Staff ! (Casier → Tenues)', 6000); }
+  else ctx.toast("🛡️ La Tenue Staff a été retirée : ton compte n'est plus lié au staff.", 6000);
+  const m = ctx.menus;
+  m.surLook();
+  if (m.page === 'jouer') m.montrerPerso();
+  if (m.page === 'casier') m.dessinerCasier();
+}
+
+function montrerLiaison() {
+  const l = boite.liaison;
+  const f = $('#fenetreLiaison');
+  // seulement sur les menus (jamais en pleine partie), une demande à la fois
+  if (!l || !f || !f.classList.contains('cache') || $('#menu').classList.contains('cache')) return;
+  codeJoueur().then(c => { $('#liaisonCode').textContent = c || '—'; }).catch(() => {});
+  $('#liaisonRole').textContent = l.role_nom;
+  $('#liaisonDate').textContent = 'Demande faite le ' + dateCourte(l.demande_le);
+  $('#liaisonMsg').textContent = '';
+  f.classList.remove('cache');
+  const repondre = async accepter => {
+    for (const b of f.querySelectorAll('button')) b.disabled = true;
+    try {
+      await repondreLiaison(l.id, accepter);
+      f.classList.add('cache');
+      boite.liaison = null;
+      if (accepter) { equiperStaff = true; }
+      else ctx.toast('Demande de liaison refusée.', 3000);
+      verifierBoite();
+    } catch (e) { $('#liaisonMsg').textContent = '❌ ' + e.message; }
+    for (const b of f.querySelectorAll('button')) b.disabled = false;
+  };
+  $('#liaisonAccepter').onclick = () => repondre(true);
+  $('#liaisonRefuser').onclick = () => repondre(false);
+}
+
 function majSuspension() {
   const s = boite.suspension;
   const barre = $('#barreSuspension');
@@ -281,6 +324,8 @@ export async function verifierBoite() {
     dessinerBoite();
     montrerAvertissement();
     majSuspension();
+    majStaff();
+    montrerLiaison();
     for (const f of ecouteurs) f(boite);
   } catch (e) { /* serveur injoignable : on réessaiera */ }
   verifEnCours = false;
@@ -317,7 +362,7 @@ export function synchroniserProfil(vite = false) {
   dernierEnvoi = t;
   const p = ctx.profil;
   envoyerProfil({
-    pseudo: ctx.reglages?.pseudo || '', niveau: p.niveau, xp: p.xp, pieces: p.pieces, possedes: p.possedes, equipe: p.equipe,
+    pseudo: ctx.reglages?.pseudo || document.querySelector('#pseudo')?.value || '', niveau: p.niveau, xp: p.xp, pieces: p.pieces, possedes: p.possedes, equipe: p.equipe,
     esprits: p.collectionEsprits.map(e => ({ type: e.type, rarete: e.rarete, n: e.n })),
     stats: { parties: p.stats.parties, victoires: p.stats.victoires, kills: p.stats.kills }, version: ctx.version || '',
   }).catch(() => {});

@@ -264,6 +264,8 @@ body.demarrage #menu { visibility: hidden; }
 .carte.r-collab { --rarete: #ff2e88; background: radial-gradient(circle at 50% 30%, rgba(34, 232, 255, .55), transparent 60%), linear-gradient(160deg, #ff2e88 0%, #b026ff 50%, #0a0a14 100%); border-color: #22e8ff; box-shadow: 0 8px 18px rgba(0, 0, 0, .35), 0 0 14px rgba(34, 232, 255, .35); }
 .carte.r-collab .carte-bas b { font-family: 'Orbitron', system-ui; font-weight: 900; font-size: 15px; letter-spacing: .3px; }
 .carte.r-collab .carte-cat::after { content: ' · 2K27'; color: #22e8ff; }
+.carte.r-staff { --rarete: #14e0a2; background: radial-gradient(circle at 50% 30%, rgba(20, 224, 162, .45), transparent 62%), linear-gradient(160deg, #1b2a33 0%, #11161c 70%); border-color: #14e0a2; box-shadow: 0 8px 18px rgba(0, 0, 0, .35), 0 0 14px rgba(20, 224, 162, .35); }
+.carte.r-staff .carte-cat::after { content: ' · 🛡️ Staff'; color: #14e0a2; }
 .bandeau-collab { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; width: min(92%, 440px); padding: 10px 14px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 13px; color: #d9dcff; background: rgba(10, 10, 20, .82); border: 2px solid #b026ff; box-shadow: 0 0 22px rgba(176, 38, 255, .45); animation: lueur 2.4s ease-in-out infinite; }
 .bandeau-collab .collab-logo { font-size: 22px; }
 .bandeau-collab:hover { border-color: #22e8ff; }
@@ -760,7 +762,9 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
 /* Boîte de réception et fenêtres des cadeaux : jamais plus hautes que l'écran (téléphone en paysage) */
 .boite-reception { max-height: calc(100dvh - 20px); display: flex; flex-direction: column; }
 .boite-reception .liste-boite { flex: 1 1 auto; min-height: 0; max-height: none; }
-.boite.cadeau, .boite.avertissement, .boite.signalement { max-height: calc(100dvh - 20px); overflow-y: auto; }
+.boite.cadeau, .boite.avertissement, .boite.signalement, .boite.liaison { max-height: calc(100dvh - 20px); overflow-y: auto; }
+.boite.liaison { max-width: 480px; text-align: center; border-color: #14e0a2; box-shadow: 0 0 24px rgba(20, 224, 162, .35); }
+.liaison-texte { font-size: 17px; font-weight: 800; background: rgba(20, 224, 162, .12); border-radius: 12px; padding: 10px; }
 @media (max-height: 500px) {
   .boite-reception { padding: 10px 14px; gap: 4px; }
   .boite-reception h2 { font-size: 20px; margin: 0; }
@@ -778,3 +782,10 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
   .carte-esprit-jeu .ico { font-size: 30px; }
 }
 .fiche-infos .bulle-esprit, .bulle-esprit { color: #1b1033 !important; }
+
+/* Paramètres → Compte (code de sauvegarde) */
+.groupe-param.compte { display: grid; gap: 6px; text-align: left; }
+.groupe-param.compte h3 { margin: 8px 0 0; }
+.ligne-code { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ligne-code code { font: 900 18px/1.2 ui-monospace, Consolas, monospace; letter-spacing: 2px; background: rgba(0, 0, 0, .35); padding: 7px 12px; border-radius: 10px; color: #ffd23f; }
+.ligne-code input { font: 800 16px ui-monospace, Consolas, monospace; letter-spacing: 2px; text-transform: uppercase; flex: 1 1 200px; }

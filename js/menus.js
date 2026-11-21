@@ -139,7 +139,7 @@ export class Menus {
 
   majStats() {
     const p = this.profil, s = p.stats;
-    const total = CATALOGUE.length, poss = CATALOGUE.filter(o => possede(p, o)).length;
+    const total = CATALOGUE.filter(o => !o.reserve || possede(p, o)).length, poss = CATALOGUE.filter(o => possede(p, o)).length;
     // niveau et XP
     const besoin = xpPourNiveau(p.niveau);
     $('#niveauProfil').innerHTML = `<div class="ligne-niveau"><span class="gros-niveau">⭐ ${p.niveau}</span><div class="barre-xp grande"><i style="width:${Math.round(p.xp / besoin * 100)}%"></i></div><small>${p.xp} / ${besoin} XP</small></div>
@@ -267,7 +267,7 @@ export class Menus {
   initFiltres() {
     const remplir = (sel, options) => { for (const [v, t] of options) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); } };
     const series = collectionsVisibles().map(c => [String(c.n), '📦 ' + c.nom]);
-    const raretes = Object.entries(RARETES_COSM).map(([k, r]) => [k, r.nom]);
+    const raretes = Object.entries(RARETES_COSM).filter(([k]) => k !== 'staff').map(([k, r]) => [k, r.nom]);
     remplir($('#filtreCat'), CATEGORIES.map(c => [c.id, c.icone + ' ' + c.nom]));
     remplir($('#filtreRarete'), raretes); remplir($('#filtreSerie'), series);
     remplir($('#casierRarete'), raretes); remplir($('#casierSerie'), series);
@@ -295,7 +295,7 @@ export class Menus {
 
   // Tout le catalogue en vente (tous les objets disponibles, filtrés, par pages de 24)
   dessinerCatalogue() {
-    const ordre = { commun: 0, rare: 1, epique: 2, legendaire: 3, collab: 4 };
+    const ordre = { commun: 0, rare: 1, epique: 2, legendaire: 3, collab: 4, staff: 5 };
     const liste = CATALOGUE.filter(o => !o.gratuit && (enVente(o) || possede(this.profil, o)) && this.passeFiltre(o, this.filtres))
       .sort((a, b) => (b.nouveau250 ? 1 : 0) - (a.nouveau250 ? 1 : 0) || ordre[a.rarete] - ordre[b.rarete] || a.nom.localeCompare(b.nom));
     const parPage = 24, pages = Math.max(1, Math.ceil(liste.length / parPage));
@@ -403,10 +403,10 @@ export class Menus {
     const g = $('#grilleCasier');
     g.innerHTML = '';
     this.fileMini = [];
-    const tous = CATALOGUE.filter(o => o.cat === this.categorie);
+    const tous = CATALOGUE.filter(o => o.cat === this.categorie && (!o.reserve || possede(this.profil, o))); // Tenue Staff : visible seulement si on l'a
     const f = this.filtresCasier;
     const liste = tous.filter(o => this.passeFiltre(o, { texte: f.texte, rarete: f.rarete, serie: f.serie, possede: f.mes ? 'oui' : '' }));
-    const ordre = { commun: 0, rare: 1, epique: 2, legendaire: 3, collab: 4 };
+    const ordre = { commun: 0, rare: 1, epique: 2, legendaire: 3, collab: 4, staff: 5 };
     liste.sort((a, b) => (possede(this.profil, b) - possede(this.profil, a)) || ordre[a.rarete] - ordre[b.rarete]);
     for (const o of liste) {
       const c = this.carte(o);

@@ -4,7 +4,8 @@ import { hasard, angleVers, arrondi, borner } from './outils.js';
 import { OBJETS, RARETES, tirerButin, LISTE_ARMES, butinRavitaillement } from './armes.js';
 import { rayonBoite, DEMI } from './monde.js';
 import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, REGAIN_SOLO, DEFIS_ENTRAINEMENT, posCargaison, CARGO } from './partage.js';
-import { nettoyerLook, lookAuHasard } from './boutique.js';
+import { nettoyerLook, lookAuHasard, LOOK_DEFAUT } from './boutique.js';
+import { URL_API, verifierStaff } from './retours.js';
 // rareté de collection de chaque esprit (aspect seulement) et référence publique (signalements) : vérifiées ici
 const RARETES_OK = new Set(['commun', 'rare', 'epique', 'legendaire']);
 function nettoyerEsp(e) {
@@ -13,6 +14,7 @@ function nettoyerEsp(e) {
   return r;
 }
 const nettoyerRef = r => (typeof r === 'string' && /^[0-9a-f]{12}$/.test(r) ? r : null);
+const nettoyerBadge = b => (typeof b === 'string' && /^[0-9a-f]{32}$/.test(b) ? b : null);
 import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE } from './esprits.js';
 
 const NOMS_BOTS = ['Patate', 'Croquette', 'Tartiflette', 'Grumeau', 'Moustache', 'Biscotte', 'Pépito', 'Cornichon',
@@ -55,6 +57,25 @@ export class Hote {
     this.diffuserSalon();
   }
 
+  // Tenue Staff : seulement pour les vrais comptes du staff. Le joueur envoie la preuve (badge) que le serveur lui a donnée,
+  // l'hôte la fait vérifier par le serveur ; sans preuve valable, la tenue est remplacée par la tenue de base pour tout le monde.
+  controlerStaff(de) {
+    const p = this.salon.get(de);
+    if (!p || p.look.tenue !== 'staff') return;
+    const cle = (p.ref || '') + ':' + (p.badge || '');
+    if (p.staffOk === cle) return; // déjà vérifié : c'est bien du staff
+    if (!URL_API || !p.ref || !p.badge || p.staffNon === cle) { p.look.tenue = LOOK_DEFAUT.tenue; return; }
+    if (p.staffVerif === cle) return; // vérification en cours
+    p.staffVerif = cle;
+    verifierStaff([{ ref: p.ref, badge: p.badge }]).then(d => {
+      const q = this.salon.get(de);
+      if (!q) return;
+      if (Array.isArray(d.staff) && d.staff.includes(q.ref)) { q.staffOk = cle; return; }
+      q.staffNon = cle;
+      if (q.look.tenue === 'staff') { q.look.tenue = LOOK_DEFAUT.tenue; this.diffuserSalon(); }
+    }).catch(() => { const q = this.salon.get(de); if (q) q.staffVerif = null; }); // serveur injoignable : on ne punit pas un vrai staff
+  }
+
   recevoir(de, m) {
     if (!m || typeof m !== 'object') return;
     if (m.t === 'bonjour') {
@@ -63,14 +84,21 @@ export class Hote {
       const pris = new Set([...this.salon.values()].filter(p => p.id !== de).map(p => p.nom));
       if (pris.has(nom)) { let k = 2; while (pris.has(nom.slice(0, 13) + ' ' + k)) k++; nom = nom.slice(0, 13) + ' ' + k; }
       this.salon.set(de, { id: de, nom, couleur: /^#[0-9a-f]{6}$/i.test(m.couleur) ? m.couleur : '#3498db', hote: de === this.reseau.monId, look: nettoyerLook(m.look),
-        esp: nettoyerEsp(m.esp), ref: nettoyerRef(m.ref) });
+        esp: nettoyerEsp(m.esp), ref: nettoyerRef(m.ref), badge: nettoyerBadge(m.staff) });
+      this.controlerStaff(de);
       this.reseau.envoyerA(de, { t: 'bienvenue', id: de, enCours: this.enCours });
       this.diffuserSalon();
       return;
     }
     if (m.t === 'look') {
       const p = this.salon.get(de);
-      if (p) { p.look = nettoyerLook(m.look); p.esp = nettoyerEsp(m.esp); if (/^#[0-9a-f]{6}$/i.test(m.couleur)) p.couleur = m.couleur; this.diffuserSalon(); }
+      if (p) {
+        p.look = nettoyerLook(m.look); p.esp = nettoyerEsp(m.esp); if (/^#[0-9a-f]{6}$/i.test(m.couleur)) p.couleur = m.couleur;
+        if (!p.ref) p.ref = nettoyerRef(m.ref);
+        p.badge = nettoyerBadge(m.staff) || p.badge;
+        this.controlerStaff(de);
+        this.diffuserSalon();
+      }
       return;
     }
     if (m.t === 'ping') { this.reseau.envoyerA(de, { t: 'pong', c: +m.c || 0 }); return; }

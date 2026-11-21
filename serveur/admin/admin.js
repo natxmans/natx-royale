@@ -99,6 +99,8 @@ function personne(q, code) {
     q.pseudo ? el('span', { class: 'pseudo' }, q.pseudo) : null,
     el('span', { class: 'code' }, q.code));
 }
+// même chose, mais sans lien pour les rôles qui ne voient pas les fiches des joueurs
+const personneOuTexte = q => (!q ? '—' : PERM('joueurs.voir') ? personne(q) : el('span', { class: 'personne' }, q.pseudo ? el('span', { class: 'pseudo' }, q.pseudo) : null, el('span', { class: 'code' }, q.code)));
 const champ = (libelle, input) => el('label', {}, libelle, input);
 const choix = (options, valeur, attrs = {}) => el('select', attrs, Object.entries(options).map(([k, v]) => el('option', { value: k, selected: k === String(valeur) ? true : null }, v)));
 function pages(total, page, parPage, aller) {
@@ -220,7 +222,7 @@ async function router() {
   try {
     const contenu = await p.f(c);
     if (moiVue !== vueActuelle) return; // l'admin a changé de page entre-temps
-    if (contenu) c.replaceChildren(...[].concat(contenu));
+    if (contenu) c.replaceChildren(...[].concat(contenu).filter(x => x !== null && x !== undefined && x !== false)); // jamais « null » écrit dans la page
   } catch (e) {
     if (moiVue === vueActuelle) c.replaceChildren(el('p', { class: 'erreur' }, e.message));
   }
@@ -231,7 +233,7 @@ const recharger = () => router();
 
 function ouvrirTiroir(titre, ...contenu) {
   $('#tiroirTitre').textContent = titre;
-  $('#tiroirCorps').replaceChildren(...contenu);
+  $('#tiroirCorps').replaceChildren(...contenu.filter(x => x !== null && x !== undefined && x !== false));
   $('#tiroir').classList.remove('cache');
 }
 function fermerTiroir() { $('#tiroir').classList.add('cache'); }
@@ -337,6 +339,7 @@ async function vueFicheJoueur(code) {
   if (PERM('joueurs.sanctionner')) actions.append(el('button', { class: 'bouton danger', onclick: () => formSanction(d.code) }, '⛔ Sanctionner'));
   blocs.push(actions);
   blocs.push(panneauQuiEstCe(d));
+  blocs.push(panneauCompte(d));
   if (p) {
     const parCat = {};
     for (const o of p.possedes) (parCat[o.cle.split(':')[0]] ||= []).push(o.nom);
@@ -375,11 +378,29 @@ function panneauQuiEstCe(d) {
   if (b) b.onclick = async () => { if (await action(b, () => api('POST', `/joueurs/j${d.code.replace('-', '').toLowerCase()}/surnom`, { surnom: surnom.value, note: note.value }), 'Surnom enregistré.')) recharger(); };
   const pseudos = d.pseudos || [];
   return panneau('🏷️ Qui est-ce ?',
+    d.staff ? el('p', { class: 'alerte staff' }, `🛡️ Compte joueur de l'admin « ${d.staff.admin} » (${d.staff.role_nom})${d.staff.actif ? '' : ' — compte admin désactivé'}. Il porte la Tenue Staff.`) : null,
     el('p', { class: 'aide' }, 'Visible seulement par les admins, jamais dans le jeu. Le surnom s\'affiche partout dans le panel (joueurs, cadeaux, signalements, sanctions, journal) et sert à la recherche.'),
     el('div', { class: 'form-grille' }, champ('Surnom', surnom), champ('Note privée', note)), b ? el('div', { class: 'actions' }, b) : null,
     el('h3', {}, 'Pseudos utilisés dans le jeu'),
     pseudos.length ? el('ul', { class: 'liste-simple' }, pseudos.map(x => el('li', {}, el('b', {}, x.pseudo), ` — du ${jour(x.premier)} au ${jour(x.dernier)}`)))
       : el('p', { class: 'vide' }, 'Pas encore connu (le jeu l\'envoie avec le profil).'));
+}
+
+// Sauvegarde en ligne du joueur + nouveau code de sauvegarde (s'il a perdu le sien)
+function panneauCompte(d) {
+  const c = d.compte || {};
+  const b = PERM('joueurs.compte') ? el('button', { class: 'bouton' }, '🔑 Faire un nouveau code de sauvegarde') : null;
+  if (b) b.onclick = async () => {
+    const conf = await demander({ titre: 'Nouveau code de sauvegarde', texte: `Pour ${d.qui?.surnom || d.profil?.pseudo || d.code}. Son ancien code ne marchera plus. Donne-le-lui en privé : avec ce code, on joue avec son compte.`, mot: 'CONFIRMER' });
+    const r = conf && await action(b, () => api('POST', `/joueurs/j${d.code.replace('-', '').toLowerCase()}/code-sauvegarde`, conf));
+    if (r) ouvrirTiroir('Code de sauvegarde', el('p', {}, `Pour ${d.code}. Il le tape dans le jeu : ⚙️ Paramètres → 👤 Compte → « Récupérer mon compte ».`),
+      el('code', { class: 'mdp-provisoire' }, r.code), el('p', { class: 'aide' }, "Ce code ne sera plus affiché ici. Il remplace l'ancien."));
+  };
+  return panneau('☁️ Compte et sauvegarde',
+    el('ul', { class: 'liste-simple' },
+      el('li', {}, c.sauvegarde ? `Sauvegarde en ligne : oui (version ${c.rev}, ${Math.round((c.taille || 0) / 1024)} Ko, le ${date(c.maj_le)})` : "Sauvegarde en ligne : pas encore (son jeu n'a pas la dernière version, ou n'a pas encore joué)."),
+      el('li', {}, c.code ? `Code de sauvegarde : créé le ${date(c.code_cree_le)} (le serveur ne peut pas le relire)` : 'Code de sauvegarde : pas encore créé')),
+    el('p', { class: 'aide' }, 'Un joueur qui a perdu son code (ou qui change de téléphone) : fais-lui un nouveau code et donne-le-lui en privé.'), b);
 }
 
 function formSanction(code) {
@@ -943,15 +964,21 @@ async function vueAdmins() {
         const r = conf && await action(e.target, () => api('POST', '/admins/' + a.id, { reinitialiser: true, ...conf }));
         if (r) { await recharger(); montrerMdpProvisoire(a.identifiant, r.mot_de_passe_provisoire); }
       } }, 'Réinitialiser le mot de passe'),
+      a.joueur ? el('button', { class: 'bouton discret', onclick: async e => {
+        const conf = await demander({ titre: 'Délier le compte joueur', texte: `${a.identifiant} ↔ ${a.joueur.code}. Ce compte joueur perdra la Tenue Staff.`, mdp: true });
+        if (conf && await action(e.target, () => api('POST', '/admins/' + a.id, { delier: true, ...conf }), 'Compte joueur délié.')) recharger();
+      } }, 'Délier le compte joueur') : null,
       a.moi ? null : el('button', { class: 'bouton danger', onclick: async e => {
         const conf = await demander({ titre: 'Supprimer le compte', texte: a.identifiant, mdp: true });
         if (conf && await action(e.target, () => api('DELETE', '/admins/' + a.id, conf), 'Compte supprimé.')) recharger();
       } }, 'Supprimer')) : null;
     return el('tr', { class: a.actif ? '' : 'eteint' }, el('td', {}, el('b', {}, a.identifiant), a.moi ? ' (toi)' : '', a.doit_changer_mdp ? el('div', {}, pastille('mot de passe provisoire', 'jaune')) : null),
-      el('td', {}, role), el('td', {}, a.actif ? pastille('actif', 'vert') : pastille('désactivé', 'gris')), el('td', {}, date(a.derniere_connexion)), el('td', {}, a.sessions), el('td', {}, boutons));
+      el('td', {}, role), el('td', {}, a.actif ? pastille('actif', 'vert') : pastille('désactivé', 'gris')), el('td', {}, a.joueur ? personneOuTexte(a.joueur) : '—'),
+      el('td', {}, date(a.derniere_connexion)), el('td', {}, a.sessions), el('td', {}, boutons));
   });
   const blocs = [el('header', { class: 'titre' }, el('h1', {}, 'Administrateurs')),
-    panneau('Comptes', tableau(['Identifiant', 'Rôle', 'État', 'Dernière connexion', 'Sessions', ''], lignes))];
+    panneau('Comptes', el('p', { class: 'aide' }, "« Compte joueur » : le compte du jeu lié à ce compte admin (il porte la Tenue Staff). Chacun lie le sien dans « Mon compte »."),
+      tableau(['Identifiant', 'Rôle', 'État', 'Compte joueur', 'Dernière connexion', 'Sessions', ''], lignes))];
   if (gerer) {
     const ident = el('input', { maxlength: 60, placeholder: 'ex. moderateur.lea', autocomplete: 'off' });
     const role = choix(d.roles, 'moderateur');
@@ -1075,9 +1102,40 @@ async function vueCompte() {
           if (await action(e.target, () => api('DELETE', '/sessions/' + s.id, {}), 'Session fermée.')) recharger();
         } }, 'Fermer'))))),
       el('p', { class: 'aide' }, 'Une session se ferme seule après 2 h sans rien faire, et au plus tard 12 h après la connexion.'))),
+    d.doit_changer_mdp ? null : panneauLiaison(d.liaison),
     panneau('🕑 Mes dernières connexions', tableau(['Date', 'Résultat', 'Navigateur'], d.connexions.map(c => el('tr', {}, el('td', {}, date(c.cree_le)),
       el('td', {}, c.ok ? pastille('réussie', 'vert') : pastille('ratée', 'rouge')), el('td', { class: 'petit' }, c.navigateur || '—'))))),
   ];
+}
+
+// Liaison staff : l'admin choisit le code de SON compte joueur ; le jeu de ce compte doit accepter la demande
+// (personne ne peut lier le compte d'un autre). Une fois lié, ce compte joueur reçoit la Tenue Staff.
+function panneauLiaison(l) {
+  l = l || {};
+  const code = el('input', { maxlength: 9, placeholder: 'ex. 80FD-FB83', autocomplete: 'off', spellcheck: 'false', class: 'code-joueur' });
+  code.addEventListener('input', () => { const v = code.value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 8); code.value = v.length > 4 ? v.slice(0, 4) + '-' + v.slice(4) : v; });
+  const lier = el('button', { class: 'bouton principal' }, l.joueur ? 'Lier ce compte à la place' : '🔗 Lier');
+  lier.onclick = async () => {
+    if (code.value.replace('-', '').length !== 8) { toast('Tape le code de ton compte joueur (8 caractères, ex. 80FD-FB83).', true); code.focus(); return; }
+    if (await action(lier, () => api('POST', '/liaison', { joueur: code.value }), 'Demande envoyée : accepte-la dans le jeu.')) recharger();
+  };
+  const contenu = [el('p', { class: 'aide' }, "Lie ton compte admin à TON compte du jeu : il reçoit la Tenue Staff (jamais en vente, jamais offrable, les bots ne la portent pas). Ton code joueur est dans le jeu : ⚙️ Paramètres → 👤 Compte. Le jeu de ce compte doit ensuite accepter la demande.")];
+  if (l.joueur) {
+    const delier = el('button', { class: 'bouton danger' }, 'Délier');
+    delier.onclick = async () => {
+      const conf = await demander({ titre: 'Délier mon compte joueur', texte: `${l.joueur.code} perdra la Tenue Staff.`, bouton: 'Délier' });
+      if (conf && await action(delier, () => api('DELETE', '/liaison', {}), 'Compte joueur délié.')) recharger();
+    };
+    contenu.push(el('p', { class: 'lien-staff' }, '✅ Lié au compte joueur ', personneOuTexte(l.joueur), ` depuis le ${date(l.liaison_le)}.`), el('div', { class: 'actions' }, delier));
+  }
+  if (l.attente) {
+    const annuler = el('button', { class: 'bouton discret' }, 'Annuler la demande');
+    annuler.onclick = async () => { if (await action(annuler, () => api('DELETE', '/liaison', { quoi: 'demande' }), 'Demande annulée.')) recharger(); };
+    contenu.push(el('p', { class: 'alerte' }, '⏳ Demande envoyée à ', personneOuTexte(l.attente), ` le ${date(l.demande_le)}. Ouvre le jeu avec ce compte : sur le menu, une fenêtre « Demande de liaison staff » apparaît (30 secondes au plus) → « Accepter ».`),
+      el('div', { class: 'actions' }, annuler));
+  }
+  contenu.push(el('h3', {}, l.joueur ? 'Changer de compte joueur' : 'Lier mon compte joueur'), el('div', { class: 'form-grille' }, champ('Code de mon compte joueur', code)), el('div', { class: 'actions' }, lier));
+  return panneau('🎮 Mon compte joueur · Tenue Staff', ...contenu);
 }
 
 // ================================================================ démarrage

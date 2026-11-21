@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
@@ -407,9 +407,21 @@
   <div class="boite large">
     <h2>⚙️ Paramètres</h2>
     <div class="onglets-param">
-      <button data-p="image" class="actif">🖼️ Image</button><button data-p="controles">🎮 Contrôles</button><button data-p="son">🔊 Son</button><button data-p="interface">🧭 Écran</button>
+      <button data-p="image" class="actif">🖼️ Image</button><button data-p="controles">🎮 Contrôles</button><button data-p="son">🔊 Son</button><button data-p="interface">🧭 Écran</button><button data-p="compte" id="ongletCompte">👤 Compte</button>
     </div>
     <div id="reglagesModal" class="reglages"></div>
+    <div class="groupe-param compte cache" data-g="compte" id="paramCompte">
+      <p>Ton code joueur : <b id="compteCodeJoueur" class="code-joueur">…</b> <small>(à donner à l'admin pour recevoir un cadeau)</small></p>
+      <p id="compteEtat" class="petit-texte">☁️ Sauvegarde en ligne…</p>
+      <h3>🔑 Code de sauvegarde</h3>
+      <p class="petit-texte">Avec ce code, tu retrouves ton compte (pièces, objets, niveau, esprits) sur un autre navigateur ou un téléphone, et tu joues avec le même compte partout.
+        <b>Ne le donne à personne</b> : quelqu'un qui l'a peut jouer avec ton compte. Si tu le perds, un admin peut t'en faire un nouveau.</p>
+      <div class="ligne-code"><code id="compteCode">…</code><button class="petit" id="compteVoir">👁️ Afficher</button><button class="petit" id="compteCopier">📋 Copier</button><button class="petit bleu" id="compteNouveau">🔑 Créer mon code</button></div>
+      <h3>📥 Récupérer mon compte</h3>
+      <p class="petit-texte">Sur ce navigateur, le compte actuel sera remplacé par celui du code (il reste sauvegardé en ligne).</p>
+      <div class="ligne-code"><input id="compteSaisie" placeholder="ABCD-EFGH-JKLM-NPQR" maxlength="19" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="petit vert" id="compteRecuperer">Récupérer</button></div>
+      <p id="compteMsg" class="petit-texte" role="status"></p>
+    </div>
     <button class="gros vert" id="fermerParametres">✔ C'est bon</button>
   </div>
 </div>
@@ -472,9 +484,21 @@
   </div>
 </div>
 
+<!-- Liaison staff : un compte admin demande à se lier à ce compte joueur (panel → Mon compte) -->
+<div id="fenetreLiaison" class="ecran cache" role="alertdialog" aria-labelledby="titreLiaison">
+  <div class="boite liaison">
+    <h2 id="titreLiaison">🛡️ Demande de liaison staff</h2>
+    <p class="liaison-texte">Un compte du staff NATX ROYALE (<b id="liaisonRole"></b>) veut se lier à ton compte joueur <b id="liaisonCode"></b>.</p>
+    <p id="liaisonDate" class="petit-texte"></p>
+    <p class="petit-texte">C'est toi qui l'as demandé dans l'espace admin ? Accepte : ton compte joueur sera lié à ton compte du staff et recevra la <b>Tenue Staff</b>. Si ce n'est pas toi, refuse.</p>
+    <p id="liaisonMsg" class="petit-texte"></p>
+    <div class="boutons-cadeau"><button class="gros vert" id="liaisonAccepter">✅ Accepter</button><button class="petit" id="liaisonRefuser">Refuser</button></div>
+  </div>
+</div>
+
 <div id="chargement" class="ecran cache"><div class="boite"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=10"></script>
+<script type="module" src="js/jeu.js?v=11"></script>
 </body>
 </html>

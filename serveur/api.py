@@ -139,6 +139,9 @@ CREATE TABLE IF NOT EXISTS joueurs_notes (
 CREATE TABLE IF NOT EXISTS pseudos_joueurs (
   joueur_id TEXT NOT NULL, pseudo TEXT NOT NULL, premier INTEGER NOT NULL, dernier INTEGER NOT NULL, PRIMARY KEY (joueur_id, pseudo));
 CREATE INDEX IF NOT EXISTS pseudos_recherche ON pseudos_joueurs(pseudo);
+CREATE TABLE IF NOT EXISTS comptes (
+  joueur_id TEXT PRIMARY KEY, code_hash TEXT UNIQUE, code_cree_le INTEGER, sauvegarde TEXT, rev INTEGER NOT NULL DEFAULT 0,
+  maj_le INTEGER, taille INTEGER NOT NULL DEFAULT 0);
 """
 CIBLES = {'tous', 'joueur', 'code'}
 STYLES_ANNONCE = {'info', 'evenement', 'alerte'}
@@ -223,7 +226,9 @@ def migrer(db):
         db.execute('UPDATE cadeaux_recus SET ouvert_le = recu_le WHERE ouvert_le IS NULL')
     ajouter_colonnes(db, 'cadeaux', ["expediteur TEXT", "origine TEXT NOT NULL DEFAULT 'admin'", 'esprit TEXT'])
     ajouter_colonnes(db, 'admins', ['actif INTEGER NOT NULL DEFAULT 1', 'doit_changer_mdp INTEGER NOT NULL DEFAULT 0',
-                                    'cree_par INTEGER', 'derniere_connexion INTEGER'])
+                                    'cree_par INTEGER', 'derniere_connexion INTEGER',
+                                    # liaison staff : le compte joueur de l'admin (joueur_id) et la demande en attente
+                                    'joueur_id TEXT', 'joueur_attente TEXT', 'liaison_demande_le INTEGER', 'liaison_le INTEGER'])
     ajouter_colonnes(db, 'sessions', ['ip_hash TEXT', 'navigateur TEXT', 'vu_le INTEGER'])
     ajouter_colonnes(db, 'journal', ['categorie TEXT', 'cible TEXT', 'details TEXT', 'ip_hash TEXT'])
     # rôles : le tout premier compte (celui de Nathan) devient super administrateur s'il n'y en a pas encore
@@ -430,14 +435,14 @@ class Requete:
         self.ip_hash = hacher_ip(ip)
         self._corps = None
 
-    def json(self):
+    def json(self, maxi=16384):
         if self._corps is not None:
             return self._corps
         try:
             n = int(self.environ.get('CONTENT_LENGTH') or 0)
         except ValueError:
             n = 0
-        if n > 16384:
+        if n > maxi:
             raise Erreur(413, 'Message trop long.')
         brut = self.environ['wsgi.input'].read(n) if n else b''
         try:
@@ -725,6 +730,7 @@ PERMISSIONS = {
     'retours': {_S, _A, _M},
     'joueurs.voir': {_S, _A, _M},
     'joueurs.sanctionner': {_S, _A, _M},
+    'joueurs.compte': {_S, _A},  # nouveau code de sauvegarde d'un joueur = accès à son compte
     'signalements': {_S, _A, _M},
     'cadeaux.voir': {_S, _A, _B},
     'cadeaux.creer': {_S, _A, _B},

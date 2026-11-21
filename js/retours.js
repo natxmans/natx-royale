@@ -111,6 +111,9 @@ export const recupererCadeaux = () => avecJeton(jeton => appel('POST', '/cadeaux
 export const recupererBoite = () => avecJeton(jeton => appel('POST', '/boite', { jeton }));
 export const ouvrirCadeauServeur = id => avecJeton(jeton => appel('POST', '/boite/ouvrir', { jeton, id }));
 export const avertissementLu = id => avecJeton(jeton => appel('POST', '/boite/avertissement', { jeton, id }));
+// liaison staff : le joueur répond à la demande d'un compte admin ; l'hôte vérifie les Tenues Staff des joueurs
+export const repondreLiaison = (id, accepter) => avecJeton(jeton => appel('POST', '/boite/liaison', { jeton, id, accepter: accepter === true }));
+export const verifierStaff = liste => avecJeton(jeton => appel('POST', '/staff/verifier', { jeton, liste }));
 // Ce que le jeu déclare (pseudo, niveau, inventaire…) pour la page « joueurs » de l'admin
 export const envoyerProfil = profil => avecJeton(jeton => appel('POST', '/profil', { jeton, profil }));
 export const signalerJoueur = d => avecJeton(jeton => appel('POST', '/signalements', { jeton, ...d }));
@@ -118,6 +121,28 @@ export const signalerJoueur = d => avecJeton(jeton => appel('POST', '/signalemen
 export const demanderCargaison = d => avecJeton(jeton => appel('POST', '/cargaison', { jeton, ...d }));
 export const reclamerCargaison = d => avecJeton(jeton => appel('POST', '/cargaison/reclamer', { jeton, ...d }));
 export const utiliserCodeCadeau = code => avecJeton(jeton => appel('POST', '/cadeaux/code', { jeton, code }));
+// Compte : sauvegarde en ligne du profil, code de sauvegarde, récupération sur un autre appareil
+export const chargerCompte = () => avecJeton(jeton => appel('POST', '/compte/charger', { jeton }));
+export const sauvegarderCompte = (rev, profil) => avecJeton(jeton => appel('POST', '/compte/sauvegarder', { jeton, rev, profil }));
+export async function nouveauCodeSauvegarde() {
+  const d = await avecJeton(jeton => appel('POST', '/compte/code', { jeton }));
+  memoriserCodeSauvegarde(d.code);
+  return d.code;
+}
+// le code de sauvegarde est gardé dans CE navigateur (pour pouvoir le relire) ; le serveur n'en garde qu'une empreinte
+export function codeSauvegardeLocal() {
+  try { return JSON.parse(localStorage.getItem(CLE_JOUEUR) || 'null')?.code || null; } catch (e) { return null; }
+}
+function memoriserCodeSauvegarde(code) {
+  try { const j = JSON.parse(localStorage.getItem(CLE_JOUEUR) || 'null'); if (j) { j.code = code; localStorage.setItem(CLE_JOUEUR, JSON.stringify(j)); } } catch (e) { /* rien */ }
+}
+// Sur un autre navigateur : le code redonne l'identité (et la sauvegarde, renvoyée à compte.js)
+export async function recupererCompte(code) {
+  const d = await appel('POST', '/compte/recuperer', { code });
+  localStorage.setItem(CLE_JOUEUR, JSON.stringify({ id: d.id, jeton: d.jeton, code: String(code).toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/(.{4})(?=.)/g, '$1-') }));
+  return d;
+}
+
 // Code joueur à donner à l'admin pour recevoir un cadeau perso (8 premiers caractères de l'identité anonyme)
 export async function codeJoueur() {
   await jetonJoueur();

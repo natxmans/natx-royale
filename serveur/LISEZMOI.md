@@ -191,3 +191,13 @@ une « avant-restauration » à chaque restauration (10 gardées). Restauration 
 `POST /api/signalements`, `POST /api/cargaison` (l'hôte), `POST /api/cargaison/reclamer` (celui qui ouvre la caisse).
 `GET /api/jeu` renvoie aussi les réglages de la boutique, les promotions, les esprits disponibles et l'événement en cours.
 Tests : `python -X utf8 .claude/tests/test_gestion.py [ancienne_version_api.py]` (tout en local, bases temporaires).
+
+### Liaison staff et Tenue Staff (21 nov. 2026)
+Chaque admin peut lier SON compte du jeu à son compte admin : panel → 👤 Mon compte → « 🎮 Mon compte joueur » → code joueur → « Lier ».
+Le jeu de ce compte reçoit une demande (« Demande de liaison staff ») qu'il doit **accepter** : un admin ne peut donc pas lier le compte d'un autre.
+Une fois lié, le compte joueur reçoit la **Tenue Staff** : jamais en vente, jamais offrable (absente de `catalogue.json`), jamais portée par les bots.
+Elle repart toute seule si l'admin se délie, si un super admin le délie (page Administrateurs, mot de passe demandé), si le compte admin est désactivé ou supprimé.
+Un compte joueur = au plus un compte admin. Une demande non acceptée expire après 7 jours.
+L'hôte d'une partie fait vérifier la tenue par le serveur (`POST /api/staff/verifier`, preuve signée par le serveur) : un joueur qui la porterait sans être du staff la perd dans le salon.
+Routes : `POST /api/admin/liaison` {joueur}, `DELETE /api/admin/liaison` ({quoi: 'demande'} pour annuler la demande seulement), `POST /api/boite/liaison` {jeton, id, accepter}, `POST /api/staff/verifier` {jeton, liste:[{ref, badge}]}.
+`POST /api/boite` renvoie `staff` (rôle + preuve) et `liaison` (demande en attente, sans l'identifiant de l'admin).

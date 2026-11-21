@@ -24,11 +24,12 @@ def extraire(js):
                for m in re.findall(r"(\w+):\s*\{\s*nom:\s*" + CH + r",\s*couleur:\s*'(#[0-9a-fA-F]{3,8})'(?:,\s*prix:\s*(\d+))?", js)}
     categories = [{'id': m[0], 'nom': texte(m[1]), 'icone': texte(m[3])}
                   for m in re.findall(r"\{\s*id:\s*'(\w+)',\s*nom:\s*" + CH + r",\s*un:\s*" + CH + r",\s*icone:\s*" + CH + r"\s*\}", js)]
+    raretes.pop('staff', None)  # Tenue Staff : réservée aux comptes liés au staff, jamais offrable ni vendable
     objets, vus = [], set()
     motif = r"L\(\s*'(\w+)'\s*,\s*'(\w+)'\s*,\s*" + CH + r"\s*,\s*'(\w+)'\s*,\s*" + CH + r"\s*(?:,\s*(true|false))?\s*\)"
     for id_, cat, nom, rarete, desc, gratuit in re.findall(motif, js):
         cle = cat + ':' + id_
-        if cle in vus:
+        if cle in vus or rarete == 'staff':
             continue
         vus.add(cle)
         objets.append({'cle': cle, 'cat': cat, 'id': id_, 'nom': texte(nom), 'rarete': rarete, 'desc': texte(desc), 'gratuit': gratuit == 'true'})

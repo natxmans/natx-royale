@@ -8,6 +8,7 @@ export const RARETES_COSM = {
   epique:     { nom: 'Épique',     couleur: '#b552ff', prix: 1000 },
   legendaire: { nom: 'Légendaire', couleur: '#ffad1f', prix: 1600 },
   collab:     { nom: 'Collab 2K27', couleur: '#ff2e88', prix: 1200 },
+  staff:      { nom: 'Staff', couleur: '#14e0a2', prix: 0 }, // jamais en vente : seulement pour les comptes liés au staff
 };
 
 export const CATEGORIES = [
@@ -122,6 +123,26 @@ export const CATALOGUE = [
   L('pompes', 'emote', 'Pompes', 'commun', 'Une petite séance de sport en plein combat.'),
 ];
 
+// Tenue Staff : réservée aux comptes joueurs liés à un compte admin (panel → Mon compte → Mon compte joueur).
+// Le serveur dit qui est du staff (boîte de réception) ; elle n'est ni en vente, ni offrable, ni portée par les bots,
+// et l'hôte d'une partie l'enlève à un joueur qui la porterait sans être vraiment du staff (voir hote.js).
+export const CLE_STAFF = 'tenue:staff';
+CATALOGUE.push({ id: 'staff', cat: 'tenue', nom: 'Tenue Staff', rarete: 'staff', reserve: true, gratuit: false,
+  desc: 'Réservée au staff de NATX ROYALE : elle arrive toute seule quand ton compte joueur est lié à ton compte admin.' });
+export function appliquerStaff(p, estStaff) {
+  const i = p.possedes.indexOf(CLE_STAFF);
+  if (estStaff && i < 0) { p.possedes.push(CLE_STAFF); p.nouveautes.push(CLE_STAFF); return 'ajoutee'; }
+  if (!estStaff && i >= 0) {
+    p.possedes.splice(i, 1);
+    const n = p.nouveautes.indexOf(CLE_STAFF);
+    if (n >= 0) p.nouveautes.splice(n, 1);
+    if (p.equipe.tenue === 'staff') p.equipe.tenue = LOOK_DEFAUT.tenue;
+    for (const pr of p.presets || []) if (pr && pr.tenue === 'staff') pr.tenue = LOOK_DEFAUT.tenue;
+    return 'retiree';
+  }
+  return null;
+}
+
 export const COLLAB = CATALOGUE.filter(o => o.rarete === 'collab');
 export const objet = (cat, id) => CATALOGUE.find(o => o.cat === cat && o.id === id);
 
@@ -155,6 +176,7 @@ export function appliquerConfigBoutique(e) {
   CONFIG.boutique = e.boutique || {};
   CONFIG.collections = e.collections || {};
   for (const o of CATALOGUE) {
+    if (o.reserve) continue;
     const cle = cleObjet(o);
     if (!ORIGINE.has(cle)) ORIGINE.set(cle, { nom: o.nom, desc: o.desc, rarete: o.rarete, serie: o.serie });
     const base = ORIGINE.get(cle), r = CONFIG.cosmetiques[cle] || {};
@@ -171,7 +193,7 @@ export const collectionsVisibles = () => nomsCollections().filter(c => c.visible
 export const collectionDe = o => (o && o.serie ? nomsCollections().find(c => c.n === o.serie && c.visible) || null : null);
 // meilleure promotion en cours pour cet objet (null s'il n'y en a pas)
 export function promoDe(o) {
-  if (!o || o.gratuit) return null;
+  if (!o || o.gratuit || o.reserve) return null;
   const cle = cleObjet(o), t = Date.now() / 1000;
   let meilleure = null;
   for (const p of CONFIG.promotions) {
@@ -188,11 +210,11 @@ export function prixDe(o) {
   const p = prixNormal(o), r = promoDe(o);
   return r ? Math.max(0, Math.round(p * (100 - r.reduction) / 1000) * 10) : p;
 }
-export const enVente = o => !!o && !o.gratuit && !o.horsVente;
+export const enVente = o => !!o && !o.gratuit && !o.horsVente && !o.reserve;
 // cosmétiques ajoutés dans l'espace admin (leur modèle est un modèle livré, voir modeles.js enregistrerAjouts)
 export function ajouterCosmetiquesAdmin(liste) {
   for (const a of Array.isArray(liste) ? liste : []) {
-    if (!a || !CATEGORIES.some(c => c.id === a.cat) || !RARETES_COSM[a.rarete] || objet(a.cat, a.id)) continue;
+    if (!a || !CATEGORIES.some(c => c.id === a.cat) || !RARETES_COSM[a.rarete] || a.rarete === 'staff' || objet(a.cat, a.id)) continue;
     CATALOGUE.push({ id: a.id, cat: a.cat, nom: a.nom, desc: a.desc || '', rarete: a.rarete, ajout: true, prixAdmin: Number.isInteger(a.prix) ? a.prix : null });
   }
 }
@@ -210,7 +232,7 @@ export function nettoyerLook(l) {
 export function lookAuHasard(r = Math.random) {
   const l = {};
   for (const c of Object.keys(LOOK_DEFAUT)) {
-    const liste = CATALOGUE.filter(o => o.cat === c);
+    const liste = CATALOGUE.filter(o => o.cat === c && !o.reserve); // les bots ne portent jamais la Tenue Staff
     l[c] = liste[Math.floor(r() * liste.length)].id;
   }
   if (r() < 0.4) l.chapeau = 'aucun';
@@ -335,8 +357,13 @@ export function lookPossedeAuHasard(p, r = Math.random) {
   }
   return l;
 }
+// Chaque sauvegarde augmente le numéro de version « rev » : le serveur garde toujours la plus récente (compte.js)
+let quandSauve = null;
+export const surSauvegardeProfil = f => { quandSauve = f; };
 export function sauverProfil(p) {
+  p.rev = (Number.isInteger(p.rev) && p.rev > 0 ? p.rev : 0) + 1;
   try { localStorage.setItem(CLE, JSON.stringify(p)); } catch (e) { /* stockage plein ou bloqué */ }
+  if (quandSauve) quandSauve(p);
 }
 export const possede = (p, o) => !!o && p.possedes.includes(cleObjet(o));
 export const estDeBase = o => !!o && LOOK_DEFAUT[o.cat] === o.id;
