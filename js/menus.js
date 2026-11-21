@@ -271,7 +271,7 @@ export class Menus {
       <h2>${d.icone} ${echapper(d.nom)}</h2><p class="petit-texte">Esprit de ${echapper(d.role.toLowerCase())} · <i>${echapper(perso)}</i></p>
       <p class="bulle-esprit" id="bulleEsprit">« ${echapper(replique(t, 'repos'))} »</p>
       <p><b>Passif :</b> ${echapper(d.passif)}</p><p><b>Pouvoir « ${echapper(d.pouvoir)} » :</b> ${echapper(d.descPouvoir)} <small>(recharge ${d.recharge} s)</small></p>
-      <p class="petit-texte">${miens.length ? 'Dans ta collection : ' + miens.map(e => `${RARETES_ESPRIT[e.rarete].nom} × ${e.n}`).join(' · ') : 'Gagne-le en ouvrant une cargaison pendant un événement. En partie, tu peux aussi le capturer sur un autel (pour la partie seulement).'}</p>
+      <p class="petit-texte">${miens.length ? 'Dans ta collection : ' + miens.map(e => `${RARETES_ESPRIT[e.rarete].nom} × ${e.n}`).join(' · ') : 'Capture-le sur un autel pendant une partie, puis exporte-le sur un AUTRE autel (ou gagne la partie) : il arrive dans ta boîte 🎁 avec sa rareté. Les cargaisons en donnent aussi, souvent plus rares.'}</p>
       <div class="boutons-esprit"><button class="petit" data-a="obtention">🎉 Arrivée</button><button class="petit" data-a="content">😊 Caresser</button><button class="petit" data-a="activer">✨ Pouvoir</button><button class="petit" data-a="surpris">😮 Surprise</button></div>`;
     for (const b of el.querySelectorAll('[data-a]')) b.onclick = () => {
       this.apercu.animerEspritApercu(b.dataset.a);

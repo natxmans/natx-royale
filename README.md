@@ -25,6 +25,8 @@ Une bataille royale cartoon à jouer entre potes, directement dans le navigateur
 - **15 esprits** : de petits compagnons flottent sur des autels. Capture-en un : il te suit, te donne un bonus
   et un pouvoir (🌱 Pousse, ☁️ Filou, 🛡️ Gardien, 👁️ Zyeuto, 🔨 Briquet, Braise, Givrette, Zap, Zephyr, Racine,
   Minuit, Tic-Tac, Goutte, Pépite, Lumi). Un joueur éliminé laisse son esprit sur place : le premier qui passe le prend.
+  Pour **garder** un esprit dans ta collection, exporte-le sur un autre autel (ou gagne la partie avec) : il arrive
+  dans ta boîte avec sa rareté.
 - **Ton personnage** : couleur, peau, coiffure et couleur des cheveux, plus 250 cosmétiques (tenues, chapeaux,
   sacs, pioches, deltaplanes, emotes, traînées) et des skins d'armes. Tout se gagne en jouant, avec les pièces
   du jeu.

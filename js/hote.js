@@ -15,7 +15,7 @@ function nettoyerEsp(e) {
 }
 const nettoyerRef = r => (typeof r === 'string' && /^[0-9a-f]{12}$/.test(r) ? r : null);
 const nettoyerBadge = b => (typeof b === 'string' && /^[0-9a-f]{32}$/.test(b) ? b : null);
-import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, DUREE_ESPRIT_TOMBE, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE,
+import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, DUREE_ESPRIT_TOMBE, EXPORT, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE,
   FEU, GLACE, FOUDRE, VENT, NATURE, OMBRE, ETOILE } from './esprits.js';
 
 const NOMS_BOTS = ['Patate', 'Croquette', 'Tartiflette', 'Grumeau', 'Moustache', 'Biscotte', 'Pépito', 'Cornichon',
@@ -178,6 +178,21 @@ export class Hote {
         if (!pres(j.x, j.y, j.z) && !(credible && pres(mx, my, mz))) { this.reseau.envoyerA(de, { t: 'refusRamasser', id: m.id, raison: 'loin' }); break; }
         this.butins.delete(m.id);
         this.reseau.diffuser({ t: 'butin-', id: m.id, par: de, b });
+        break;
+      }
+      case 'exporter': {
+        // Export d'un esprit vers la collection : sur un vrai autel, différent de celui où il a été pris, 3 par partie au plus
+        const sa = this.sanctuaires && this.sanctuaires[m.id | 0];
+        if (!j || !j.vivant || !j.esprit || !sa || sa.tombe || this.options.entrainement) break;
+        if (sa.id === j.esprit.autel || (j.exports | 0) >= EXPORT.parPartie) break;
+        const pres = (x, y, z) => Math.hypot(sa.x - x, sa.z - z) <= PORTEE_CAPTURE + 1.5 && Math.abs(sa.y - y) <= 3;
+        const mx = +m.x, my = +m.y, mz = +m.z;
+        const credible = Number.isFinite(mx) && Number.isFinite(mz) && Math.hypot(mx - j.x, mz - j.z) <= 6 && Math.abs(my - j.y) <= 4;
+        if (!pres(j.x, j.y, j.z) && !(credible && pres(mx, my, mz))) break;
+        const type = j.esprit.type;
+        j.esprit = null; j.exports = (j.exports | 0) + 1;
+        this.reseau.diffuser({ t: 'espritLibre', id: de });
+        this.reseau.diffuser({ t: 'exporte', id: de, type, s: sa.id });
         break;
       }
       case 'ouvrir': {
@@ -896,7 +911,7 @@ export class Hote {
     sa.dispo = false;
     sa.retour = sa.tombe ? Infinity : this.temps + RECHARGE_SANCTUAIRE; // un esprit tombé ne revient pas : ce n'est pas un autel
     // un seul esprit à la fois : l'ancien repart
-    j.esprit = { type: sa.type, pret: this.temps + 3 };
+    j.esprit = { type: sa.type, pret: this.temps + 3, autel: sa.id }; // autel = où il a été pris (pour l'export, il en faut un autre)
     this.reseau.diffuser({ t: 'esprit', s: sa.id, par: j.id, type: sa.type, pret: arrondi(j.esprit.pret), rar: (j.esp && j.esp[sa.type]) || null });
     this.avancerDefi(j.id, 'esprit');
     return true;

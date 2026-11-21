@@ -228,6 +228,14 @@ par défaut 12:30, 17:30 et 20:00, 60 minutes, les 4 sortes. Panel → 📦 Carg
 - Pièces, butin de fête et XP sont appliqués par le jeu (comme le bonus de pièces de l'admin) : rien de secret là-dedans.
 Routes : `GET /api/admin/programme`, `POST /api/admin/programme` (rôles super admin, admin, événements).
 
+## Export d'un esprit sur un autel
+
+Comme l'extraction de Fortnite : un esprit capturé en partie ne rejoint la collection que si le joueur va l'**exporter** sur un AUTRE autel
+(5 s à côté, annulé s'il s'éloigne ou s'il est touché), ou s'il gagne la partie avec. Le jeu (l'hôte) vérifie l'autel et la limite de 3 par partie,
+puis le joueur appelle `POST /api/esprit/exporter` (`jeton`, `partie_id`, `type`). Le serveur tire la rareté (`POIDS_EXPORT` : commun 70, rare 22,
+épique 7, légendaire 1), met l'esprit dans sa boîte (cadeau d'origine `export`) et le note dans `esprits_obtenus` (source `export:<partie>`).
+Limites côté serveur : 3 par partie, 10 par jour et par joueur ; refusé si le compte est privé de cadeaux ou suspendu. Pas en Entraînement.
+
 ## Avis « À étudier » transmis
 
 Quand un avis passe en **À étudier** (par un admin, ou par le robot : bug à 3 votes, idée à 5 votes), il devient « à transmettre »

@@ -120,6 +120,8 @@ export const signalerJoueur = d => avecJeton(jeton => appel('POST', '/signalemen
 // Cargaisons : l'hôte demande au serveur ce qu'il y a dedans ; celui qui l'ouvre réclame sa récompense
 export const demanderCargaison = d => avecJeton(jeton => appel('POST', '/cargaison', { jeton, ...d }));
 export const reclamerCargaison = d => avecJeton(jeton => appel('POST', '/cargaison/reclamer', { jeton, ...d }));
+// Esprit exporté sur un autel : le serveur tire la rareté et le met dans la boîte du joueur
+export const exporterEsprit = d => avecJeton(jeton => appel('POST', '/esprit/exporter', { jeton, ...d }));
 export const utiliserCodeCadeau = code => avecJeton(jeton => appel('POST', '/cadeaux/code', { jeton, code }));
 // Compte : sauvegarde en ligne du profil, code de sauvegarde, récupération sur un autre appareil
 export const chargerCompte = () => avecJeton(jeton => appel('POST', '/compte/charger', { jeton }));

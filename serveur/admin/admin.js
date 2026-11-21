@@ -646,7 +646,7 @@ async function vueCadeaux() {
   if (PERM('cadeaux.creer')) blocs.push(formCadeau(cat, d.expediteur_defaut));
   const recherche = el('input', { type: 'search', placeholder: 'Titre, expéditeur, code cadeau, code joueur ou pseudo…', value: etatCadeaux.q, maxlength: 40 });
   let t; recherche.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { etatCadeaux.q = recherche.value; etatCadeaux.page = 0; recharger(); }, 400); });
-  const origine = choix({ '': 'Toutes les origines', admin: 'Envoyés par l\'équipe', cargaison: 'Gagnés dans une cargaison', robot: 'Récompenses du robot' }, etatCadeaux.origine,
+  const origine = choix({ '': 'Toutes les origines', admin: 'Envoyés par l\'équipe', cargaison: 'Gagnés dans une cargaison', export: 'Esprits exportés sur un autel', robot: 'Récompenses du robot' }, etatCadeaux.origine,
     { onchange: e => { etatCadeaux.origine = e.target.value; recharger(); } });
   // un cadeau que tous ses destinataires ont ouvert sort tout seul de la liste ; on peut quand même les revoir
   const etat = choix({ '': 'Cadeaux en cours', ouverts: `Cadeaux ouverts, retirés tout seuls (${d.ouverts_retires || 0})`, tous: 'Tous les cadeaux' }, etatCadeaux.etat,

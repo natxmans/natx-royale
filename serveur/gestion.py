@@ -626,6 +626,53 @@ def api_cargaison_reclamer(req, db):
     return 201, {'cadeau': entree_boite(l), 'deja': False}
 
 
+# ================================================================ export d'un esprit sur un autel
+# Comme l'extraction de Fortnite : un esprit capturé en partie ne rejoint la collection que si le joueur va l'exporter
+# sur un AUTRE autel (ou gagne la partie avec). Le jeu annonce l'export ; le serveur tire la rareté, la note dans
+# esprits_obtenus (source « export:<partie> ») et limite les abus : 3 par partie, 10 par jour.
+POIDS_EXPORT = {'commun': 70, 'rare': 22, 'epique': 7, 'legendaire': 1}
+EXPORTS_PAR_PARTIE, EXPORTS_PAR_JOUR = 3, 10
+
+
+def api_esprit_exporter(req, db):
+    d = req.json()
+    jid = api.joueur_obligatoire(req, d)
+    pid = str(d.get('partie_id') or '')
+    if not RE_ID_PARTIE.fullmatch(pid):
+        raise Erreur(400, 'Identifiant de partie invalide.')
+    type_ = str(d.get('type') or '')
+    esprits = reglages_esprits(db)
+    if type_ not in esprits or not esprits[type_]['actif']:
+        raise Erreur(400, 'Esprit inconnu.')
+    if not limite(db, 'export:' + jid, 30, 3600):
+        raise Erreur(429, 'Trop de demandes.')
+    if api.sanction_active(db, jid, ('cadeaux', 'suspension')):
+        raise Erreur(403, 'Ton compte ne peut pas recevoir de récompense pour le moment.')
+    db.execute('BEGIN IMMEDIATE')
+    try:
+        t = maintenant()
+        if un(db, 'SELECT COUNT(*) FROM esprits_obtenus WHERE joueur_id=? AND source=?', jid, 'export:' + pid) >= EXPORTS_PAR_PARTIE:
+            raise Erreur(409, f'Tu as déjà exporté {EXPORTS_PAR_PARTIE} esprits pendant cette partie.')
+        if un(db, "SELECT COUNT(*) FROM esprits_obtenus WHERE joueur_id=? AND source LIKE 'export:%' AND cree_le>?", jid, t - 86400) >= EXPORTS_PAR_JOUR:
+            raise Erreur(429, f"Tu as déjà exporté {EXPORTS_PAR_JOUR} esprits aujourd'hui : reviens demain.")
+        rarete = tirer(POIDS_EXPORT) or 'commun'
+        nom = esprits_jeu().get(type_, {}).get('nom', type_)
+        cur = db.execute("""INSERT INTO cadeaux(titre, message, pieces, objets, cible, joueur_id, actif, cree_le, expediteur, origine, esprit)
+            VALUES (?,?,0,'[]', 'joueur', ?, 1, ?, ?, 'export', ?)""",
+                         (f'Esprit exporté : {nom}'[:60], f'Tu as exporté {nom} sur un autel : il rejoint ta collection ({RARETES_ESPRIT.get(rarete, rarete)}).'[:200],
+                          jid, t, 'Autel des esprits', json.dumps({'type': type_, 'rarete': rarete})))
+        db.execute('INSERT INTO cadeaux_recus(cadeau_id, joueur_id, recu_le) VALUES (?,?,?)', (cur.lastrowid, jid, t))
+        db.execute('INSERT INTO esprits_obtenus(joueur_id, type, rarete, source, cree_le) VALUES (?,?,?,?,?)', (jid, type_, rarete, 'export:' + pid, t))
+        l = db.execute('SELECT c.*, r.recu_le, r.ouvert_le FROM cadeaux c JOIN cadeaux_recus r ON r.cadeau_id=c.id AND r.joueur_id=? WHERE c.id=?',
+                       (jid, cur.lastrowid)).fetchone()
+        db.execute('COMMIT')
+    except BaseException:
+        db.execute('ROLLBACK')
+        raise
+    api.joueur_vu(db, jid)
+    return 201, {'cadeau': entree_boite(l)}
+
+
 # ================================================================ admin : mon compte, administrateurs, sessions
 def regles_mdp(mdp, ident):
     if not isinstance(mdp, str) or len(mdp) < 12:
@@ -1270,7 +1317,7 @@ def admin_cadeaux(req, db):
         conds.append('c.archive_le IS NOT NULL')
     elif etat != 'tous':
         conds.append('c.archive_le IS NULL')
-    if req.query.get('origine') in ('admin', 'cargaison', 'robot'):
+    if req.query.get('origine') in ('admin', 'cargaison', 'robot', 'export'):
         conds.append('c.origine=?'); params.append(req.query['origine'])
     if q:
         hexa = re.sub(r'[^0-9a-f]', '', q.lower())
@@ -1873,6 +1920,7 @@ ROUTES = [
     ('POST', r'/api/compte/code', api_compte_code, True),
     ('POST', r'/api/compte/recuperer', api_compte_recuperer, True),
     ('POST', r'/api/cargaison/reclamer', api_cargaison_reclamer, True),
+    ('POST', r'/api/esprit/exporter', api_esprit_exporter, True),
     ('POST', r'/api/boite/liaison', api_liaison_repondre, True),
     ('POST', r'/api/staff/verifier', api_staff_verifier, True),
     ('GET', r'/api/admin/tableau', admin_tableau, False),

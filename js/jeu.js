@@ -8,11 +8,11 @@ import { Monde, DEMI, rayonBoite } from './monde.js';
 import { OBJETS, RARETES, modeleObjet, modelesPrets, remplacerModeleArme } from './armes.js';
 import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPret, coiffureParDefaut, cheveuxParDefaut, CHAUVE } from './personnage.js';
 import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele, clipAnimation, prechargerCosmetiques, chargerCosmetiques, cosmetiquePret, ficheEmote, ficheTrainee, QUALITE_TENUES } from './modeles.js';
-import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, signalerJoueur, URL_API } from './retours.js';
+import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, exporterEsprit, signalerJoueur, URL_API } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
 import { initCadeaux, bonusActif, texteMultiplicateur, synchroniserProfil, etatBoite, verifierBoite, evenementEnCours } from './cadeaux.js';
 import { initCompte } from './compte.js';
-import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, FEU, GLACE, NATURE, VENT, TEMPS, EAU, CHANCE, ETOILE, OMBRE, replique, RARETES_ESPRIT, meilleuresRaretes } from './esprits.js';
+import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, EXPORT, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, FEU, GLACE, NATURE, VENT, TEMPS, EAU, CHANCE, ETOILE, OMBRE, replique, RARETES_ESPRIT, meilleuresRaretes } from './esprits.js';
 import { Reseau } from './reseau.js';
 import { Hote } from './hote.js';
 import { etatZone, posDirigeable, cibleConstruction, COUT_CONSTR, posRavito, simulerGrenade, MODES, modeValide, DEFIS_ENTRAINEMENT, posCargaison, debutCargaison, CARGO } from './partage.js';
@@ -972,6 +972,7 @@ function recevoir(m) {
         const avant = moi.pv + moi.bouclier;
         moi.pv = m.pv; moi.bouclier = m.b;
         if (m.deg && moi.pv + moi.bouclier < avant) {
+          if (moi.export) { moi.export = null; annonceObjet('✨ Export interrompu : tu as été touché'); }
           const orbe = etat.orbes.get(moi.id);
           if (orbe && etat.temps - (orbe.surprisT || -9) > 3) { orbe.surprisT = etat.temps; jouerEsprit(orbe.mesh, 'surpris'); }
           $('#flash').classList.remove('noir'); $('#flash').style.opacity = 0.9;
@@ -1056,18 +1057,27 @@ function recevoir(m) {
       const rar = RARETES_ESPRIT[m.rar] ? m.rar : null;
       donnerEsprit(m.par, m.type, rar);
       if (moi && m.par === moi.id) {
-        moi.esprit = { type: m.type, pret: +m.pret || etat.temps + 3 };
+        moi.esprit = { type: m.type, pret: +m.pret || etat.temps + 3, autel: m.s };
         son('niveau'); son('esprit_' + m.type, 0.7);
         if (rar && rar !== 'commun') son('esprit_rare');
         setTimeout(() => ajouterFil(`${d.icone} <b style="color:${d.couleur}">${d.nom}</b>${rar ? ` <small style="color:${RARETES_ESPRIT[rar].couleur}">(${RARETES_ESPRIT[rar].nom})</small>` : ''} : « ${echapper(replique(m.type, 'capture'))} »`), 900);
         banniere(`${d.icone} ${d.nom.toUpperCase()} · ${d.role.toUpperCase()}`, `${d.passif} · Pouvoir (${tactile ? '✨' : L('KeyQ')}) : ${d.pouvoir}`);
         ajouterFil(`${d.icone} Tu as capturé <b style="color:${d.couleur}">${d.nom}</b>, l'esprit de ${d.role.toLowerCase()}`, true);
+        // la première fois de la partie : comment le garder pour de bon
+        if (!etat.options.entrainement && !etat.exportDit) { etat.exportDit = true; setTimeout(() => ajouterFil('✨ Pour le garder dans ta <b>collection</b> : exporte-le sur un <b>autre autel</b>, ou gagne la partie', true), 2600); }
       } else if (sa && distCam(sa.x, sa.y, sa.z) < 90) ajouterFil(`${d.icone} <b>${echapper(nomDe(m.par))}</b> a capturé ${d.nom}`);
       break;
     }
     case 'sanctuaire': {
       const sa = etat.sanctuaires.get(m.s);
       if (sa && ESPRITS[m.type]) { majSanctuaire(sa, m.type, true); etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 24, 5); }
+      break;
+    }
+    case 'exporte': { // un joueur a exporté son esprit sur un autel
+      const sa = etat.sanctuaires.get(m.s), d = ESPRITS[m.type];
+      if (sa && d) { etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 40, 7); sonLoin('coffreDore', distCam(sa.x, sa.y, sa.z) * 2); }
+      if (moi && m.id === moi.id && d) { moi.exports = (moi.exports | 0) + 1; moi.export = null; envoyerExport(m.type, false); }
+      else if (sa && d && distCam(sa.x, sa.y, sa.z) < 60) ajouterFil(`${d.icone} <b>${echapper(nomDe(m.id))}</b> a exporté ${d.nom}`);
       break;
     }
     case 'sanctuaire+': { // l'esprit d'un joueur éliminé reste sur place
@@ -1373,6 +1383,7 @@ function recevoirFin(m) {
   }
   // Mêlée : la place = le rang au nombre d’éliminations
   const placeMelee = m.melee && moi ? 1 + [...etat.kills].filter(([id, n]) => id !== moi.id && n > moi.kills).length : 0;
+  if (gagne && moi.esprit && !etat.options.entrainement && !moi.exportVictoire && (moi.exports | 0) < EXPORT.parPartie) { moi.exportVictoire = true; envoyerExport(moi.esprit.type, true); }
   const gainHtml = moi && !moi.recompense ? donnerRecompense(gagne ? 1 : placeMelee || moi.place || etat.vivants, gagne) : (moi && moi.gainHtml) || '';
   setTimeout(() => {
     document.exitPointerLock?.();
@@ -1808,6 +1819,7 @@ function interagir() {
   else if (it.type === 'ravito') { etat.mesCoffres.add('r' + it.r.id); reseau.versHote({ t: 'ouvrirRavito', id: it.r.id }); }
   else if (it.type === 'cargo') reseau.versHote({ t: 'ouvrirCargo', id: it.c.id });
   else if (it.type === 'esprit') reseau.versHote({ t: 'esprit', id: it.s.id, x: arrondi(moi.x), y: arrondi(moi.y), z: arrondi(moi.z) });
+  else if (it.type === 'export') { if (!moi.export) { moi.export = { s: it.s.id, t: 0 }; moi.conso = null; son('clic'); } }
   else if (it.type === 'passage') prendrePassage(it.p);
   else if (it.type === 'butin') {
     const b = it.b;
@@ -2232,6 +2244,22 @@ function majMoi(dt) {
       if (!moi.emote) essayerAction(dt);
       majFantome();
       chercherInteraction();
+      // export d'un esprit vers la collection : rester près de l'autel pendant 5 s (sinon c'est annulé)
+      if (moi.export) {
+        const sa = etat.sanctuaires.get(moi.export.s);
+        const pres = sa && moi.esprit && Math.hypot(sa.x - moi.x, sa.z - moi.z) < PORTEE_CAPTURE + 0.6 && Math.abs(sa.y - moi.y) < 3;
+        if (!pres) { moi.export = null; annonceObjet('✨ Export annulé : reste près de l’autel'); }
+        else if (!moi.export.envoye) {
+          moi.export.t += dt;
+          if (Math.random() < dt * 14) etincellesEsprit(sa.x, sa.y + sa.mesh.userData.hauteur, sa.z, moi.esprit.type, 1, 2.5);
+          if (moi.export.t >= EXPORT.duree) {
+            moi.export.envoye = true;
+            reseau.versHote({ t: 'exporter', id: sa.id, x: arrondi(moi.x), y: arrondi(moi.y), z: arrondi(moi.z) });
+            const demande = moi.export;
+            setTimeout(() => { if (moi.export === demande) moi.export = null; }, 2000); // l'hôte n'a pas répondu : on pourra réessayer
+          }
+        }
+      }
       break;
     }
   }
@@ -2407,10 +2435,13 @@ function chercherInteraction() {
     const d = Math.hypot(cg.x - moi.x, cg.sol - moi.y, cg.z - moi.z);
     if (d < CARGO.portee && d < bd + 0.6) { bd = d; best = { type: 'cargo', c: cg }; }
   }
+  const peutExporter = moi.esprit && !etat.options.entrainement && (moi.exports | 0) < EXPORT.parPartie;
   for (const sa of etat.sanctuaires.values()) {
-    if (!sa.dispo) continue;
     const d = Math.hypot(sa.x - moi.x, sa.z - moi.z);
-    if (d < PORTEE_CAPTURE && Math.abs(sa.y - moi.y) < 3 && d < bd + 0.6) { bd = d; best = { type: 'esprit', s: sa }; }
+    if (!(d < PORTEE_CAPTURE && Math.abs(sa.y - moi.y) < 3 && d < bd + 0.6)) continue;
+    // j'ai un esprit : sur un AUTRE autel je peux l'exporter vers ma collection ; sur le sien, on me dit d'aller ailleurs
+    if (peutExporter && !sa.tombe) { bd = d; best = { type: sa.id === moi.esprit.autel ? 'exportAilleurs' : 'export', s: sa }; }
+    else if (sa.dispo) { bd = d; best = { type: 'esprit', s: sa }; }
   }
   // trappes des passages secrets (pas pendant les 2,5 s qui suivent un passage)
   if (etat.temps >= (moi.passageT || 0)) for (const p of etat.monde.passages || []) {
@@ -2832,6 +2863,11 @@ function majHUD(dt) {
     kAnneau = moi.conso.t / moi.conso.duree;
     pr.firstElementChild.style.width = (kAnneau * 100) + '%';
     pr.lastElementChild.textContent = OBJETS[moi.inv[moi.conso.slot]?.objet]?.nom || '';
+  } else if (moi.export) {
+    pr.style.display = 'block';
+    kAnneau = Math.min(1, moi.export.t / EXPORT.duree);
+    pr.firstElementChild.style.width = (kAnneau * 100) + '%';
+    pr.lastElementChild.textContent = 'Export de l’esprit…';
   } else if (moi.rechargeT > 0) {
     pr.style.display = 'block';
     kAnneau = 1 - moi.rechargeT / moi.rechargeTotal;
@@ -2850,6 +2886,11 @@ function majHUD(dt) {
     if (ia.type === 'coffre') inv.innerHTML = `${kE} Ouvrir le coffre${ia.c.dore ? ' <b style="color:#ffd23f">doré</b> 🌟' : ' ✨'}`;
     else if (ia.type === 'ravito') inv.innerHTML = `${kE} Ouvrir le <b style="color:#d18bff">ravitaillement</b> 📦`;
     else if (ia.type === 'cargo') inv.innerHTML = `${kE} Ouvrir la <b style="color:#ffad1f">cargaison</b> 📦✨`;
+    else if (ia.type === 'export' || ia.type === 'exportAilleurs') {
+      const d = ESPRITS[moi.esprit && moi.esprit.type] || ESPRITS.soin, nom = `<b style="color:${d.couleur}">${d.icone} ${d.nom}</b>`;
+      inv.innerHTML = ia.type === 'exportAilleurs' ? `✨ Pour exporter ${nom}, va sur un <b>autre</b> autel`
+        : moi.export ? `✨ Export de ${nom}… reste près de l’autel` : `${kE} Exporter ${nom} vers ta collection <small>(reste ${EXPORT.duree} s près de l’autel)</small>`;
+    }
     else if (ia.type === 'passage') inv.innerHTML = `${kE} Prendre le <b style="color:#7fe9ff">passage secret</b> 🕳️ <small>→ ${ia.p.nom}</small>`;
     else if (ia.type === 'esprit') { const d = ESPRITS[ia.s.type]; inv.innerHTML = `${kE} Capturer <b style="color:${d.couleur}">${d.icone} ${d.nom}</b> <small>(esprit de ${d.role.toLowerCase()})</small>`; }
     else {
@@ -3139,6 +3180,17 @@ function ouvrirCargoVisuel(m) {
   if (d && distCam(c.x, c.sol, c.z) < 300) ajouterFil(`📦 ${qui} ouvert la cargaison : ${d.icone} <b style="color:${d.couleur}">${d.nom}</b>${r ? ` <small style="color:${r.couleur}">(${r.nom})</small>` : ''}`, m.par === etat.moi?.id);
 }
 // celui qui a ouvert la caisse (signature reçue de l'hôte) réclame sa récompense : c'est le SERVEUR qui la donne, une seule fois
+// Mon esprit part dans ma collection : le serveur tire sa rareté et le met dans ma boîte (victoire = export automatique)
+function envoyerExport(type, victoire) {
+  const d = ESPRITS[type];
+  if (!d || !etat.partieId) return;
+  banniere(`${d.icone} ${d.nom.toUpperCase()} EXPORTÉ`, victoire ? 'Victoire : ton esprit rejoint ta collection' : 'Il rejoint ta collection · ouvre ta boîte 🎁 pour voir sa rareté');
+  son('niveau');
+  exporterEsprit({ partie_id: etat.partieId, type }).then(() => {
+    toast(`${d.icone} ${d.nom} t’attend dans ta boîte 🎁 (ouvre-la pour voir sa rareté)`, 5000);
+    verifierBoite();
+  }).catch(e => toast('✨ ' + e.message, 5000));
+}
 function reclamerRecompenseCargo(id, sig) {
   if (!/^[0-9a-f]{16}$/.test(String(id)) || typeof sig !== 'string') return;
   reclamerCargaison({ id, sig }).then(d => {

@@ -157,6 +157,8 @@ export function meilleuresRaretes(collection) {
 
 // Réglages des effets (partagés par l'hôte et les joueurs)
 export const RECHARGE_SANCTUAIRE = 75;      // secondes avant qu'un nouvel esprit apparaisse sur l'autel
+// Export d'un esprit vers la collection (comme l'extraction de Fortnite) : sur un AUTRE autel que celui où on l'a pris
+export const EXPORT = { duree: 5, parPartie: 3 }; // secondes sans bouger ; nombre d'exports par partie
 export const DUREE_ESPRIT_TOMBE = 60;      // secondes pendant lesquelles l'esprit d'un joueur éliminé reste à prendre
 export const PORTEE_CAPTURE = 3.2;          // mètres
 export const VITESSE_MOBILITE = 1.12;

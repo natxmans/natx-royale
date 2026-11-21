@@ -152,4 +152,11 @@ export const NOUVEAUTES = [
     'L’accueil annonce l’événement en cours ou le prochain ; clique dessus pour voir tout le programme',
     'Un joueur éliminé (bot ou humain) laisse son esprit sur place : tu as une minute pour aller le prendre',
   ]],
+  ['✨ Export des esprits (novembre)', [
+    'Garde les esprits que tu captures : emmène ton esprit sur un AUTRE autel et exporte-le (E, puis reste 5 secondes à côté)',
+    'L’esprit exporté arrive dans ta boîte 🎁 : ouvre-la pour découvrir sa rareté (commun, rare, épique ou légendaire)',
+    'Si tu t’éloignes ou si tu es touché pendant l’export, il est annulé : tu gardes ton esprit et tu peux recommencer',
+    'Tu gagnes la partie avec un esprit ? Il est exporté tout seul',
+    '3 exports par partie au plus, 10 par jour ; pas en Entraînement',
+  ]],
 ];
