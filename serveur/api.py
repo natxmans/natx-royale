@@ -7,6 +7,7 @@ Uniquement la bibliothèque standard de Python (3.9 ou plus) : WSGI + SQLite.
   Créer un compte admin :        python serveur/api.py creer-admin <identifiant> [--role super_admin|admin|moderateur|boutique|evenements]
   Sauvegarder la base :          python serveur/api.py sauvegarder
   Passage du robot modérateur :  python serveur/api.py robot   (sinon il passe tout seul une fois par jour)
+  Avis « À étudier » à transmettre : python serveur/api.py a-etudier [--marquer]   (voir outils/veille_a_etudier.py)
   En ligne (hébergeur Python) :  serveur/wsgi.py expose « application »
 
 Variables d'environnement (voir serveur/LISEZMOI.md) :
@@ -241,6 +242,8 @@ def migrer(db):
                                     'joueur_id TEXT', 'joueur_attente TEXT', 'liaison_demande_le INTEGER', 'liaison_le INTEGER'])
     ajouter_colonnes(db, 'sessions', ['ip_hash TEXT', 'navigateur TEXT', 'vu_le INTEGER'])
     ajouter_colonnes(db, 'journal', ['categorie TEXT', 'cible TEXT', 'details TEXT', 'ip_hash TEXT'])
+    # avis passés « À étudier » : transmis_le = quand la veille (outils/veille_a_etudier.py) l'a emporté
+    ajouter_colonnes(db, 'retours', ['transmis_le INTEGER'])
     # rôles : le tout premier compte (celui de Nathan) devient super administrateur s'il n'y en a pas encore
     if not db.execute("SELECT 1 FROM admins WHERE role='super_admin'").fetchone():
         premier = db.execute('SELECT id FROM admins ORDER BY id LIMIT 1').fetchone()
@@ -1037,13 +1040,16 @@ def admin_detail(req, db, rid):
 
 def admin_modifier(req, db, rid):
     s = session_admin(req, db, ecriture=True, permission='retours')
-    retour_existant(db, rid)
+    avant = retour_existant(db, rid)
     d = req.json()
     champs, params, actions = [], [], []
     if 'statut' in d:
         if d['statut'] not in STATUTS:
             raise Erreur(400, 'Statut inconnu.')
         champs.append('statut=?'); params.append(d['statut']); actions.append('statut → ' + d['statut'])
+        # l'état change : l'avis (re)devient « à transmettre » s'il arrive en « À étudier » (voir avis_a_etudier)
+        if d['statut'] != avant['statut']:
+            champs.append('transmis_le=NULL')
     if 'public' in d:
         champs.append('public=?'); params.append(1 if d['public'] else 0); actions.append('publiée' if d['public'] else 'masquée')
     if 'texte_public' in d:
@@ -1060,6 +1066,21 @@ def admin_modifier(req, db, rid):
     for a in actions:
         journaliser(db, s, a, 'retours', f'retour:{rid}', retour_id=rid, req=req)
     return admin_detail(req, db, rid)
+
+
+def avis_a_etudier(db, marquer=False):
+    """Les avis en « À étudier » (mis par un admin ou par le robot) qui n'ont pas encore été transmis.
+    marquer=True : ils sont notés comme transmis, on ne les reverra que s'ils changent d'état puis y reviennent.
+    Rien qui identifie le joueur ne sort d'ici. Lancé en ligne de commande par outils/veille_a_etudier.py."""
+    lignes = [dict(r) for r in db.execute("""SELECT r.id, r.categorie, r.note, r.texte, r.cree_le, r.maj_le, r.plateforme, r.version_jeu,
+        (SELECT COUNT(*) FROM votes v WHERE v.retour_id = r.id) AS votes
+        FROM retours r WHERE r.statut='a_etudier' AND r.spam=0 AND r.transmis_le IS NULL ORDER BY COALESCE(r.maj_le, r.cree_le), r.id LIMIT 20""")]
+    for l in lignes:
+        l['categorie_nom'] = CATEGORIES.get(l['categorie'], l['categorie'])
+        l['notes'] = [n[0] for n in db.execute('SELECT texte FROM notes_internes WHERE retour_id=? ORDER BY cree_le', (l['id'],))]
+    if marquer and lignes:
+        db.execute(f"UPDATE retours SET transmis_le=? WHERE id IN ({','.join('?' * len(lignes))})", [maintenant()] + [l['id'] for l in lignes])
+    return lignes
 
 
 def admin_note(req, db, rid):
@@ -1473,6 +1494,10 @@ if __name__ == '__main__':
     elif commande == 'sauvegarder':
         connexion().close()
         print('Sauvegarde :', gestion.faire_sauvegarde('manuelle'))
+    elif commande == 'a-etudier':
+        db = connexion()
+        print(json.dumps(avis_a_etudier(db, '--marquer' in sys.argv), ensure_ascii=False))
+        db.close()
     elif commande == 'robot':
         db = connexion()
         print('Robot modérateur :', robot.passer(db, 'ligne de commande')['resume'])

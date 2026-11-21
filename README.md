@@ -48,7 +48,7 @@ La liste complète des nouveautés est dans le jeu, onglet 📰 Nouveautés.
 | `index.html`, `style.css`, `js/` | le jeu (three.js + PeerJS, aucun outil de construction) |
 | `modeles/` | modèles 3D (`.glb`) ; `integration.json` dit lesquels sont activés et comment les placer |
 | `serveur/` | serveur des avis, votes, cadeaux, modération et espace admin (Python + SQLite), hébergé à part — voir `serveur/LISEZMOI.md` |
-| `outils/` | `versionner.py` : à lancer avant chaque mise à jour, pour que tous les fichiers du jeu aient le même numéro de version |
+| `outils/` | `versionner.py` : à lancer avant chaque mise à jour, pour que tous les fichiers du jeu aient le même numéro de version ; `veille_a_etudier.py` : remonte les avis passés « À étudier » dans l'espace admin |
 | `docs/` | étude « Battle Royale à 100 joueurs » et rapports de mise à jour |
 
 Le serveur ne contient aucun mot de passe ni clé secrète : les clés sont créées sur l'hébergeur, les comptes

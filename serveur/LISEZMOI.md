@@ -217,6 +217,16 @@ Routes : `POST /api/admin/liaison` {joueur}, `DELETE /api/admin/liaison` ({quoi:
 - Les règles montrées aux joueurs sont dans `js/regles.js` (bouton 📜 Règles du jeu, montrées une fois au premier lancement) ; `robot.REGLES` doit garder les mêmes numéros et titres (un test le vérifie).
 Routes : `GET /api/admin/robot`, `POST /api/admin/robot/reglages`, `POST /api/admin/robot/lancer`.
 
+## Avis « À étudier » transmis
+
+Quand un avis passe en **À étudier** (par un admin, ou par le robot : bug à 3 votes, idée à 5 votes), il devient « à transmettre »
+(colonne `retours.transmis_le` vide). `python api.py a-etudier` les liste en JSON, `--marquer` les note comme transmis.
+Rien qui identifie le joueur ne sort : numéro, catégorie, note, texte, dates, plateforme, version, votes, notes de l'équipe.
+Un avis déjà transmis ne repart que s'il change d'état puis revient en « À étudier ». Les avis cachés comme spam ne partent jamais.
+
+Sur le PC de développement, `outils/veille_a_etudier.py` lance cette commande par SSH (clé de mise en ligne, aucun mot de passe)
+toutes les 2 minutes et affiche chaque avis sous la forme « Voir ceci : … ». Pas de route web : rien de plus n'est ouvert sur Internet.
+
 ### Relais pour la 4G (TURN), mis à jour le 21 nov. 2026
 Le serveur sait utiliser trois sortes de relais (le premier réglé gagne) : **Metered** (`NATX_TURN_APP` + `NATX_TURN_JETON`), un relais à **identifiants fixes** (`NATX_TURN_URLS` + `NATX_TURN_UTILISATEUR` + `NATX_TURN_MDP`), ou **Cloudflare Realtime** (`NATX_TURN_CLE_ID` + `NATX_TURN_JETON`).
 - Cloudflare a été abandonné le 21 nov. : l'activation de Realtime passe par une page de paiement (0 $ mais carte ou PayPal obligatoires).
