@@ -37,7 +37,9 @@ def extraire(js):
     tous_250, collections, ressources = cosmetiques_250({o['cle'] for o in objets})
     objets += [{'cle': o['cle'], 'cat': o['cat'], 'id': o['id'], 'nom': o['nom'], 'rarete': o['rarete'], 'desc': o['desc'],
                 'gratuit': False, 'nouveau250': True} for o in tous_250 if o['livre']]
-    return {'source': 'js/boutique.js + js/catalogue250.js + modeles/integration.json', 'categories': categories, 'raretes': raretes,
+    # les livraisons quotidiennes (js/livraisons_jour.js) dont le modèle est bien dans son .glb
+    objets += livraisons_jour({o['cle'] for o in objets})
+    return {'source': 'js/boutique.js + js/catalogue250.js + modeles/integration.json + js/livraisons_jour.js', 'categories': categories, 'raretes': raretes,
             'objets': objets, 'tous_250': tous_250, 'collections': collections, 'ressources': ressources, 'esprits': esprits()}
 
 
@@ -97,6 +99,34 @@ def cosmetiques_250(deja):
         sortie.append({'cle': cle, 'cat': e['cat'], 'id': e['id'], 'nom': e['nom'], 'rarete': e['rarete'], 'desc': e['desc'], 'ref': e['ref'],
                        'serie': e['serie'], 'besoin': e['besoin'], 'livre': bool(f), 'fichier': f, 'objet': o, 'triangles': tris.get(o)})
     return sortie, [{'n': n, 'nom': nom} for n, nom in sorted(collections.items())], ressources
+
+
+def livraisons_jour(deja):
+    """Objets des livraisons quotidiennes (js/livraisons_jour.js), seulement si leur objet est dans le .glb du jour."""
+    racine = os.path.join(ICI, '..')
+    chemin = os.path.join(racine, 'js', 'livraisons_jour.js')
+    if not os.path.isfile(chemin):
+        return []
+    js = open(chemin, encoding='utf-8').read()
+    try:
+        liste = json.loads(js.split('export const LIVRAISONS_JOUR =', 1)[1].strip().rstrip(';').strip())
+    except (IndexError, ValueError):
+        return []
+    sortie, glb = [], {}
+    for l in liste:
+        for o in l.get('objets', []):
+            cle = o.get('cat', '') + ':' + o.get('id', '')
+            if cle in deja or o.get('cat') not in ('chapeau', 'dos', 'pioche', 'deltaplane'):
+                continue
+            f = o.get('fichier', '')
+            if f not in glb:
+                glb[f] = set(objets_glb(os.path.join(racine, 'modeles', f)))
+            if o['cat'] + '_' + o['id'] not in glb[f]:
+                continue
+            deja.add(cle)
+            sortie.append({'cle': cle, 'cat': o['cat'], 'id': o['id'], 'nom': o['nom'], 'rarete': o['rarete'], 'desc': o.get('desc', ''),
+                           'gratuit': False, 'jour': l.get('date')})
+    return sortie
 
 
 def esprits():

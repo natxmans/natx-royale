@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { activerCosmetiques } from './boutique.js';
+import { LIVRAISONS_JOUR } from './livraisons_jour.js';
 
 const VERSION = 2; // à augmenter quand un .glb change (évite le vieux cache du navigateur)
 const BIBLIO = {};           // nom de l'objet → Object3D (modèle d'origine, jamais affiché)
@@ -150,6 +151,8 @@ const CATEGORIES_MODELE = new Set(['chapeau', 'dos', 'pioche', 'deltaplane']);
 // tenue (image + pièces 3D ; voir « Tenues : deux niveaux d'image »), emote (clip d'animation), trainee (case d'un atlas + réglages) : fiche JSON
 const FICHES = { tenue: new Map(), emote: new Map(), trainee: new Map() };
 const fichierDe = new Map(); // « chapeau:capuche_nuageuse » → « cosm250_chapeaux_v001.glb »
+// Livraisons quotidiennes : chaque objet est dans le .glb de son jour (modeles/jour/…), chargé à la demande comme les 250
+for (const l of LIVRAISONS_JOUR) for (const e of (l && l.objets) || []) if (e && CATEGORIES_MODELE.has(e.cat) && typeof e.fichier === 'string' && /^jour\/[\w-]+\.glb$/.test(e.fichier)) fichierDe.set(e.cat + ':' + e.id, e.fichier);
 const textures = new Map();
 const chargeurTex = new THREE.TextureLoader();
 function chargerTexture(chemin, lineaire = false) {

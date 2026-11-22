@@ -1,7 +1,7 @@
 // Menus : onglets Jouer / Boutique / Casier, achats, équipement, récompenses.
 import { CATALOGUE, CATEGORIES, RARETES_COSM, COLLAB, objet, prixDe, possede, acheter, sauverProfil, boutiqueDuJour, cleObjet,
   defisDuJour, texteDefi, xpPourNiveau, lookPossedeAuHasard, nettoyerLook, RECOMPENSE_DEFI,
-  COLLECTIONS_250, collectionDe, collectionsVisibles, estDeBase, desequiper, LOOK_DEFAUT, promoDe, prixNormal, enVente } from './boutique.js';
+  COLLECTIONS_250, collectionDe, collectionsVisibles, estDeBase, desequiper, LOOK_DEFAUT, promoDe, prixNormal, enVente, estRecentJour, livraisonDuJour } from './boutique.js';
 import { ESPRITS, TYPES_ESPRITS, PERSONNALITES, RARETES_ESPRIT, ORDRE_RARETES, meilleuresRaretes, replique, sonEsprit, PRIX_ECLATS, NIVEAUX } from './esprits.js';
 import { descriptionEsprit } from './cadeaux.js';
 import { chargerCosmetiques, cosmetiquePret } from './modeles.js';
@@ -184,7 +184,7 @@ export class Menus {
     const cat = CATEGORIES.find(c => c.id === o.cat);
     const img = o.cat === 'trainee' ? imageTrainee(o.id) : '';
     const serie = collectionDe(o);
-    d.innerHTML = `<div class="carte-img">${img ? `<img src="${img}" alt="">` : '<span class="charge">…</span>'}</div>${o.nouveau250 ? '<span class="pastille-nouv">NOUVEAU</span>' : ''}
+    d.innerHTML = `<div class="carte-img">${img ? `<img src="${img}" alt="">` : '<span class="charge">…</span>'}</div>${o.nouveau250 || estRecentJour(o) ? '<span class="pastille-nouv">NOUVEAU</span>' : ''}
       <div class="carte-bas"><span class="carte-cat">${cat.icone} ${cat.un}${serie ? ` · <span class="carte-serie">📦 ${echapper(serie.nom)}</span>` : ''}</span><b>${echapper(o.nom)}</b>
       ${possede(this.profil, o) ? '<span class="prix ok">✔ Possédé</span>' : !enVente(o) ? '<span class="prix">Pas en vente</span>' : this.textePrix(o)}</div>`;
     d.style.setProperty('--rarete', r.couleur);
@@ -366,7 +366,7 @@ export class Menus {
   dessinerCatalogue() {
     const ordre = { commun: 0, rare: 1, epique: 2, legendaire: 3, collab: 4, staff: 5 };
     const liste = CATALOGUE.filter(o => !o.gratuit && (enVente(o) || possede(this.profil, o)) && this.passeFiltre(o, this.filtres))
-      .sort((a, b) => (b.nouveau250 ? 1 : 0) - (a.nouveau250 ? 1 : 0) || ordre[a.rarete] - ordre[b.rarete] || a.nom.localeCompare(b.nom));
+      .sort((a, b) => (estRecentJour(b) ? 1 : 0) - (estRecentJour(a) ? 1 : 0) || (b.nouveau250 ? 1 : 0) - (a.nouveau250 ? 1 : 0) || ordre[a.rarete] - ordre[b.rarete] || a.nom.localeCompare(b.nom));
     const parPage = 24, pages = Math.max(1, Math.ceil(liste.length / parPage));
     this.pageCatalogue = Math.min(this.pageCatalogue, pages - 1);
     const g = $('#grilleCatalogue');
@@ -382,14 +382,18 @@ export class Menus {
   dessinerBoutique() {
     const b = boutiqueDuJour();
     this.fileMini = [];
-    const gv = $('#grilleVedettes'), gj = $('#grilleJour'), gc = $('#grilleCollab');
-    gv.innerHTML = ''; gj.innerHTML = ''; gc.innerHTML = '';
+    const gv = $('#grilleVedettes'), gj = $('#grilleJour'), gc = $('#grilleCollab'), gl = $('#grilleLivraison');
+    gv.innerHTML = ''; gj.innerHTML = ''; gc.innerHTML = ''; gl.innerHTML = '';
+    // la livraison quotidienne de 10 cosmétiques (js/livraisons_jour.js)
+    const liv = livraisonDuJour();
+    $('#titreLivraison').classList.toggle('cache', !liv.objets.length); gl.classList.toggle('cache', !liv.objets.length);
+    for (const o of liv.objets) { const c = this.carte(o); c.onclick = () => this.choisirBoutique(o); gl.appendChild(c); }
     for (const o of COLLAB) { const c = this.carte(o); c.onclick = () => this.choisirBoutique(o); gc.appendChild(c); }
     for (const o of b.vedettes) { const c = this.carte(o, true); c.onclick = () => this.choisirBoutique(o); gv.appendChild(c); }
     for (const o of b.quotidiens) { const c = this.carte(o); c.onclick = () => this.choisirBoutique(o); gj.appendChild(c); }
     this.majCompteur();
     this.dessinerCatalogue();
-    this.choisirBoutique(this.selection && [...COLLAB, ...b.vedettes, ...b.quotidiens].includes(this.selection) ? this.selection : COLLAB[1]);
+    this.choisirBoutique(this.selection && [...COLLAB, ...liv.objets, ...b.vedettes, ...b.quotidiens].includes(this.selection) ? this.selection : COLLAB[1]);
   }
 
   cadragePour(o) {

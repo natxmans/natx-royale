@@ -200,6 +200,11 @@ export const NOUVEAUTES = [
     'Sur téléphone : les onglets de l’accueil tiennent sur l’écran, et le bouton « récupérer » t’amène tout de suite au bon endroit',
     'Corrigé : le haut de la page ✨ Esprits n’est plus écrasé, et les petits boutons verts et jaunes ne sont plus gris',
   ]],
+  ['📦 Livraison du jour (novembre)', [
+    'Chaque jour à 18 h, 10 nouveaux cosmétiques arrivent dans la boutique : chapeaux, sacs à dos, pioches et deltaplanes',
+    'Ils sont dans la section « 📦 Livraison du jour » de la boutique, et marqués NOUVEAU pendant 3 jours',
+    'Après, ils restent dans tout le catalogue, et les bots peuvent les porter',
+  ]],
   ['🔊 Nouveaux sons (novembre)', [
     'Tous les bruitages ont été refaits avec de vrais sons : 48 sons choisis un par un',
     'Chaque arme a son propre tir : pistolet, mitraillette, fusil d’assaut, fusil à pompe, fusil de précision, lance-roquettes',

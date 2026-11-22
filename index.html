@@ -18,31 +18,32 @@
 <script type="importmap">{ "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-  "./js/apercu.js": "./js/apercu.js?v=24",
-  "./js/armes.js": "./js/armes.js?v=24",
-  "./js/avis.js": "./js/avis.js?v=24",
-  "./js/boutique.js": "./js/boutique.js?v=24",
-  "./js/cadeaux.js": "./js/cadeaux.js?v=24",
-  "./js/catalogue250.js": "./js/catalogue250.js?v=24",
-  "./js/compte.js": "./js/compte.js?v=24",
-  "./js/effets.js": "./js/effets.js?v=24",
-  "./js/esprits.js": "./js/esprits.js?v=24",
-  "./js/hote.js": "./js/hote.js?v=24",
-  "./js/icones.js": "./js/icones.js?v=24",
-  "./js/jeu.js": "./js/jeu.js?v=24",
-  "./js/lieux.js": "./js/lieux.js?v=24",
-  "./js/menus.js": "./js/menus.js?v=24",
-  "./js/modeles.js": "./js/modeles.js?v=24",
-  "./js/monde.js": "./js/monde.js?v=24",
-  "./js/nouveautes.js": "./js/nouveautes.js?v=24",
-  "./js/outils.js": "./js/outils.js?v=24",
-  "./js/partage.js": "./js/partage.js?v=24",
-  "./js/personnage.js": "./js/personnage.js?v=24",
-  "./js/regles.js": "./js/regles.js?v=24",
-  "./js/reseau.js": "./js/reseau.js?v=24",
-  "./js/retours.js": "./js/retours.js?v=24",
-  "./js/sons.js": "./js/sons.js?v=24",
-  "./js/touches.js": "./js/touches.js?v=24"
+  "./js/apercu.js": "./js/apercu.js?v=25",
+  "./js/armes.js": "./js/armes.js?v=25",
+  "./js/avis.js": "./js/avis.js?v=25",
+  "./js/boutique.js": "./js/boutique.js?v=25",
+  "./js/cadeaux.js": "./js/cadeaux.js?v=25",
+  "./js/catalogue250.js": "./js/catalogue250.js?v=25",
+  "./js/compte.js": "./js/compte.js?v=25",
+  "./js/effets.js": "./js/effets.js?v=25",
+  "./js/esprits.js": "./js/esprits.js?v=25",
+  "./js/hote.js": "./js/hote.js?v=25",
+  "./js/icones.js": "./js/icones.js?v=25",
+  "./js/jeu.js": "./js/jeu.js?v=25",
+  "./js/lieux.js": "./js/lieux.js?v=25",
+  "./js/livraisons_jour.js": "./js/livraisons_jour.js?v=25",
+  "./js/menus.js": "./js/menus.js?v=25",
+  "./js/modeles.js": "./js/modeles.js?v=25",
+  "./js/monde.js": "./js/monde.js?v=25",
+  "./js/nouveautes.js": "./js/nouveautes.js?v=25",
+  "./js/outils.js": "./js/outils.js?v=25",
+  "./js/partage.js": "./js/partage.js?v=25",
+  "./js/personnage.js": "./js/personnage.js?v=25",
+  "./js/regles.js": "./js/regles.js?v=25",
+  "./js/reseau.js": "./js/reseau.js?v=25",
+  "./js/retours.js": "./js/retours.js?v=25",
+  "./js/sons.js": "./js/sons.js?v=25",
+  "./js/touches.js": "./js/touches.js?v=25"
 } }</script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
 <script>
@@ -182,6 +183,8 @@
       <div class="titre-boutique bandeau" style="--image: url('modeles/interface/illustrations/boutique.webp')"><h2>🛒 Boutique du jour</h2><span id="compteBoutique"></span></div>
       <div class="collab-entete"><span class="collab-logo">NATX <i>×</i> <b>2K27</b></span><span>Événement collab : les objets exclusifs du festival gaming 2K27</span></div>
       <div class="grille collab" id="grilleCollab"></div>
+      <h3 id="titreLivraison" class="cache">📦 Livraison du jour : 10 nouveaux cosmétiques</h3>
+      <div class="grille cache" id="grilleLivraison"></div>
       <h3>⭐ À la une</h3>
       <div class="grille vedettes" id="grilleVedettes"></div>
       <h3>🗓️ Les objets du jour</h3>
@@ -580,6 +583,6 @@
 <div id="chargement" class="ecran cache"><div class="boite"><img class="illustration" src="modeles/interface/illustrations/chargement_petit.webp" width="320" height="180" alt="" loading="lazy"><div class="roue"></div><h2 id="txtChargement">Connexion…</h2><p id="astuceChargement" class="petit-texte"></p></div></div>
 <div id="toasts"></div>
 
-<script type="module" src="js/jeu.js?v=24"></script>
+<script type="module" src="js/jeu.js?v=25"></script>
 </body>
 </html>

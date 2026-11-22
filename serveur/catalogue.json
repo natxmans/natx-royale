@@ -1,5 +1,5 @@
 {
- "source": "js/boutique.js + js/catalogue250.js + modeles/integration.json",
+ "source": "js/boutique.js + js/catalogue250.js + modeles/integration.json + js/livraisons_jour.js",
  "categories": [
   {
    "id": "tenue",

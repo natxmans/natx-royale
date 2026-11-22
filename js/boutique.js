@@ -1,6 +1,7 @@
 // Boutique : catalogue des objets (tous inventés), pièces, profil du joueur.
 import { hasard } from './outils.js';
 import { CATALOGUE_250, COLLECTIONS_250 } from './catalogue250.js';
+import { LIVRAISONS_JOUR } from './livraisons_jour.js';
 
 export const RARETES_COSM = {
   commun:     { nom: 'Commun',     couleur: '#8fa3b8', prix: 300 },
@@ -179,6 +180,31 @@ export function appliquerStaff(p, estStaff) {
 
 export const COLLAB = CATALOGUE.filter(o => o.rarete === 'collab');
 export const objet = (cat, id) => CATALOGUE.find(o => o.cat === cat && o.id === id);
+
+// ---------- Livraisons quotidiennes (js/livraisons_jour.js, une livraison de 10 objets par jour) ----------
+// Leur modèle est publié en même temps qu'elles (modeles/jour/) : elles sont en vente tout de suite.
+const CATS_JOUR = new Set(['chapeau', 'dos', 'pioche', 'deltaplane']);
+const RARETES_JOUR = new Set(['commun', 'rare', 'epique', 'legendaire']);
+for (const l of LIVRAISONS_JOUR) {
+  for (const e of (l && l.objets) || []) {
+    if (!e || !CATS_JOUR.has(e.cat) || !RARETES_JOUR.has(e.rarete) || typeof e.id !== 'string' || objet(e.cat, e.id)) continue;
+    CATALOGUE.push({ id: e.id, cat: e.cat, nom: e.nom, desc: e.desc || '', rarete: e.rarete, jour: l.date });
+  }
+}
+const dateLocale = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+// « NOUVEAU » pendant 3 jours après la livraison
+export function estRecentJour(o, d = new Date()) {
+  if (!o || !o.jour) return false;
+  const ilYa3 = new Date(d); ilYa3.setDate(ilYa3.getDate() - 2);
+  return o.jour >= dateLocale(ilYa3) && o.jour <= dateLocale(d);
+}
+// La dernière livraison (si elle date d'aujourd'hui ou d'hier) : ses objets en vente
+export function livraisonDuJour(d = new Date()) {
+  const hier = new Date(d); hier.setDate(hier.getDate() - 1);
+  const dates = LIVRAISONS_JOUR.map(l => l && l.date).filter(x => typeof x === 'string' && x <= dateLocale(d) && x >= dateLocale(hier)).sort();
+  const date = dates[dates.length - 1];
+  return date ? { date, objets: CATALOGUE.filter(o => o.jour === date && enVente(o)) } : { date: null, objets: [] };
+}
 
 // ---------- Les 250 nouveaux cosmétiques (js/catalogue250.js) ----------
 // Ils n'entrent dans CATALOGUE (vente, casier, bots) qu'une fois leur contenu livré ET activé dans

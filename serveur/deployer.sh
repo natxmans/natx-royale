@@ -6,6 +6,9 @@
 # LISEZMOI.md et les réglages (non secrets).
 # Ce qui n'est JAMAIS touché en ligne : ~/natx-serveur/donnees/ (avis, votes, comptes admin,
 # clé secrète créée par le serveur lui-même).
+#
+# sh serveur/deployer.sh catalogue  →  envoie SEULEMENT catalogue.json (livraison quotidienne de cosmétiques) :
+# le code du serveur en ligne ne change pas.
 set -e
 cd "$(dirname "$0")"
 
@@ -21,6 +24,19 @@ python -X utf8 copier_visuels.py
 for f in admin/index.html admin/admin.js admin/admin.css reglages-alwaysdata.env catalogue.json; do
   [ -f "$f" ] || { echo "Fichier manquant : $f"; exit 1; }
 done
+
+# 1 bis. livraison quotidienne : seulement le catalogue (les objets offrables par l'admin), puis redémarrage
+if [ "$1" = "catalogue" ]; then
+  tar -cf - catalogue.json | ssh -i "$CLE" -o BatchMode=yes "$COMPTE" "
+    set -e
+    [ -f ~/$DOSSIER/wsgi.py ] || { echo 'Serveur absent : lancer un déploiement complet.'; exit 1; }
+    tar -x -C ~/$DOSSIER
+    touch ~/$DOSSIER/wsgi.py
+    echo 'catalogue.json à jour dans ~/$DOSSIER'"
+  sleep 3
+  curl -fsS "$ADRESSE/api/sante" > /dev/null && echo "Le serveur répond." || { echo "Pas de réponse du serveur"; exit 1; }
+  exit 0
+fi
 
 # 2. envoi des fichiers (sans donnees/ ni __pycache__/) et redémarrage de l'appli
 tar -cf - --exclude=donnees --exclude=__pycache__ api.py gestion.py robot.py wsgi.py reglages-alwaysdata.env LISEZMOI.md catalogue.json admin |

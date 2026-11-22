@@ -34,6 +34,8 @@ Une bataille royale cartoon à jouer entre potes, directement dans le navigateur
   île, joueurs éliminés, victoire) ; ils ne servent qu'à ça et sont gardés sur le serveur, comme le niveau de tes esprits.
   Tu peux aussi **partir avec un esprit** de ta collection dès le début de la partie : si tu meurs avec lui, tu le perds, et il
   faut payer des éclats pour le récupérer (de 25 à 100 💠 selon sa rareté).
+- **Livraison du jour** : chaque jour, 10 nouveaux cosmétiques (chapeaux, sacs à dos, pioches, deltaplanes) arrivent dans la
+  boutique, section « 📦 Livraison du jour » (voir `outils/LIVRAISON-QUOTIDIENNE.md`).
 - **Ton personnage** : couleur, peau, coiffure et couleur des cheveux, plus 250 cosmétiques (tenues, chapeaux,
   sacs, pioches, deltaplanes, emotes, traînées) et des skins d'armes. Tout se gagne en jouant, avec les pièces
   du jeu.
