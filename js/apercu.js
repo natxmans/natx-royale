@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { creerPersonnage, modelePioche, modeleDeltaplane, animerPersonnage, tenirObjet, presenterPersonnage } from './personnage.js';
 import { modeleObjet, habillerArme } from './armes.js';
+import { modeleGlb, aModele } from './modeles.js';
 import { creerEsprit, animerEsprit, jouerEsprit } from './esprits.js';
 
 export class Apercu {
@@ -171,6 +172,8 @@ export class Apercu {
     if (o.cat === 'pioche') return this.miniature(cle, () => { const g = modelePioche(o.id); g.rotation.set(-0.9, 0.6, 0.6); return g; }, [0.2, 0.3, 1]);
     if (o.cat === 'deltaplane') return this.miniature(cle, () => { const g = new THREE.Group(); const d = modeleDeltaplane(o.id, couleur); d.position.y = 0; g.add(d); return g; }, [0.4, 1.1, 1.4]);
     if (o.cat === 'trainee') return null;
+    // sac à dos d'une livraison du jour (pas d'image toute prête) : l'objet seul, vu de dos ; sinon le perso entier, cadré de loin, cachait le sac
+    if (o.cat === 'dos' && o.jour && aModele('dos_' + o.id)) return this.miniature(cle, () => { const g = new THREE.Group(); g.add(modeleGlb('dos_' + o.id)); g.rotation.y = 0.5; return g; }, [0.35, 0.3, 1]);
     if (o.cat === 'arme') return this.miniature(cle, () => { const g = habillerArme(modeleObjet('fusil', 4), o.id); g.rotation.set(0.25, 1.1, 0); return g; }, [0.2, 0.25, 1]);
     const look = {};
     look[o.cat] = o.id;
