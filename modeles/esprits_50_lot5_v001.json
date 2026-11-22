@@ -1,0 +1,439 @@
+{
+ "_aide": "10 entrées prêtes pour le tableau « esprits » d'integration.json (actif:false), même format que les 5 d'esprits_v003.glb. Les clés qui commencent par « _ » sont des notes. _effets_caches = objets à l'échelle 0,001 au repos, montrés par « activer » et « obtention ».",
+ "esprits": [
+  {
+   "id": "forge",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_forge",
+   "nom": "Enclumo",
+   "couleur": "#ff9d3d",
+   "animations": {
+    "flotter": "forge_flotter",
+    "activer": "forge_activer",
+    "apparaitre": "forge_apparaitre",
+    "attente2": "forge_attente2",
+    "deplacer": "forge_deplacer",
+    "content": "forge_content",
+    "surpris": "forge_surpris",
+    "obtention": "forge_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.52,
+    "h": 0.42,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1692,
+   "_role": "Forge",
+   "_description": "enclume orange à bec, socle sombre, lingot brûlant posé dessus, marteau qui flotte à côté, étincelles en orbite ; activer : le marteau frappe deux fois le lingot",
+   "_morceaux": [
+    "forge_lingot",
+    "forge_marteau",
+    "forge_etincelles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_forge"
+  },
+  {
+   "id": "egide",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_egide",
+   "nom": "Égide",
+   "couleur": "#5ad1a4",
+   "animations": {
+    "flotter": "egide_flotter",
+    "activer": "egide_activer",
+    "apparaitre": "egide_apparaitre",
+    "attente2": "egide_attente2",
+    "deplacer": "egide_deplacer",
+    "content": "egide_content",
+    "surpris": "egide_surpris",
+    "obtention": "egide_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.48,
+    "h": 0.45,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2768,
+   "_role": "Rempart",
+   "_description": "bouclier vert en écu, bombé, haut en créneaux comme un rempart, bord clair, chevron et pierre lumineux, petit étendard sur le dessus, pierres en orbite ; activer : il grandit ; effet : un mur de briques lumineuses sort du sol devant lui",
+   "_morceaux": [
+    "egide_drapeau",
+    "egide_pierres"
+   ],
+   "_effets_caches": [
+    "egide_mur"
+   ],
+   "_materiau_lumiere": "lumiere_egide"
+  },
+  {
+   "id": "rage",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_rage",
+   "nom": "Furio",
+   "couleur": "#ff3d3d",
+   "animations": {
+    "flotter": "rage_flotter",
+    "activer": "rage_activer",
+    "apparaitre": "rage_apparaitre",
+    "attente2": "rage_attente2",
+    "deplacer": "rage_deplacer",
+    "content": "rage_content",
+    "surpris": "rage_surpris",
+    "obtention": "rage_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.29,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2656,
+   "_role": "Rage",
+   "_description": "boule rouge très en colère : sourcils froncés, dents serrées, signe de colère qui bat sur la tête, vapeur qui lui sort des deux côtés, petites flammes en orbite ; activer : il tremble de rage et gonfle",
+   "_morceaux": [
+    "rage_colere",
+    "rage_vapeur_g",
+    "rage_vapeur_d",
+    "rage_flammes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_rage"
+  },
+  {
+   "id": "ninja",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_ninja",
+   "nom": "Shino",
+   "couleur": "#6b7280",
+   "animations": {
+    "flotter": "ninja_flotter",
+    "activer": "ninja_activer",
+    "apparaitre": "ninja_apparaitre",
+    "attente2": "ninja_attente2",
+    "deplacer": "ninja_deplacer",
+    "content": "ninja_content",
+    "surpris": "ninja_surpris",
+    "obtention": "ninja_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.48,
+    "h": 0.25,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3396,
+   "_role": "Ninja",
+   "_description": "boule grise à bandeau de ninja : plaque de métal avec un shuriken, nœud et deux pans qui flottent derrière, shurikens en orbite ; activer : il fonce en tournant ; effet : nuage de fumée",
+   "_morceaux": [
+    "ninja_rubans",
+    "ninja_shurikens"
+   ],
+   "_effets_caches": [
+    "ninja_fumee"
+   ],
+   "_materiau_lumiere": "lumiere_ninja"
+  },
+  {
+   "id": "robot",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_robot",
+   "nom": "Bipbop",
+   "couleur": "#8fd3e8",
+   "animations": {
+    "flotter": "robot_flotter",
+    "activer": "robot_activer",
+    "apparaitre": "robot_apparaitre",
+    "attente2": "robot_attente2",
+    "deplacer": "robot_deplacer",
+    "content": "robot_content",
+    "surpris": "robot_surpris",
+    "obtention": "robot_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.38,
+    "h": 0.33,
+    "d": 0.36
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3188,
+   "_role": "Robot",
+   "_description": "robot rond bleu clair : visière sombre où brillent les yeux, antenne à boule lumineuse, oreilles-boulons, rivets, petits bras, pixels lumineux en orbite ; activer : il saute en tournant, lève les bras et son antenne clignote",
+   "_morceaux": [
+    "robot_antenne",
+    "robot_bras_g",
+    "robot_bras_d",
+    "robot_pixels"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_robot"
+  },
+  {
+   "id": "ange",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_ange",
+   "nom": "Séraph",
+   "couleur": "#fff3b0",
+   "animations": {
+    "flotter": "ange_flotter",
+    "activer": "ange_activer",
+    "apparaitre": "ange_apparaitre",
+    "attente2": "ange_attente2",
+    "deplacer": "ange_deplacer",
+    "content": "ange_content",
+    "surpris": "ange_surpris",
+    "obtention": "ange_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.3,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2860,
+   "_role": "Ange",
+   "_description": "boule dorée avec une petite mèche, auréole lumineuse (ange_aureole, à cacher par le code), deux ailes blanches à 4 plumes qui battent, plumes et étoiles en orbite ; activer : il s'envole en battant des ailes",
+   "_morceaux": [
+    "ange_aureole",
+    "ange_aile_g",
+    "ange_aile_d",
+    "ange_plumes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_ange"
+  },
+  {
+   "id": "perroquet",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_perroquet",
+   "nom": "Coco",
+   "couleur": "#3ddc84",
+   "animations": {
+    "flotter": "perroquet_flotter",
+    "activer": "perroquet_activer",
+    "apparaitre": "perroquet_apparaitre",
+    "attente2": "perroquet_attente2",
+    "deplacer": "perroquet_deplacer",
+    "content": "perroquet_content",
+    "surpris": "perroquet_surpris",
+    "obtention": "perroquet_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.36,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3858,
+   "_role": "Pirate",
+   "_description": "perroquet vert tout rond : ventre jaune, bec crochu orange, tricorne de pirate à tête de mort, ailes vertes à bouts rouges et bleus, longue queue, pièces d'or en orbite ; activer : il saute en tournant, le chapeau s'envole un instant",
+   "_morceaux": [
+    "perroquet_chapeau",
+    "perroquet_aile_g",
+    "perroquet_aile_d",
+    "perroquet_queue",
+    "perroquet_pieces"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_perroquet"
+  },
+  {
+   "id": "soleil",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_soleil",
+   "nom": "Solaro",
+   "couleur": "#ffd84d",
+   "animations": {
+    "flotter": "soleil_flotter",
+    "activer": "soleil_activer",
+    "apparaitre": "soleil_apparaitre",
+    "attente2": "soleil_attente2",
+    "deplacer": "soleil_deplacer",
+    "content": "soleil_content",
+    "surpris": "soleil_surpris",
+    "obtention": "soleil_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.52,
+    "h": 0.36,
+    "d": 0.43
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2640,
+   "_role": "Soleil",
+   "_description": "petit soleil qui brille : 12 rayons longs et courts autour du visage, cercle de lumière, mini soleils en orbite ; activer : il gonfle et ses rayons font un tour",
+   "_morceaux": [
+    "soleil_rayons",
+    "soleil_soleils"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_soleil"
+  },
+  {
+   "id": "galaxie",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_galaxie",
+   "nom": "Nébula",
+   "couleur": "#7a6bff",
+   "animations": {
+    "flotter": "galaxie_flotter",
+    "activer": "galaxie_activer",
+    "apparaitre": "galaxie_apparaitre",
+    "attente2": "galaxie_attente2",
+    "deplacer": "galaxie_deplacer",
+    "content": "galaxie_content",
+    "surpris": "galaxie_surpris",
+    "obtention": "galaxie_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.47,
+    "h": 0.26,
+    "d": 0.47
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3340,
+   "_role": "Cosmos",
+   "_description": "boule violette semée de petites étoiles, galaxie en spirale (disque et 3 bras lumineux) qui tourne à plat sous le visage, planètes en orbite ; activer : la galaxie tourne vite",
+   "_morceaux": [
+    "galaxie_bras",
+    "galaxie_planetes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_galaxie"
+  },
+  {
+   "id": "prisme",
+   "actif": false,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_prisme",
+   "nom": "Prisma",
+   "couleur": "#ff8af0",
+   "animations": {
+    "flotter": "prisme_flotter",
+    "activer": "prisme_activer",
+    "apparaitre": "prisme_apparaitre",
+    "attente2": "prisme_attente2",
+    "deplacer": "prisme_deplacer",
+    "content": "prisme_content",
+    "surpris": "prisme_surpris",
+    "obtention": "prisme_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.5,
+    "h": 0.29,
+    "d": 0.44
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1708,
+   "_role": "Lumière",
+   "_description": "prisme de verre rose à arêtes blanches, rayon blanc qui entre d'un côté, arc-en-ciel en éventail qui sort de l'autre, éclats colorés en orbite ; activer : il saute en tournant et l'arc-en-ciel s'élargit",
+   "_morceaux": [
+    "prisme_arcenciel",
+    "prisme_eclats"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_prisme"
+  }
+ ]
+}

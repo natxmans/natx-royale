@@ -241,3 +241,22 @@ Les 10 pouvoirs (réglages dans js/esprits.js, décidés par l'hôte dans js/hot
   (elle s'ouvre vers -z) ; ruine_muret_b tourné de 90° ; ruine_linteau posé à 4,695 m.
 - Qualité basse (téléphones) : les modèles ne sont pas utilisés, le code dessine ses boîtes (50 000 triangles de moins sur l'île).
 - Pour changer un objet : garder son nom, son origine et ses cotes ; livrer un nouveau fichier (decors_secrets_v002.glb) et le dire.
+
+=====================================================================================
+10) 22 NOVEMBRE 2026 — LES 50 NOUVEAUX ESPRITS (esprits_50_lot<N>_v001.glb)
+=====================================================================================
+(écrit par la session Développement ; aucun fichier 3D modifié)
+
+- Livrés en 5 lots de 10 (esprits_50_lot1_v001.glb … lot5), même convention qu'esprits_plus_v001.glb : racine esprit_<id>,
+  8 animations <id>_flotter / _activer / _apparaitre / _attente2 / _deplacer / _content / _surpris / _obtention.
+- Chaque lot a sa fiche .json avec 10 entrées prêtes pour le tableau « esprits » d'integration.json. Elles y sont recopiées
+  avec actif:true (la note « _esprits_50 » dit quels lots sont branchés). Rien d'autre à changer dans le code.
+- Un esprit sans modèle garde sa forme de secours dessinée en code (js/esprits.js, FORME_SECOURS).
+- Leurs bonus et leurs pouvoirs ne sont pas dans les modèles : ce sont des réglages dans js/esprits.js (p = bonus, a = pouvoir),
+  lus par un code commun (js/hote.js : preparerGenerique / appliquerGenerique ; js/jeu.js : effetGenerique).
+- Pièges posés au sol (oursin de Récifa, mine de Clac) : modeles/pieges_esprits_v001.glb branché (entrée « pieges_esprits »
+  d'integration.json). js/jeu.js (creerPiege) pose piege_oursin / piege_mine à la racine, joue <objet>_apparaitre puis <objet>_repos
+  en boucle (près de la caméra). Sans le fichier, les formes dessinées en code reviennent.
+- Les 5 lots sont livrés et branchés (65 esprits modélisés). ange_aureole se cache après la seconde chance de Séraph (js/jeu.js, SIGNE_CHANCE).
+- Vignettes des 65 livrées (modeles/admin/vignettes/esprit/<id>.webp + vignettes_esprits.json) : utilisées par la page Esprits et par le panel.
+

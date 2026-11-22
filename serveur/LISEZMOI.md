@@ -236,6 +236,25 @@ puis le joueur appelle `POST /api/esprit/exporter` (`jeton`, `partie_id`, `type`
 épique 7, légendaire 1), met l'esprit dans sa boîte (cadeau d'origine `export`) et le note dans `esprits_obtenus` (source `export:<partie>`).
 Limites côté serveur : 3 par partie, 10 par jour et par joueur ; refusé si le compte est privé de cadeaux ou suspendu. Pas en Entraînement.
 
+## Éclats d'esprit (monnaie pour améliorer les esprits, 22 nov. 2026)
+
+Pendant une partie, on améliore son esprit sur un autel (★ → ★★ → ★★★, l'amélioration ne dure que la partie). Ça se paie en
+**éclats d'esprit 💠**, une monnaie qui ne sert qu'à ça et qui est **gardée d'une partie à l'autre, ici sur le serveur** (tables `eclats`,
+`eclats_parties`, `eclats_depenses`).
+
+- **Gagner** : l'hôte de la partie compte ce que chaque joueur ramasse (coffres, ravitaillements, tas sur l'île, joueurs éliminés,
+  victoire). Le jeu du joueur envoie `POST /api/eclats/gagner` (`jeton`, `partie_id`, `total` = tout ce qu'il a gagné dans la partie) :
+  le serveur n'ajoute que ce qui manque, au plus **150 par partie** et **600 par jour** (`ECLATS_PAR_PARTIE`, `ECLATS_PAR_JOUR`).
+  Refusé si le compte est privé de cadeaux ou suspendu.
+- **Payer** : `POST /api/eclats/depenser` (`jeton`, `partie_id`, `demande` = identifiant au hasard, `type`, `niveau` 2 ou 3, `rarete` annoncée).
+  Le serveur calcule le prix lui-même (`PRIX_ECLATS`, ★★ / ★★★ : commun 50 / 120, rare 80 / 200, épique 120 / 300, légendaire 200 / 500),
+  avec la rareté la plus haute entre celle annoncée et celle qu'il connaît (`esprits_obtenus`). Pas assez : `ok: false` et rien n'est retiré.
+  La même `demande` renvoyée n'est pas payée deux fois. Le jeu ne demande l'amélioration à l'hôte qu'après ce paiement.
+- **Voir** : `POST /api/eclats` (`jeton`) → solde et prix. La fiche d'un joueur dans l'espace admin montre son solde, ce qu'il a gagné et dépensé.
+- Limite connue : pendant la partie, l'hôte croit le joueur qui dit avoir payé (comme pour les dégâts). Le solde, lui, ne peut pas être
+  augmenté au-delà des plafonds. En Entraînement l'amélioration est gratuite et aucun éclat n'est gagné. Les bots n'ont pas de compte :
+  ils paient moins cher (12 puis 30) avec ce qu'ils ramassent pendant la partie.
+
 ## Avis « À étudier » transmis
 
 Quand un avis passe en **À étudier** (par un admin, ou par le robot : bug à 3 votes, idée à 5 votes), il devient « à transmettre »

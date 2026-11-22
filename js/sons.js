@@ -1,4 +1,5 @@
-// Bruitages et musiques fabriqués avec Web Audio (aucun fichier son).
+// Bruitages : de vrais sons (dossier sons/) ; tant qu'un fichier n'est pas chargé, ou s'il manque, le même bruitage fabriqué avec
+// Web Audio sert de secours. Les musiques et le vent de la chute restent fabriqués avec Web Audio.
 let ctx = null, bruit = null, maitre = null, busMusique = null;
 export let volumeGeneral = 0.6;
 let volumeMusique = 0.5;
@@ -12,6 +13,7 @@ export function initSons() {
   const d = bruit.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   if (musiqueVoulue) jouerMusique(musiqueVoulue);
+  chargerBruitages();
 }
 
 export function reglerVolume(v) { volumeGeneral = v; if (maitre) maitre.gain.value = v; }
@@ -39,7 +41,163 @@ function bip(freq, duree, vol, type = 'square', freqFin, sortie = maitre, t = ct
 }
 const plus = (ms, f) => setTimeout(f, ms);
 
+// ---------- Vrais bruitages (dossier sons/) ----------
+// Les fichiers viennent de pixabay.com (licence Pixabay ; la liste et les auteurs sont dans sons/CREDITS.md).
+// Chaque nom de son du jeu → un fichier de sons/ et ses réglages :
+//   f = fichier (ou plusieurs : un au hasard à chaque fois), v = volume, ton = vitesse de lecture (1 = normal),
+//   var = petite variation du ton au hasard (pour que ça ne sonne jamais deux fois pareil), duree = on coupe après tant de secondes,
+//   tranches = morceaux [début, durée] d'un fichier qui contient plusieurs sons, avec = un autre son joué en même temps.
+const VERSION_SONS = 2; // à augmenter quand un fichier de sons/ change (évite le vieux cache du navigateur)
+const FICHIERS = {
+  // armes
+  // (les armes qui tirent vite ont un son coupé plus tôt : sinon 5 ou 6 échos se superposent et ça devient de la bouillie)
+  pistolet: { f: 'pistolet', v: 0.85, var: 0.05, duree: 0.6 },
+  smg: { f: 'smg', v: 0.6, ton: 1.12, var: 0.06, duree: 0.28 },
+  fusil: { f: 'fusil', v: 0.75, var: 0.05, duree: 0.5 },
+  pompe: { f: 'pompe', v: 1, var: 0.04 },
+  sniper: { f: 'sniper', v: 1, var: 0.03 },
+  roquette: { f: 'roquette', v: 0.9 },
+  lancer: { f: 'souffle', v: 0.5, ton: 1.2, var: 0.08 },
+  explosion: { f: 'explosion', v: 1.15, var: 0.06 },
+  recharge: { f: 'recharge', v: 0.6 },
+  vide: { f: 'vide', v: 0.5 },
+  // pioche, récolte, constructions
+  pioche: { f: 'souffle', v: 0.35, ton: 1.5, var: 0.1 },
+  bois: { f: 'bois', v: 0.7, var: 0.08 },
+  pierre: { f: 'pierre', v: 0.8, var: 0.08 },
+  arbreTombe: { f: 'arbre', v: 0.9 },
+  construire: { f: 'construire', v: 0.6, var: 0.1 },
+  casse: { f: 'casse', v: 0.7, var: 0.08 },
+  // coups reçus et donnés
+  touche: { f: 'touche', v: 0.5, ton: 1.25, var: 0.06 },
+  tete: { f: 'tete', v: 0.55, ton: 1.1 },
+  aie: { f: 'aie', v: 0.75, var: 0.06 },
+  bouclierCasse: { f: 'verre', v: 0.6 },
+  mort: { f: 'mort', v: 0.8 },
+  elimination: { f: 'elimination', v: 0.7 },
+  serie: { f: 'elimination', v: 0.7, ton: 1.25 },
+  coeur: { f: 'coeur', v: 0.6, duree: 0.8 }, // rejoué toutes les 0,95 s quand il reste peu de vie
+  // objets, coffres, déplacements
+  ramasser: { f: 'ramasser', v: 0.6, var: 0.05 },
+  scintille_eclat: { f: 'scintille', v: 0.4, ton: 1.5, duree: 0.7, var: 0.06 }, // ramasser un éclat d'esprit
+  coffre: { f: 'coffre', v: 0.8 },
+  coffreDore: { f: 'scintille', v: 0.7, avec: 'coffre' },
+  ravito: { f: 'arrivee', v: 0.7, ton: 0.75 },
+  soin: { f: 'soin', v: 0.6 },
+  rebond: { f: 'rebond', v: 0.7, var: 0.06 },
+  passage: { f: 'teleport', v: 0.7 },
+  chute: { f: 'chute', v: 0.8 },
+  saut: { f: 'souffle', v: 0.4, ton: 0.85 },
+  // menus et annonces
+  clic: { f: 'clic', v: 0.45 },
+  niveau: { f: 'niveau', v: 0.7 },
+  ameliorer: { f: 'niveau', v: 0.65, ton: 1.12, avec: 'construire' }, // un esprit monte de niveau sur un autel
+  victoire: { f: 'victoire', v: 0.8 },
+  zone: { f: 'zone', v: 0.5 },
+  cadeau: { f: 'scintille', v: 0.5, ton: 1.15 },
+  message: { f: 'message', v: 0.5 },
+  arrivee: { f: 'arrivee', v: 0.5 },
+  // bruits de pas selon le sol
+  // (on les entend sans arrêt : plus doux que le reste ; volumes mesurés pour que les 5 sols aient la même force)
+  pasHerbe: { f: ['pasHerbe1', 'pasHerbe2', 'pasHerbe3'], v: 0.3, var: 0.1 },
+  pasSable: { f: 'pasSable', v: 0.35, var: 0.1, tranches: [[0.65, 0.18], [0.87, 0.18], [1.13, 0.18], [1.83, 0.18]] },
+  pasNeige: { f: 'pasNeige', v: 0.5, var: 0.08, duree: 0.45 },
+  pasBois: { f: 'pasBois', v: 0.28, var: 0.1 },
+  pasEau: { f: 'eau', v: 0.45, ton: 1.15, var: 0.12, duree: 0.5 },
+  // esprits (capture et pouvoir) : les 50 esprits du 22 nov. prennent le son de leur sorte de pouvoir (esprits.js, sonEsprit)
+  esprit_soin: { f: 'magie', v: 0.7, ton: 1.2 },
+  esprit_mobilite: { f: 'elan', v: 0.5, ton: 1.2 },
+  esprit_protection: { f: 'bouclier', v: 0.6 },
+  esprit_vision: { f: 'magie', v: 0.7, ton: 1.4 },
+  esprit_batisseur: { f: 'magie', v: 0.6, ton: 0.85, avec: 'construire' },
+  esprit_feu: { f: 'feu', v: 0.8 },
+  esprit_glace: { f: 'glace', v: 0.8, duree: 1.4 },
+  esprit_foudre: { f: 'foudre', v: 0.7 },
+  esprit_vent: { f: 'elan', v: 0.5, ton: 0.8 },
+  esprit_nature: { f: 'magie', v: 0.6, ton: 0.9 },
+  esprit_ombre: { f: 'teleport', v: 0.6, ton: 0.7 },
+  esprit_temps: { f: 'teleport', v: 0.6, ton: 1.25 },
+  esprit_eau: { f: 'eau', v: 0.6, ton: 0.8 },
+  esprit_chance: { f: 'scintille', v: 0.6 },
+  esprit_etoile: { f: 'scintille', v: 0.6, ton: 1.2 },
+  esprit_rare: { f: 'scintille', v: 0.35, ton: 1.45 },
+};
+export const NOMS_SONS = Object.keys(FICHIERS);
+const tampons = new Map(); // fichier → { b, debut, gain } une fois chargé ; false s'il manque
+let chargementSons = null, vraisSons = true;
+// Pour comparer (page d'écoute) : false = seulement les anciens bruitages fabriqués
+export function reglerVraisSons(oui) { vraisSons = !!oui; }
+export function etatSons() { const v = [...tampons.values()]; return { prets: v.filter(Boolean).length, manquants: v.filter(x => x === false).length, total: new Set(Object.values(FICHIERS).flatMap(d => [].concat(d.f))).size }; }
+// Mesure un son chargé : où il commence vraiment (les fichiers ont un petit silence au début) et de combien le monter ou le baisser
+// pour que tous les sons aient à peu près la même force avant leur réglage « v ».
+function mesurer(b) {
+  const n = b.length, sr = b.sampleRate;
+  let pic = 0;
+  const voies = [];
+  for (let c = 0; c < b.numberOfChannels; c++) { const d = b.getChannelData(c); voies.push(d); for (let i = 0; i < n; i++) { const a = d[i] < 0 ? -d[i] : d[i]; if (a > pic) pic = a; } }
+  if (!(pic > 0)) return { b, debut: 0, gain: 1 };
+  const d0 = voies[0], seuil = pic * 0.04;
+  let debut = 0;
+  while (debut < n && d0[debut] < seuil && d0[debut] > -seuil) debut++;
+  // force du passage le plus fort (fenêtre d'un dixième de seconde)
+  const w = Math.max(1, Math.round(sr * 0.1));
+  let som = 0, fort = 0;
+  for (let i = 0; i < n; i++) { som += d0[i] * d0[i]; if (i >= w) som -= d0[i - w] * d0[i - w]; if (i >= w - 1 && som > fort) fort = som; }
+  const rms = Math.sqrt(fort / w) || pic;
+  return { b, debut: Math.max(0, debut / sr - 0.004), gain: Math.min(0.95 / pic, 0.25 / rms) };
+}
+// Charge tous les fichiers en douce (4 à la fois), après le premier clic du joueur
+function chargerBruitages() {
+  if (chargementSons || !ctx) return chargementSons;
+  const noms = [...new Set(Object.values(FICHIERS).flatMap(d => [].concat(d.f)))];
+  let i = 0;
+  const suivant = async () => {
+    while (i < noms.length) {
+      const nom = noms[i++];
+      try {
+        const r = await fetch(new URL(`../sons/${nom}.mp3?v=${VERSION_SONS}`, import.meta.url)); // à côté du dossier js/, quelle que soit la page
+        if (!r.ok) throw new Error('absent');
+        const donnees = await r.arrayBuffer();
+        const b = await new Promise((ok, rate) => ctx.decodeAudioData(donnees, ok, rate));
+        tampons.set(nom, mesurer(b));
+      } catch (e) { tampons.set(nom, false); } // fichier absent ou illisible : le bruitage fabriqué reste
+    }
+  };
+  chargementSons = Promise.all([suivant(), suivant(), suivant(), suivant()]);
+  return chargementSons;
+}
+export const bruitagesPrets = () => chargementSons || Promise.resolve();
+// Joue le vrai son s'il est chargé ; renvoie false sinon
+function jouerFichier(nom, vol) {
+  const d = FICHIERS[nom];
+  if (!d) return false;
+  const liste = [].concat(d.f);
+  const t = tampons.get(liste[Math.floor(Math.random() * liste.length)]);
+  if (!t) return false;
+  const s = ctx.createBufferSource(); s.buffer = t.b;
+  const ton = (d.ton || 1) * (1 + (Math.random() * 2 - 1) * (d.var || 0));
+  s.playbackRate.value = ton;
+  const g = ctx.createGain(), niveau = vol * (d.v === undefined ? 1 : d.v) * t.gain, m = ctx.currentTime;
+  g.gain.setValueAtTime(niveau, m);
+  s.connect(g); g.connect(maitre);
+  const tr = d.tranches ? d.tranches[Math.floor(Math.random() * d.tranches.length)] : null;
+  const debut = tr ? tr[0] : t.debut, duree = tr ? tr[1] : d.duree || 0;
+  if (duree) { // on coupe en douceur
+    const fin = m + duree / ton;
+    g.gain.setValueAtTime(niveau, Math.max(m, fin - 0.04)); g.gain.linearRampToValueAtTime(0.0001, fin);
+    s.start(m, debut, duree);
+  } else s.start(m, debut);
+  if (d.avec) jouerFichier(d.avec, vol);
+  return true;
+}
+
 export function son(nom, vol = 1) {
+  if (!ctx || vol < 0.02) return;
+  if (vraisSons && jouerFichier(nom, vol)) return;
+  sonFabrique(nom, vol);
+}
+// Les anciens bruitages, fabriqués avec Web Audio : ils servent de secours tant qu'un fichier n'est pas chargé
+export function sonFabrique(nom, vol = 1) {
   if (!ctx || vol < 0.02) return;
   switch (nom) {
     case 'pistolet': rafale(0.12, 2600, 1, 0.5 * vol); bip(180, 0.08, 0.2 * vol, 'sine', 60); break;

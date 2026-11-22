@@ -673,6 +673,115 @@ def api_esprit_exporter(req, db):
     return 201, {'cadeau': entree_boite(l)}
 
 
+# ================================================================ éclats d'esprit (monnaie qui ne sert qu'à améliorer les esprits)
+# Le solde de chaque joueur est gardé ICI, d'une partie à l'autre. Le jeu (l'hôte de la partie) compte ce que le joueur
+# ramasse ; le joueur l'annonce au serveur (total de la partie, renvoyé autant de fois qu'il veut : seul ce qui manque est
+# ajouté), avec un plafond par partie et par jour. Pour améliorer son esprit, le joueur paie ici AVANT de demander à l'hôte :
+# le serveur calcule lui-même le prix selon la rareté de cet esprit dans la collection du joueur.
+ORDRE_RARETES = ['commun', 'rare', 'epique', 'legendaire']
+PRIX_ECLATS = {'commun': (50, 120), 'rare': (80, 200), 'epique': (120, 300), 'legendaire': (200, 500)}  # (★★, ★★★)
+ECLATS_PAR_PARTIE, ECLATS_PAR_JOUR = 150, 600
+RE_DEMANDE = re.compile(r'[0-9a-f]{12,32}')
+
+
+def solde_eclats(db, jid):
+    l = db.execute('SELECT solde FROM eclats WHERE joueur_id=?', (jid,)).fetchone()
+    return l['solde'] if l else 0
+
+
+def gagnes_aujourdhui(db, jid, t):
+    return un(db, 'SELECT COALESCE(SUM(gagnes), 0) FROM eclats_parties WHERE joueur_id=? AND cree_le>?', jid, t - 86400)
+
+
+def infos_eclats(db, jid, t):
+    return {'solde': solde_eclats(db, jid), 'prix': {r: list(p) for r, p in PRIX_ECLATS.items()}, 'par_partie': ECLATS_PAR_PARTIE,
+            'par_jour': ECLATS_PAR_JOUR, 'aujourdhui': gagnes_aujourdhui(db, jid, t)}
+
+
+def api_eclats(req, db):
+    jid = api.joueur_obligatoire(req, req.json())
+    if not limite(db, 'eclats:' + jid, 300, 3600):
+        raise Erreur(429, 'Trop de demandes.')
+    return 200, infos_eclats(db, jid, maintenant())
+
+
+def api_eclats_gagner(req, db):
+    d = req.json()
+    jid = api.joueur_obligatoire(req, d)
+    pid = str(d.get('partie_id') or '')
+    if not RE_ID_PARTIE.fullmatch(pid):
+        raise Erreur(400, 'Identifiant de partie invalide.')
+    total = entier(d.get('total'), 0, 100000)
+    if not limite(db, 'eclatsg:' + jid, 240, 3600):
+        raise Erreur(429, 'Trop de demandes.')
+    if api.sanction_active(db, jid, ('cadeaux', 'suspension')):
+        raise Erreur(403, 'Ton compte ne peut pas recevoir de récompense pour le moment.')
+    db.execute('BEGIN IMMEDIATE')
+    try:
+        t = maintenant()
+        l = db.execute('SELECT gagnes FROM eclats_parties WHERE joueur_id=? AND partie_id=?', (jid, pid)).fetchone()
+        deja = l['gagnes'] if l else 0
+        voulu = min(total, ECLATS_PAR_PARTIE)
+        credit = max(0, min(voulu - deja, ECLATS_PAR_JOUR - gagnes_aujourdhui(db, jid, t)))
+        if credit:
+            db.execute("""INSERT INTO eclats_parties(joueur_id, partie_id, gagnes, cree_le, maj_le) VALUES (?,?,?,?,?)
+                ON CONFLICT(joueur_id, partie_id) DO UPDATE SET gagnes=gagnes+excluded.gagnes, maj_le=excluded.maj_le""", (jid, pid, credit, t, t))
+            db.execute("""INSERT INTO eclats(joueur_id, solde, gagnes, maj_le) VALUES (?,?,?,?)
+                ON CONFLICT(joueur_id) DO UPDATE SET solde=solde+excluded.solde, gagnes=gagnes+excluded.gagnes, maj_le=excluded.maj_le""", (jid, credit, credit, t))
+        db.execute('COMMIT')
+    except BaseException:
+        db.execute('ROLLBACK')
+        raise
+    api.joueur_vu(db, jid)
+    return 200, {'solde': solde_eclats(db, jid), 'credites': deja + credit, 'ajoutes': credit, 'plafond': deja + credit < min(total, 100000)}
+
+
+def api_eclats_depenser(req, db):
+    d = req.json()
+    jid = api.joueur_obligatoire(req, d)
+    pid = str(d.get('partie_id') or '')
+    if not RE_ID_PARTIE.fullmatch(pid):
+        raise Erreur(400, 'Identifiant de partie invalide.')
+    demande = str(d.get('demande') or '')
+    if not RE_DEMANDE.fullmatch(demande):
+        raise Erreur(400, 'Demande invalide.')
+    type_ = str(d.get('type') or '')
+    if type_ not in reglages_esprits(db):
+        raise Erreur(400, 'Esprit inconnu.')
+    niveau = entier(d.get('niveau'), 0, 9)
+    if niveau not in (2, 3):
+        raise Erreur(400, 'Niveau invalide.')
+    declaree = d.get('rarete') if d.get('rarete') in ORDRE_RARETES else 'commun'
+    if not limite(db, 'eclatsd:' + jid, 120, 3600):
+        raise Erreur(429, 'Trop de demandes.')
+    if api.sanction_active(db, jid, ('suspension',)):
+        raise Erreur(403, 'Ton compte est suspendu.')
+    db.execute('BEGIN IMMEDIATE')
+    try:
+        t = maintenant()
+        l = db.execute('SELECT prix, rarete FROM eclats_depenses WHERE joueur_id=? AND demande=?', (jid, demande)).fetchone()
+        if l:  # la même demande renvoyée (réseau coupé) : déjà payée, on ne repaie pas
+            db.execute('COMMIT')
+            return 200, {'ok': True, 'deja': True, 'prix': l['prix'], 'rarete': l['rarete'], 'solde': solde_eclats(db, jid)}
+        # la rareté la plus haute entre celle que le jeu annonce et celle que le serveur connaît (exports, cargaisons)
+        connues = [r['rarete'] for r in db.execute('SELECT DISTINCT rarete FROM esprits_obtenus WHERE joueur_id=? AND type=?', (jid, type_))]
+        rarete = max([declaree] + [r for r in connues if r in ORDRE_RARETES], key=ORDRE_RARETES.index)
+        prix = PRIX_ECLATS[rarete][niveau - 2]
+        solde = solde_eclats(db, jid)
+        if solde < prix:
+            db.execute('COMMIT')
+            return 200, {'ok': False, 'prix': prix, 'rarete': rarete, 'solde': solde}
+        db.execute('INSERT INTO eclats_depenses(joueur_id, demande, partie_id, type, niveau, rarete, prix, cree_le) VALUES (?,?,?,?,?,?,?,?)',
+                   (jid, demande, pid, type_, niveau, rarete, prix, t))
+        db.execute('UPDATE eclats SET solde=solde-?, depenses=depenses+?, maj_le=? WHERE joueur_id=?', (prix, prix, t, jid))
+        db.execute('COMMIT')
+    except BaseException:
+        db.execute('ROLLBACK')
+        raise
+    api.joueur_vu(db, jid)
+    return 200, {'ok': True, 'prix': prix, 'rarete': rarete, 'solde': solde - prix}
+
+
 # ================================================================ admin : mon compte, administrateurs, sessions
 def regles_mdp(mdp, ident):
     if not isinstance(mdp, str) or len(mdp) < 12:
@@ -1178,6 +1287,8 @@ def admin_joueur(req, db, code):
                     for l in db.execute("""SELECT c.id, c.titre, c.expediteur, c.origine, r.recu_le, r.ouvert_le, r.annule_le FROM cadeaux_recus r
                         JOIN cadeaux c ON c.id=r.cadeau_id WHERE r.joueur_id=? ORDER BY r.recu_le DESC LIMIT 40""", (jid,))],
         'esprits_obtenus': [dict(l) for l in db.execute('SELECT type, rarete, source, cree_le FROM esprits_obtenus WHERE joueur_id=? ORDER BY id DESC LIMIT 40', (jid,))],
+        'eclats': (lambda l: {'solde': l['solde'], 'gagnes': l['gagnes'], 'depenses': l['depenses']} if l else {'solde': 0, 'gagnes': 0, 'depenses': 0})(
+            db.execute('SELECT * FROM eclats WHERE joueur_id=?', (jid,)).fetchone()),
         'signalements_recus': signal('cible_id'), 'signalements_faits': signal('auteur_id'),
         'retours': un(db, 'SELECT COUNT(*) FROM retours WHERE joueur_id=?', jid), 'interventions': interventions,
     }
@@ -1921,6 +2032,9 @@ ROUTES = [
     ('POST', r'/api/compte/recuperer', api_compte_recuperer, True),
     ('POST', r'/api/cargaison/reclamer', api_cargaison_reclamer, True),
     ('POST', r'/api/esprit/exporter', api_esprit_exporter, True),
+    ('POST', r'/api/eclats', api_eclats, True),
+    ('POST', r'/api/eclats/gagner', api_eclats_gagner, True),
+    ('POST', r'/api/eclats/depenser', api_eclats_depenser, True),
     ('POST', r'/api/boite/liaison', api_liaison_repondre, True),
     ('POST', r'/api/staff/verifier', api_staff_verifier, True),
     ('GET', r'/api/admin/tableau', admin_tableau, False),

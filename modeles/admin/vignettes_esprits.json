@@ -1,5 +1,5 @@
 {
- "_aide": "Vignettes 256 x 256 (WebP, fond transparent) des 15 esprits : les 5 d'esprits_v003.glb puis les 10 d'esprits_plus_v001.glb.",
+ "_aide": "Vignettes 256 x 256 (WebP, fond transparent) des 65 esprits : les 5 d'esprits_v003.glb, les 10 d'esprits_plus_v001.glb, puis les 50 d'esprits_50_lot1 à lot5_v001.glb (dans l'ordre de la commande).",
  "esprits": [
   {
    "id": "soin",
@@ -120,6 +120,406 @@
    "couleur": "#fff27a",
    "fichier": "esprits_plus_v001.glb",
    "vignette": "vignettes/esprit/etoile.webp"
+  },
+  {
+   "id": "lave",
+   "nom": "Magmou",
+   "role": "Lave",
+   "couleur": "#ff5a2a",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/lave.webp"
+  },
+  {
+   "id": "cendre",
+   "nom": "Suie",
+   "role": "Fumée",
+   "couleur": "#9aa3ad",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/cendre.webp"
+  },
+  {
+   "id": "comete",
+   "nom": "Astro",
+   "role": "Météore",
+   "couleur": "#ffb14d",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/comete.webp"
+  },
+  {
+   "id": "dragon",
+   "nom": "Dracot",
+   "role": "Dragon",
+   "couleur": "#e2463f",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/dragon.webp"
+  },
+  {
+   "id": "volcan",
+   "nom": "Krakou",
+   "role": "Éruption",
+   "couleur": "#ff8a3d",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/volcan.webp"
+  },
+  {
+   "id": "cristal",
+   "nom": "Cristo",
+   "role": "Cristal",
+   "couleur": "#7ae0ff",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/cristal.webp"
+  },
+  {
+   "id": "neige",
+   "nom": "Boulou",
+   "role": "Neige",
+   "couleur": "#cfeeff",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/neige.webp"
+  },
+  {
+   "id": "banquise",
+   "nom": "Pingou",
+   "role": "Glisse",
+   "couleur": "#5aa8ff",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/banquise.webp"
+  },
+  {
+   "id": "aurore",
+   "nom": "Boréa",
+   "role": "Aurore",
+   "couleur": "#8affc8",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/aurore.webp"
+  },
+  {
+   "id": "orage",
+   "nom": "Grondin",
+   "role": "Orage",
+   "couleur": "#8f9bff",
+   "fichier": "esprits_50_lot1_v001.glb",
+   "vignette": "vignettes/esprit/orage.webp"
+  },
+  {
+   "id": "pile",
+   "nom": "Voltix",
+   "role": "Énergie",
+   "couleur": "#b6ff3d",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/pile.webp"
+  },
+  {
+   "id": "aimant",
+   "nom": "Magno",
+   "role": "Aimant",
+   "couleur": "#ff4d6d",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/aimant.webp"
+  },
+  {
+   "id": "plasma",
+   "nom": "Néon",
+   "role": "Plasma",
+   "couleur": "#c44dff",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/plasma.webp"
+  },
+  {
+   "id": "nimbus",
+   "nom": "Nimbo",
+   "role": "Nuage",
+   "couleur": "#dfe9f5",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/nimbus.webp"
+  },
+  {
+   "id": "tornade",
+   "nom": "Tourbi",
+   "role": "Tornade",
+   "couleur": "#7fd6c9",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/tornade.webp"
+  },
+  {
+   "id": "plume",
+   "nom": "Piaf",
+   "role": "Plume",
+   "couleur": "#ffe9c2",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/plume.webp"
+  },
+  {
+   "id": "echo",
+   "nom": "Résono",
+   "role": "Écho",
+   "couleur": "#ffd24d",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/echo.webp"
+  },
+  {
+   "id": "vague",
+   "nom": "Houlou",
+   "role": "Vague",
+   "couleur": "#2f9bff",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/vague.webp"
+  },
+  {
+   "id": "pluie",
+   "nom": "Ondine",
+   "role": "Pluie",
+   "couleur": "#6fc3ff",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/pluie.webp"
+  },
+  {
+   "id": "corail",
+   "nom": "Récifa",
+   "role": "Corail",
+   "couleur": "#ff8fa3",
+   "fichier": "esprits_50_lot2_v001.glb",
+   "vignette": "vignettes/esprit/corail.webp"
+  },
+  {
+   "id": "poulpe",
+   "nom": "Tentac",
+   "role": "Encre",
+   "couleur": "#7b5cff",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/poulpe.webp"
+  },
+  {
+   "id": "fleur",
+   "nom": "Pétalia",
+   "role": "Fleur",
+   "couleur": "#ff9ed8",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/fleur.webp"
+  },
+  {
+   "id": "spore",
+   "nom": "Sporo",
+   "role": "Poison",
+   "couleur": "#9be04a",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/spore.webp"
+  },
+  {
+   "id": "cactus",
+   "nom": "Piko",
+   "role": "Épines",
+   "couleur": "#5fcf6b",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/cactus.webp"
+  },
+  {
+   "id": "chene",
+   "nom": "Chênou",
+   "role": "Forêt",
+   "couleur": "#7bbf4a",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/chene.webp"
+  },
+  {
+   "id": "abeille",
+   "nom": "Bzzou",
+   "role": "Essaim",
+   "couleur": "#ffcf33",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/abeille.webp"
+  },
+  {
+   "id": "liane",
+   "nom": "Liana",
+   "role": "Liane",
+   "couleur": "#52c98a",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/liane.webp"
+  },
+  {
+   "id": "ours",
+   "nom": "Grizou",
+   "role": "Force",
+   "couleur": "#b9824f",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/ours.webp"
+  },
+  {
+   "id": "loup",
+   "nom": "Crocs",
+   "role": "Chasse",
+   "couleur": "#aab4c8",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/loup.webp"
+  },
+  {
+   "id": "hibou",
+   "nom": "Houhou",
+   "role": "Nuit",
+   "couleur": "#b08cff",
+   "fichier": "esprits_50_lot3_v001.glb",
+   "vignette": "vignettes/esprit/hibou.webp"
+  },
+  {
+   "id": "tortue",
+   "nom": "Carapou",
+   "role": "Carapace",
+   "couleur": "#4fbf8f",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/tortue.webp"
+  },
+  {
+   "id": "vampire",
+   "nom": "Morsi",
+   "role": "Vampire",
+   "couleur": "#d1456f",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/vampire.webp"
+  },
+  {
+   "id": "fantome",
+   "nom": "Bouh",
+   "role": "Fantôme",
+   "couleur": "#e8e6ff",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/fantome.webp"
+  },
+  {
+   "id": "miroir",
+   "nom": "Reflex",
+   "role": "Miroir",
+   "couleur": "#9fe8ff",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/miroir.webp"
+  },
+  {
+   "id": "sablier",
+   "nom": "Sablo",
+   "role": "Sablier",
+   "couleur": "#e8c48a",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/sablier.webp"
+  },
+  {
+   "id": "sable",
+   "nom": "Dunou",
+   "role": "Désert",
+   "couleur": "#e0a95a",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/sable.webp"
+  },
+  {
+   "id": "bombe",
+   "nom": "Boumi",
+   "role": "Explosifs",
+   "couleur": "#ff6b4a",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/bombe.webp"
+  },
+  {
+   "id": "mine",
+   "nom": "Clac",
+   "role": "Piège",
+   "couleur": "#c8ced8",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/mine.webp"
+  },
+  {
+   "id": "reserve",
+   "nom": "Cartou",
+   "role": "Réserve",
+   "couleur": "#c9a36b",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/reserve.webp"
+  },
+  {
+   "id": "docteur",
+   "nom": "Bobo",
+   "role": "Secours",
+   "couleur": "#ff7a8a",
+   "fichier": "esprits_50_lot4_v001.glb",
+   "vignette": "vignettes/esprit/docteur.webp"
+  },
+  {
+   "id": "forge",
+   "nom": "Enclumo",
+   "role": "Forge",
+   "couleur": "#ff9d3d",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/forge.webp"
+  },
+  {
+   "id": "egide",
+   "nom": "Égide",
+   "role": "Rempart",
+   "couleur": "#5ad1a4",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/egide.webp"
+  },
+  {
+   "id": "rage",
+   "nom": "Furio",
+   "role": "Rage",
+   "couleur": "#ff3d3d",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/rage.webp"
+  },
+  {
+   "id": "ninja",
+   "nom": "Shino",
+   "role": "Ninja",
+   "couleur": "#6b7280",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/ninja.webp"
+  },
+  {
+   "id": "robot",
+   "nom": "Bipbop",
+   "role": "Robot",
+   "couleur": "#8fd3e8",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/robot.webp"
+  },
+  {
+   "id": "ange",
+   "nom": "Séraph",
+   "role": "Ange",
+   "couleur": "#fff3b0",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/ange.webp"
+  },
+  {
+   "id": "perroquet",
+   "nom": "Coco",
+   "role": "Pirate",
+   "couleur": "#3ddc84",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/perroquet.webp"
+  },
+  {
+   "id": "soleil",
+   "nom": "Solaro",
+   "role": "Soleil",
+   "couleur": "#ffd84d",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/soleil.webp"
+  },
+  {
+   "id": "galaxie",
+   "nom": "Nébula",
+   "role": "Cosmos",
+   "couleur": "#7a6bff",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/galaxie.webp"
+  },
+  {
+   "id": "prisme",
+   "nom": "Prisma",
+   "role": "Lumière",
+   "couleur": "#ff8af0",
+   "fichier": "esprits_50_lot5_v001.glb",
+   "vignette": "vignettes/esprit/prisme.webp"
   }
  ]
 }

@@ -190,6 +190,11 @@ button.petit.rouge { background: rgba(217, 69, 69, .85); }
 #banniere.vue { opacity: 1; transform: translateX(-50%) scale(1); }
 #banniere small { display: block; font-family: 'Nunito'; font-size: 14px; text-align: center; opacity: .9; }
 #invite { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); background: rgba(8, 14, 32, .65); padding: 9px 16px; border-radius: 14px; font-size: 17px; display: none; border: 2px solid rgba(255, 255, 255, .15); }
+/* améliorer son esprit sur un autel (sous l'invitation E) */
+#invite2 { position: absolute; left: 50%; top: calc(62% + 50px); transform: translateX(-50%); background: rgba(40, 28, 0, .7); padding: 8px 16px; border-radius: 14px; font-size: 16px; display: none; border: 2px solid rgba(255, 210, 63, .6); white-space: nowrap; }
+#invite2 .etoiles { color: #ffd23f; }
+#invite2 .prix { background: rgba(255, 255, 255, .12); border-radius: 8px; padding: 1px 7px; margin-left: 4px; }
+#invite2.pas-assez .prix { color: #ff8a8a; text-decoration: line-through; }
 #progression { position: absolute; left: 50%; top: 68%; transform: translateX(-50%); width: 240px; height: 16px; background: rgba(0, 0, 0, .55); border-radius: 10px; overflow: hidden; display: none; border: 2px solid rgba(255, 255, 255, .2); }
 #progression div { height: 100%; width: 0; background: linear-gradient(90deg, #4fd1ff, #3ccf5e); }
 #progression span { position: absolute; inset: 0; font-size: 11px; text-align: center; line-height: 13px; }
@@ -216,6 +221,9 @@ button.petit.rouge { background: rgba(217, 69, 69, .85); }
 #munitions { font-family: 'Lilita One', system-ui; font-weight: 400; font-size: 44px; }
 #munitions small { font-size: 21px; opacity: .8; }
 #mats { font-size: 22px; margin-top: 2px; }
+#eclats { font-size: 19px; margin-top: 1px; color: #bfefff; }
+#eclats.gagne { animation: eclats-gagne .6s ease-out; }
+@keyframes eclats-gagne { 0% { transform: scale(1.45); color: #fff; text-shadow: 0 0 12px #8fe3ff; } 100% { transform: scale(1); } }
 #aideConstr { margin-top: 8px; font-size: 13px; display: flex; gap: 6px; justify-content: flex-end; }
 #aideConstr span { background: rgba(8, 14, 32, .55); padding: 5px 9px; border-radius: 10px; border: 2px solid transparent; }
 #aideConstr span.actif { border-color: #4fb3ff; background: rgba(79, 179, 255, .4); }
@@ -436,11 +444,14 @@ body.tactile #droite { right: 10px; bottom: auto; top: 160px; }
 body.tactile #munitions { font-size: 26px; }
 body.tactile #munitions small { font-size: 14px; }
 body.tactile #mats { font-size: 15px; }
+body.tactile #eclats { font-size: 13px; }
 body.tactile #aideConstr { display: none; }
 body.tactile #annonce { font-size: 24px; top: 20%; }
 body.tactile #banniere { font-size: 18px; bottom: 96px; padding: 6px 40px; }
 body.tactile #invite { pointer-events: auto; top: 58%; font-size: 15px; padding: 13px 22px; min-width: 190px; text-align: center; border-color: rgba(255, 210, 63, .75); background: rgba(8, 14, 32, .86); animation: invite-pulse 1.3s ease-in-out infinite; cursor: pointer; }
 body.tactile #invite:active { background: rgba(255, 210, 63, .35); }
+body.tactile #invite2 { pointer-events: auto; top: calc(58% + 62px); font-size: 14px; padding: 11px 18px; z-index: 4; cursor: pointer; }
+body.tactile #invite2:active { background: rgba(255, 210, 63, .4); }
 @keyframes invite-pulse { 50% { box-shadow: 0 0 0 6px rgba(255, 210, 63, .18); } }
 /* Téléphone : ce qu'on touche du doigt passe AU-DESSUS des zones invisibles du joystick (gauche) et de la caméra (droite),
    sinon le doigt bouge la caméra au lieu de ramasser ou de changer d'objet */
@@ -736,14 +747,15 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 #pageEsprits { align-items: stretch; }
 .esprits-liste { flex: 1; overflow-y: auto; padding: 4px 10px 30px 4px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .esprits-liste h2 { margin: 0; }
-.grille-esprits-jeu { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
-.carte-esprit-jeu { --couleur-esprit: #a8ff7a; --couleur-rarete: rgba(255, 255, 255, .15); display: grid; justify-items: center; gap: 3px; padding: 14px 10px; border-radius: 18px;
+.grille-esprits-jeu { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; } /* 65 esprits : des cartes plus serrées */
+.carte-esprit-jeu { --couleur-esprit: #a8ff7a; --couleur-rarete: rgba(255, 255, 255, .15); display: grid; justify-items: center; gap: 3px; padding: 10px 8px; border-radius: 16px;
   background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--couleur-esprit) 28%, transparent), rgba(11, 21, 48, .85) 70%); border: 2px solid var(--couleur-rarete); cursor: pointer; transition: transform .15s; }
 .carte-esprit-jeu:hover { transform: translateY(-3px); }
 .carte-esprit-jeu.choisie { box-shadow: 0 0 0 3px var(--couleur-esprit); }
 .carte-esprit-jeu.inconnu { filter: grayscale(.85) brightness(.7); }
 .carte-esprit-jeu .ico { font-size: 40px; filter: drop-shadow(0 0 10px var(--couleur-esprit)); }
-.carte-esprit-jeu .ico img { display: block; width: 72px; height: 72px; object-fit: contain; }
+.carte-esprit-jeu .ico img { display: block; width: 60px; height: 60px; object-fit: contain; }
+.carte-esprit-jeu .ico { min-height: 60px; display: grid; place-items: center; }
 .carte-esprit-jeu.inconnu .ico img { filter: grayscale(1) brightness(.6); opacity: .7; }
 .carte-esprit-jeu small { color: rgba(255, 255, 255, .7); }
 .carte-esprit-jeu .raretes { display: flex; gap: 5px; margin-top: 4px; }
@@ -787,7 +799,7 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
 @media (max-width: 820px), (max-height: 520px) {
   #pageEsprits { flex-direction: column; }
   .esprits-liste { overflow: visible; padding: 0; flex: none; }
-  .grille-esprits-jeu { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .grille-esprits-jeu { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
   .carte-esprit-jeu .ico { font-size: 30px; }
 }
 .fiche-infos .bulle-esprit, .bulle-esprit { color: #1b1033 !important; }

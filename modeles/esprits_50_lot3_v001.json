@@ -1,0 +1,436 @@
+{
+ "_aide": "10 entrées prêtes pour le tableau « esprits » d'integration.json (actif:false), même format que les 5 d'esprits_v003.glb. Les clés qui commencent par « _ » sont des notes. _effets_caches = objets à l'échelle 0,001 au repos, montrés par « activer » et « obtention ».",
+ "esprits": [
+  {
+   "id": "poulpe",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_poulpe",
+   "nom": "Tentac",
+   "couleur": "#7b5cff",
+   "animations": {
+    "flotter": "poulpe_flotter",
+    "activer": "poulpe_activer",
+    "apparaitre": "poulpe_apparaitre",
+    "attente2": "poulpe_attente2",
+    "deplacer": "poulpe_deplacer",
+    "content": "poulpe_content",
+    "surpris": "poulpe_surpris",
+    "obtention": "poulpe_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.32,
+    "d": 0.47
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3828,
+   "_role": "Encre",
+   "_description": "bébé poulpe violet : grosse tête à anneaux lumineux, 4 tentacules à ventouses qui ondulent, gouttes d'encre en orbite ; activer : il se propulse vers le haut, tentacules écartés",
+   "_morceaux": [
+    "poulpe_tentacule_1",
+    "poulpe_tentacule_2",
+    "poulpe_tentacule_3",
+    "poulpe_tentacule_4",
+    "poulpe_encre"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_poulpe"
+  },
+  {
+   "id": "fleur",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_fleur",
+   "nom": "Pétalia",
+   "couleur": "#ff9ed8",
+   "animations": {
+    "flotter": "fleur_flotter",
+    "activer": "fleur_activer",
+    "apparaitre": "fleur_apparaitre",
+    "attente2": "fleur_attente2",
+    "deplacer": "fleur_deplacer",
+    "content": "fleur_content",
+    "surpris": "fleur_surpris",
+    "obtention": "fleur_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.38,
+    "h": 0.42,
+    "d": 0.36
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3652,
+   "_role": "Fleur",
+   "_description": "fleur rose : cœur jaune avec le visage, 6 gros pétales et 6 petits plus clairs, tige à deux feuilles qui se balance, grains de pollen ; activer : les pétales font un tour",
+   "_morceaux": [
+    "fleur_petales",
+    "fleur_tige",
+    "fleur_pollen"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_fleur"
+  },
+  {
+   "id": "spore",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_spore",
+   "nom": "Sporo",
+   "couleur": "#9be04a",
+   "animations": {
+    "flotter": "spore_flotter",
+    "activer": "spore_activer",
+    "apparaitre": "spore_apparaitre",
+    "attente2": "spore_attente2",
+    "deplacer": "spore_deplacer",
+    "content": "spore_content",
+    "surpris": "spore_surpris",
+    "obtention": "spore_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.36,
+    "h": 0.32,
+    "d": 0.36
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3852,
+   "_role": "Poison",
+   "_description": "boule verte couverte de pustules à bout lumineux, 3 cheminées qui crachent des bouffées de spores, spores en orbite ; activer : elle gonfle en tremblant",
+   "_morceaux": [
+    "spore_bouffees",
+    "spore_spores"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_spore"
+  },
+  {
+   "id": "cactus",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_cactus",
+   "nom": "Piko",
+   "couleur": "#5fcf6b",
+   "animations": {
+    "flotter": "cactus_flotter",
+    "activer": "cactus_activer",
+    "apparaitre": "cactus_apparaitre",
+    "attente2": "cactus_attente2",
+    "deplacer": "cactus_deplacer",
+    "content": "cactus_content",
+    "surpris": "cactus_surpris",
+    "obtention": "cactus_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.38,
+    "h": 0.32,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3848,
+   "_role": "Épines",
+   "_description": "cactus rond à 10 côtes garnies d'épines claires, deux petits bras, fleur rose sur la tête, épines en orbite ; activer : il se hérisse (il gonfle en tremblant, la fleur tourne)",
+   "_morceaux": [
+    "cactus_fleur",
+    "cactus_epines"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_cactus"
+  },
+  {
+   "id": "chene",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_chene",
+   "nom": "Chênou",
+   "couleur": "#7bbf4a",
+   "animations": {
+    "flotter": "chene_flotter",
+    "activer": "chene_activer",
+    "apparaitre": "chene_apparaitre",
+    "attente2": "chene_attente2",
+    "deplacer": "chene_deplacer",
+    "content": "chene_content",
+    "surpris": "chene_surpris",
+    "obtention": "chene_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.43,
+    "h": 0.41,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3004,
+   "_role": "Forêt",
+   "_description": "gland vert à pointe, chapeau brun à écailles, queue avec une feuille de chêne qui remue, feuilles de chêne lumineuses en orbite ; activer : il saute en tournant",
+   "_morceaux": [
+    "chene_feuille",
+    "chene_feuilles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_chene"
+  },
+  {
+   "id": "abeille",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_abeille",
+   "nom": "Bzzou",
+   "couleur": "#ffcf33",
+   "animations": {
+    "flotter": "abeille_flotter",
+    "activer": "abeille_activer",
+    "apparaitre": "abeille_apparaitre",
+    "attente2": "abeille_attente2",
+    "deplacer": "abeille_deplacer",
+    "content": "abeille_content",
+    "surpris": "abeille_surpris",
+    "obtention": "abeille_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.31,
+    "d": 0.42
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2940,
+   "_role": "Essaim",
+   "_description": "abeille ronde à 3 raies sombres, antennes, dard, deux ailes lumineuses qui battent vite, trois mini abeilles en orbite ; activer : elle zigzague en bourdonnant",
+   "_morceaux": [
+    "abeille_aile_g",
+    "abeille_aile_d",
+    "abeille_essaim"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_abeille"
+  },
+  {
+   "id": "liane",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_liane",
+   "nom": "Liana",
+   "couleur": "#52c98a",
+   "animations": {
+    "flotter": "liane_flotter",
+    "activer": "liane_activer",
+    "apparaitre": "liane_apparaitre",
+    "attente2": "liane_attente2",
+    "deplacer": "liane_deplacer",
+    "content": "liane_content",
+    "surpris": "liane_surpris",
+    "obtention": "liane_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.43,
+    "h": 0.42,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3740,
+   "_role": "Liane",
+   "_description": "pelote de liane : boule entourée de 7 tours de tige de deux verts, deux feuilles sur la tête, vrille en tire-bouchon à bourgeon lumineux, petites feuilles en orbite",
+   "_morceaux": [
+    "liane_feuilles",
+    "liane_vrille",
+    "liane_pousses"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_liane"
+  },
+  {
+   "id": "ours",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_ours",
+   "nom": "Grizou",
+   "couleur": "#b9824f",
+   "animations": {
+    "flotter": "ours_flotter",
+    "activer": "ours_activer",
+    "apparaitre": "ours_apparaitre",
+    "attente2": "ours_attente2",
+    "deplacer": "ours_deplacer",
+    "content": "ours_content",
+    "surpris": "ours_surpris",
+    "obtention": "ours_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.48,
+    "h": 0.28,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3500,
+   "_role": "Force",
+   "_description": "tête d'ourson brun : museau clair, truffe, oreilles rondes qui remuent, deux pattes à coussinets, étoiles en orbite ; activer : deux coups de patte, gauche puis droite",
+   "_morceaux": [
+    "ours_oreille_g",
+    "ours_oreille_d",
+    "ours_patte_g",
+    "ours_patte_d",
+    "ours_etoiles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_ours"
+  },
+  {
+   "id": "loup",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_loup",
+   "nom": "Crocs",
+   "couleur": "#aab4c8",
+   "animations": {
+    "flotter": "loup_flotter",
+    "activer": "loup_activer",
+    "apparaitre": "loup_apparaitre",
+    "attente2": "loup_attente2",
+    "deplacer": "loup_deplacer",
+    "content": "loup_content",
+    "surpris": "loup_surpris",
+    "obtention": "loup_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.31,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2876,
+   "_role": "Chasse",
+   "_description": "tête de louveteau gris : museau clair, truffe, deux petits crocs, sourcils décidés, oreilles pointues, touffes de poils aux joues, empreintes de patte lumineuses ; activer : il bondit en avant",
+   "_morceaux": [
+    "loup_oreille_g",
+    "loup_oreille_d",
+    "loup_empreintes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_loup"
+  },
+  {
+   "id": "hibou",
+   "actif": false,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_hibou",
+   "nom": "Houhou",
+   "couleur": "#b08cff",
+   "animations": {
+    "flotter": "hibou_flotter",
+    "activer": "hibou_activer",
+    "apparaitre": "hibou_apparaitre",
+    "attente2": "hibou_attente2",
+    "deplacer": "hibou_deplacer",
+    "content": "hibou_content",
+    "surpris": "hibou_surpris",
+    "obtention": "hibou_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.4,
+    "h": 0.31,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3392,
+   "_role": "Nuit",
+   "_description": "petit hibou violet : deux grands yeux dorés dans des disques clairs, bec orange, aigrettes, ventre à chevrons, ailes qui battent, étoiles en orbite ; activer : il fait un tour complet",
+   "_morceaux": [
+    "hibou_aile_g",
+    "hibou_aile_d",
+    "hibou_etoiles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_hibou"
+  }
+ ]
+}

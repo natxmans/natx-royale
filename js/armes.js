@@ -25,6 +25,8 @@ export const OBJETS = {
   minigourde:{ nom: 'Mini-gourde', type: 'conso', duree: 1, bouclier: 25, plafond: 50, max: 6, icone: '🧪' },
   munitions:{ nom: 'Munitions', type: 'munitions', icone: '📦' },
   materiaux:{ nom: 'Matériaux', type: 'materiaux', icone: '🪵' },
+  // monnaie de la partie qui sert SEULEMENT à améliorer son esprit sur un autel (comptée par l'hôte)
+  eclats:   { nom: 'Éclats d\'esprit', type: 'eclats', icone: '💠' },
 };
 
 // Armes que les bots savent utiliser (pas d'explosifs)
@@ -213,6 +215,15 @@ export function modeleObjet(objet, rarete = 0) {
       g.add(cube(0.6, 0.18, 0.18, '#c8955a', 0, 0, -0.1));
       g.add(cube(0.6, 0.18, 0.18, '#b98448', 0, 0.18, 0.05));
       break;
+    case 'eclats': { // éclats d'esprit : trois cristaux qui brillent
+      const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#8fe3ff').multiplyScalar(1.8), toneMapped: false });
+      const mat2 = new THREE.MeshBasicMaterial({ color: new THREE.Color('#c77dff').multiplyScalar(1.8), toneMapped: false });
+      for (const [x, y, z, s, m] of [[0, 0.05, 0, 0.2, mat], [0.17, -0.04, 0.06, 0.12, mat2], [-0.15, -0.05, -0.05, 0.11, mat2]]) {
+        const c = new THREE.Mesh(new THREE.OctahedronGeometry(s), m);
+        c.position.set(x, y, z); c.scale.y = 1.6; g.add(c);
+      }
+      break;
+    }
     case 'roquettes': {
       const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.3, 12), new THREE.MeshLambertMaterial({ color: '#4d5a3a' }));
       tube.rotation.x = Math.PI / 2; tube.position.set(0, 0.1, -0.35); g.add(tube);

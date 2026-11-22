@@ -4,15 +4,16 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { Monde, DEMI, rayonBoite } from './monde.js';
+import { Monde, DEMI, rayonBoite, CASE } from './monde.js';
 import { OBJETS, RARETES, modeleObjet, modelesPrets, remplacerModeleArme } from './armes.js';
 import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPret, coiffureParDefaut, cheveuxParDefaut, CHAUVE } from './personnage.js';
 import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele, clipAnimation, prechargerCosmetiques, chargerCosmetiques, cosmetiquePret, ficheEmote, ficheTrainee, QUALITE_TENUES } from './modeles.js';
-import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, exporterEsprit, signalerJoueur, URL_API } from './retours.js';
+import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, exporterEsprit, signalerJoueur, URL_API, soldeEclats, gagnerEclats, depenserEclats } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
 import { initCadeaux, bonusActif, texteMultiplicateur, synchroniserProfil, etatBoite, verifierBoite, evenementEnCours } from './cadeaux.js';
 import { initCompte } from './compte.js';
-import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, EXPORT, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, FEU, GLACE, NATURE, VENT, TEMPS, EAU, CHANCE, ETOILE, OMBRE, replique, RARETES_ESPRIT, meilleuresRaretes } from './esprits.js';
+import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, EXPORT, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, FEU, GLACE, NATURE, VENT, TEMPS, EAU, CHANCE, ETOILE, OMBRE, replique, RARETES_ESPRIT, meilleuresRaretes, don, pouvoirDe, sonEsprit, NIVEAUX, ECLATS, PRIX_ECLATS, prixAmelioration, niveauDe, forceEsprit, rechargeEsprit, plusFort, pouvoirAuNiveau } from './esprits.js';
+const TAILLE_NIVEAU = [1, 1, 1.14, 1.28]; // un esprit amélioré est un peu plus gros
 import { Reseau } from './reseau.js';
 import { Hote } from './hote.js';
 import { etatZone, posDirigeable, cibleConstruction, COUT_CONSTR, posRavito, simulerGrenade, MODES, modeValide, DEFIS_ENTRAINEMENT, posCargaison, debutCargaison, CARGO } from './partage.js';
@@ -584,7 +585,7 @@ function ajouterSanctuaire(s) {
   const g = s.tombe ? creerEspritTombe() : creerSanctuaire();
   g.position.set(s.x, s.y, s.z);
   scene.add(g);
-  const sa = { id: s.id, x: s.x, y: s.y, z: s.z, type: s.type, dispo: false, mesh: g, esprit: null, tombe: !!s.tombe };
+  const sa = { id: s.id, x: s.x, y: s.y, z: s.z, type: s.type, dispo: false, mesh: g, esprit: null, tombe: !!s.tombe, niv: Math.max(1, Math.min(NIVEAUX.max, s.niv | 0 || 1)) };
   etat.sanctuaires.set(s.id, sa);
   majSanctuaire(sa, s.type, s.dispo !== false);
 }
@@ -594,13 +595,14 @@ function majSanctuaire(sa, type, dispo) {
   if (sa.esprit) { sa.mesh.remove(sa.esprit); sa.esprit = null; }
   if (dispo) { sa.esprit = creerEsprit(type, 1.5); sa.esprit.position.y = sa.mesh.userData.hauteur; sa.mesh.add(sa.esprit); jouerEsprit(sa.esprit, 'apparaitre'); }
 }
-function donnerEsprit(id, type, rarete = null) {
+function donnerEsprit(id, type, rarete = null, niv = 1) {
   retirerEsprit(id);
-  const mesh = creerEsprit(type, 0.9, rarete);
+  niv = Math.max(1, Math.min(NIVEAUX.max, niv | 0 || 1));
+  const mesh = creerEsprit(type, 0.9 * TAILLE_NIVEAU[niv], rarete);
   scene.add(mesh);
   // esprits v003 : arrivée en spirale + éclat de lumière (2,5 s) ; sinon l'ancienne animation
   if (!jouerEsprit(mesh, 'obtention') && !jouerEsprit(mesh, 'content')) jouerEsprit(mesh, 'apparaitre');
-  etat.orbes.set(id, { type, mesh, a: Math.random() * 6, place: false });
+  etat.orbes.set(id, { type, mesh, a: Math.random() * 6, place: false, niv });
   eteindreCoeur(id);
 }
 function retirerEsprit(id) {
@@ -646,6 +648,10 @@ function majEsprits(dt) {
       const q = o.mesh.position;
       particules.ajouter({ x: q.x, y: q.y, z: q.z, vy: 0.4, couleur: ESPRITS[o.type].couleur, forme: 2, taille: 0.18, tailleFin: 0.02, vie: 0.6, additif: true });
     }
+    if (o.niv > 1 && Math.random() < dt * 3 * (o.niv - 1) && distCam(p.x, p.y, p.z) < 40) { // amélioré : des étincelles dorées
+      const q = o.mesh.position, a = Math.random() * 6.28;
+      particules.ajouter({ x: q.x + Math.cos(a) * 0.35, y: q.y + 0.1, z: q.z + Math.sin(a) * 0.35, vy: 0.7, couleur: Math.random() < 0.5 ? '#ffd23f' : '#fff3b0', forme: 2, taille: 0.16, tailleFin: 0.02, vie: 0.7, additif: true });
+    }
   }
   majPouvoirs(dt);
   majVision();
@@ -662,9 +668,11 @@ const texVision = (() => {
 })();
 function majVision() {
   const moi = etat.moi;
-  const actif = moi && moi.esprit && moi.esprit.type === 'vision' && etat.temps < (etat.visionJusqua || 0) && moi.ph !== 'mort';
+  const pv = moi && moi.esprit ? pouvoirDe(moi.esprit.type) : null; // Houhou (hibou) a aussi un pouvoir de vision
+  const actif = moi && moi.esprit && (moi.esprit.type === 'vision' || (pv && pv.t === 'vision')) && etat.temps < (etat.visionJusqua || 0) && moi.ph !== 'mort';
+  const rayonVision = etat.visionRayon || VISION.pouvoir;
   for (const a of etat.autres.values()) {
-    const voir = actif && a.vivant && a.cible && a.modele.visible && !coequipier(a.id) && etat.orbes.get(a.id)?.type !== 'ombre' && Math.hypot(a.x - moi.x, a.z - moi.z) < VISION.pouvoir;
+    const voir = actif && a.vivant && a.cible && a.modele.visible && !coequipier(a.id) && etat.orbes.get(a.id)?.type !== 'ombre' && Math.hypot(a.x - moi.x, a.z - moi.z) < rayonVision;
     if (voir && !a.repereVision) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texVision, depthTest: false, transparent: true, fog: false }));
       s.position.y = 3.4; s.scale.set(0.9, 0.9, 1); s.renderOrder = 13;
@@ -677,7 +685,7 @@ let signatureEsprit = '';
 function majHudEsprit() {
   const moi = etat.moi, el = $('#espritHud');
   const e = moi && moi.ph !== 'mort' ? moi.esprit : null;
-  const sig = e ? e.type : '';
+  const sig = e ? e.type + niveauDe(e) : '';
   if (sig !== signatureEsprit) {
     signatureEsprit = sig;
     el.classList.toggle('cache', !e);
@@ -685,7 +693,7 @@ function majHudEsprit() {
       const d = ESPRITS[e.type];
       el.style.setProperty('--couleur-esprit', d.couleur);
       el.querySelector('.esprit-ico').textContent = d.icone;
-      el.querySelector('b').textContent = d.nom + ' (' + d.role + ') · ' + d.pouvoir;
+      el.querySelector('b').textContent = d.nom + ' ' + NIVEAUX.etoiles[niveauDe(e)] + ' (' + d.role + ') · ' + d.pouvoir;
       el.querySelector('small').textContent = d.passif;
       $('#tPouvoir').firstChild.textContent = d.icone;
     }
@@ -693,13 +701,13 @@ function majHudEsprit() {
   }
   if (!e) return;
   const d = ESPRITS[e.type];
-  const k = borner(1 - (e.pret - etat.temps) / d.recharge, 0, 1);
+  const k = borner(1 - (e.pret - etat.temps) / rechargeEsprit(e), 0, 1);
   el.querySelector('.esprit-recharge i').style.width = Math.round(k * 100) + '%';
   el.classList.toggle('pret', k >= 1);
   if (tactile) { const b = $('#tPouvoir'); b.style.setProperty('--recharge', k); b.classList.toggle('pret', k >= 1); }
 }
 // Briquet (bâtisseur) : construire coûte moins cher
-const coutConstr = () => (etat.moi && etat.moi.esprit && etat.moi.esprit.type === 'batisseur' ? COUT_BATISSEUR : COUT_CONSTR);
+const coutConstr = () => (etat.moi && etat.moi.esprit ? (etat.moi.esprit.type === 'batisseur' ? Math.max(2, Math.round(plusFort(COUT_CONSTR, COUT_BATISSEUR, forceEsprit(etat.moi.esprit)))) : don(etat.moi.esprit, 'construit', COUT_CONSTR)) : COUT_CONSTR);
 function utiliserPouvoir() {
   const moi = etat.moi;
   if (!moi || !moi.esprit || moi.ph === 'mort' || moi.ph === 'dirigeable') return;
@@ -736,7 +744,28 @@ function utiliserPouvoir() {
     moi.dash = { fin: etat.temps + ETOILE.duree, fx: -Math.sin(moi.ry), fz: -Math.cos(moi.ry) };
     moi.sansChute = true; moi.accroupi = false; moi.emote = null;
   }
-  moi.esprit.pret = etat.temps + d.recharge;
+  // Les 50 esprits « à réglages » : mes propres déplacements se font tout de suite ici, l'hôte fait le reste
+  const A = pouvoirDe(type);
+  if (A && ['bond', 'dash', 'teleport', 'echange'].includes(A.t)) {
+    if (moi.ph !== 'sol') return;
+    const fx = -Math.sin(moi.ry), fz = -Math.cos(moi.ry);
+    if (A.t === 'bond') { moi.vy = A.haut; moi.vx = fx * A.avant; moi.vz = fz * A.avant; moi.auSol = false; }
+    else if (A.t === 'dash') moi.dash = { fin: etat.temps + A.duree, fx, fz, v: A.distance / A.duree };
+    else if (A.t === 'teleport') {
+      const p = pointVise(A.portee);
+      moi.x = p.x; moi.y = p.y + 0.05; moi.z = p.z; moi.vx = moi.vy = moi.vz = 0; moi.historique = []; moi.export = null;
+      plus.a = [arrondi(p.x), arrondi(p.y), arrondi(p.z)];
+    }
+    if (A.t !== 'echange') { moi.sansChute = true; moi.accroupi = false; moi.emote = null; }
+  }
+  // Fort express, Igloo : les murs se posent autour de MA case. Au bord de la case, je me recentre un peu (sinon un mur me pousserait
+  // dehors), et je dis à l'hôte où je suis : il peut avoir quelques centimètres de retard sur moi.
+  if (type === 'batisseur' || (A && A.t === 'murs' && A.forme === 'bunker')) {
+    const dedans = v => { const c = Math.floor(v / CASE) * CASE; return Math.min(Math.max(v, c + 0.7), c + CASE - 0.7); };
+    moi.x = dedans(moi.x); moi.z = dedans(moi.z);
+    plus.p = [arrondi(moi.x), arrondi(moi.y), arrondi(moi.z)];
+  }
+  moi.esprit.pret = etat.temps + rechargeEsprit(moi.esprit);
   reseau.versHote({ t: 'pouvoir', ry: arrondi(moi.ry), rx: arrondi(moi.rx), ...plus });
   vibrer(30);
 }
@@ -747,11 +776,11 @@ function effetPouvoir(m) {
   const moi = etat.moi;
   if (moi && m.par === moi.id && moi.esprit) {
     moi.esprit.pret = +m.pret || moi.esprit.pret;
-    if (m.type === 'vision') { etat.visionJusqua = etat.temps + VISION.duree; annonceObjet(`👁️ ${d.pouvoir} : les ennemis proches sont marqués en rose`); }
+    if (m.type === 'vision') { etat.visionJusqua = etat.temps + VISION.duree; etat.visionRayon = VISION.pouvoir; annonceObjet(`👁️ ${d.pouvoir} : les ennemis proches sont marqués en rose`); }
   }
   const o = etat.orbes.get(m.par);
   if (o) jouerEsprit(o.mesh, 'activer');
-  if (moi && m.par === moi.id) { son('esprit_' + m.type, 0.8); ajouterFil(`${d.icone} <b style="color:${d.couleur}">${d.nom}</b> : « ${echapper(replique(m.type, 'pouvoir'))} »`); }
+  if (moi && m.par === moi.id) { son(sonEsprit(m.type), 0.8); ajouterFil(`${d.icone} <b style="color:${d.couleur}">${d.nom}</b> : « ${echapper(replique(m.type, 'pouvoir'))} »`); }
   const x = +m.x, y = +m.y, z = +m.z, dc = distCam(x, y, z);
   if (dc > 160) return;
   if (effetPouvoirAjoute(m, d, x, y, z, dc)) return;
@@ -787,13 +816,14 @@ function effetPouvoir(m) {
 }
 
 // ---------- Les 10 esprits ajoutés : ce que l'on voit (boule de feu, éclair, ronces, clone, bulle…) ----------
-const effetsPouvoirs = { boules: [], clones: [], bulles: [], eclairs: [], pieges: new Map(), geles: new Map(), sauves: new Set() };
+const effetsPouvoirs = { boules: [], clones: [], bulles: [], eclairs: [], nuages: [], pieges: new Map(), geles: new Map(), sauves: new Set(), buffs: new Map() };
 function viderPouvoirs() {
-  for (const l of [effetsPouvoirs.boules, effetsPouvoirs.clones, effetsPouvoirs.eclairs]) { for (const e of l) scene.remove(e.mesh); l.length = 0; }
+  for (const l of [effetsPouvoirs.boules, effetsPouvoirs.clones, effetsPouvoirs.eclairs, effetsPouvoirs.nuages]) { for (const e of l) scene.remove(e.mesh); l.length = 0; }
   for (const b of effetsPouvoirs.bulles) b.mesh.removeFromParent();
   effetsPouvoirs.bulles.length = 0;
   for (const p of effetsPouvoirs.pieges.values()) scene.remove(p);
-  effetsPouvoirs.pieges.clear(); effetsPouvoirs.geles.clear(); effetsPouvoirs.sauves.clear();
+  effetsPouvoirs.pieges.clear(); effetsPouvoirs.geles.clear(); effetsPouvoirs.sauves.clear(); effetsPouvoirs.buffs.clear();
+  etat.visionJusqua = 0; etat.visionRayon = 0; // l'œil perçant ne passe pas d'une partie à la suivante
 }
 const matBouleFeu = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff7a3d').multiplyScalar(2.4), toneMapped: false });
 const geoBouleFeu = new THREE.SphereGeometry(0.38, 14, 10);
@@ -807,8 +837,34 @@ const positionDe = id => (etat.moi && id === etat.moi.id ? etat.moi : etat.autre
 function creerPiege(p) {
   if (!p || effetsPouvoirs.pieges.has(p.id)) return;
   const g = new THREE.Group();
+  const dp = ESPRITS[p.type], Ap = dp ? pouvoirDe(p.type) : null;
+  // les modèles livrés (pieges_esprits_v001.glb) : la mine de Clac et l'oursin de Récifa, avec leurs animations
+  const livre = Ap ? modeleGlb(Ap.explose ? 'piege_mine' : 'piege_oursin', { ombres: false }) : null;
+  if (livre) {
+    g.add(livre);
+    const nom = Ap.explose ? 'piege_mine' : 'piege_oursin', mixer = new THREE.AnimationMixer(livre);
+    const repos = clipAnimation(nom + '_repos'), apparait = clipAnimation(nom + '_apparaitre');
+    const boucle = repos ? mixer.clipAction(repos) : null;
+    if (apparait) {
+      const a = mixer.clipAction(apparait); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.play();
+      mixer.addEventListener('finished', () => { if (boucle) { a.stop(); boucle.play(); } });
+    } else if (boucle) boucle.play();
+    g.userData.mixer = mixer;
+  } else if (Ap && Ap.explose) { // la mine de Clac : un disque de métal et une petite lampe rouge
+    const base = new THREE.Mesh(geoMine, matPiege(dp.couleur)); base.position.y = 0.08; g.add(base);
+    const lampe = new THREE.Mesh(geoLampe, matLumineux('#ff3d3d')); lampe.position.y = 0.22; g.add(lampe);
+  } else if (Ap) { // l'oursin de Récifa : une boule hérissée de piquants
+    const corps = new THREE.Mesh(geoOursin, matPiege(dp.couleur)); corps.position.y = 0.3; g.add(corps);
+    for (let i = 0; i < 12; i++) {
+      const a = i / 12 * Math.PI * 2, haut = i % 3 === 0, e = new THREE.Mesh(geoPique, matPiege(dp.clair));
+      e.position.set(Math.cos(a) * (haut ? 0.2 : 0.45), haut ? 0.68 : 0.36, Math.sin(a) * (haut ? 0.2 : 0.45));
+      e.rotation.set(Math.sin(a) * (haut ? 0.4 : 1.3), 0, -Math.cos(a) * (haut ? 0.4 : 1.3));
+      g.add(e);
+    }
+  } else {
   for (const [r, y] of [[1, 0.1], [0.62, 0.16]]) { const t = new THREE.Mesh(geoRonce, matRonce); t.rotation.x = Math.PI / 2; t.scale.setScalar(r); t.position.y = y; g.add(t); }
   for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, e = new THREE.Mesh(geoEpine, matEpine); e.position.set(Math.cos(a) * (i % 2 ? 1.02 : 0.6), 0.3, Math.sin(a) * (i % 2 ? 1.02 : 0.6)); e.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5); g.add(e); }
+  }
   g.position.set(+p.x, +p.y, +p.z);
   scene.add(g);
   effetsPouvoirs.pieges.set(p.id, g);
@@ -817,29 +873,195 @@ function retirerPiege(m) {
   const g = effetsPouvoirs.pieges.get(m.id);
   if (!g) return;
   scene.remove(g); effetsPouvoirs.pieges.delete(m.id);
+  const dp = pouvoirDe(m.type) ? ESPRITS[m.type] : null;
   if (m.declenche && distCam(+m.x, +m.y, +m.z) < 120) {
-    for (let i = 0; i < 26; i++) particules.ajouter({ x: +m.x + (Math.random() - 0.5) * 2, y: +m.y + 0.2, z: +m.z + (Math.random() - 0.5) * 2, vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 3, vz: (Math.random() - 0.5) * 3, couleur: i % 2 ? '#3d6b2f' : '#8a5a2b', forme: 3, taille: 0.3, tailleFin: 0.08, vie: 0.8, gravite: 6 });
+    for (let i = 0; i < 26; i++) particules.ajouter({ x: +m.x + (Math.random() - 0.5) * 2, y: +m.y + 0.2, z: +m.z + (Math.random() - 0.5) * 2, vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 3, vz: (Math.random() - 0.5) * 3, couleur: dp ? (i % 2 ? dp.couleur : dp.clair) : i % 2 ? '#3d6b2f' : '#8a5a2b', forme: 3, taille: 0.3, tailleFin: 0.08, vie: 0.8, gravite: 6 });
     sonLoin('bois', distCam(+m.x, +m.y, +m.z) * 2);
   }
 }
-// Lumi (étoile) vient de sauver quelqu'un d'un coup mortel
-function eteindreCoeur(id) { // le petit cœur de Lumi (nœud etoile_coeur du modèle) : éteint une fois sa chance utilisée
+// Lumi (étoile) ou Séraph (ange) vient de sauver quelqu'un d'un coup mortel
+// Le petit cœur de Lumi (nœud etoile_coeur) et l'auréole de Séraph (nœud ange_aureole) s'éteignent une fois la chance utilisée.
+// La chance compte pour le joueur, pas pour l'esprit (une par partie) : un joueur déjà sauvé qui prend l'autre esprit le reçoit éteint.
+const SIGNE_CHANCE = { etoile: 'etoile_coeur', ange: 'ange_aureole' };
+function eteindreCoeur(id) {
   const o = etat.orbes.get(id);
-  const coeur = o && o.type === 'etoile' && effetsPouvoirs.sauves.has(id) ? o.mesh.getObjectByName('etoile_coeur') : null;
-  if (coeur) coeur.visible = false;
+  const signe = o && SIGNE_CHANCE[o.type] && effetsPouvoirs.sauves.has(id) ? o.mesh.getObjectByName(SIGNE_CHANCE[o.type]) : null;
+  if (signe) signe.visible = false;
 }
 function effetSauve(m) {
   const x = +m.x, y = +m.y + 1, z = +m.z, moi = etat.moi;
   effetsPouvoirs.sauves.add(m.id); eteindreCoeur(m.id);
   if (distCam(x, y, z) < 140) for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2; particules.ajouter({ x, y, z, vx: Math.cos(a) * 5, vy: 1.5 + (i % 5), vz: Math.sin(a) * 5, couleur: i % 2 ? '#fff27a' : '#ffffff', forme: 2, taille: 0.4, tailleFin: 0.05, vie: 0.9, additif: true }); }
-  if (moi && m.id === moi.id) { son('niveau'); banniere('🌟 LUMI T\'A SAUVÉ !', `Il te reste ${m.pv | 0} PV. Elle ne pourra plus le refaire dans cette partie.`); }
-  else if (etat.infos.has(m.id)) ajouterFil(`🌟 Lumi a sauvé <b>${echapper(nomDe(m.id))}</b>`);
+  const os = etat.orbes.get(m.id), ds = ESPRITS[os && os.type] || ESPRITS.etoile; // Lumi (étoile) ou Séraph (ange)
+  if (moi && m.id === moi.id) { son('niveau'); banniere(`${ds.icone} ${ds.nom.toUpperCase()} T'A SAUVÉ !`, `Il te reste ${m.pv | 0} PV. Ça ne marche qu'une fois par partie.`); }
+  else if (etat.infos.has(m.id)) ajouterFil(`${ds.icone} ${ds.nom} a sauvé <b>${echapper(nomDe(m.id))}</b>`);
 }
-// Les effets de chaque pouvoir ; renvoie true si c'est un des 10 esprits ajoutés
+// ---------- Les 50 esprits « à réglages » (22 nov. 2026) : ce que l'on voit, par sorte de pouvoir ----------
+const matsLumineux = new Map(), matsTrait = new Map(), matsNuage = new Map(), matsPiege = new Map();
+const matLumineux = couleur => { if (!matsLumineux.has(couleur)) matsLumineux.set(couleur, new THREE.MeshBasicMaterial({ color: new THREE.Color(couleur).multiplyScalar(2.2), toneMapped: false })); return matsLumineux.get(couleur); };
+const matTrait = couleur => { if (!matsTrait.has(couleur)) matsTrait.set(couleur, new THREE.LineBasicMaterial({ color: new THREE.Color(couleur).multiplyScalar(2.4), toneMapped: false })); return matsTrait.get(couleur); };
+const matNuage = couleur => { if (!matsNuage.has(couleur)) matsNuage.set(couleur, new THREE.MeshBasicMaterial({ color: couleur, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide })); return matsNuage.get(couleur); };
+const matPiege = couleur => { if (!matsPiege.has(couleur)) matsPiege.set(couleur, new THREE.MeshLambertMaterial({ color: couleur })); return matsPiege.get(couleur); };
+const geoNuage = new THREE.CircleGeometry(1, 40), geoMine = new THREE.CylinderGeometry(0.55, 0.65, 0.16, 14), geoLampe = new THREE.SphereGeometry(0.13, 10, 8);
+const geoOursin = new THREE.SphereGeometry(0.34, 10, 8), geoPique = new THREE.ConeGeometry(0.07, 0.5, 5);
+// coup de pouce en cours (élan, furie, invisibilité) d'un joueur
+const buffActif = id => { const b = effetsPouvoirs.buffs.get(id); return b && etat.temps < b.fin ? b : null; };
+const estInvisible = id => { const b = buffActif(id); return !!(b && b.invisible); };
+// Le point que je vise (pour me téléporter) : droit devant mon regard, jusqu'au premier mur ou au sol, puis posé par terre
+function pointVise(portee) {
+  const moi = etat.moi, M = etat.monde;
+  const ox = moi.x, oy = moi.y + 1.5, oz = moi.z;
+  const dx = -Math.sin(moi.ry) * Math.cos(moi.rx), dy = Math.sin(moi.rx), dz = -Math.cos(moi.ry) * Math.cos(moi.rx);
+  const h = M.lancerRayon(ox, oy, oz, dx, dy, dz, portee);
+  const dist = h ? Math.max(0, h.t - 0.7) : portee;
+  const x = ox + dx * dist, y = oy + dy * dist, z = oz + dz * dist;
+  const s = M.lancerRayon(x, y + 0.5, z, 0, -1, 0, 400);
+  return { x, y: Math.max(s ? s.y : M.hauteurTerrain(x, z), 0), z };
+}
+// L'explosion d'un pouvoir, aux couleurs de son esprit (boule de neige, vague, météore…)
+function explosionEsprit(x, y, z, r, type) {
+  const d = ESPRITS[type], dc = distCam(x, y, z);
+  sonLoin('explosion', dc * 0.9);
+  if (dc > 170) return;
+  flash(x, y + 0.5, z, r * 1.6);
+  for (let i = 0; i < 46; i++) {
+    const a = Math.random() * 6.28, b = Math.random() * Math.PI, v = 2 + Math.random() * r * 1.4;
+    particules.ajouter({ x, y: y + 0.3, z, vx: Math.cos(a) * Math.sin(b) * v, vy: Math.abs(Math.cos(b)) * v, vz: Math.sin(a) * Math.sin(b) * v, couleur: i % 3 ? d.couleur : d.clair, forme: 2, taille: 0.7, tailleFin: 0.05, vie: 0.6, additif: true, frein: 1.5 });
+  }
+  for (let i = 0; i < 40; i++) {
+    const a = i / 40 * Math.PI * 2;
+    particules.ajouter({ x: x + Math.cos(a) * 0.5, y: y + 0.3, z: z + Math.sin(a) * 0.5, vx: Math.cos(a) * r * 2, vy: 0.3, vz: Math.sin(a) * r * 2, couleur: i % 2 ? d.couleur : d.clair, forme: 2, taille: 0.4, tailleFin: 0.05, vie: 0.5, additif: true, frein: 1.4 });
+  }
+  etat.secousse = Math.max(etat.secousse, Math.max(0, 1 - dc / 40) * 0.5);
+}
+function effetGenerique(m, d, A, x, y, z, dc, part, anneau) {
+  const moi = etat.moi, aMoi = moi && m.par === moi.id;
+  const trois = t => (Array.isArray(t) && t.length >= 3 && t.slice(0, 3).every(v => Number.isFinite(+v)) ? t.slice(0, 3).map(Number) : null);
+  const tourbillon = (px, py, pz) => { for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; part({ x: px + Math.cos(a) * 0.9, y: py + (i % 7) * 0.3, z: pz + Math.sin(a) * 0.9, vx: -Math.sin(a) * 3, vy: 0.4, vz: Math.cos(a) * 3, couleur: i % 2 ? d.couleur : d.clair, vie: 0.7 }); } };
+  const boule = (o, b, duree) => {
+    const mesh = new THREE.Mesh(geoBouleFeu, matLumineux(d.couleur));
+    mesh.scale.setScalar(Math.min(2.6, 0.7 + A.rayon * 0.24));
+    mesh.position.set(o[0], o[1], o[2]);
+    scene.add(mesh);
+    effetsPouvoirs.boules.push({ mesh, o, b, t: 0, duree: Math.max(0.05, duree), c1: d.couleur, c2: d.clair });
+  };
+  const personne = () => { if (aMoi) annonceObjet(`${d.icone} Aucun ennemi en vue à moins de ${A.portee} m`); };
+  switch (A.t) {
+    case 'boule': {
+      const o = trois(m.o), b = trois(m.b);
+      if (o && b) boule(o, b, +m.duree || 0.1);
+      return;
+    }
+    case 'frappe':
+      (Array.isArray(m.c) ? m.c : []).slice(0, 8).forEach((p, k) => {
+        const c = trois(p);
+        if (!c) return;
+        const attente = A.delai + k * 0.22;
+        // le cercle d'alerte au sol, puis ce qui tombe du ciel
+        for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2; part({ x: c[0] + Math.cos(a) * A.rayon, y: c[1] + 0.25, z: c[2] + Math.sin(a) * A.rayon, vy: 0.3, couleur: i % 2 ? d.couleur : '#ffffff', vie: attente, taille: 0.3 }); }
+        boule([c[0] + 7, c[1] + 55, c[2] + 5], c, attente);
+      });
+      return;
+    case 'nuage': {
+      const c = trois(m.n);
+      if (!c) return;
+      const mesh = new THREE.Mesh(geoNuage, matNuage(d.couleur));
+      mesh.rotation.x = -Math.PI / 2; mesh.scale.setScalar(A.rayon); mesh.position.set(c[0], c[1] + 0.12, c[2]); mesh.renderOrder = 5;
+      scene.add(mesh);
+      effetsPouvoirs.nuages.push({ mesh, x: c[0], y: c[1], z: c[2], r: A.rayon, fin: etat.temps + A.duree, c1: d.couleur, c2: d.clair, soin: !!A.soin });
+      sonLoin(A.soin ? 'soin' : 'rebond', dc * 2);
+      return;
+    }
+    case 'onde':
+      if (A.pousse && A.pousse[0] < 0) { // une force négative attire : les étincelles reviennent vers le centre
+        for (let i = 0; i < 54; i++) { const a = i / 54 * Math.PI * 2; part({ x: x + Math.cos(a) * A.rayon, y: y + 0.8, z: z + Math.sin(a) * A.rayon, vx: -Math.cos(a) * A.rayon * 1.6, vy: 0.2, vz: -Math.sin(a) * A.rayon * 1.6, couleur: i % 2 ? d.couleur : d.clair, vie: 0.55 }); }
+      } else anneau(60, A.rayon * 1.9, d.couleur, d.clair, 0.7, { vie: 0.65, frein: 1.3 });
+      sonLoin('rebond', dc * 2);
+      return;
+    case 'chaine': {
+      if (m.vide) { personne(); return; }
+      const pts = (Array.isArray(m.pts) ? m.pts : []).slice(0, 8).map(trois).filter(Boolean).map(p => new THREE.Vector3(p[0], p[1], p[2]));
+      if (pts.length < 2) return;
+      // un trait en zigzag entre chaque cible
+      const zig = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        for (let k = 1; k <= 5; k++) zig.push(pts[i - 1].clone().lerp(pts[i], k / 6).add(new THREE.Vector3((Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2)));
+        zig.push(pts[i]);
+        for (let k = 0; k < 14; k++) part({ x: pts[i].x, y: pts[i].y, z: pts[i].z, vx: (Math.random() - 0.5) * 7, vy: Math.random() * 5, vz: (Math.random() - 0.5) * 7, couleur: k % 2 ? d.couleur : d.clair, vie: 0.4 });
+      }
+      const mesh = new THREE.Line(new THREE.BufferGeometry().setFromPoints(zig), matTrait(d.couleur));
+      scene.add(mesh);
+      effetsPouvoirs.eclairs.push({ mesh, t: 0 });
+      sonLoin('bouclierCasse', dc * 2);
+      return;
+    }
+    case 'soin': {
+      const r = Math.max(1.2, (A.rayon || 0) * 0.5);
+      for (let i = 0; i < 40; i++) { const a = Math.random() * Math.PI * 2, q = Math.random() * r; part({ x: x + Math.cos(a) * q, y: y + 0.2, z: z + Math.sin(a) * q, vy: 2 + Math.random() * 2, couleur: i % 2 ? d.couleur : d.clair, vie: 1.1 }); }
+      sonLoin('soin', dc * 2);
+      return;
+    }
+    case 'buff':
+      effetsPouvoirs.buffs.set(m.par, { fin: etat.temps + A.duree, c1: d.couleur, c2: d.clair, invisible: !!A.invisible });
+      anneau(30, 4, d.couleur, d.clair, 1, { vie: 0.5 });
+      if (aMoi) {
+        moi.buff = { fin: etat.temps + A.duree, vitesse: A.vitesse || 0 };
+        if (A.invisible) annonceObjet(`${d.icone} Tu es invisible pendant ${String(A.duree).replace('.', ',')} s`);
+      }
+      return;
+    case 'dash': {
+      const fx = -Math.sin(+m.ry || 0), fz = -Math.cos(+m.ry || 0);
+      for (let i = 0; i < 46; i++) { const t = i / 46 * A.distance; part({ x: x + fx * t, y: y + 0.6 + Math.random() * 1.2, z: z + fz * t, vx: (Math.random() - 0.5) * 1.5, vy: 0.6, vz: (Math.random() - 0.5) * 1.5, couleur: i % 2 ? d.couleur : d.clair, vie: 0.5 + i / 46 * 0.5, taille: 0.4 }); }
+      return;
+    }
+    case 'bond':
+      anneau(36, 6, d.couleur, d.clair, 0.2, { vie: 0.5 });
+      sonLoin('rebond', dc * 2);
+      return;
+    case 'teleport': {
+      tourbillon(x, y, z);
+      const a = trois(m.a);
+      if (a) tourbillon(a[0], a[1], a[2]);
+      return;
+    }
+    case 'echange': {
+      if (m.vide) { personne(); return; }
+      const pa = trois(m.pa), pb = trois(m.pb);
+      if (!pa || !pb) return;
+      tourbillon(pa[0], pa[1], pa[2]); tourbillon(pb[0], pb[1], pb[2]);
+      // celui qui lance le pouvoir prend la place de l'autre, et l'inverse
+      const vers = aMoi ? pb : moi && m.e === moi.id ? pa : null;
+      if (vers && moi.ph !== 'mort') {
+        moi.x = vers[0]; moi.y = vers[1] + 0.05; moi.z = vers[2]; moi.vx = moi.vy = moi.vz = 0;
+        moi.sansChute = true; moi.accroupi = false; moi.emote = null; moi.historique = []; moi.export = null;
+        if (!aMoi) annonceObjet(`${d.icone} ${nomDe(m.par)} a échangé sa place avec toi !`);
+      }
+      return;
+    }
+    case 'piege':
+      for (let i = 0; i < 18; i++) part({ x: x + (Math.random() - 0.5) * 2, y: y + 0.1, z: z + (Math.random() - 0.5) * 2, vy: 1 + Math.random() * 2, couleur: i % 2 ? d.couleur : d.clair, forme: 3, additif: false });
+      return;
+    case 'objet':
+      for (let i = 0; i < 36; i++) part({ x: x - Math.sin(+m.ry || 0) * 2 + (Math.random() - 0.5), y: y + 0.3, z: z - Math.cos(+m.ry || 0) * 2 + (Math.random() - 0.5), vx: (Math.random() - 0.5) * 3, vy: 3 + Math.random() * 4, vz: (Math.random() - 0.5) * 3, couleur: i % 3 ? d.couleur : '#ffffff', forme: 3, vie: 1, gravite: 7 });
+      sonLoin('coffreDore', dc * 2);
+      return;
+    case 'murs':
+      for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 2; part({ x: x + Math.cos(a) * r, y: y + 1 + Math.random() * 2, z: z + Math.sin(a) * r, vx: -Math.cos(a) * 5, vy: 0.5, vz: -Math.sin(a) * 5, couleur: i % 2 ? d.couleur : d.clair, forme: 3, vie: 0.6, additif: false, gravite: 1 }); }
+      return;
+    case 'vision':
+      anneau(48, 14, d.couleur, d.clair, 1.6, { vie: 0.6, frein: 1.5 });
+      if (aMoi) { etat.visionJusqua = etat.temps + A.duree; etat.visionRayon = A.rayon; annonceObjet(`${d.icone} ${d.pouvoir} : les ennemis proches sont marqués en rose`); }
+      return;
+    case 'clone': effetPouvoirAjoute({ ...m, type: 'ombre' }, d, x, y, z, dc); return;
+  }
+}
+// Les effets de chaque pouvoir ; renvoie true si c'est un des esprits ajoutés (les 10 du 21 nov., les 50 du 22 nov.)
 function effetPouvoirAjoute(m, d, x, y, z, dc) {
   const moi = etat.moi, aMoi = moi && m.par === moi.id;
   const part = o => particules.ajouter({ forme: 2, taille: 0.35, tailleFin: 0.05, vie: 0.7, additif: true, ...o });
   const anneau = (n, vit, coul1, coul2, h = 0.4, extra = {}) => { for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; part({ x: x + Math.cos(a) * 0.6, y: y + h, z: z + Math.sin(a) * 0.6, vx: Math.cos(a) * vit, vy: 0.5, vz: Math.sin(a) * vit, couleur: i % 2 ? coul1 : coul2, ...extra }); } };
+  const A = pouvoirAuNiveau(pouvoirDe(m.type), m.niv);
+  if (A) { effetGenerique(m, d, A, x, y, z, dc, part, anneau); return true; }
   switch (m.type) {
     case 'feu': {
       if (!Array.isArray(m.o) || !Array.isArray(m.b)) return true;
@@ -921,7 +1143,7 @@ function majPouvoirs(dt) {
     const k = Math.min(1, b.t / b.duree);
     b.mesh.position.set(b.o[0] + (b.b[0] - b.o[0]) * k, b.o[1] + (b.b[1] - b.o[1]) * k, b.o[2] + (b.b[2] - b.o[2]) * k);
     const q = b.mesh.position;
-    particules.ajouter({ x: q.x, y: q.y, z: q.z, vy: 0.5, couleur: Math.random() < 0.5 ? '#ffd23f' : '#ff7a3d', forme: 2, taille: 0.45, tailleFin: 0.05, vie: 0.35, additif: true });
+    particules.ajouter({ x: q.x, y: q.y, z: q.z, vy: 0.5, couleur: Math.random() < 0.5 ? (b.c2 || '#ffd23f') : (b.c1 || '#ff7a3d'), forme: 2, taille: 0.45, tailleFin: 0.05, vie: 0.35, additif: true });
     if (k >= 1) { scene.remove(b.mesh); E.boules.splice(i, 1); }
   }
   for (let i = E.eclairs.length - 1; i >= 0; i--) {
@@ -947,10 +1169,32 @@ function majPouvoirs(dt) {
     b.mesh.scale.setScalar(1 + Math.sin(etat.temps * 9) * 0.04);
     if (etat.temps >= b.fin || !b.mesh.parent) { b.mesh.removeFromParent(); E.bulles.splice(i, 1); }
   }
+  // pièges livrés : leur animation (la lampe de la mine clignote, l'oursin respire), seulement près de la caméra
+  for (const g of E.pieges.values()) if (g.userData.mixer && distCam(g.position.x, g.position.y, g.position.z) < 90) g.userData.mixer.update(dt);
   for (const [id, g] of E.geles) {
     if (etat.temps >= g.fin) { E.geles.delete(id); continue; }
+    if (estInvisible(id)) continue;
     const p = positionDe(id);
     if (p && Math.random() < dt * 14 && distCam(p.x, p.y, p.z) < 70) particules.ajouter({ x: p.x + (Math.random() - 0.5) * 0.9, y: p.y + Math.random() * 1.8, z: p.z + (Math.random() - 0.5) * 0.9, vy: g.ronces ? 0.8 : -0.6, couleur: g.ronces ? '#3d6b2f' : '#cfeaff', forme: 3, taille: 0.22, tailleFin: 0.04, vie: 0.6, additif: !g.ronces });
+  }
+  // nuages posés par un pouvoir (lave, poison, encre, pluie de soin) : ils fument jusqu'à la fin
+  for (let i = E.nuages.length - 1; i >= 0; i--) {
+    const n = E.nuages[i];
+    if (etat.temps >= n.fin) { scene.remove(n.mesh); E.nuages.splice(i, 1); continue; }
+    if (distCam(n.x, n.y, n.z) > 110) continue;
+    for (let k = 0; k < 3; k++) {
+      if (Math.random() > dt * 22) continue;
+      const a = Math.random() * 6.283, q = Math.sqrt(Math.random()) * n.r;
+      particules.ajouter({ x: n.x + Math.cos(a) * q, y: n.y + 0.2 + Math.random() * (n.soin ? 0.4 : 1.4), z: n.z + Math.sin(a) * q, vx: (Math.random() - 0.5) * 0.6, vy: n.soin ? 1.6 : 0.5, vz: (Math.random() - 0.5) * 0.6,
+        couleur: Math.random() < 0.5 ? n.c1 : n.c2, forme: 2, taille: n.soin ? 0.3 : 0.8, tailleFin: n.soin ? 0.05 : 1.5, vie: n.soin ? 0.9 : 1.1, alpha: n.soin ? 1 : 0.45, additif: n.soin });
+    }
+  }
+  // coups de pouce en cours (élan, furie, auréole) : de petites étincelles autour du joueur ; un joueur invisible n'en a pas
+  for (const [id, b] of E.buffs) {
+    if (etat.temps >= b.fin) { if (b.invisible && etat.moi && id === etat.moi.id) annonceObjet('👀 Tu es de nouveau visible'); E.buffs.delete(id); continue; }
+    if (b.invisible) continue;
+    const p = positionDe(id);
+    if (p && Math.random() < dt * 16 && distCam(p.x, p.y, p.z) < 70) particules.ajouter({ x: p.x + (Math.random() - 0.5) * 0.9, y: p.y + Math.random() * 1.8, z: p.z + (Math.random() - 0.5) * 0.9, vy: 1.2, couleur: Math.random() < 0.5 ? b.c1 : b.c2, forme: 2, taille: 0.25, tailleFin: 0.04, vie: 0.6, additif: true });
   }
 }
 
@@ -1055,22 +1299,26 @@ function recevoir(m) {
       if (!d) break;
       if (sa) { etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 30, 6); majSanctuaire(sa, m.type, false); sonLoin('coffreDore', distCam(sa.x, sa.y, sa.z) * 2); if (sa.tombe) retirerSanctuaire(sa); }
       const rar = RARETES_ESPRIT[m.rar] ? m.rar : null;
-      donnerEsprit(m.par, m.type, rar);
+      const niv = Math.max(1, Math.min(NIVEAUX.max, m.niv | 0 || 1));
+      donnerEsprit(m.par, m.type, rar, niv);
       if (moi && m.par === moi.id) {
-        moi.esprit = { type: m.type, pret: +m.pret || etat.temps + 3, autel: m.s };
-        son('niveau'); son('esprit_' + m.type, 0.7);
+        moi.esprit = { type: m.type, pret: +m.pret || etat.temps + 3, autel: m.s, niv };
+        etat.visionJusqua = 0; // un pouvoir de vision s'arrête quand on change d'esprit
+        son('niveau'); son(sonEsprit(m.type), 0.7);
         if (rar && rar !== 'commun') son('esprit_rare');
         setTimeout(() => ajouterFil(`${d.icone} <b style="color:${d.couleur}">${d.nom}</b>${rar ? ` <small style="color:${RARETES_ESPRIT[rar].couleur}">(${RARETES_ESPRIT[rar].nom})</small>` : ''} : « ${echapper(replique(m.type, 'capture'))} »`), 900);
         banniere(`${d.icone} ${d.nom.toUpperCase()} · ${d.role.toUpperCase()}`, `${d.passif} · Pouvoir (${tactile ? '✨' : L('KeyQ')}) : ${d.pouvoir}`);
         ajouterFil(`${d.icone} Tu as capturé <b style="color:${d.couleur}">${d.nom}</b>, l'esprit de ${d.role.toLowerCase()}`, true);
         // la première fois de la partie : comment le garder pour de bon
+        if (niv > 1) setTimeout(() => ajouterFil(`⬆️ Il était déjà amélioré : <b style="color:#ffd23f">${NIVEAUX.etoiles[niv]}</b>`, true), 1800);
+        if (!etat.amelioDit && niv < NIVEAUX.max) { etat.amelioDit = true; setTimeout(() => { const p = PRIX_ECLATS[rareteDe(m.type)]; ajouterFil(`⬆️ Améliore-le sur un autel avec tes <b style="color:#8fe3ff">éclats d'esprit 💠</b> (${tactile ? 'bouton ⬆️' : L('KeyU')}) : ${p[0]} 💠 pour ★★, puis ${p[1]} 💠 pour ★★★. Tu en trouves dans les coffres et sur les joueurs éliminés, et tu les gardes d'une partie à l'autre`, true); }, 5200); }
         if (!etat.options.entrainement && !etat.exportDit) { etat.exportDit = true; setTimeout(() => ajouterFil('✨ Pour le garder dans ta <b>collection</b> : exporte-le sur un <b>autre autel</b>, ou gagne la partie', true), 2600); }
       } else if (sa && distCam(sa.x, sa.y, sa.z) < 90) ajouterFil(`${d.icone} <b>${echapper(nomDe(m.par))}</b> a capturé ${d.nom}`);
       break;
     }
     case 'sanctuaire': {
       const sa = etat.sanctuaires.get(m.s);
-      if (sa && ESPRITS[m.type]) { majSanctuaire(sa, m.type, true); etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 24, 5); }
+      if (sa && ESPRITS[m.type]) { sa.niv = 1; majSanctuaire(sa, m.type, true); etincellesEsprit(sa.x, sa.y + 2, sa.z, m.type, 24, 5); }
       break;
     }
     case 'exporte': { // un joueur a exporté son esprit sur un autel
@@ -1083,7 +1331,7 @@ function recevoir(m) {
     case 'sanctuaire+': { // l'esprit d'un joueur éliminé reste sur place
       const s = m.s;
       if (!s || !ESPRITS[s.type] || etat.sanctuaires.has(s.id) || ![s.x, s.y, s.z].every(Number.isFinite)) break;
-      ajouterSanctuaire({ id: s.id, x: s.x, y: s.y, z: s.z, type: s.type, dispo: true, tombe: true });
+      ajouterSanctuaire({ id: s.id, x: s.x, y: s.y, z: s.z, type: s.type, dispo: true, tombe: true, niv: s.niv });
       etincellesEsprit(s.x, s.y + 1, s.z, s.type, 24, 5);
       if (moi && moi.ph !== 'mort' && distCam(s.x, s.y, s.z) < 45) ajouterFil(`${ESPRITS[s.type].icone} L’esprit <b style="color:${ESPRITS[s.type].couleur}">${ESPRITS[s.type].nom}</b> est resté sur place : va le prendre !`);
       break;
@@ -1093,25 +1341,54 @@ function recevoir(m) {
       if (sa && sa.tombe) { if (sa.dispo) etincellesEsprit(sa.x, sa.y + 1, sa.z, sa.type, 16, 3); retirerSanctuaire(sa); }
       break;
     }
+    case 'espritNiv': { // un esprit vient d'être amélioré sur un autel
+      const niv = Math.max(1, Math.min(NIVEAUX.max, m.niv | 0 || 1));
+      const o = etat.orbes.get(m.id), sa = etat.sanctuaires.get(m.s);
+      if (o) {
+        o.niv = niv; o.mesh.scale.setScalar(0.9 * TAILLE_NIVEAU[niv]);
+        if (!jouerEsprit(o.mesh, 'content')) jouerEsprit(o.mesh, 'activer');
+        const q = o.mesh.position;
+        if (distCam(q.x, q.y, q.z) < 90) {
+          etincellesEsprit(q.x, q.y, q.z, o.type, 26, 4);
+          for (let i = 0; i < 30; i++) { const a = i / 30 * Math.PI * 2; particules.ajouter({ x: q.x, y: q.y, z: q.z, vx: Math.cos(a) * 3, vy: 1.5 + Math.random() * 2, vz: Math.sin(a) * 3, couleur: i % 2 ? '#ffd23f' : '#fff3b0', forme: 2, taille: 0.3, tailleFin: 0.04, vie: 0.9, additif: true, gravite: 2 }); }
+        }
+      }
+      if (sa && distCam(sa.x, sa.y, sa.z) < 90) { etincellesEsprit(sa.x, sa.y + 2, sa.z, o ? o.type : sa.type, 20, 5); if (!(moi && m.id === moi.id)) sonLoin('ameliorer', distCam(sa.x, sa.y, sa.z) * 2); }
+      if (moi && m.id === moi.id && moi.esprit) {
+        moi.esprit.niv = niv; moi.esprit.pret = +m.pret || moi.esprit.pret;
+        moi.amelioDemande = 0;
+        const d = ESPRITS[moi.esprit.type];
+        son('ameliorer'); vibrer([30, 40, 60]);
+        banniere(`${d.icone} ${d.nom.toUpperCase()} ${NIVEAUX.etoiles[niv]}`, `Niveau ${niv} : bonus et pouvoir plus forts, recharge ${Math.round(rechargeEsprit(moi.esprit))} s au lieu de ${d.recharge} s`);
+        ajouterFil(`⬆️ <b style="color:${d.couleur}">${d.nom}</b> passe au niveau <b style="color:#ffd23f">${NIVEAUX.etoiles[niv]}</b> ${m.cout ? `(−${m.cout | 0} 💠)` : ''}`, true);
+      } else if (o && etat.infos.has(m.id) && o.mesh.visible && distCam(o.mesh.position.x, o.mesh.position.y, o.mesh.position.z) < 60) ajouterFil(`⬆️ <b>${echapper(nomDe(m.id))}</b> a amélioré son esprit ${NIVEAUX.etoiles[niv]}`);
+      break;
+    }
     case 'espritLibre': {
       const o = etat.orbes.get(m.id);
       if (o && o.mesh.visible) { const q = o.mesh.position; etincellesEsprit(q.x, q.y, q.z, o.type, 24, 5); }
       retirerEsprit(m.id);
-      if (moi && m.id === moi.id) moi.esprit = null;
+      if (moi && m.id === moi.id) { moi.esprit = null; etat.visionJusqua = 0; }
       break;
     }
     case 'pouvoir': effetPouvoir(m); break;
     case 'gel': { // ralenti par Givrette (glace) ou pris dans les ronces de Racine
       const fin = etat.temps + (+m.duree || 0), f = borner(+m.f || 1, 0.05, 1);
-      if (moi && m.id === moi.id) { moi.gelJusqua = fin; moi.gelFacteur = f; annonceObjet(f < 0.2 ? '🍄 Pris dans les ronces !' : '❄️ Tu es ralenti !'); }
+      if (moi && m.id === moi.id) { moi.gelJusqua = fin; moi.gelFacteur = f; annonceObjet(f < 0.2 ? '⛔ Tu es bloqué sur place !' : '🐌 Tu es ralenti !'); }
       effetsPouvoirs.geles.set(m.id, { fin, ronces: f < 0.2 });
       break;
     }
     case 'pousse': // bourrasque de Zephyr (vent)
-      if (moi && m.id === moi.id && Array.isArray(m.v) && moi.ph === 'sol') { moi.vx = +m.v[0] || 0; moi.vy = +m.v[1] || 0; moi.vz = +m.v[2] || 0; moi.auSol = false; moi.sansChute = true; moi.accroupi = false; annonceObjet('🌪️ Emporté par une bourrasque !'); }
+      if (moi && m.id === moi.id && Array.isArray(m.v) && moi.ph === 'sol') { moi.vx = +m.v[0] || 0; moi.vy = +m.v[1] || 0; moi.vz = +m.v[2] || 0; moi.auSol = false; moi.sansChute = true; moi.accroupi = false; annonceObjet('💨 Tu es projeté !'); }
       break;
     case 'piege+': creerPiege(m.p); break;
     case 'piege-': retirerPiege(m); break;
+    case 'buffFin': { // un coup de pouce qui s'arrête avant la fin (un joueur invisible vient de faire des dégâts)
+      const b = effetsPouvoirs.buffs.get(m.id);
+      effetsPouvoirs.buffs.delete(m.id);
+      if (moi && m.id === moi.id) { moi.buff = null; if (b && b.invisible) annonceObjet('👀 Tu es de nouveau visible'); }
+      break;
+    }
     case 'defis': {
       const avant = etat.defis ? DEFIS_ENTRAINEMENT.filter(x => etat.defis[x.id] >= x.n).length : 0;
       etat.defis = m.d && typeof m.d === 'object' ? m.d : etat.defis;
@@ -1155,6 +1432,15 @@ function recevoir(m) {
     case 'fin': recevoirFin(m); break;
     case 'retourSalon': retourSalon(); break;
     case 'chat': recevoirChat(m); break;
+    case 'eclats': { // éclats d'esprit gagnés dans cette partie (comptés par l'hôte) : le jeu les envoie au serveur, qui les garde
+      if (!moi) break;
+      const n = Math.max(0, Math.min(9999, m.n | 0));
+      if (n > (etat.eclatsGagnes | 0)) { const el = $('#eclats'); el.classList.remove('gagne'); void el.offsetWidth; el.classList.add('gagne'); }
+      etat.eclatsGagnes = n;
+      if (m.victoire) ajouterFil(`💠 Victoire : +${m.plus | 0} éclats d'esprit`, true);
+      envoyerGainsEclats();
+      break;
+    }
     case 'pong': etat.ping = Math.round(performance.now() - (+m.c || 0)); break;
     case 'exclu': etat.exclu = true; location.href = location.pathname + '?erreur=exclu'; break;
     case 'cargo': if (m.c && etat.monde) creerCargo(m.c); break;
@@ -1182,7 +1468,10 @@ function recevoir(m) {
       lancerProjectile({ type: m.type, o: m.o, v: m.v, duree: +m.duree || 0, par: m.par, mien: false });
       if (m.type === 'roquette') sonLoin('roquette', distCam(m.o[0], m.o[1], m.o[2]));
       break;
-    case 'boum': explosionVisuelle(+m.x, +m.y, +m.z, +m.r || 4); visuSon(+m.x, +m.z, 'boum'); break;
+    case 'boum':
+      if (pouvoirDe(m.e)) explosionEsprit(+m.x, +m.y, +m.z, +m.r || 4, m.e); else explosionVisuelle(+m.x, +m.y, +m.z, +m.r || 4);
+      visuSon(+m.x, +m.z, 'boum');
+      break;
   }
 }
 
@@ -1191,7 +1480,9 @@ function distCam(x, y, z) { return Math.hypot(camera.position.x - x, camera.posi
 function debutPartie(m) {
   preparerMonde(m.graine);
   etat.options = m.options || {};
+  envoyerGainsEclats(true); // les éclats de la partie d'avant qui ne sont pas encore partis (avant de changer de partie)
   etat.partieId = typeof m.partieId === 'string' ? m.partieId : null;
+  etat.eclatsGagnes = 0; etat.eclatsCredites = 0; etat.eclatsPlafondDit = false; chargerSoldeEclats();
   // Cargaison : l'hôte demande au serveur s'il y a un événement en cours (le serveur choisit l'esprit et la récompense)
   if (reseau.estHote && hote && etat.partieId && !etat.options.entrainement) {
     const humains = (m.joueurs || []).filter(j => !j.bot && !j.mannequin).length;
@@ -1261,6 +1552,11 @@ function recevoirSnap(m) {
 }
 
 // Mêlée : quelqu’un est éliminé mais reste en jeu (il réapparaît). Le tireur marque un point.
+// Krakou, Dunou : chaque élimination donne des matériaux
+function matsElimination() {
+  const moi = etat.moi, n = don(moi.esprit, 'killMats', 0);
+  if (n && moi.ph !== 'mort') { moi.mats = Math.min(999, moi.mats + n); annonceObjet(`+${n} 🪵`); }
+}
 function recevoirFrag(m) {
   if (m.k) etat.kills.set(m.k, m.kills || 0);
   const inf = etat.infos.get(m.v), moi = etat.moi;
@@ -1274,12 +1570,12 @@ function recevoirFrag(m) {
   ajouterFil(texte, moi && (m.k === moi.id || m.v === moi.id));
   if (!moi) return;
   if (m.k === moi.id) {
-    moi.kills++;
+    moi.kills++; matsElimination();
     son('elimination');
     const reste = (etat.options.objectif | 0) - moi.kills;
     banniere('💀 ÉLIMINATION', `${nomDe(m.v)} · ${moi.kills} / ${etat.options.objectif | 0}${reste === 1 ? ' · plus qu’une !' : ''}`);
   }
-  if (m.v === moi.id) { moi.conso = null; son('aie', 0.8); annonce(m.k ? `💀 Éliminé par ${nomDe(m.k)}` : '💀 Éliminé', 2, '#ff7b7b'); }
+  if (m.v === moi.id) { moi.conso = null; moi.export = null; moi.buff = null; son('aie', 0.8); annonce(m.k ? `💀 Éliminé par ${nomDe(m.k)}` : '💀 Éliminé', 2, '#ff7b7b'); }
 }
 
 function recevoirElim(m) {
@@ -1291,6 +1587,7 @@ function recevoirElim(m) {
   const inf = etat.infos.get(m.v); if (inf) inf.vivant = false;
   const o = etat.autres.get(m.v);
   if (o) { o.vivant = false; o.modele.visible = false; explosionElimination(o.x, o.y, o.z, o.couleur); }
+  effetsPouvoirs.buffs.delete(m.v);
   const moi = etat.moi;
   // Fil des éliminations
   let texte;
@@ -1306,7 +1603,7 @@ function recevoirElim(m) {
   ajouterFil(texte, moi && (m.k === moi.id || m.v === moi.id));
   if (!moi) return;
   if (m.k === moi.id) {
-    moi.kills++;
+    moi.kills++; matsElimination();
     son('elimination');
     // séries d'éliminations
     moi.killsT = (moi.killsT || []).filter(t => etat.temps - t < 8);
@@ -1325,9 +1622,10 @@ function recevoirElim(m) {
 
 function mourir(m) {
   const moi = etat.moi;
+  envoyerGainsEclats(true);
   moi.ph = 'mort'; moi.place = m.place; moi.pv = 0; moi.tempsSurvie = etat.temps; moi.accroupi = false;
   reglerVent(0);
-  moi.construction = null; moi.conso = null;
+  moi.construction = null; moi.conso = null; moi.buff = null; moi.export = null;
   moi.modele.visible = false;
   moi.emote = null;
   son('mort');
@@ -1370,6 +1668,7 @@ function changerSpectateur(prefere) {
 }
 
 function recevoirFin(m) {
+  setTimeout(() => envoyerGainsEclats(true), 400); // les éclats de la partie (et ceux de la victoire) partent au serveur
   etat.fini = true;
   const moi = etat.moi;
   const gagnants = Array.isArray(m.gagnants) ? m.gagnants : (m.gagnant ? [m.gagnant] : []);
@@ -1576,6 +1875,7 @@ function recevoirObjet(b) {
   son('ramasser');
   if (def.type === 'munitions') { moi.munitions = Math.min(999, moi.munitions + (b.qte || 30)); annonceObjet(`+${b.qte || 30} munitions`); return; }
   if (def.type === 'materiaux') { moi.mats = Math.min(999, moi.mats + (b.qte || 30)); annonceObjet(`+${b.qte || 30} matériaux`); return; }
+  if (def.type === 'eclats') { son('scintille_eclat'); annonceObjet(`+${b.qte || 1} 💠 éclat${(b.qte || 1) > 1 ? 's' : ''} d'esprit`); return; } // le compte vient de l'hôte
   if (def.type === 'conso' || def.type === 'lancer') {
     let qte = b.qte || 1;
     for (let s = 1; s < 6 && qte > 0; s++) {
@@ -1661,6 +1961,7 @@ function aideHTML() {
   <tr><td><kbd>1</kbd>…<kbd>6</kbd> / molette</td><td>Changer d'objet (1 = pioche)</td></tr>
   <tr><td>${k('KeyF')} ${k('KeyC')} ${k('KeyV')}</td><td>Construire un <b>mur</b>, une <b>rampe</b>, un <b>sol</b> (10 🪵)</td></tr>
   <tr><td>${k('KeyE')}</td><td>Ramasser · ouvrir un coffre · capturer un esprit</td></tr>
+  <tr><td>${k('KeyU')}</td><td>Améliorer ton esprit sur un autel avec tes éclats 💠 (★★ de ${PRIX_ECLATS.commun[0]} à ${PRIX_ECLATS.legendaire[0]} 💠, ★★★ de ${PRIX_ECLATS.commun[1]} à ${PRIX_ECLATS.legendaire[1]} 💠, selon la rareté de l'esprit dans ta collection)</td></tr>
   <tr><td>${k('KeyQ')}</td><td>Pouvoir de ton esprit élémentaire (sanctuaires ◆ sur la carte)</td></tr>
   <tr><td>${k('KeyR')} · ${k('KeyG')}</td><td>Recharger · jeter l'objet</td></tr>
   <tr><td>${k('KeyB')} · ${k('KeyX')}</td><td>Émote (danse) 💃 · s'accroupir</td></tr>
@@ -1709,6 +2010,7 @@ function actionTouche(c, e = { key: '', preventDefault() {} }) {
   else if (c === 'KeyR') recharger();
   else if (c === 'KeyE') interagir();
   else if (c === 'KeyQ') utiliserPouvoir();
+  else if (c === 'KeyU') ameliorerEsprit();
   else if (c === 'KeyG') { if (moi.ph === 'sol') jeterSlot(moi.slot); }
   else if (c === 'KeyM' || (!touchesPerso().carte && c === e.code && (e.key === 'm' || e.key === 'M'))) {
     etat.grandeCarte = !etat.grandeCarte;
@@ -1805,7 +2107,7 @@ function recharger() {
   const def = OBJETS[it.objet];
   if (def.type !== 'arme' || moi.rechargeT > 0 || it.mun >= def.chargeur) return;
   if (moi.munitions <= 0) { annonceObjet('Plus de munitions !'); son('vide'); return; }
-  moi.rechargeT = def.recharge * (moi.esprit && moi.esprit.type === 'temps' ? TEMPS.recharge : 1); // Tic-Tac (temps) : 30 % plus vite
+  moi.rechargeT = def.recharge * (moi.esprit && moi.esprit.type === 'temps' ? plusFort(1, TEMPS.recharge, forceEsprit(moi.esprit)) : 1) * don(moi.esprit, 'recharge', 1); // Tic-Tac (temps) : 30 % plus vite
   moi.rechargeTotal = moi.rechargeT;
   son('recharge', 0.7);
 }
@@ -1884,7 +2186,7 @@ function dispersionActuelle(def) {
   if (v > 1) d += 0.015;
   if (!moi.auSol) d += 0.03;
   if (moi.accroupi && moi.auSol) d *= 0.6;
-  return d;
+  return d * don(moi.esprit, 'precision', 1); // Néon, Prisma : des tirs plus précis
 }
 
 // Lance un rayon depuis la caméra : renvoie le point touché + qui/quoi
@@ -1992,13 +2294,13 @@ function coupPioche() {
   const b = h.boite;
   if (b && b.type === 'arbre') {
     reseau.versHote({ t: 'recolte', type: 'arbre', id: b.id, deg: 25 });
-    const gain = 6 * (moi.esprit && moi.esprit.type === 'nature' ? NATURE.recolte : 1); // Racine (nature) : 2 fois plus
+    const gain = Math.round(6 * (moi.esprit && moi.esprit.type === 'nature' ? plusFort(1, NATURE.recolte, forceEsprit(moi.esprit)) : 1) * don(moi.esprit, 'recolte', 1)); // Racine (nature) : 2 fois plus
     moi.mats = Math.min(999, moi.mats + gain);
     eclats(r.x, r.y, r.z, '#8a5a2b', 5, 4); son('bois');
     annonceObjet(`+${gain} 🪵`);
   } else if (b && b.type === 'rocher') {
     reseau.versHote({ t: 'recolte', type: 'rocher', id: b.id, deg: 25 });
-    const gain = 8 * (moi.esprit && moi.esprit.type === 'nature' ? NATURE.recolte : 1);
+    const gain = Math.round(8 * (moi.esprit && moi.esprit.type === 'nature' ? plusFort(1, NATURE.recolte, forceEsprit(moi.esprit)) : 1) * don(moi.esprit, 'recolte', 1));
     moi.mats = Math.min(999, moi.mats + gain);
     eclats(r.x, r.y, r.z, '#9a9ea6', 5, 4); son('pierre');
     annonceObjet(`+${gain} 🪵`);
@@ -2056,7 +2358,7 @@ function commencerConso() {
   const plafond = def.plafond || 100;
   if (def.pv && moi.pv >= plafond) { annonceObjet(def.plafond ? `${def.nom} : soigne jusqu'à ${plafond} PV seulement` : 'Ta vie est déjà au maximum'); moi.tirT = 0.5; return; }
   if (def.bouclier && moi.bouclier >= plafond) { annonceObjet(def.plafond ? `${def.nom} : bouclier jusqu'à ${plafond} seulement` : 'Ton bouclier est déjà au maximum'); moi.tirT = 0.5; return; }
-  moi.conso = { slot: moi.slot, t: 0, duree: def.duree };
+  moi.conso = { slot: moi.slot, t: 0, duree: def.duree * don(moi.esprit, 'conso', 1) }; // Bobo, Ondine, Voltix : on se soigne plus vite
   son('soin', 0.5);
 }
 
@@ -2134,9 +2436,15 @@ function majMoi(dt) {
       }
     }
   }
+  if (moi.export && moi.ph !== 'sol') moi.export = null;
   if (moi.conso) {
     if (moi.slot !== moi.conso.slot || !moi.inv[moi.slot]) moi.conso = null;
     else { moi.conso.t += dt; if (moi.conso.t >= moi.conso.duree) finirConso(); }
+  }
+  // Chênou : des matériaux qui poussent tout seuls ; Cartou : des munitions qui reviennent
+  if (moi.esprit) {
+    moi.donT = (moi.donT || 0) + dt;
+    if (moi.donT >= 1) { moi.donT -= 1; moi.mats = Math.min(999, moi.mats + don(moi.esprit, 'mats', 0)); moi.munitions = Math.min(999, moi.munitions + don(moi.esprit, 'munitions', 0)); }
   }
 
   // Direction voulue avec le clavier
@@ -2186,8 +2494,10 @@ function majMoi(dt) {
       if (moi.visee) vit = Math.min(vit, 4.4);
       if (moi.conso) vit = 3.2;
       const monEsprit = moi.esprit ? moi.esprit.type : null;
-      if (moi.dansEau && monEsprit !== 'eau') vit *= 0.55; // Goutte (eau) : on nage aussi vite qu'on court
-      if (monEsprit === 'mobilite') vit *= VITESSE_MOBILITE;
+      if (moi.dansEau && monEsprit !== 'eau' && !don(moi.esprit, 'nage')) vit *= 0.55; // Goutte (eau) : on nage aussi vite qu'on court
+      if (monEsprit === 'mobilite') vit *= plusFort(1, VITESSE_MOBILITE, forceEsprit(moi.esprit));
+      vit *= don(moi.esprit, 'vitesse', 1); // les 50 esprits « à réglages »
+      if (moi.buff && etat.temps < moi.buff.fin && moi.buff.vitesse) vit *= moi.buff.vitesse; // élan d'un pouvoir (Survolté, Traque, Furie…)
       const gele = etat.temps < (moi.gelJusqua || 0) ? moi.gelFacteur : 1; // gelé par Givrette, ou pris dans des ronces
       vit *= gele;
       const bulle = etat.temps < (moi.bulleJusqua || 0);
@@ -2195,17 +2505,17 @@ function majMoi(dt) {
       moi.histT = (moi.histT || 0) + dt;
       if (moi.histT >= 0.25) { moi.histT = 0; (moi.historique = moi.historique || []).push({ t: etat.temps, x: moi.x, y: moi.y, z: moi.z }); while (moi.historique.length && etat.temps - moi.historique[0].t > 6) moi.historique.shift(); }
       const k = moi.auSol ? Math.min(1, dt * 14) : Math.min(1, dt * 3);
-      if (moi.dash && etat.temps < moi.dash.fin) { moi.vx = moi.dash.fx * ETOILE.distance / ETOILE.duree; moi.vz = moi.dash.fz * ETOILE.distance / ETOILE.duree; if (moi.vy < 0) moi.vy = 0; } // Lumi : étoile filante
+      if (moi.dash && etat.temps < moi.dash.fin) { const vd = moi.dash.v || ETOILE.distance / ETOILE.duree; moi.vx = moi.dash.fx * vd; moi.vz = moi.dash.fz * vd; if (moi.vy < 0) moi.vy = 0; } // Lumi : étoile filante
       else {
         if (moi.dash) { moi.dash = null; moi.vx *= 0.2; moi.vz *= 0.2; }
         moi.vx += (dx * vit - moi.vx) * k;
         moi.vz += (dz * vit - moi.vz) * k;
       }
       // saut : plus haut avec Zephyr (vent), très haut dans la bulle de Goutte ; impossible dans les ronces
-      if (touches.has('Space') && moi.auSol && gele > 0.2) { moi.vy = bulle ? EAU.saut : monEsprit === 'vent' ? VENT.saut : 9.2; moi.auSol = false; moi.accroupi = false; }
+      if (touches.has('Space') && moi.auSol && gele > 0.2) { moi.vy = bulle ? EAU.saut : monEsprit === 'vent' ? plusFort(9.2, VENT.saut, forceEsprit(moi.esprit)) : don(moi.esprit, 'saut', 9.2); moi.auSol = false; moi.accroupi = false; }
       // Filou (mobilité) : double saut (appuyer encore une fois en l'air)
-      const espace = touches.has('Space');
-      if (espace && !moi.espacePrec && !moi.auSol && !moi.sansChute && moi.esprit && moi.esprit.type === 'mobilite' && !moi.doubleSaut && moi.vy < 7) {
+      const espace = touches.has('Space'), appuiNeuf = espace && !moi.espacePrec;
+      if (appuiNeuf && !moi.auSol && !moi.sansChute && moi.esprit && (moi.esprit.type === 'mobilite' || don(moi.esprit, 'doubleSaut')) && !moi.doubleSaut && moi.vy < 7) {
         moi.vy = 9.5; moi.doubleSaut = true; son('saut', 0.5);
         for (let i = 0; i < 12; i++) particules.ajouter({ x: moi.x, y: moi.y + 0.1, z: moi.z, vx: (Math.random() - 0.5) * 4, vy: -0.5, vz: (Math.random() - 0.5) * 4, couleur: '#eaffe0', forme: 2, taille: 0.3, tailleFin: 0.05, vie: 0.5, additif: true });
       }
@@ -2218,7 +2528,7 @@ function majMoi(dt) {
       else if (etaitEnLair && moi.auSol) {
         if (vyAvant < -9) poussiere(moi.x, moi.y, moi.z, 8);
         // dégâts de chute (sauf après un champignon)
-        if (vyAvant < -17 && !moi.sansChute && !moi.dansEau && !etat.options.entrainement && !etat.regles.sansChute && !(moi.esprit && moi.esprit.type === 'mobilite')) { reseau.versHote({ t: 'chute', deg: Math.round((-vyAvant - 17) * 5) }); son('chute'); etat.secousse = Math.max(etat.secousse, 0.4); }
+        if (vyAvant < -17 && !moi.sansChute && !moi.dansEau && !etat.options.entrainement && !etat.regles.sansChute && !(moi.esprit && (moi.esprit.type === 'mobilite' || don(moi.esprit, 'chute')))) { reseau.versHote({ t: 'chute', deg: Math.round((-vyAvant - 17) * 5) }); son('chute'); etat.secousse = Math.max(etat.secousse, 0.4); }
         moi.sansChute = false;
       }
       // champignons rebondissants
@@ -2232,7 +2542,8 @@ function majMoi(dt) {
         }
       }
       // deltaplane après un rebond
-      if (moi.sansChute && !moi.auSol && moi.vy < 0 && touches.has('Space') && moi.y - monde.hauteurTerrain(moi.x, moi.z) > 5) { moi.ph = 'planeur'; son('saut', 0.5); }
+      // (Nimbo : un nouvel appui sur Espace en l'air suffit, même sans rebond)
+      if (((moi.sansChute && touches.has('Space')) || (appuiNeuf && don(moi.esprit, 'planeur'))) && !moi.auSol && moi.vy < 0 && moi.y - monde.hauteurTerrain(moi.x, moi.z) > 5) { moi.ph = 'planeur'; son('saut', 0.5); }
       // bruits de pas
       const vh = Math.hypot(moi.vx, moi.vz);
       if (moi.auSol) etat.stats.distance += vh * dt;
@@ -2248,7 +2559,7 @@ function majMoi(dt) {
       if (moi.export) {
         const sa = etat.sanctuaires.get(moi.export.s);
         const pres = sa && moi.esprit && Math.hypot(sa.x - moi.x, sa.z - moi.z) < PORTEE_CAPTURE + 0.6 && Math.abs(sa.y - moi.y) < 3;
-        if (!pres) { moi.export = null; annonceObjet('✨ Export annulé : reste près de l’autel'); }
+        if (!pres) { moi.export = null; if (moi.esprit) annonceObjet('✨ Export annulé : reste près de l’autel'); }
         else if (!moi.export.envoye) {
           moi.export.t += dt;
           if (Math.random() < dt * 14) etincellesEsprit(sa.x, sa.y + sa.mesh.userData.hauteur, sa.z, moi.esprit.type, 1, 2.5);
@@ -2405,12 +2716,14 @@ function aPortee(moi, x, y, z) {
 function chercherInteraction() {
   const moi = etat.moi;
   let best = null, bd = 2.7;
+  const aimant = don(moi.esprit, 'aimant', 0); // Magno : les munitions et les matériaux viennent de plus loin
   for (const b of etat.butins.values()) {
     const d = Math.hypot(b.x - moi.x, b.y - moi.y - 0.3, b.z - moi.z);
-    if (d > 2.8) continue;
     const def = OBJETS[b.objet];
+    if (aimant && d < aimant && d >= 1.8 && (def.type === 'munitions' || def.type === 'materiaux' || def.type === 'eclats')) { if (!b.demande || performance.now() - b.demande > 1500) demanderRamassage(b); continue; }
+    if (d > 2.8) continue;
     if (!aPortee(moi, b.x, b.y + 0.5, b.z)) continue;
-    if ((def.type === 'munitions' || def.type === 'materiaux') && d < 1.8) {
+    if ((def.type === 'munitions' || def.type === 'materiaux' || def.type === 'eclats') && d < 1.8) {
       if (!b.demande || performance.now() - b.demande > 1500) demanderRamassage(b);
       continue;
     }
@@ -2449,6 +2762,73 @@ function chercherInteraction() {
     if (p.vers >= 0 && d < 2.1 && d < bd + 0.3) { bd = d; best = { type: 'passage', p }; }
   }
   etat.interaction = best;
+  // améliorer son esprit : sur n'importe quel vrai autel (pas sur un esprit tombé), à côté du reste (autre touche)
+  etat.amelioration = null;
+  if (moi.esprit && niveauDe(moi.esprit) < NIVEAUX.max) for (const sa of etat.sanctuaires.values()) {
+    if (sa.tombe || Math.hypot(sa.x - moi.x, sa.z - moi.z) >= PORTEE_CAPTURE || Math.abs(sa.y - moi.y) >= 3) continue;
+    etat.amelioration = { s: sa };
+    break;
+  }
+}
+// ---------- Éclats d'esprit : gardés sur le serveur d'une partie à l'autre ----------
+// etat.eclatsSolde = solde du serveur ; etat.eclatsGagnes = gagnés dans cette partie (dit par l'hôte) ;
+// etat.eclatsCredites = ceux de cette partie que le serveur a déjà ajoutés au solde.
+const rareteDe = type => meilleuresRaretes(profil.collectionEsprits)[type] || 'commun'; // rareté de cet esprit dans ma collection
+const eclatsAffiches = () => (etat.eclatsSolde | 0) + Math.max(0, (etat.eclatsGagnes | 0) - (etat.eclatsCredites | 0));
+function chargerSoldeEclats() {
+  if (!URL_API) return;
+  soldeEclats().then(d => { etat.eclatsSolde = d.solde | 0; majSoldeMenu(); }).catch(() => { /* pas de serveur : on garde ce qu'on sait */ });
+}
+function majSoldeMenu() {
+  const el = $('#soldeEclatsMenu');
+  if (el) el.textContent = etat.eclatsSolde === undefined || etat.eclatsSolde === null ? '' : `💠 Tu as ${etat.eclatsSolde} éclats d'esprit (gardés d'une partie à l'autre) pour améliorer tes esprits pendant les parties.`;
+}
+// Annonce au serveur ce que j'ai gagné dans la partie (le total : il n'ajoute que ce qui manque). Regroupé toutes les 2,5 s.
+let minuteurEclats = null;
+function envoyerGainsEclats(vite = false) {
+  clearTimeout(minuteurEclats);
+  if (!URL_API || !etat.partieId || etat.options.entrainement || (etat.eclatsGagnes | 0) <= (etat.eclatsCredites | 0)) return Promise.resolve();
+  if (!vite) { minuteurEclats = setTimeout(() => envoyerGainsEclats(true), 2500); return Promise.resolve(); }
+  const partie = etat.partieId, total = etat.eclatsGagnes | 0;
+  return gagnerEclats({ partie_id: partie, total }).then(d => {
+    etat.eclatsSolde = d.solde | 0;
+    if (etat.partieId !== partie) return;
+    etat.eclatsCredites = Math.max(etat.eclatsCredites | 0, d.credites | 0);
+    if (d.plafond) {
+      etat.eclatsCredites = Math.max(etat.eclatsCredites, total); // le reste ne sera pas compté : on ne le montre plus
+      if (!etat.eclatsPlafondDit) { etat.eclatsPlafondDit = true; ajouterFil('💠 Limite d\'éclats atteinte (150 par partie, 600 par jour) : les autres ne comptent pas', true); }
+    }
+    majSoldeMenu();
+  }).catch(() => { if (etat.partieId === partie) minuteurEclats = setTimeout(() => envoyerGainsEclats(true), 10000); });
+}
+// Améliorer mon esprit : je paie au serveur (il calcule le prix selon la rareté), puis je demande à l'hôte.
+// En Entraînement c'est gratuit (rien n'est payé).
+async function ameliorerEsprit() {
+  const moi = etat.moi, am = etat.amelioration;
+  if (!moi || moi.ph !== 'sol' || !moi.esprit) return;
+  if (!am) { annonceObjet('⬆️ Va sur un autel pour améliorer ton esprit'); return; }
+  const niv = niveauDe(moi.esprit);
+  if (niv >= NIVEAUX.max) { annonceObjet(`✨ Ton esprit est déjà au niveau maximum ${NIVEAUX.etoiles[NIVEAUX.max]}`); return; }
+  const demander = prix => reseau.versHote({ t: 'ameliorer', id: am.s.id, x: arrondi(moi.x), y: arrondi(moi.y), z: arrondi(moi.z), paye: !!prix, prix: prix | 0 });
+  if (etat.options.entrainement) {
+    if (performance.now() - (moi.amelioDemande || 0) < 1000) return;
+    moi.amelioDemande = performance.now(); demander(0); return;
+  }
+  if (moi.amelioEnCours) return;
+  const type = moi.esprit.type, rar = rareteDe(type), prix = prixAmelioration(rar, niv + 1);
+  if (!URL_API || !etat.partieId) { annonceObjet('💠 Le serveur des éclats n\'est pas joignable : amélioration impossible pour l\'instant'); return; }
+  if (eclatsAffiches() < prix) { annonceObjet(`💠 Il te faut ${prix} éclats d'esprit (tu en as ${eclatsAffiches()}) : ouvre des coffres, élimine des adversaires`); son('vide', 0.6); return; }
+  const demande = [...crypto.getRandomValues(new Uint8Array(12))].map(o => o.toString(16).padStart(2, '0')).join('');
+  moi.amelioEnCours = true;
+  annonceObjet('💠 Paiement…');
+  try {
+    await envoyerGainsEclats(true); // d'abord les éclats de cette partie que le serveur n'a pas encore
+    const d = await depenserEclats({ partie_id: etat.partieId, demande, type, niveau: niv + 1, rarete: rar });
+    etat.eclatsSolde = d.solde | 0; majSoldeMenu();
+    if (!d.ok) { annonceObjet(`💠 Il te faut ${d.prix} éclats d'esprit pour cet esprit ${(RARETES_ESPRIT[d.rarete] || {}).nom || ''} (tu en as ${d.solde})`); son('vide', 0.6); return; }
+    if (etat.moi === moi && moi.esprit && moi.esprit.type === type) demander(d.prix);
+  } catch (e) { annonceObjet('💠 ' + e.message); }
+  finally { moi.amelioEnCours = false; }
 }
 
 // ---------- Les autres joueurs ----------
@@ -2469,7 +2849,7 @@ function majAutres(dt) {
     const v = Math.hypot(a.x - ox, a.z - oz) / Math.max(dt, 0.001);
     a.vitesse = a.vitesse * 0.85 + v * 0.15;
     const m = a.modele;
-    m.visible = c.ph !== 'dirigeable';
+    m.visible = c.ph !== 'dirigeable' && !(estInvisible(a.id) && !a.marqueur); // Suie, Shino : invisibles, sauf pour leurs coéquipiers
     m.position.set(a.x, a.y, a.z);
     m.rotation.y = a.ry;
     const [obj, rar] = String(c.a || '').split(':');
@@ -2693,8 +3073,10 @@ function dessinerCarte(cv, centreX, centreZ, vue, grand) {
     g.fillStyle = '#ffd23f'; g.strokeStyle = '#000'; g.lineWidth = 2;
     g.beginPath(); g.moveTo(x, y); g.lineTo(x - 6 * k, y - 11 * k); g.arc(x, y - 13 * k, 6.5 * k, Math.PI * 0.85, Math.PI * 2.15); g.closePath(); g.fill(); g.stroke();
   }
-  if (moi && moi.esprit && moi.esprit.type === 'vision' && moi.ph !== 'mort') {
-    const loin = etat.temps < (etat.visionJusqua || 0) ? VISION.pouvoir : VISION.passif;
+  // Zyeuto, Résono, Clac : les ennemis proches ; plus loin pendant un pouvoir de vision (Zyeuto, Houhou)
+  const loinEnnemis = moi && moi.esprit && moi.ph !== 'mort' ? (etat.temps < (etat.visionJusqua || 0) ? etat.visionRayon || VISION.pouvoir : moi.esprit.type === 'vision' ? Math.round(VISION.passif * forceEsprit(moi.esprit)) : don(moi.esprit, 'carteEnnemis', 0)) : 0;
+  if (loinEnnemis) {
+    const loin = loinEnnemis;
     for (const a of etat.autres.values()) {
       if (!a.vivant || !a.cible || a.marqueur || etat.orbes.get(a.id)?.type === 'ombre' || Math.hypot(a.x - moi.x, a.z - moi.z) > loin) continue;
       const [x, y] = P(a.x, a.z);
@@ -2702,9 +3084,10 @@ function dessinerCarte(cv, centreX, centreZ, vue, grand) {
     }
   }
   // Pépite (chance) : les coffres encore fermés autour de moi
-  if (moi && moi.esprit && moi.esprit.type === 'chance' && moi.ph !== 'mort' && etat.monde) {
+  const loinCoffres = moi && moi.esprit && moi.ph !== 'mort' ? (moi.esprit.type === 'chance' ? Math.round(CHANCE.passif * forceEsprit(moi.esprit)) : don(moi.esprit, 'carteCoffres', 0)) : 0; // Pépite, Houhou, Coco
+  if (loinCoffres && etat.monde) {
     for (const c of etat.monde.coffres) {
-      if (c.ouvert || Math.hypot(c.x - moi.x, c.z - moi.z) > CHANCE.passif) continue;
+      if (c.ouvert || Math.hypot(c.x - moi.x, c.z - moi.z) > loinCoffres) continue;
       const [x, y] = P(c.x, c.z), t = grand ? 4 : 3;
       g.fillStyle = '#ffc83d'; g.strokeStyle = '#5a3d00'; g.lineWidth = 1.5; g.fillRect(x - t, y - t, t * 2, t * 2); g.strokeRect(x - t, y - t, t * 2, t * 2);
     }
@@ -2842,6 +3225,7 @@ function majHUD(dt) {
   // battement de cœur quand la vie est basse
   if (moi.ph === 'sol' && moi.pv > 0 && moi.pv <= 25) { etat.coeurT = (etat.coeurT || 0) - dt; if (etat.coeurT <= 0) { etat.coeurT = 0.95; son('coeur', 0.8); } }
   $('#mats b').textContent = moi.mats;
+  $('#eclats b').textContent = eclatsAffiches();
   // Viseur
   let ecart = 6;
   if (it && OBJETS[it.objet].type === 'arme' && !moi.construction) {
@@ -2892,13 +3276,23 @@ function majHUD(dt) {
         : moi.export ? `✨ Export de ${nom}… reste près de l’autel` : `${kE} Exporter ${nom} vers ta collection <small>(reste ${EXPORT.duree} s près de l’autel)</small>`;
     }
     else if (ia.type === 'passage') inv.innerHTML = `${kE} Prendre le <b style="color:#7fe9ff">passage secret</b> 🕳️ <small>→ ${ia.p.nom}</small>`;
-    else if (ia.type === 'esprit') { const d = ESPRITS[ia.s.type]; inv.innerHTML = `${kE} Capturer <b style="color:${d.couleur}">${d.icone} ${d.nom}</b> <small>(esprit de ${d.role.toLowerCase()})</small>`; }
+    else if (ia.type === 'esprit') { const d = ESPRITS[ia.s.type]; inv.innerHTML = `${kE} Capturer <b style="color:${d.couleur}">${d.icone} ${d.nom}${ia.s.niv > 1 ? ' <span style="color:#ffd23f">' + NIVEAUX.etoiles[ia.s.niv] + '</span>' : ''}</b> <small>(esprit de ${d.role.toLowerCase()})</small>`; }
     else {
       const def = OBJETS[ia.b.objet];
       const r = RARETES[ia.b.rarete || 0];
       inv.innerHTML = `${kE} Ramasser <span style="color:${r.couleur}">${def.nom}${def.type === 'arme' ? ' (' + r.nom + ')' : ''}${ia.b.qte > 1 ? ' ×' + ia.b.qte : ''}</span>`;
     }
   } else inv.style.display = 'none';
+  // Invitation (U) : améliorer son esprit sur un autel
+  const inv2 = $('#invite2'), am = moi.ph === 'sol' && !moi.export && moi.esprit ? etat.amelioration : null;
+  if (am) {
+    const niv = niveauDe(moi.esprit), d = ESPRITS[moi.esprit.type], rar = rareteDe(moi.esprit.type), r = RARETES_ESPRIT[rar];
+    const gratuit = !!etat.options.entrainement, cout = prixAmelioration(rar, niv + 1), ok = gratuit || eclatsAffiches() >= cout;
+    const html = `${tactile ? '⬆️' : `<kbd>${L('KeyU')}</kbd>`} Améliorer <b style="color:${d.couleur}">${d.icone} ${d.nom}</b>${r ? ` <small style="color:${r.couleur}">${r.nom}</small>` : ''} → <b class="etoiles">${NIVEAUX.etoiles[niv + 1]}</b> <span class="prix">${gratuit ? 'gratuit ici' : cout + ' 💠'}</span>`;
+    if (inv2.dataset.html !== html) { inv2.innerHTML = html; inv2.dataset.html = html; }
+    inv2.classList.toggle('pas-assez', !ok);
+    inv2.style.display = 'block';
+  } else inv2.style.display = 'none';
   // Dirigeable
   const id = $('#infoDirigeable');
   if (moi.ph === 'dirigeable') {
@@ -4080,6 +4474,9 @@ function initMenu() {
   $('#fermerCarte').onclick = () => { if (enJeu() && etat.grandeCarte) actionTouche('KeyM'); };
   // le texte « Ramasser / Ouvrir » se touche du doigt
   $('#invite').addEventListener('pointerdown', e => { e.stopPropagation(); if (enJeu()) interagir(); });
+  $('#invite2').addEventListener('pointerdown', e => { e.stopPropagation(); if (enJeu()) ameliorerEsprit(); });
+  $('[data-page="esprits"]')?.addEventListener('click', chargerSoldeEclats); // le solde d'éclats sur la page Esprits
+  chargerSoldeEclats();
   initTactile();
   cvGrande.addEventListener('contextmenu', e => e.preventDefault());
   $('#btnLancer').onclick = () => {

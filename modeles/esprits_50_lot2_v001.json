@@ -1,0 +1,428 @@
+{
+ "_aide": "10 entrées prêtes pour le tableau « esprits » d'integration.json (actif:false), même format que les 5 d'esprits_v003.glb. Les clés qui commencent par « _ » sont des notes. _effets_caches = objets à l'échelle 0,001 au repos, montrés par « activer » et « obtention ».",
+ "esprits": [
+  {
+   "id": "pile",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_pile",
+   "nom": "Voltix",
+   "couleur": "#b6ff3d",
+   "animations": {
+    "flotter": "pile_flotter",
+    "activer": "pile_activer",
+    "apparaitre": "pile_apparaitre",
+    "attente2": "pile_attente2",
+    "deplacer": "pile_deplacer",
+    "content": "pile_content",
+    "surpris": "pile_surpris",
+    "obtention": "pile_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.39,
+    "d": 0.33
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2488,
+   "_role": "Énergie",
+   "_description": "petite pile verte à culot noir, éclair sur le ventre, borne en métal avec des arcs électriques, barres de charge dans le dos, étincelles",
+   "_morceaux": [
+    "pile_arcs",
+    "pile_etincelles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_pile"
+  },
+  {
+   "id": "aimant",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_aimant",
+   "nom": "Magno",
+   "couleur": "#ff4d6d",
+   "animations": {
+    "flotter": "aimant_flotter",
+    "activer": "aimant_activer",
+    "apparaitre": "aimant_apparaitre",
+    "attente2": "aimant_attente2",
+    "deplacer": "aimant_deplacer",
+    "content": "aimant_content",
+    "surpris": "aimant_surpris",
+    "obtention": "aimant_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.41,
+    "h": 0.42,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2568,
+   "_role": "Aimant",
+   "_description": "aimant en fer à cheval rouge, arche en haut avec le visage, deux bouts argentés, lignes du champ magnétique entre les bouts, écrous attirés en orbite",
+   "_morceaux": [
+    "aimant_champ",
+    "aimant_ecrous"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_aimant"
+  },
+  {
+   "id": "plasma",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_plasma",
+   "nom": "Néon",
+   "couleur": "#c44dff",
+   "animations": {
+    "flotter": "plasma_flotter",
+    "activer": "plasma_activer",
+    "apparaitre": "plasma_apparaitre",
+    "attente2": "plasma_attente2",
+    "deplacer": "plasma_deplacer",
+    "content": "plasma_content",
+    "surpris": "plasma_surpris",
+    "obtention": "plasma_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.29,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2868,
+   "_role": "Plasma",
+   "_description": "boule de plasma violette parcourue de filaments lumineux en zigzag, arcs qui jaillissent, billes en orbite",
+   "_morceaux": [
+    "plasma_arcs",
+    "plasma_billes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_plasma"
+  },
+  {
+   "id": "nimbus",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_nimbus",
+   "nom": "Nimbo",
+   "couleur": "#dfe9f5",
+   "animations": {
+    "flotter": "nimbus_flotter",
+    "activer": "nimbus_activer",
+    "apparaitre": "nimbus_apparaitre",
+    "attente2": "nimbus_attente2",
+    "deplacer": "nimbus_deplacer",
+    "content": "nimbus_content",
+    "surpris": "nimbus_surpris",
+    "obtention": "nimbus_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.54,
+    "h": 0.29,
+    "d": 0.48
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3832,
+   "_role": "Nuage",
+   "_description": "petit nuage blanc tout doux à grosses joues roses, dessous plat un peu bleuté, petites mains, deux bouffées qui respirent, trois bébés nuages en orbite",
+   "_morceaux": [
+    "nimbus_bouffee_g",
+    "nimbus_bouffee_d",
+    "nimbus_nuageons"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_nimbus"
+  },
+  {
+   "id": "tornade",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_tornade",
+   "nom": "Tourbi",
+   "couleur": "#7fd6c9",
+   "animations": {
+    "flotter": "tornade_flotter",
+    "activer": "tornade_activer",
+    "apparaitre": "tornade_apparaitre",
+    "attente2": "tornade_attente2",
+    "deplacer": "tornade_deplacer",
+    "content": "tornade_content",
+    "surpris": "tornade_surpris",
+    "obtention": "tornade_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.42,
+    "h": 0.35,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2312,
+   "_role": "Tornade",
+   "_description": "mini tornade en entonnoir à 4 étages qui se déhanchent, trait de vent en spirale, débris emportés (caisse, planche, caillou)",
+   "_morceaux": [
+    "tornade_spirale",
+    "tornade_debris"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_tornade"
+  },
+  {
+   "id": "plume",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_plume",
+   "nom": "Piaf",
+   "couleur": "#ffe9c2",
+   "animations": {
+    "flotter": "plume_flotter",
+    "activer": "plume_activer",
+    "apparaitre": "plume_apparaitre",
+    "attente2": "plume_attente2",
+    "deplacer": "plume_deplacer",
+    "content": "plume_content",
+    "surpris": "plume_surpris",
+    "obtention": "plume_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.32,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2832,
+   "_role": "Plume",
+   "_description": "petit oiseau rond couleur crème : bec ouvert, huppe de 3 plumes, ailes à 3 plumes qui battent, queue en éventail, duvet qui vole autour",
+   "_morceaux": [
+    "plume_aile_g",
+    "plume_aile_d",
+    "plume_queue",
+    "plume_duvet"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_plume"
+  },
+  {
+   "id": "echo",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_echo",
+   "nom": "Résono",
+   "couleur": "#ffd24d",
+   "animations": {
+    "flotter": "echo_flotter",
+    "activer": "echo_activer",
+    "apparaitre": "echo_apparaitre",
+    "attente2": "echo_attente2",
+    "deplacer": "echo_deplacer",
+    "content": "echo_content",
+    "surpris": "echo_surpris",
+    "obtention": "echo_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.54,
+    "h": 0.4,
+    "d": 0.32
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2832,
+   "_role": "Écho",
+   "_description": "petite cloche dorée : lèvre, anneau, battant qui se balance dessous, ondes sonores de chaque côté ; activer : elle sonne",
+   "_morceaux": [
+    "echo_battant",
+    "echo_ondes_g",
+    "echo_ondes_d"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_echo"
+  },
+  {
+   "id": "vague",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_vague",
+   "nom": "Houlou",
+   "couleur": "#2f9bff",
+   "animations": {
+    "flotter": "vague_flotter",
+    "activer": "vague_activer",
+    "apparaitre": "vague_apparaitre",
+    "attente2": "vague_attente2",
+    "deplacer": "vague_deplacer",
+    "content": "vague_content",
+    "surpris": "vague_surpris",
+    "obtention": "vague_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.35,
+    "d": 0.45
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2606,
+   "_role": "Vague",
+   "_description": "petite vague qui s'enroule (silhouette de face), crête d'écume, reflets clairs, gouttes ; activer : elle déferle vers l'avant",
+   "_morceaux": [
+    "vague_ecume",
+    "vague_gouttes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_vague"
+  },
+  {
+   "id": "pluie",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_pluie",
+   "nom": "Ondine",
+   "couleur": "#6fc3ff",
+   "animations": {
+    "flotter": "pluie_flotter",
+    "activer": "pluie_activer",
+    "apparaitre": "pluie_apparaitre",
+    "attente2": "pluie_attente2",
+    "deplacer": "pluie_deplacer",
+    "content": "pluie_content",
+    "surpris": "pluie_surpris",
+    "obtention": "pluie_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.31,
+    "h": 0.43,
+    "d": 0.32
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2342,
+   "_role": "Pluie",
+   "_description": "petit parapluie cloche bleu à 8 pans avec un visage, tige et poignée jaune en J, gouttes de pluie qui tombent du bord ; activer : il tournoie",
+   "_morceaux": [
+    "pluie_gouttes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_pluie"
+  },
+  {
+   "id": "corail",
+   "actif": false,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_corail",
+   "nom": "Récifa",
+   "couleur": "#ff8fa3",
+   "animations": {
+    "flotter": "corail_flotter",
+    "activer": "corail_activer",
+    "apparaitre": "corail_apparaitre",
+    "attente2": "corail_attente2",
+    "deplacer": "corail_deplacer",
+    "content": "corail_content",
+    "surpris": "corail_surpris",
+    "obtention": "corail_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.38,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3076,
+   "_role": "Corail",
+   "_description": "coquillage rose à côtes en éventail, trois branches de corail sur le dessus aux bouts lumineux, bulles en orbite",
+   "_morceaux": [
+    "corail_branches",
+    "corail_bulles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_corail"
+  }
+ ]
+}

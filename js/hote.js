@@ -2,7 +2,7 @@
 // Il décide des dégâts, des constructions, du butin, de la zone et fait jouer les bots.
 import { hasard, angleVers, arrondi, borner } from './outils.js';
 import { OBJETS, RARETES, tirerButin, LISTE_ARMES, butinRavitaillement } from './armes.js';
-import { rayonBoite, DEMI } from './monde.js';
+import { rayonBoite, DEMI, CASE } from './monde.js';
 import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, VITESSES_ZONE, DEFIS_ENTRAINEMENT, posCargaison, CARGO } from './partage.js';
 import { nettoyerLook, lookAuHasard, LOOK_DEFAUT, lookAStaff, retirerStaffDuLook } from './boutique.js';
 import { URL_API, verifierStaff } from './retours.js';
@@ -15,8 +15,10 @@ function nettoyerEsp(e) {
 }
 const nettoyerRef = r => (typeof r === 'string' && /^[0-9a-f]{12}$/.test(r) ? r : null);
 const nettoyerBadge = b => (typeof b === 'string' && /^[0-9a-f]{32}$/.test(b) ? b : null);
-import { ESPRITS, TYPES_ESPRITS, placerSanctuaires, RECHARGE_SANCTUAIRE, DUREE_ESPRIT_TOMBE, EXPORT, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE,
-  FEU, GLACE, FOUDRE, VENT, NATURE, OMBRE, ETOILE } from './esprits.js';
+import { ESPRITS, espritAuHasard, placerSanctuaires, RECHARGE_SANCTUAIRE, DUREE_ESPRIT_TOMBE, EXPORT, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE,
+  FEU, GLACE, FOUDRE, VENT, NATURE, OMBRE, ETOILE, don, pouvoirDe, NIVEAUX, ECLATS, niveauDe, forceEsprit, rechargeEsprit, plusFort, pouvoirAuNiveau } from './esprits.js';
+// Les ronces de Racine, écrites comme les pièges des esprits « à réglages »
+const PIEGE_RONCES = { rayon: NATURE.rayon, degats: NATURE.degats, gel: [NATURE.duree, NATURE.facteur], vie: NATURE.vie, max: NATURE.max };
 
 const NOMS_BOTS = ['Patate', 'Croquette', 'Tartiflette', 'Grumeau', 'Moustache', 'Biscotte', 'Pépito', 'Cornichon',
   'Raclette', 'Chaussette', 'Gaufrette', 'Nougat', 'Saucisson', 'Crumble', 'Pistache', 'Bretzel', 'Kiwi', 'Radis',
@@ -132,7 +134,8 @@ export class Hote {
         }
         break;
       case 'touche':
-        if (j && j.vivant) this.blesser(m.cible, borner(+m.deg || 0, 0, 260), de, m.arme, m.tete);
+        // l'arme annoncée doit être un vrai objet du jeu (sinon : pioche), pour qu'un joueur ne s'invente pas une arme « zone » ou « esprit »
+        if (j && j.vivant) this.blesser(m.cible, borner(+m.deg || 0, 0, 260), de, typeof m.arme === 'string' && Object.hasOwn(OBJETS, m.arme) ? m.arme : 'pioche', m.tete);
         break;
       case 'explosion': {
         // un explosif à la fois, pas trop loin du lanceur
@@ -172,12 +175,24 @@ export class Hote {
         if (!b) { this.reseau.envoyerA(de, { t: 'refusRamasser', id: m.id, raison: 'parti' }); break; }
         // l'hôte vérifie que le joueur est vraiment à côté (anti-triche). La position envoyée avec la demande
         // compte aussi (l'hôte a un peu de retard sur un téléphone ou une connexion lente), si elle est crédible.
-        const pres = (x, y, z) => Math.hypot(b.x - x, b.z - z) <= 4.5 && Math.abs(b.y - y) <= 3.5;
+        const loin = b.objet === 'munitions' || b.objet === 'materiaux' || b.objet === 'eclats' ? Math.max(4.5, don(j.esprit, 'aimant', 0) + 1.5) : 4.5; // Magno (aimant)
+        const pres = (x, y, z) => Math.hypot(b.x - x, b.z - z) <= loin && Math.abs(b.y - y) <= 3.5;
         const mx = +m.x, my = +m.y, mz = +m.z;
         const credible = Number.isFinite(mx) && Number.isFinite(my) && Number.isFinite(mz) && Math.hypot(mx - j.x, mz - j.z) <= 6 && Math.abs(my - j.y) <= 4;
         if (!pres(j.x, j.y, j.z) && !(credible && pres(mx, my, mz))) { this.reseau.envoyerA(de, { t: 'refusRamasser', id: m.id, raison: 'loin' }); break; }
         this.butins.delete(m.id);
         this.reseau.diffuser({ t: 'butin-', id: m.id, par: de, b });
+        if (b.objet === 'eclats' && !this.options.entrainement) this.donnerEclats(j, (j.eclats | 0) + Math.max(1, b.qte | 0), Math.max(1, b.qte | 0));
+        break;
+      }
+      case 'ameliorer': {
+        // Amélioration de l'esprit sur un vrai autel. Un joueur a déjà payé ses éclats au serveur (paye) ; en Entraînement c'est gratuit.
+        const sa = this.sanctuaires && this.sanctuaires[m.id | 0];
+        if (!j || !j.vivant || !j.esprit || !sa || sa.tombe) break;
+        const pres = (x, y, z) => Math.hypot(sa.x - x, sa.z - z) <= PORTEE_CAPTURE + 1.5 && Math.abs(sa.y - y) <= 3;
+        const mx = +m.x, my = +m.y, mz = +m.z;
+        const credible = Number.isFinite(mx) && Number.isFinite(mz) && Math.hypot(mx - j.x, mz - j.z) <= 6 && Math.abs(my - j.y) <= 4;
+        if (pres(j.x, j.y, j.z) || (credible && pres(mx, my, mz))) this.ameliorer(j, sa, m.paye === true || this.options.entrainement, borner(+m.prix || 0, 0, 1000));
         break;
       }
       case 'exporter': {
@@ -202,7 +217,7 @@ export class Hote {
       }
       case 'jeter':
         for (const it of (m.objets || []).slice(0, 8)) {
-          if (!OBJETS[it.objet]) continue;
+          if (!OBJETS[it.objet] || it.objet === 'eclats') continue;
           const a = Math.random() * 6.28, d = m.objets.length > 1 ? 0.6 + Math.random() * 1.2 : 0.8;
           this.creerButin({ objet: it.objet, rarete: it.rarete | 0, qte: it.qte | 0, mun: it.mun | 0 }, +m.x + Math.cos(a) * d, +m.y + 0.1, +m.z + Math.sin(a) * d);
         }
@@ -265,6 +280,10 @@ export class Hote {
     for (const pt of monde.pointsButin) {
       if (pt.bonus || fete || r() < 0.75) listeButins.push(this.creerButin(tirerButin(r, !!pt.bonus, fete), pt.x, pt.y, pt.z, false));
     }
+    // éclats d'esprit posés un peu partout (un point de butin sur 8 environ)
+    if (!this.options.entrainement) for (const pt of monde.pointsButin) {
+      if (Math.random() < ECLATS.sol) listeButins.push(this.creerButin({ objet: 'eclats', rarete: 3, qte: ECLATS.tas }, pt.x + 0.7, pt.y, pt.z + 0.5, false));
+    }
     this.dirigeable = creerDirigeable(r);
     this.zone = creerPlanZone(r, monde, this.options);
     // Mêlée : la zone est petite, le dirigeable passe au-dessus
@@ -285,6 +304,7 @@ export class Hote {
       .map(sa => ({ ...sa, dispo: true, retour: 0 }));
     this.espritT = 0;
     this.pieges = []; this.prochainPiege = 1; this.differes = []; // ronces posées, effets de pouvoirs à venir
+    this.nuages = []; this.prochainNuage = 1; // nuages posés par un pouvoir (lave, poison, pluie de soin…)
     this.temps = 0; this.envoiT = 0; this.zoneT = 0;
     this.enCours = true; this.fini = false;
     // Les bots : où et quand ils sautent, et leur arme
@@ -324,7 +344,7 @@ export class Hote {
 
   nouveauJoueur(id, nom, couleur, bot, n) {
     return {
-      id, nom, couleur, bot, n, vivant: true, pv: 100, bouclier: 0, kills: 0,
+      id, nom, couleur, bot, n, vivant: true, pv: 100, bouclier: 0, kills: 0, eclats: 0,
       x: 0, y: 112, z: 0, ry: 0, rx: 0, f: 0, a: '', ph: 'dirigeable', em: '',
       vx: 0, vy: 0, vz: 0, auSol: false,
       tirT: 0, rechargeT: 0, vueT: Math.random(), strafe: 1, strafeT: 0, bloqueT: 0, px: 0, pz: 0, detourT: 0, coince: 0, constrT: 0, destT: 20,
@@ -360,7 +380,8 @@ export class Hote {
     this.coffresOuverts.add(id);
     this.reseau.diffuser({ t: 'coffreX', id });
     const r = Math.random, fete = !!this.fete;
-    const items = [tirerButin(r, true, fete), r() < 0.5 ? { objet: 'munitions', qte: 40 } : tirerButin(r, true, fete), { objet: 'materiaux', qte: 30 }];
+    const items = [tirerButin(r, true, fete), r() < 0.5 ? { objet: 'munitions', qte: 40 } : tirerButin(r, true, fete), { objet: 'materiaux', qte: 30 },
+      { objet: 'eclats', rarete: 3, qte: c.dore ? ECLATS.coffreDore : ECLATS.coffre }];
     // coffre doré : une arme épique ou légendaire en plus
     if (c.dore) {
       let a = tirerButin(r, true, true);
@@ -396,7 +417,7 @@ export class Hote {
     if (!posRavito(rv, this.temps).pose || Math.hypot(j.x - rv.x, j.z - rv.z) > 5) return;
     rv.ouvert = true;
     this.reseau.diffuser({ t: 'ravitoX', id });
-    this.eparpiller(butinRavitaillement(Math.random), rv.x, rv.sol, rv.z);
+    this.eparpiller([...butinRavitaillement(Math.random), { objet: 'eclats', rarete: 3, qte: ECLATS.ravito }], rv.x, rv.sol, rv.z);
   }
 
   // ---------- Cargaison (événement de l'espace admin) ----------
@@ -434,7 +455,8 @@ export class Hote {
   exploser(auteur, x, y, z, arme, def = OBJETS[arme]) {
     const R = def.rayon, M = this.monde;
     const a = this.joueurs.get(auteur);
-    this.reseau.diffuser({ t: 'boum', x: arrondi(x), y: arrondi(y), z: arrondi(z), r: R, a: arme, par: auteur });
+    this.reseau.diffuser({ t: 'boum', x: arrondi(x), y: arrondi(y), z: arrondi(z), r: R, a: arme, par: auteur, ...(def.esprit ? { e: def.esprit } : {}) });
+    const touches = [];
     for (const j of this.joueurs.values()) {
       if (!j.vivant || j.ph === 'dirigeable' || j.id === auteur || memeEquipe(a, j)) continue;
       const cy = j.y + 0.9, d = Math.hypot(j.x - x, cy - y, j.z - z);
@@ -443,7 +465,8 @@ export class Hote {
       const L = Math.max(0.01, d), dx = (j.x - x) / L, dy = (cy - y) / L, dz = (j.z - z) / L;
       const h = M.lancerRayon(x - dx * 0.2, y - dy * 0.2, z - dz * 0.2, dx, dy, dz, L);
       if (h && h.t < L - 0.6) continue;
-      this.blesser(j.id, def.degats * (1 - Math.max(0, d - 1) / (R + 0.5) * 0.65), auteur, arme, false);
+      touches.push(j);
+      if (def.degats) this.blesser(j.id, def.degats * (1 - Math.max(0, d - 1) / (R + 0.5) * 0.65), auteur, arme, false);
     }
     // les constructions proches cassent
     for (const cle of [...this.constrPV.keys()]) {
@@ -452,6 +475,7 @@ export class Hote {
       const q = c.mesh.position, d = Math.hypot(q.x - x, q.y - y, q.z - z);
       if (d < R + 2) this.abimer(cle, 120 + 380 * (1 - d / (R + 2)));
     }
+    return touches;
   }
 
   recolter(type, id, deg) {
@@ -496,22 +520,61 @@ export class Hote {
     const tireur = auteur && auteur !== id ? this.joueurs.get(auteur) : null;
     const avecArme = arme !== 'esprit'; // les bonus des esprits comptent pour les armes, pas pour les pouvoirs
     // Braise (feu) : +10 % de dégâts
-    if (tireur && avecArme && tireur.esprit && tireur.esprit.type === 'feu') deg *= FEU.bonus;
+    if (tireur && avecArme && tireur.esprit && tireur.esprit.type === 'feu') deg *= plusFort(1, FEU.bonus, forceEsprit(tireur.esprit));
+    // un esprit amélioré (★★, ★★★) : ses pouvoirs font plus mal
+    if (tireur && arme === 'esprit') deg *= forceEsprit(tireur.esprit);
+    // Les 50 esprits « à réglages » : ce que le tireur ajoute avec ses armes, ce que la victime encaisse en moins
+    const E = tireur ? tireur.esprit : null, V = j.esprit;
+    if (tireur && avecArme) {
+      deg *= don(E, 'degats', 1);
+      if (tete) deg *= don(E, 'tete', 1);
+      const bas = don(E, 'degatsBas');
+      if (bas && tireur.pv < bas[0]) deg *= bas[1];
+      if (OBJETS[arme] && OBJETS[arme].rayon) deg *= don(E, 'explosion', 1);
+      if (arme === 'pioche') deg *= don(E, 'pioche', 1);
+      const bt = this.buffDe(tireur);
+      if (bt && bt.degats) deg *= bt.degats;
+    }
+    if (arme === 'zone') {
+      // Suie (cendre) : la zone fait moins mal (1 dégât sur 2 quand elle n'en fait qu'un)
+      const k = don(V, 'zone', 1);
+      if (k !== 1) { j.zoneReste = (j.zoneReste || 0) + deg * k; deg = Math.floor(j.zoneReste); j.zoneReste -= deg; }
+    } else if (arme !== 'chute') {
+      deg *= don(V, 'resiste', 1);
+      const bv = this.buffDe(j);
+      if (bv && bv.resiste) deg *= bv.resiste;
+    }
     deg = Math.round(deg);
     if (deg <= 0) return;
     let reste = deg;
     const avaitBouclier = j.bouclier > 0;
     if (j.bouclier > 0) { const a = Math.min(j.bouclier, reste); j.bouclier -= a; reste -= a; }
     j.pv -= reste;
-    // Lumi (étoile) : une fois par partie, elle sauve son joueur d'un coup mortel
+    // Lumi (étoile), Séraph (ange) : une fois par partie, l'esprit sauve son joueur d'un coup mortel
     let sauve = false;
-    if (j.pv <= 0 && j.esprit && j.esprit.type === 'etoile' && !j.sauve && !this.options.entrainement) { j.sauve = sauve = true; j.pv = ETOILE.pv; }
+    const pvSauve = V ? (V.type === 'etoile' ? Math.min(60, Math.round(ETOILE.pv * forceEsprit(V))) : don(V, 'sauve', 0)) : 0;
+    if (j.pv <= 0 && pvSauve && !j.sauve && !this.options.entrainement) { j.sauve = sauve = true; j.pv = pvSauve; }
     this.reseau.diffuser({
       t: 'pv', id, pv: Math.max(0, j.pv), b: j.bouclier, de: auteur, deg, tete: !!tete,
       x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), casse: avaitBouclier && j.bouclier <= 0, ...(sauve ? { sauve: true } : {}),
     });
     // Givrette (glace) : ses tirs ralentissent celui qui est touché
-    if (tireur && avecArme && j.pv > 0 && tireur.esprit && tireur.esprit.type === 'glace') this.ralentir(j, GLACE.touche, GLACE.facteurTouche);
+    if (tireur && avecArme && j.pv > 0 && tireur.esprit && tireur.esprit.type === 'glace') this.ralentir(j, GLACE.touche * forceEsprit(tireur.esprit), GLACE.facteurTouche);
+    if (tireur && avecArme) {
+      const gel = don(E, 'gelTouche'), poison = don(E, 'poisonTouche'), vol = don(E, 'volVie', 0), epines = don(V, 'epines', 0);
+      if (gel && j.pv > 0) this.ralentir(j, gel[0], gel[1]);
+      // Sporo (spore) : le poison ronge un peu de vie chaque seconde
+      if (poison && j.pv > 0) j.poison = { tics: poison[0], dps: poison[1], par: tireur.id };
+      // Morsi (vampire) : une partie des dégâts soigne le tireur
+      if (vol && tireur.vivant && tireur.pv > 0 && tireur.pv < 100) {
+        tireur.pv = Math.min(100, tireur.pv + Math.max(1, Math.round(deg * vol)));
+        this.reseau.diffuser({ t: 'pv', id: tireur.id, pv: tireur.pv, b: tireur.bouclier });
+      }
+      // Récifa (corail) : une partie des dégâts revient au tireur (sans jamais l'éliminer)
+      if (epines && tireur.vivant) { const retour = Math.min(Math.round(deg * epines), tireur.pv + tireur.bouclier - 1); if (retour > 0) this.blesser(tireur.id, retour, id, 'esprit', false); }
+    }
+    // faire des dégâts fait réapparaître celui qui était invisible (Suie, Shino)
+    if (tireur) { const bi = this.buffDe(tireur); if (bi && bi.invisible) this.finBuff(tireur); }
     if (j.pv <= 0 && this.options.entrainement) { this.reapparaitre(j, auteur); return; }
     if (j.pv <= 0 && this.regles.reapparition) { this.marquer(j, auteur, arme); return; }
     if (j.bot && auteur && auteur !== id) this.reactionBot(j, auteur);
@@ -521,9 +584,9 @@ export class Hote {
   eliminer(id, auteur, arme) {
     const j = this.joueurs.get(id);
     if (!j || !j.vivant) return;
-    j.vivant = false; j.pv = 0;
+    j.vivant = false; j.pv = 0; j.poison = null; j.buff = null;
     // son esprit le quitte… et reste là où il est tombé : le premier qui passe peut le prendre
-    if (j.esprit) { const type = j.esprit.type; j.esprit = null; this.reseau.diffuser({ t: 'espritLibre', id }); this.lacherEsprit(type, j.x, j.y, j.z); }
+    if (j.esprit) { const type = j.esprit.type, niv = niveauDe(j.esprit); j.esprit = null; this.reseau.diffuser({ t: 'espritLibre', id }); this.lacherEsprit(type, j.x, j.y, j.z, niv); }
     let vivants = 0;
     for (const p of this.joueurs.values()) if (p.vivant) vivants++;
     const k = auteur && auteur !== id ? this.joueurs.get(auteur) : null;
@@ -531,9 +594,10 @@ export class Hote {
       k.kills++;
       // Zap (foudre) : chaque élimination rend du bouclier
       if (k.vivant && k.esprit && k.esprit.type === 'foudre' && k.bouclier < 100) {
-        k.bouclier = Math.min(100, k.bouclier + FOUDRE.bouclier);
+        k.bouclier = Math.min(100, k.bouclier + Math.round(FOUDRE.bouclier * forceEsprit(k.esprit)));
         this.reseau.diffuser({ t: 'pv', id: k.id, pv: k.pv, b: k.bouclier });
       }
+      this.bonusElimination(k);
       const regain = this.regles.regain | 0; // Solo et Éclair : une élimination rend des PV
       if (regain && k.vivant) {
         const pv = Math.min(regain, 100 - k.pv);
@@ -544,6 +608,7 @@ export class Hote {
     }
     const dist = k ? Math.round(Math.hypot(k.x - j.x, k.y - j.y, k.z - j.z)) : 0;
     this.reseau.diffuser({ t: 'elim', v: id, k: k ? auteur : null, a: arme || '', place: vivants + 1, vivants, kills: k ? k.kills : 0, dist });
+    this.lacherEclats(j);
     if (j.bot) {
       const items = [{ objet: j.arme.objet, rarete: j.arme.rarete, mun: OBJETS[j.arme.objet].chargeur }, { objet: 'munitions', qte: 30 }];
       if (j.mats > 0) items.push({ objet: 'materiaux', qte: j.mats });
@@ -562,6 +627,7 @@ export class Hote {
     // pouvoirs des esprits : ce qui arrive un instant plus tard (boule de feu, éclair qui saute), et les ronces posées
     while (this.differes.length && this.temps >= this.differes[0].t) this.differes.shift().f();
     if (this.pieges.length) this.majPieges();
+    if (this.nuages.length) this.majNuages();
     // Ravitaillements qui tombent du ciel
     while (this.planRavitos.length && this.temps >= this.planRavitos[0]) { this.planRavitos.shift(); this.lancerRavito(); }
     // Fontaines de soin : +3 PV toutes les demi-secondes
@@ -589,16 +655,27 @@ export class Hote {
         if (sa.tombe && sa.dispo && this.temps >= sa.expire) { sa.dispo = false; this.reseau.diffuser({ t: 'sanctuaire-', s: sa.id }); continue; }
         if (sa.dispo || this.temps < sa.retour) continue;
         sa.dispo = true;
-        sa.type = TYPES_ESPRITS[Math.floor(Math.random() * TYPES_ESPRITS.length)];
+        sa.type = espritAuHasard(); // seulement parmi les esprits que l'admin a laissés allumés
+        sa.niv = 1;
         this.reseau.diffuser({ t: 'sanctuaire', s: sa.id, type: sa.type });
       }
       for (const j of this.joueurs.values()) {
-        const r = j.vivant && j.esprit && REGEN[j.esprit.type];
-        if (!r) continue;
-        if (j.esprit.type === 'soin' && j.pv < r.max && j.pv > 0) j.pv = Math.min(r.max, j.pv + r.pas);
-        else if (j.esprit.type === 'protection' && j.bouclier < r.max) j.bouclier = Math.min(r.max, j.bouclier + r.pas);
-        else continue;
-        this.reseau.diffuser({ t: 'pv', id: j.id, pv: j.pv, b: j.bouclier, regen: true });
+        if (!j.vivant) continue;
+        let change = false;
+        const r0 = j.esprit && REGEN[j.esprit.type], fr = r0 ? forceEsprit(j.esprit) : 1;
+        const r = r0 && { max: Math.min(100, Math.round(r0.max * (1 + (fr - 1) * 0.6))), pas: Math.round(r0.pas * fr) };
+        if (r && j.esprit.type === 'soin' && j.pv < r.max && j.pv > 0) { j.pv = Math.min(r.max, j.pv + r.pas); change = true; }
+        else if (r && j.esprit.type === 'protection' && j.bouclier < r.max) { j.bouclier = Math.min(r.max, j.bouclier + r.pas); change = true; }
+        // les 50 esprits « à réglages » : vie et bouclier qui remontent tout seuls, auréole de Séraph
+        const rp = don(j.esprit, 'regenPv'), rb = don(j.esprit, 'regenBouclier'), bf = this.buffDe(j);
+        if (rp && j.pv > 0 && j.pv < rp[0]) { j.pv = Math.min(rp[0], j.pv + rp[1]); change = true; }
+        if (rb && j.bouclier < rb[0]) { j.bouclier = Math.min(rb[0], j.bouclier + rb[1]); change = true; }
+        if (bf && bf.regen && j.pv > 0 && j.pv < 100) { j.pv = Math.min(100, j.pv + bf.regen); change = true; }
+        if (change) this.reseau.diffuser({ t: 'pv', id: j.id, pv: j.pv, b: j.bouclier, regen: true });
+        // les bots aussi reçoivent les matériaux de Chênou
+        if (j.bot && j.esprit) j.mats = Math.min(999, (j.mats || 0) + don(j.esprit, 'mats', 0));
+        // le poison de Sporo
+        if (j.poison) { const p = j.poison; if (--p.tics <= 0) j.poison = null; this.blesser(j.id, p.dps, p.par, 'esprit', false); }
       }
     }
 
@@ -622,6 +699,7 @@ export class Hote {
       if (unites.size <= seuil) {
         this.fini = true;
         const g = vivants[0];
+        this.recompenserVictoire(vivants);
         this.reseau.diffuser({ t: 'fin', gagnant: g ? g.id : null, nom: g ? g.nom : null, kills: g ? g.kills : 0, equipe: g ? g.equipe : 0, gagnants: vivants.map(v => v.id) });
       }
     }
@@ -688,7 +766,7 @@ export class Hote {
       return;
     }
     b.vueT -= dt;
-    if (b.vueT <= 0) { b.vueT = 0.3 + Math.random() * 0.25; this.chercherCible(b); this.espritBot(b); }
+    if (b.vueT <= 0) { b.vueT = 0.3 + Math.random() * 0.25; this.chercherCible(b); this.espritBot(b); this.ramasserEclatsBot(b); }
     const z = etatZone(this.zone, this.temps);
     const distProchaine = Math.hypot(b.x - z.cx, b.z - z.cz);
     const distActuelle = Math.hypot(b.x - z.x, b.z - z.z);
@@ -739,7 +817,9 @@ export class Hote {
     }
     // Contourner un obstacle
     if (b.detourT > 0) { b.detourT -= dt; const ox = mx; mx = -mz * b.cote; mz = ox * b.cote; }
-    const vit = (b.dansEau && !(b.esprit && b.esprit.type === 'eau') ? 3.5 : 6.3) * (b.esprit && b.esprit.type === 'mobilite' ? VITESSE_MOBILITE : 1)
+    const elan = this.buffDe(b);
+    const vit = (b.dansEau && !(b.esprit && (b.esprit.type === 'eau' || don(b.esprit, 'nage'))) ? 3.5 : 6.3) * (b.esprit && b.esprit.type === 'mobilite' ? plusFort(1, VITESSE_MOBILITE, forceEsprit(b.esprit)) : 1)
+      * don(b.esprit, 'vitesse', 1) * (elan && elan.vitesse ? elan.vitesse : 1)
       * (this.temps < (b.gelJusqua || 0) ? b.gelFacteur : 1); // gelé par Givrette ou pris dans les ronces
     const n = Math.hypot(mx, mz);
     if (this.temps < (b.pousseJusqua || 0)) { /* emporté par une bourrasque : il ne dirige plus rien */ }
@@ -767,6 +847,10 @@ export class Hote {
       for (const sa of this.sanctuaires) if (sa.dispo && Math.hypot(sa.x - b.x, sa.z - b.z) < PORTEE_CAPTURE && Math.abs(sa.y - b.y) < 3) { this.capturer(b, sa); return; }
       return;
     }
+    if (niveauDe(b.esprit) < NIVEAUX.max && (b.eclats | 0) >= ECLATS.coutBots[niveauDe(b.esprit) + 1] && !(b.cible && b.voit)) {
+      const sa = this.sanctuaires.find(s => !s.tombe && Math.hypot(s.x - b.x, s.z - b.z) < PORTEE_CAPTURE + 1 && Math.abs(s.y - b.y) < 3);
+      if (sa) this.ameliorer(b, sa);
+    }
     if (this.temps < b.esprit.pret) return;
     const t = b.cible ? this.joueurs.get(b.cible) : null;
     const d = t ? Math.hypot(t.x - b.x, t.z - b.z) : Infinity;
@@ -774,7 +858,30 @@ export class Hote {
     if ((type === 'soin' && b.pv < 55) || (type === 'protection' && t && b.bouclier < 30) || (type === 'batisseur' && t && b.voit && d < 30 && b.auSol)
       || (type === 'feu' && t && b.voit && d > 6 && d < 35) || (type === 'glace' && t && d < 9) || (type === 'foudre' && t && b.voit && d < 22)
       || (type === 'vent' && t && d < 6) || (type === 'nature' && t && d < 14 && b.auSol) || (type === 'ombre' && t && b.pv < 45)
-      || (type === 'etoile' && t && b.voit && d > 5 && d < 13 && b.auSol)) this.pouvoir(b, { ry: b.ry, rx: b.rx });
+      || (type === 'etoile' && t && b.voit && d > 5 && d < 13 && b.auSol)) { this.pouvoir(b, { ry: b.ry, rx: b.rx }); return; }
+    // les 50 esprits « à réglages » : le bon moment dépend de la sorte de pouvoir
+    const A = pouvoirDe(type);
+    if (!A) return;
+    const vu = !!(t && b.voit);
+    let ok = false;
+    switch (A.t) {
+      case 'boule': ok = vu && d > 4 && d < A.portee * 0.85; break;
+      case 'frappe': ok = vu && d > 6 && d < A.portee * 0.85; break;
+      case 'nuage': ok = A.soin ? b.pv < 60 : A.portee ? vu && d > 4 && d < A.portee * 0.85 : !!t && d < A.rayon; break;
+      case 'onde': ok = !!t && d < A.rayon * 0.8; break;
+      case 'chaine': ok = vu && d < A.portee * 0.85; break;
+      case 'soin': ok = A.pv ? b.pv < 55 : !!t && b.bouclier < 40; break;
+      case 'buff': ok = A.regen ? b.pv < 60 : A.invisible ? !!t && b.pv < 50 : vu; break;
+      case 'dash': ok = vu && d > 4 && d < A.distance * 0.9 && b.auSol; break;
+      case 'bond': ok = !!t && b.pv < 40 && b.auSol; break;
+      case 'teleport': ok = vu && d > 14 && d < A.portee + 12; break;
+      case 'echange': ok = vu && d > 12 && d < A.portee && b.auSol; break;
+      case 'piege': ok = !!t && d < 14 && b.auSol; break;
+      case 'objet': ok = !t && b.auSol && Math.random() < 0.2; break;
+      case 'murs': ok = vu && d < 30 && b.auSol; break;
+      case 'clone': ok = !!t && b.pv < 45; break;
+    }
+    if (ok) this.pouvoir(b, { ry: b.ry, rx: b.rx });
   }
 
   // Objectif du bot : un ravitaillement posé, ou un objet utile au sol
@@ -793,6 +900,14 @@ export class Hote {
         if (sa.dispo && d < bd && Math.hypot(sa.x - z.x, sa.z - z.z) < z.r - 5) { bd = d; best = { sanctuaire: sa.id, x: sa.x, z: sa.z }; }
       }
     }
+    // un autel pour améliorer son esprit (s'il a assez d'éclats)
+    if (!best && b.esprit && !b.mannequin && this.sanctuaires && niveauDe(b.esprit) < NIVEAUX.max && (b.eclats | 0) >= ECLATS.coutBots[niveauDe(b.esprit) + 1]) {
+      bd = 60;
+      for (const sa of this.sanctuaires) {
+        const d = Math.hypot(sa.x - b.x, sa.z - b.z);
+        if (!sa.tombe && d < bd && Math.hypot(sa.x - z.x, sa.z - z.z) < z.r - 5) { bd = d; best = { autel: sa.id, x: sa.x, z: sa.z }; }
+      }
+    }
     if (!best) {
       bd = 28;
       for (const it of this.butins.values()) {
@@ -802,6 +917,7 @@ export class Hote {
         if (LISTE_ARMES.includes(it.objet)) utile = valeurArme(it) > valeurArme(b.arme) + 0.5;
         else if (it.objet === 'soin' || it.objet === 'pansements') utile = b.soins < 3;
         else if (it.objet === 'bouclier' || it.objet === 'minigourde') utile = b.gourdes < 2;
+        else if (it.objet === 'eclats') utile = true;
         if (utile) { bd = d; best = { butin: it.id, x: it.x, z: it.z }; }
       }
     }
@@ -811,6 +927,7 @@ export class Hote {
     const o = b.objectif;
     if (o.ravito) { this.ouvrirRavito(b.id, o.ravito); return; }
     if (o.sanctuaire !== undefined) { const sa = this.sanctuaires[o.sanctuaire]; if (sa && sa.dispo) this.capturer(b, sa); return; }
+    if (o.autel !== undefined) { const sa = this.sanctuaires[o.autel]; if (sa) this.ameliorer(b, sa); return; }
     const it = this.butins.get(o.butin);
     if (!it) return;
     this.butins.delete(it.id);
@@ -819,6 +936,7 @@ export class Hote {
       this.creerButin({ objet: b.arme.objet, rarete: b.arme.rarete, mun: OBJETS[b.arme.objet].chargeur }, b.x + 0.5, b.y + 0.1, b.z);
       b.arme = { objet: it.objet, rarete: it.rarete }; b.mun = OBJETS[it.objet].chargeur; b.rechargeT = 0;
     } else if (it.objet === 'soin' || it.objet === 'pansements') b.soins += 1;
+    else if (it.objet === 'eclats') b.eclats = Math.min(999, (b.eclats | 0) + Math.max(1, it.qte | 0));
     else b.gourdes += 1;
   }
 
@@ -897,13 +1015,68 @@ export class Hote {
 
   // ---------- Esprits élémentaires ----------
   // L'esprit d'un joueur éliminé (bot ou humain) reste au sol, là où il est tombé. Il se prend comme sur un autel.
-  lacherEsprit(type, x, y, z) {
+  lacherEsprit(type, x, y, z, niv = 1) {
     if (!this.sanctuaires || !ESPRITS[type]) return;
     const h = this.monde.lancerRayon(x, y + 1.5, z, 0, -1, 0, 400);
     const sol = Math.max(h ? h.y : this.monde.hauteurTerrain(x, z), 0); // jamais sous l'eau
-    const sa = { id: this.sanctuaires.length, x: arrondi(x), y: arrondi(sol), z: arrondi(z), type, dispo: true, retour: Infinity, tombe: true, expire: this.temps + DUREE_ESPRIT_TOMBE };
+    const sa = { id: this.sanctuaires.length, x: arrondi(x), y: arrondi(sol), z: arrondi(z), type, dispo: true, retour: Infinity, tombe: true, expire: this.temps + DUREE_ESPRIT_TOMBE, niv };
     this.sanctuaires.push(sa);
-    this.reseau.diffuser({ t: 'sanctuaire+', s: { id: sa.id, x: sa.x, y: sa.y, z: sa.z, type, dispo: true, tombe: true } });
+    this.reseau.diffuser({ t: 'sanctuaire+', s: { id: sa.id, x: sa.x, y: sa.y, z: sa.z, type, dispo: true, tombe: true, niv } });
+  }
+
+  // Éclats d'esprit : la monnaie de la partie qui sert seulement à améliorer son esprit. C'est l'hôte qui les compte
+  // (ramassés, payés, lâchés) et qui dit au joueur combien il en a.
+  // Pour un joueur, j.eclats = ce qu'il a GAGNÉ dans cette partie (son jeu l'annonce au serveur, qui le garde) ;
+  // pour un bot, ce qu'il a en poche (il le dépense pendant la partie et le lâche s'il est éliminé).
+  donnerEclats(j, n, plus = 0, victoire = false) {
+    j.eclats = Math.max(0, Math.min(9999, n | 0));
+    if (!j.bot) this.reseau.envoyerA(j.id, { t: 'eclats', n: j.eclats, ...(plus ? { plus } : {}), ...(victoire ? { victoire: true } : {}) });
+  }
+  // Un joueur éliminé fait tomber des éclats (5, ou 1 en Mêlée où l'on réapparaît sans arrêt). Il ne perd pas les siens :
+  // ils sont déjà gardés sur le serveur. Un bot lâche en plus ce qu'il avait en poche.
+  lacherEclats(j) {
+    if (!j || j.mannequin || this.options.entrainement) return;
+    const n = (this.regles.reapparition ? ECLATS.eliminationMelee : ECLATS.elimination) + (j.bot ? j.eclats | 0 : 0);
+    if (j.bot) j.eclats = 0;
+    if (n <= 0) return;
+    const a = Math.random() * 6.28;
+    this.creerButin({ objet: 'eclats', rarete: 3, qte: n }, j.x + Math.cos(a) * 0.9, j.y + 0.1, j.z + Math.sin(a) * 0.9);
+  }
+
+  // Un bot ramasse les éclats qu'il frôle en passant (comme un joueur), même en plein combat
+  ramasserEclatsBot(b) {
+    if (b.mannequin || b.ph !== 'sol') return;
+    for (const it of this.butins.values()) {
+      if (it.objet !== 'eclats' || Math.abs(it.x - b.x) > 2.2 || Math.abs(it.z - b.z) > 2.2) continue;
+      if (Math.hypot(it.x - b.x, it.z - b.z) > 2.2 || Math.abs(it.y - b.y) > 2.5) continue;
+      this.butins.delete(it.id);
+      this.reseau.diffuser({ t: 'butin-', id: it.id, par: b.id });
+      b.eclats = Math.min(999, (b.eclats | 0) + Math.max(1, it.qte | 0));
+    }
+  }
+
+  // Les gagnants reçoivent des éclats en plus (les joueurs : ajoutés à ce qu'ils ont gagné dans la partie)
+  recompenserVictoire(liste) {
+    if (this.options.entrainement) return;
+    for (const j of liste) if (j && !j.bot) this.donnerEclats(j, (j.eclats | 0) + ECLATS.victoire, ECLATS.victoire, true);
+  }
+
+  // Monter l'esprit d'un joueur d'un niveau (sur un vrai autel). Un joueur a payé ses éclats au serveur avant de demander
+  // (paye), ou c'est l'Entraînement ; un bot paie avec ce qu'il a ramassé pendant la partie.
+  ameliorer(j, sa, paye = false, prix = 0) {
+    if (!j || !j.vivant || !j.esprit || !sa || sa.tombe) return false;
+    const niv = niveauDe(j.esprit);
+    if (niv >= NIVEAUX.max || this.temps - (j.amelioT ?? -9) < 0.6) return false;
+    let cout = prix | 0;
+    if (j.bot) { cout = ECLATS.coutBots[niv + 1]; if ((j.eclats | 0) < cout) return false; j.eclats -= cout; }
+    else if (!paye) return false;
+    j.amelioT = this.temps;
+    j.esprit.niv = niv + 1;
+    // la recharge en cours raccourcit aussi
+    const reste = j.esprit.pret - this.temps;
+    if (reste > 0) j.esprit.pret = this.temps + reste * NIVEAUX.recharge[niv + 1] / NIVEAUX.recharge[niv];
+    this.reseau.diffuser({ t: 'espritNiv', id: j.id, niv: niv + 1, cout, s: sa.id, pret: arrondi(j.esprit.pret) });
+    return true;
   }
 
   capturer(j, sa) {
@@ -911,35 +1084,46 @@ export class Hote {
     sa.dispo = false;
     sa.retour = sa.tombe ? Infinity : this.temps + RECHARGE_SANCTUAIRE; // un esprit tombé ne revient pas : ce n'est pas un autel
     // un seul esprit à la fois : l'ancien repart
-    j.esprit = { type: sa.type, pret: this.temps + 3, autel: sa.id }; // autel = où il a été pris (pour l'export, il en faut un autre)
-    this.reseau.diffuser({ t: 'esprit', s: sa.id, par: j.id, type: sa.type, pret: arrondi(j.esprit.pret), rar: (j.esp && j.esp[sa.type]) || null });
+    const niv = Math.max(1, Math.min(NIVEAUX.max, sa.niv | 0 || 1)); // un esprit tombé garde son niveau ; un autel en donne un de niveau 1
+    j.esprit = { type: sa.type, pret: this.temps + 3, autel: sa.id, niv }; // autel = où il a été pris (pour l'export, il en faut un autre)
+    this.reseau.diffuser({ t: 'esprit', s: sa.id, par: j.id, type: sa.type, pret: arrondi(j.esprit.pret), rar: (j.esp && j.esp[sa.type]) || null, niv });
     this.avancerDefi(j.id, 'esprit');
     return true;
   }
 
   pouvoir(j, m) {
     if (!j || !j.vivant || !j.esprit || this.temps < j.esprit.pret || j.ph === 'dirigeable') return;
-    const type = j.esprit.type, def = ESPRITS[type];
-    j.esprit.pret = this.temps + def.recharge;
+    const type = j.esprit.type, niv = niveauDe(j.esprit), f = forceEsprit(j.esprit);
+    j.esprit.pret = this.temps + rechargeEsprit(j.esprit);
     const ry = Number.isFinite(+(m && m.ry)) ? +m.ry : j.ry;
     const rx = borner(Number.isFinite(+(m && m.rx)) ? +m.rx : j.rx || 0, -1.45, 1.45);
     // Les 10 esprits ajoutés : ce que l'hôte calcule AVANT d'annoncer le pouvoir (les autres joueurs en ont besoin pour l'afficher)
-    const plus = this.preparerPouvoir(j, type, ry, rx, m);
+    const A = pouvoirAuNiveau(pouvoirDe(type), niv); // les 50 esprits « à réglages » (soins, objets et durées selon le niveau)
+    // Fort express, Igloo : les murs entourent la case du joueur. Un joueur dit où il est (l'hôte peut avoir un peu de retard) ;
+    // un bot au bord de sa case se recentre, sinon un mur le pousserait dehors.
+    if (type === 'batisseur' || (A && A.t === 'murs' && A.forme === 'bunker')) {
+      const mp = m && Array.isArray(m.p) ? m.p.slice(0, 3).map(Number) : null;
+      if (!j.bot && mp && mp.every(Number.isFinite) && Math.hypot(mp[0] - j.x, mp[2] - j.z) <= 3 && Math.abs(mp[1] - j.y) <= 4) { j.x = mp[0]; j.y = mp[1]; j.z = mp[2]; }
+      else if (j.bot) { const dedans = v => { const c = Math.floor(v / CASE) * CASE; return Math.min(Math.max(v, c + 0.7), c + CASE - 0.7); }; j.x = dedans(j.x); j.z = dedans(j.z); }
+    }
+    const px = j.x, py = j.y, pz = j.z; // d'où part le pouvoir (certains pouvoirs déplacent le joueur)
+    const plus = A ? this.preparerGenerique(j, A, type, ry, rx, m) : this.preparerPouvoir(j, type, ry, rx, m);
     if (plus && plus.vide) j.esprit.pret = this.temps + 4; // rien à viser : le pouvoir revient vite
-    this.reseau.diffuser({ t: 'pouvoir', par: j.id, type, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), ry: arrondi(ry), pret: arrondi(j.esprit.pret), ...(plus || {}) });
+    this.reseau.diffuser({ t: 'pouvoir', par: j.id, type, x: arrondi(px), y: arrondi(py), z: arrondi(pz), ry: arrondi(ry), pret: arrondi(j.esprit.pret), niv, ...(plus || {}) });
+    if (A) { if (!(plus && plus.vide)) this.appliquerGenerique(j, A, type, ry); return; }
     if (type === 'soin') {
       // Bourgeon : soigne le joueur et ses coéquipiers proches
       for (const e of this.joueurs.values()) {
         if (!e.vivant || e.pv >= 100 || (e !== j && !(memeEquipe(j, e) && Math.hypot(e.x - j.x, e.z - j.z) <= BOURGEON.rayon))) continue;
-        e.pv = Math.min(100, e.pv + BOURGEON.pv);
+        e.pv = Math.min(100, e.pv + Math.round(BOURGEON.pv * f));
         this.reseau.diffuser({ t: 'pv', id: e.id, pv: e.pv, b: e.bouclier });
       }
     } else if (type === 'protection') {
-      j.bouclier = Math.min(100, j.bouclier + CARAPACE);
+      j.bouclier = Math.min(100, j.bouclier + Math.round(CARAPACE * f));
       this.reseau.diffuser({ t: 'pv', id: j.id, pv: j.pv, b: j.bouclier });
     } else if (type === 'batisseur') {
       // Fort express : 4 murs autour du joueur (gratuits)
-      for (let k = 0; k < 4; k++) this.construire(j.id, cibleConstruction(this.monde, 'mur', j.x, j.y, j.z, ry + k * Math.PI / 2, 0));
+      for (const dy of this.etagesMurs(j.y)) for (let k = 0; k < 4; k++) this.construire(j.id, cibleConstruction(this.monde, 'mur', j.x, j.y + dy, j.z, ry + k * Math.PI / 2, 0));
     } else this.pouvoirAjoute(j, type, ry);
     // Filou (mobilité), Tic-Tac (temps), Goutte (eau) : le joueur se déplace lui-même ; Zyeuto (vision) : seulement de l'affichage chez le joueur
   }
@@ -1035,15 +1219,10 @@ export class Hote {
       }
     } else if (type === 'nature') {
       // Ronces : un piège à ses pieds (2 au plus par joueur, le plus vieux s'en va)
-      const miens = this.pieges.filter(p => p.par === j.id);
-      if (miens.length >= NATURE.max) this.retirerPiege(miens[0], false);
-      const p = { id: this.prochainPiege++, par: j.id, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), fin: this.temps + NATURE.vie, pret: this.temps + 0.8 };
-      this.pieges.push(p);
-      this.reseau.diffuser({ t: 'piege+', p: { id: p.id, par: p.par, x: p.x, y: p.y, z: p.z } });
+      this.poserPiege(j, PIEGE_RONCES, 'nature');
     } else if (type === 'ombre') {
       // Clone : les bots perdent le vrai joueur de vue quelques secondes
-      j.leurreJusqua = this.temps + OMBRE.oubli;
-      for (const b of this.joueurs.values()) if (b.bot && b.cible === j.id) { b.cible = null; b.voit = false; b.agresseur = null; }
+      this.perdreDeVue(j, OMBRE.oubli);
     } else if (type === 'chance') {
       // Jackpot : une arme rare ou plus, ou de quoi se soigner, tombe devant lui
       const r = Math.random;
@@ -1070,9 +1249,22 @@ export class Hote {
     const i = this.pieges.indexOf(p);
     if (i < 0) return;
     this.pieges.splice(i, 1);
-    this.reseau.diffuser({ t: 'piege-', id: p.id, x: p.x, y: p.y, z: p.z, declenche: !!declenche });
+    this.reseau.diffuser({ t: 'piege-', id: p.id, x: p.x, y: p.y, z: p.z, declenche: !!declenche, type: p.type });
   }
-  // Les ronces attendent qu'un ennemi marche dessus
+  // Un piège à ses pieds (ronces, oursin, mine) : chaque joueur en a un nombre limité, le plus vieux s'en va
+  poserPiege(j, def, type) {
+    const miens = this.pieges.filter(p => p.par === j.id);
+    if (miens.length >= def.max) this.retirerPiege(miens[0], false);
+    const p = { id: this.prochainPiege++, par: j.id, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z), fin: this.temps + def.vie, pret: this.temps + 0.8, def, type };
+    this.pieges.push(p);
+    this.reseau.diffuser({ t: 'piege+', p: { id: p.id, par: p.par, x: p.x, y: p.y, z: p.z, type } });
+  }
+  // Les bots perdent quelqu'un de vue pendant un moment (clone, invisibilité)
+  perdreDeVue(j, duree) {
+    j.leurreJusqua = this.temps + duree;
+    for (const b of this.joueurs.values()) if (b.bot && b.cible === j.id) { b.cible = null; b.voit = false; b.agresseur = null; }
+  }
+  // Les pièges attendent qu'un ennemi marche dessus
   majPieges() {
     for (const p of [...this.pieges]) {
       if (this.temps >= p.fin) { this.retirerPiege(p, false); continue; }
@@ -1080,12 +1272,245 @@ export class Hote {
       const poseur = this.joueurs.get(p.par);
       for (const e of this.joueurs.values()) {
         if (!e.vivant || e.id === p.par || e.ph !== 'sol' || (poseur && memeEquipe(poseur, e))) continue;
-        if (Math.hypot(e.x - p.x, e.z - p.z) > NATURE.rayon || Math.abs(e.y - p.y) > 1.8) continue;
+        if (Math.hypot(e.x - p.x, e.z - p.z) > p.def.rayon || Math.abs(e.y - p.y) > 1.8) continue;
         this.retirerPiege(p, true);
-        this.ralentir(e, NATURE.duree, NATURE.facteur);
-        this.blesser(e.id, NATURE.degats, p.par, 'esprit', false);
+        if (p.def.explose) this.exploser(p.par, p.x, p.y + 0.4, p.z, 'esprit', { rayon: p.def.explose, degats: p.def.degats, esprit: p.type }); // la mine de Clac
+        else { if (p.def.gel) this.ralentir(e, p.def.gel[0], p.def.gel[1]); this.blesser(e.id, p.def.degats, p.par, 'esprit', false); }
         break;
       }
+    }
+  }
+
+  // ---------- Les 50 esprits « à réglages » (22 nov. 2026) ----------
+  // Leur pouvoir est décrit dans esprits.js (a : { t: sorte, … }) ; une seule fonction par sorte de pouvoir.
+  buffDe(j) { return j && j.buff && this.temps < j.buff.fin ? j.buff : null; }
+  finBuff(j) {
+    if (!j.buff) return;
+    if (j.buff.invisible) j.leurreJusqua = 0;
+    j.buff = null;
+    this.reseau.diffuser({ t: 'buffFin', id: j.id });
+  }
+  // Ce qu'une élimination rapporte (PV, bouclier ; les matériaux d'un joueur, c'est son propre jeu qui les ajoute)
+  bonusElimination(k) {
+    if (!k || !k.vivant || !k.esprit) return;
+    const pv = don(k.esprit, 'killPv', 0), bo = don(k.esprit, 'killBouclier', 0);
+    if (k.bot) k.mats = Math.min(999, (k.mats || 0) + don(k.esprit, 'killMats', 0));
+    if ((pv && k.pv < 100) || (bo && k.bouclier < 100)) {
+      k.pv = Math.min(100, k.pv + pv); k.bouclier = Math.min(100, k.bouclier + bo);
+      this.reseau.diffuser({ t: 'pv', id: k.id, pv: k.pv, b: k.bouclier });
+    }
+  }
+  // Les murs se posent sur une grille de 4 m de haut : quand le joueur est en haut d'une case, le mur ne dépasse presque pas du sol.
+  // Les pouvoirs qui posent des murs ajoutent alors l'étage du dessus (sinon la tête dépasse, ou le toit cogne).
+  etagesMurs(y) {
+    const depasse = (Math.floor((y + 0.6) / CASE) + 1) * CASE - y; // hauteur de mur au-dessus des pieds
+    return depasse < 2.3 ? [0, CASE] : [0];
+  }
+  // Est-ce que a voit b (aucun mur entre les deux) ?
+  voitJoueur(a, b) {
+    const ox = a.x, oy = a.y + 1.5, oz = a.z;
+    let dx = b.x - ox, dy = b.y + 1.2 - oy, dz = b.z - oz;
+    const L = Math.hypot(dx, dy, dz) || 1; dx /= L; dy /= L; dz /= L;
+    const h = this.monde.lancerRayon(ox, oy, oz, dx, dy, dz, L);
+    return !h || h.t > L - 0.6;
+  }
+  // Le sol sous un point (pour y poser un nuage, y faire tomber un météore) ; jamais sous l'eau
+  solSous(x, y, z) {
+    const h = this.monde.lancerRayon(x, y + 0.5, z, 0, -1, 0, 400);
+    return Math.max(h ? h.y : this.monde.hauteurTerrain(x, z), 0);
+  }
+  // Le point visé : droit devant le regard, jusqu'au premier mur ou au sol (ou au bout de la portée)
+  viser(j, ry, rx, portee) {
+    const ox = j.x, oy = j.y + 1.5, oz = j.z;
+    const dx = -Math.sin(ry) * Math.cos(rx), dy = Math.sin(rx), dz = -Math.cos(ry) * Math.cos(rx);
+    const h = this.monde.lancerRayon(ox, oy, oz, dx, dy, dz, portee);
+    const dist = h ? Math.max(0.5, h.t - 0.3) : portee;
+    return { ox, oy, oz, dx, dy, dz, dist, x: ox + dx * dist, y: oy + dy * dist, z: oz + dz * dist };
+  }
+  // Une explosion de pouvoir : dégâts (à l'abri derrière un mur, on ne prend rien), puis gel et poussée pour ceux qui sont touchés
+  impact(j, x, y, z, A, type) {
+    for (const e of this.exploser(j.id, x, y, z, 'esprit', { rayon: A.rayon, degats: A.degats, esprit: type })) {
+      if (!e.vivant) continue;
+      if (A.gel) this.ralentir(e, A.gel[0], A.gel[1]);
+      if (A.pousse) { const d = Math.hypot(e.x - x, e.z - z) || 1; this.pousser(e, (e.x - x) / d * A.pousse, A.pousse * 0.45, (e.z - z) / d * A.pousse); }
+    }
+  }
+
+  // Ce que l'hôte calcule AVANT d'annoncer le pouvoir (les autres joueurs en ont besoin pour l'afficher)
+  preparerGenerique(j, A, type, ry, rx, m) {
+    const P3 = (x, y, z) => [arrondi(x), arrondi(y), arrondi(z)];
+    const cibleBot = j.bot && j.cible ? this.joueurs.get(j.cible) : null; // un bot vise directement son adversaire
+    const auSol = portee => { // le point du sol visé
+      if (cibleBot && Math.hypot(cibleBot.x - j.x, cibleBot.z - j.z) <= portee) return { x: cibleBot.x, y: this.solSous(cibleBot.x, cibleBot.y + 1, cibleBot.z), z: cibleBot.z };
+      const v = this.viser(j, ry, rx, portee);
+      return { x: v.x, y: this.solSous(v.x, v.y, v.z), z: v.z };
+    };
+    switch (A.t) {
+      case 'boule': {
+        // part droit devant, s'arrête au premier mur, au sol ou au premier ennemi, puis explose
+        const v = this.viser(j, ry, rx, A.portee);
+        let dist = v.dist;
+        for (const e of this.ennemisAutour(j, A.portee)) {
+          const ex = e.x - v.ox, ey = e.y + 1 - v.oy, ez = e.z - v.oz;
+          const t = ex * v.dx + ey * v.dy + ez * v.dz; // distance le long du tir
+          if (t < 1 || t > dist) continue;
+          if (Math.hypot(ex - v.dx * t, ey - v.dy * t, ez - v.dz * t) < 1.1) dist = t;
+        }
+        const x = v.ox + v.dx * dist, y = v.oy + v.dy * dist, z = v.oz + v.dz * dist, duree = dist / A.vitesse;
+        this.differer(duree, () => this.impact(j, x, y, z, A, type));
+        return { o: P3(v.ox, v.oy, v.oz), b: P3(x, y, z), duree: arrondi(duree) };
+      }
+      case 'frappe': {
+        // tombe du ciel un instant plus tard, là où l'on vise (plusieurs fois pour une éruption)
+        const c = auSol(A.portee), pts = [];
+        for (let k = 0; k < (A.n || 1); k++) {
+          const a = Math.random() * Math.PI * 2, d = k ? (0.35 + Math.random() * 0.65) * (A.ecart || 0) : 0;
+          const x = c.x + Math.cos(a) * d, z = c.z + Math.sin(a) * d, y = k ? this.solSous(x, c.y + 6, z) : c.y;
+          pts.push(P3(x, y, z));
+          this.differer(A.delai + k * 0.22, () => this.impact(j, x, y + 0.4, z, A, type));
+        }
+        return { c: pts };
+      }
+      case 'nuage': {
+        // reste au sol quelques secondes : à mes pieds (portée 0) ou là où je vise
+        const c = A.portee ? auSol(A.portee) : { x: j.x, y: this.solSous(j.x, j.y + 1, j.z), z: j.z };
+        this.nuages.push({ id: this.prochainNuage++, par: j.id, x: c.x, y: c.y, z: c.z, def: A, tic: this.temps + 0.5, tics: Math.max(1, Math.round(A.duree)) });
+        return { n: P3(c.x, c.y, c.z) };
+      }
+      case 'chaine': {
+        // le plus proche que l'on voit, puis ça saute d'ennemi en ennemi
+        const pts = [P3(j.x, j.y + 1.6, j.z)], touches = [];
+        let de = j, portee = A.portee;
+        for (let k = 0; k < A.degats.length; k++) {
+          const cible = this.ennemisAutour(j, portee, de.x, de.y, de.z).find(e => !touches.includes(e) && (k > 0 || this.voitJoueur(j, e)));
+          if (!cible) break;
+          touches.push(cible);
+          pts.push(P3(cible.x, cible.y + 1.2, cible.z));
+          de = cible; portee = A.saut;
+        }
+        if (!touches.length) return { vide: true };
+        touches.forEach((e, k) => this.differer(0.08 * k, () => this.blesser(e.id, A.degats[k], j.id, 'esprit', false)));
+        // Morsi (vampire) : la morsure rend autant de PV
+        if (A.vol) this.differer(0.1, () => { if (j.vivant && j.pv < 100) { j.pv = Math.min(100, j.pv + Math.round(A.degats[0] * A.vol)); this.reseau.diffuser({ t: 'pv', id: j.id, pv: j.pv, b: j.bouclier }); } });
+        return { pts };
+      }
+      case 'teleport': {
+        if (j.bot) {
+          // un bot se rapproche de son adversaire (il s'arrête à 5 m)
+          if (!cibleBot) return { vide: true };
+          const dx = cibleBot.x - j.x, dz = cibleBot.z - j.z, d = Math.hypot(dx, dz) || 1, pas = Math.min(A.portee, Math.max(0, d - 5));
+          const x = j.x + dx / d * pas, z = j.z + dz / d * pas, y = this.solSous(x, Math.max(j.y, cibleBot.y) + 2, z) + 0.1;
+          j.x = x; j.y = y; j.z = z; j.vx = j.vy = j.vz = 0;
+          return { a: P3(x, y, z) };
+        }
+        // un joueur s'est déjà déplacé lui-même (c'est son déplacement) : on montre l'arrivée aux autres, si elle est crédible
+        const a = m && Array.isArray(m.a) ? m.a.slice(0, 3).map(Number) : null;
+        return a && a.every(Number.isFinite) && Math.hypot(a[0] - j.x, a[1] - j.y, a[2] - j.z) <= A.portee + 8 ? { a: a.map(arrondi) } : null;
+      }
+      case 'echange': {
+        // échange de place avec l'ennemi le plus proche que l'on voit
+        const e = j.ph === 'sol' ? this.ennemisAutour(j, A.portee).find(e => e.ph === 'sol' && this.voitJoueur(j, e)) : null;
+        if (!e) return { vide: true };
+        const pa = P3(j.x, j.y, j.z), pb = P3(e.x, e.y, e.z);
+        [j.x, j.y, j.z, e.x, e.y, e.z] = [e.x, e.y, e.z, j.x, j.y, j.z];
+        for (const q of [j, e]) { q.vx = q.vy = q.vz = 0; if (q.bot && !q.mannequin) { q.dest = { x: q.x, z: q.z }; q.px = q.x; q.pz = q.z; } }
+        return { e: e.id, pa, pb };
+      }
+    }
+    return null;
+  }
+
+  // Les effets décidés par l'hôte, APRÈS l'annonce du pouvoir
+  appliquerGenerique(j, A, type, ry) {
+    const fx = -Math.sin(ry), fz = -Math.cos(ry);
+    switch (A.t) {
+      case 'onde':
+        // tout autour de soi : dégâts, gel, poussée (une force négative attire)
+        for (const e of this.ennemisAutour(j, A.rayon)) {
+          if (A.pousse) {
+            const d = Math.hypot(e.x - j.x, e.z - j.z) || 1, f = A.pousse[0] < 0 ? A.pousse[0] * Math.min(1, d / 8) : A.pousse[0];
+            this.pousser(e, (e.x - j.x) / d * f, A.pousse[1], (e.z - j.z) / d * f);
+          }
+          if (A.gel) this.ralentir(e, A.gel[0], A.gel[1]);
+          if (A.degats) this.blesser(e.id, A.degats, j.id, 'esprit', false);
+        }
+        break;
+      case 'soin':
+        // pour soi, et pour ses coéquipiers proches si le pouvoir a un rayon
+        for (const e of this.joueurs.values()) {
+          if (!e.vivant || (e !== j && !(A.rayon && memeEquipe(j, e) && Math.hypot(e.x - j.x, e.z - j.z) <= A.rayon))) continue;
+          const pv = Math.min(100, e.pv + (A.pv || 0)), b = Math.min(100, e.bouclier + (A.bouclier || 0));
+          if (pv === e.pv && b === e.bouclier) continue;
+          e.pv = pv; e.bouclier = b;
+          this.reseau.diffuser({ t: 'pv', id: e.id, pv, b });
+        }
+        break;
+      case 'buff':
+        // un coup de pouce de quelques secondes (la vitesse, c'est le jeu du joueur qui l'applique)
+        j.buff = { fin: this.temps + A.duree, degats: A.degats || 0, resiste: A.resiste || 0, regen: A.regen || 0, vitesse: A.vitesse || 0, invisible: !!A.invisible };
+        if (A.invisible) this.perdreDeVue(j, A.duree);
+        break;
+      case 'dash': {
+        // ceux qui sont sur le trajet (tout droit, jusqu'au premier mur) sont touchés
+        const h = this.monde.lancerRayon(j.x, j.y + 1, j.z, fx, 0, fz, A.distance);
+        const dist = h ? h.t : A.distance;
+        for (const e of this.ennemisAutour(j, A.distance + 2)) {
+          const t = (e.x - j.x) * fx + (e.z - j.z) * fz;
+          if (t < 0 || t > dist + 1 || Math.abs(e.y - j.y) > 3) continue;
+          if (Math.hypot(e.x - j.x - fx * t, e.z - j.z - fz * t) <= 1.6) this.blesser(e.id, A.degats, j.id, 'esprit', false);
+        }
+        if (j.bot) { j.vx = fx * A.distance / A.duree; j.vz = fz * A.distance / A.duree; j.pousseJusqua = this.temps + A.duree; } // un bot fonce vraiment
+        break;
+      }
+      case 'bond':
+        if (j.bot) { j.vy = A.haut; j.vx = fx * A.avant; j.vz = fz * A.avant; j.auSol = false; j.pousseJusqua = this.temps + 0.6; }
+        break;
+      case 'piege': this.poserPiege(j, A, type); break;
+      case 'objet': {
+        // des objets tombent devant soi, côte à côte
+        const n = A.objets.length;
+        A.objets.forEach((it, k) => { const c = (k - (n - 1) / 2) * 0.9; this.creerButin({ ...it }, j.x + fx * 2 + fz * c, j.y + 0.1, j.z + fz * 2 - fx * c); });
+        break;
+      }
+      case 'murs': {
+        const M = this.monde;
+        const etages = this.etagesMurs(j.y);
+        if (A.forme === 'bunker') {
+          // 4 murs autour de soi et un toit (posé au-dessus du dernier étage de murs)
+          for (const dy of etages) for (let k = 0; k < 4; k++) this.construire(j.id, cibleConstruction(M, 'mur', j.x, j.y + dy, j.z, ry + k * Math.PI / 2, 0));
+          this.construire(j.id, cibleConstruction(M, 'sol', j.x, j.y + etages[etages.length - 1], j.z, ry, 1));
+        } else {
+          // 3 murs côte à côte, devant soi
+          for (const dy of etages) {
+            const c = cibleConstruction(M, 'mur', j.x, j.y + dy, j.z, ry, 0);
+            this.construire(j.id, c);
+            for (const s of [-1, 1]) this.construire(j.id, cibleConstruction(M, 'mur', j.x + (c.axe === 'z' ? s * CASE : 0), j.y + dy, j.z + (c.axe === 'x' ? s * CASE : 0), ry, 0));
+          }
+        }
+        break;
+      }
+      case 'clone': this.perdreDeVue(j, OMBRE.oubli); break;
+      // vision : seulement de l'affichage chez le joueur ; téléportation, échange, bond et élan : le joueur se déplace lui-même
+    }
+  }
+
+  // Nuages posés par un pouvoir (lave, poison, encre, pluie de soin) : une fois par seconde, ils touchent ceux qui sont dedans
+  majNuages() {
+    for (let i = this.nuages.length - 1; i >= 0; i--) {
+      const n = this.nuages[i];
+      if (this.temps < n.tic) continue;
+      n.tic += 1;
+      const A = n.def, auteur = this.joueurs.get(n.par);
+      for (const e of this.joueurs.values()) {
+        if (!e.vivant || e.ph === 'dirigeable' || Math.hypot(e.x - n.x, e.z - n.z) > A.rayon || Math.abs(e.y - n.y) > 4) continue;
+        if (e.id === n.par || (auteur && memeEquipe(auteur, e))) {
+          if (A.soin && e.pv > 0 && e.pv < 100) { e.pv = Math.min(100, e.pv + A.soin); this.reseau.diffuser({ t: 'pv', id: e.id, pv: e.pv, b: e.bouclier }); }
+          continue;
+        }
+        if (A.gel) this.ralentir(e, 1.3, A.gel);
+        if (A.dps) this.blesser(e.id, A.dps, n.par, 'esprit', false);
+      }
+      if (--n.tics <= 0) this.nuages.splice(i, 1);
     }
   }
 
@@ -1108,14 +1533,16 @@ export class Hote {
   // dans la zone ; le premier à l'objectif gagne.
   marquer(j, auteur, arme) {
     const k = auteur && auteur !== j.id ? this.joueurs.get(auteur) : null;
-    if (k) { k.kills++; if (k.bot && Math.random() < 0.4) { k.emT = 2.5; k.em = (k.look && k.look.emote) || 'salut'; } }
+    if (k) { k.kills++; this.bonusElimination(k); if (k.bot && Math.random() < 0.4) { k.emT = 2.5; k.em = (k.look && k.look.emote) || 'salut'; } }
     const dist = k ? Math.round(Math.hypot(k.x - j.x, k.y - j.y, k.z - j.z)) : 0;
     this.reseau.diffuser({ t: 'frag', v: j.id, k: k ? k.id : null, a: arme || '', kills: k ? k.kills : 0, dist, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z) });
+    this.lacherEclats(j);
     this.reapparaitre(j, null);
     j.ph = 'sol'; // même s'il tombait encore du dirigeable
     if (j.bot) { j.cible = null; j.voit = false; j.agresseur = null; j.objectif = null; j.dest = { x: j.x, z: j.z }; j.destT = 0; j.soinT = 0; j.mun = OBJETS[j.arme.objet].chargeur; j.rechargeT = 0; }
     if (k && this.objectif && k.kills >= this.objectif && !this.fini) {
       this.fini = true;
+      this.recompenserVictoire([k]);
       this.reseau.diffuser({ t: 'fin', gagnant: k.id, nom: k.nom, kills: k.kills, equipe: 0, gagnants: [k.id], melee: true });
     }
   }
@@ -1131,7 +1558,7 @@ export class Hote {
     const p = zf ? this.pointTerre(Math.random, zf.x, zf.z, zf.r * 0.8) : this.pointTerre(Math.random, 0, 0, j.mannequin ? 45 : 30);
     const h = this.monde.lancerRayon(p.x, 160, p.z, 0, -1, 0, 320);
     j.x = p.x; j.z = p.z; j.y = (h ? h.y : this.monde.hauteurTerrain(p.x, p.z)) + 0.5; j.vx = j.vz = j.vy = 0;
-    j.pv = 100; j.bouclier = 0;
+    j.pv = 100; j.bouclier = 0; j.poison = null;
     this.reseau.diffuser({ t: 'pv', id: j.id, pv: 100, b: 0, reap: true });
     if (!j.bot) this.reseau.envoyerA(j.id, { t: 'reapparition', x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z) });
   }

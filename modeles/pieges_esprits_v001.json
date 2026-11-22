@@ -1,0 +1,87 @@
+{
+ "fichier": "pieges_esprits_v001.glb",
+ "unite": "1 = 1 m",
+ "orientation": "Blender : avant +Y, haut +Z ; three.js : avant -Z, haut +Y",
+ "regles": "Racine vide au sol, au centre (jamais animée). Aucune texture. Animations : <objet>_repos (boucle 2 s), <objet>_apparaitre (0,5 s, finit au repos).",
+ "objets": [
+  {
+   "nom": "piege_oursin",
+   "esprit": "corail",
+   "triangles": 3110,
+   "taille_blender": [
+    0.844,
+    0.811,
+    0.528
+   ],
+   "taille_three": {
+    "largeur_x": 0.844,
+    "hauteur_y": 0.528,
+    "profondeur_z": 0.811
+   },
+   "bas_y": 0.008,
+   "animations": {
+    "repos": "piege_oursin_repos",
+    "apparaitre": "piege_oursin_apparaitre"
+   },
+   "durees": {
+    "repos": 2.0,
+    "apparaitre": 0.5
+   },
+   "morceaux": [
+    "piege_oursin_corps",
+    "piege_oursin_piquants"
+   ],
+   "caches_au_repos": [],
+   "materiaux": [
+    "lumiere_piege_oursin",
+    "piege_oursin_bosse",
+    "piege_oursin_corps",
+    "piege_oursin_pique"
+   ],
+   "materiau_lumiere": "lumiere_piege_oursin",
+   "materiau_couleur_principale": "piege_oursin_corps",
+   "notes": "Boule rose aplatie dessous, ~60 piquants clairs sur des bosses foncées, 5 rangées de points lumineux et une rosace sur le dessus (comme un vrai oursin). Repos : il respire (le corps gonfle un peu, les piquants se hérissent à contretemps). Apparaître : il sort du sol puis les piquants poussent en tournant."
+  },
+  {
+   "nom": "piege_mine",
+   "esprit": "mine",
+   "triangles": 2250,
+   "taille_blender": [
+    1.188,
+    1.188,
+    0.276
+   ],
+   "taille_three": {
+    "largeur_x": 1.188,
+    "hauteur_y": 0.276,
+    "profondeur_z": 1.188
+   },
+   "bas_y": 0.0,
+   "animations": {
+    "repos": "piege_mine_repos",
+    "apparaitre": "piege_mine_apparaitre"
+   },
+   "durees": {
+    "repos": 2.0,
+    "apparaitre": 0.5
+   },
+   "morceaux": [
+    "piege_mine_corps",
+    "piege_mine_lampe"
+   ],
+   "caches_au_repos": [
+    "piege_mine_onde"
+   ],
+   "materiaux": [
+    "lumiere_piege_mine",
+    "piege_mine_fonce",
+    "piege_mine_jaune",
+    "piege_mine_metal",
+    "piege_mine_noir"
+   ],
+   "materiau_lumiere": "lumiere_piege_mine",
+   "materiau_couleur_principale": "piege_mine_metal",
+   "notes": "Disque de métal de 1,2 m (1,08 m sur le dessus), bande d'alerte jaune et noire, 8 boulons, plaque à pression, lampe rouge sous une cage. Repos : la lampe clignote 2 fois (elle grossit et une onde rouge part d'elle). piege_mine_onde est cachée à 0,001 au repos et seulement montrée pendant les clignotements. Apparaître : le disque s'ouvre au sol puis la lampe sort."
+  }
+ ]
+}

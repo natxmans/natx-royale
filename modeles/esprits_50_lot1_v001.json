@@ -1,0 +1,435 @@
+{
+ "_aide": "10 entrées prêtes pour le tableau « esprits » d'integration.json (actif:false), même format que les 5 d'esprits_v003.glb. Les clés qui commencent par « _ » sont des notes. _effets_caches = objets à l'échelle 0,001 au repos, montrés par « activer » et « obtention ».",
+ "esprits": [
+  {
+   "id": "lave",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_lave",
+   "nom": "Magmou",
+   "couleur": "#ff5a2a",
+   "animations": {
+    "flotter": "lave_flotter",
+    "activer": "lave_activer",
+    "apparaitre": "lave_apparaitre",
+    "attente2": "lave_attente2",
+    "deplacer": "lave_deplacer",
+    "content": "lave_content",
+    "surpris": "lave_surpris",
+    "obtention": "lave_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.38,
+    "d": 0.44
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2294,
+   "_role": "Lave",
+   "_description": "boule de roche noire fissurée, lave qui brille dans les fissures, mare de lave qui bout sur la tête, cailloux en orbite",
+   "_morceaux": [
+    "lave_bulles",
+    "lave_cailloux"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_lave"
+  },
+  {
+   "id": "cendre",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_cendre",
+   "nom": "Suie",
+   "couleur": "#9aa3ad",
+   "animations": {
+    "flotter": "cendre_flotter",
+    "activer": "cendre_activer",
+    "apparaitre": "cendre_apparaitre",
+    "attente2": "cendre_attente2",
+    "deplacer": "cendre_deplacer",
+    "content": "cendre_content",
+    "surpris": "cendre_surpris",
+    "obtention": "cendre_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.4,
+    "h": 0.51,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3088,
+   "_role": "Fumée",
+   "_description": "petit nuage de fumée grise en panache, volutes qui montent, braises en orbite",
+   "_morceaux": [
+    "cendre_volutes",
+    "cendre_braises"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_cendre"
+  },
+  {
+   "id": "comete",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_comete",
+   "nom": "Astro",
+   "couleur": "#ffb14d",
+   "animations": {
+    "flotter": "comete_flotter",
+    "activer": "comete_activer",
+    "apparaitre": "comete_apparaitre",
+    "attente2": "comete_attente2",
+    "deplacer": "comete_deplacer",
+    "content": "comete_content",
+    "surpris": "comete_surpris",
+    "obtention": "comete_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.42,
+    "h": 0.32,
+    "d": 0.56
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2158,
+   "_role": "Météore",
+   "_description": "caillou de l'espace à cratères, queue de comète lumineuse derrière lui, petites étoiles ; activer : il fonce droit devant",
+   "_morceaux": [
+    "comete_queue",
+    "comete_etoiles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_comete"
+  },
+  {
+   "id": "dragon",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_dragon",
+   "nom": "Dracot",
+   "couleur": "#e2463f",
+   "animations": {
+    "flotter": "dragon_flotter",
+    "activer": "dragon_activer",
+    "apparaitre": "dragon_apparaitre",
+    "attente2": "dragon_attente2",
+    "deplacer": "dragon_deplacer",
+    "content": "dragon_content",
+    "surpris": "dragon_surpris",
+    "obtention": "dragon_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.49,
+    "h": 0.32,
+    "d": 0.45
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2914,
+   "_role": "Dragon",
+   "_description": "bébé dragon rond : museau, cornes, crête, plastron, petites ailes qui battent, queue à flamme ; effet : souffle de feu",
+   "_morceaux": [
+    "dragon_aile_g",
+    "dragon_aile_d",
+    "dragon_queue"
+   ],
+   "_effets_caches": [
+    "dragon_souffle"
+   ],
+   "_materiau_lumiere": "lumiere_dragon"
+  },
+  {
+   "id": "volcan",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_volcan",
+   "nom": "Krakou",
+   "couleur": "#ff8a3d",
+   "animations": {
+    "flotter": "volcan_flotter",
+    "activer": "volcan_activer",
+    "apparaitre": "volcan_apparaitre",
+    "attente2": "volcan_attente2",
+    "deplacer": "volcan_deplacer",
+    "content": "volcan_content",
+    "surpris": "volcan_surpris",
+    "obtention": "volcan_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.33,
+    "h": 0.48,
+    "d": 0.32
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2522,
+   "_role": "Éruption",
+   "_description": "mini volcan : cratère qui rougeoie, coulées de lave, fumée qui monte ; effet : gerbe de lave",
+   "_morceaux": [
+    "volcan_fumee",
+    "volcan_bouillon"
+   ],
+   "_effets_caches": [
+    "volcan_eruption"
+   ],
+   "_materiau_lumiere": "lumiere_volcan"
+  },
+  {
+   "id": "cristal",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_cristal",
+   "nom": "Cristo",
+   "couleur": "#7ae0ff",
+   "animations": {
+    "flotter": "cristal_flotter",
+    "activer": "cristal_activer",
+    "apparaitre": "cristal_apparaitre",
+    "attente2": "cristal_attente2",
+    "deplacer": "cristal_deplacer",
+    "content": "cristal_content",
+    "surpris": "cristal_surpris",
+    "obtention": "cristal_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.35,
+    "h": 0.4,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1836,
+   "_role": "Cristal",
+   "_description": "gros cristal bleu à 6 facettes avec un visage, deux petits cristaux, éclats en orbite, anneau de lumière",
+   "_morceaux": [
+    "cristal_eclats",
+    "cristal_halo"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_cristal"
+  },
+  {
+   "id": "neige",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_neige",
+   "nom": "Boulou",
+   "couleur": "#cfeeff",
+   "animations": {
+    "flotter": "neige_flotter",
+    "activer": "neige_activer",
+    "apparaitre": "neige_apparaitre",
+    "attente2": "neige_attente2",
+    "deplacer": "neige_deplacer",
+    "content": "neige_content",
+    "surpris": "neige_surpris",
+    "obtention": "neige_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.51,
+    "h": 0.4,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2892,
+   "_role": "Neige",
+   "_description": "petit bonhomme de neige : deux boules, nez carotte, écharpe rouge dont un pan vole, bras en branches, flocons",
+   "_morceaux": [
+    "neige_pan",
+    "neige_bras_g",
+    "neige_bras_d",
+    "neige_flocons"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_neige"
+  },
+  {
+   "id": "banquise",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_banquise",
+   "nom": "Pingou",
+   "couleur": "#5aa8ff",
+   "animations": {
+    "flotter": "banquise_flotter",
+    "activer": "banquise_activer",
+    "apparaitre": "banquise_apparaitre",
+    "attente2": "banquise_attente2",
+    "deplacer": "banquise_deplacer",
+    "content": "banquise_content",
+    "surpris": "banquise_surpris",
+    "obtention": "banquise_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.42,
+    "h": 0.34,
+    "d": 0.41
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2818,
+   "_role": "Glisse",
+   "_description": "bébé pingouin bleu : ventre et masque blancs, bec et pattes orange, houppette, ailerons qui battent, glaçons ; activer : glissade sur le ventre",
+   "_morceaux": [
+    "banquise_aile_g",
+    "banquise_aile_d",
+    "banquise_glacons"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_banquise"
+  },
+  {
+   "id": "aurore",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_aurore",
+   "nom": "Boréa",
+   "couleur": "#8affc8",
+   "animations": {
+    "flotter": "aurore_flotter",
+    "activer": "aurore_activer",
+    "apparaitre": "aurore_apparaitre",
+    "attente2": "aurore_attente2",
+    "deplacer": "aurore_deplacer",
+    "content": "aurore_content",
+    "surpris": "aurore_surpris",
+    "obtention": "aurore_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.52,
+    "h": 0.3,
+    "d": 0.47
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2328,
+   "_role": "Aurore",
+   "_description": "petit cœur lumineux entouré de deux rideaux d'aurore boréale (vert et violet) qui ondulent, petites étoiles",
+   "_morceaux": [
+    "aurore_voile_a",
+    "aurore_voile_b",
+    "aurore_etoiles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_aurore"
+  },
+  {
+   "id": "orage",
+   "actif": false,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_orage",
+   "nom": "Grondin",
+   "couleur": "#8f9bff",
+   "animations": {
+    "flotter": "orage_flotter",
+    "activer": "orage_activer",
+    "apparaitre": "orage_apparaitre",
+    "attente2": "orage_attente2",
+    "deplacer": "orage_deplacer",
+    "content": "orage_content",
+    "surpris": "orage_surpris",
+    "obtention": "orage_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.47,
+    "h": 0.42,
+    "d": 0.29
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3684,
+   "_role": "Orage",
+   "_description": "nuage sombre grognon : sourcils froncés, bouche à l'envers, deux petits éclairs, gouttes de pluie ; activer : il gronde et les éclairs claquent",
+   "_morceaux": [
+    "orage_eclair_g",
+    "orage_eclair_d",
+    "orage_pluie"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_orage"
+  }
+ ]
+}

@@ -1,0 +1,438 @@
+{
+ "_aide": "10 entrées prêtes pour le tableau « esprits » d'integration.json (actif:false), même format que les 5 d'esprits_v003.glb. Les clés qui commencent par « _ » sont des notes. _effets_caches = objets à l'échelle 0,001 au repos, montrés par « activer » et « obtention ».",
+ "esprits": [
+  {
+   "id": "tortue",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_tortue",
+   "nom": "Carapou",
+   "couleur": "#4fbf8f",
+   "animations": {
+    "flotter": "tortue_flotter",
+    "activer": "tortue_activer",
+    "apparaitre": "tortue_apparaitre",
+    "attente2": "tortue_attente2",
+    "deplacer": "tortue_deplacer",
+    "content": "tortue_content",
+    "surpris": "tortue_surpris",
+    "obtention": "tortue_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.49,
+    "h": 0.19,
+    "d": 0.48
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3390,
+   "_role": "Carapace",
+   "_description": "petite tortue : carapace bombée à 7 plaques, bord clair, grosse tête ronde en avant, 4 pattes en palettes qui nagent, petite queue, bulles ; activer : elle rentre les pattes et tourne comme une toupie",
+   "_morceaux": [
+    "tortue_patte_1",
+    "tortue_patte_2",
+    "tortue_patte_3",
+    "tortue_patte_4",
+    "tortue_bulles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_tortue"
+  },
+  {
+   "id": "vampire",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_vampire",
+   "nom": "Morsi",
+   "couleur": "#d1456f",
+   "animations": {
+    "flotter": "vampire_flotter",
+    "activer": "vampire_activer",
+    "apparaitre": "vampire_apparaitre",
+    "attente2": "vampire_attente2",
+    "deplacer": "vampire_deplacer",
+    "content": "vampire_content",
+    "surpris": "vampire_surpris",
+    "obtention": "vampire_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.49,
+    "h": 0.32,
+    "d": 0.42
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2482,
+   "_role": "Vampire",
+   "_description": "petite chauve-souris vampire toute ronde : cheveux noirs en pointe sur le front, deux crocs, grandes oreilles pointues, ailes sombres qui battent, gouttes lumineuses ; activer : elle prend son élan et mord",
+   "_morceaux": [
+    "vampire_oreille_g",
+    "vampire_aile_g",
+    "vampire_oreille_d",
+    "vampire_aile_d",
+    "vampire_gouttes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_vampire"
+  },
+  {
+   "id": "fantome",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_fantome",
+   "nom": "Bouh",
+   "couleur": "#e8e6ff",
+   "animations": {
+    "flotter": "fantome_flotter",
+    "activer": "fantome_activer",
+    "apparaitre": "fantome_apparaitre",
+    "attente2": "fantome_attente2",
+    "deplacer": "fantome_deplacer",
+    "content": "fantome_content",
+    "surpris": "fantome_surpris",
+    "obtention": "fantome_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.33,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2892,
+   "_role": "Fantôme",
+   "_description": "petit fantôme en drap blanc : bas du drap en vagues, bouche en « o », deux petits bras, feux follets en orbite ; activer : « bouh ! » (il grossit, avance et lève les bras)",
+   "_morceaux": [
+    "fantome_bras_g",
+    "fantome_bras_d",
+    "fantome_follets"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_fantome"
+  },
+  {
+   "id": "miroir",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_miroir",
+   "nom": "Reflex",
+   "couleur": "#9fe8ff",
+   "animations": {
+    "flotter": "miroir_flotter",
+    "activer": "miroir_activer",
+    "apparaitre": "miroir_apparaitre",
+    "attente2": "miroir_attente2",
+    "deplacer": "miroir_deplacer",
+    "content": "miroir_content",
+    "surpris": "miroir_surpris",
+    "obtention": "miroir_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.43,
+    "h": 0.39,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1704,
+   "_role": "Miroir",
+   "_description": "miroir en losange : cadre argenté, verre bleu clair avec le visage, reflets, pierres lumineuses aux 4 pointes, éclat qui scintille, éclats de miroir en orbite ; activer : il se retourne (un tour)",
+   "_morceaux": [
+    "miroir_etincelle",
+    "miroir_eclats"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_miroir"
+  },
+  {
+   "id": "sablier",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_sablier",
+   "nom": "Sablo",
+   "couleur": "#e8c48a",
+   "animations": {
+    "flotter": "sablier_flotter",
+    "activer": "sablier_activer",
+    "apparaitre": "sablier_apparaitre",
+    "attente2": "sablier_attente2",
+    "deplacer": "sablier_deplacer",
+    "content": "sablier_content",
+    "surpris": "sablier_surpris",
+    "obtention": "sablier_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.43,
+    "h": 0.38,
+    "d": 0.34
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2480,
+   "_role": "Sablier",
+   "_description": "sablier : deux bulbes de verre avec du sable, plateaux et colonnes en bois, visage sur le bulbe du haut, grains de sable autour du col, éclats ; activer : il se retourne (un tour complet)",
+   "_morceaux": [
+    "sablier_grains",
+    "sablier_eclats"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_sablier"
+  },
+  {
+   "id": "sable",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_sable",
+   "nom": "Dunou",
+   "couleur": "#e0a95a",
+   "animations": {
+    "flotter": "sable_flotter",
+    "activer": "sable_activer",
+    "apparaitre": "sable_apparaitre",
+    "attente2": "sable_attente2",
+    "deplacer": "sable_deplacer",
+    "content": "sable_content",
+    "surpris": "sable_surpris",
+    "obtention": "sable_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.48,
+    "h": 0.31,
+    "d": 0.46
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3500,
+   "_role": "Désert",
+   "_description": "scorpion rond couleur sable : deux pinces qui claquent, 6 petites pattes, plaques sur le dos, queue recourbée au-dessus de la tête avec un dard lumineux, grains de sable en orbite ; activer : la queue pique vers l'avant",
+   "_morceaux": [
+    "sable_pince_g",
+    "sable_pince_d",
+    "sable_queue",
+    "sable_grains"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_sable"
+  },
+  {
+   "id": "bombe",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_bombe",
+   "nom": "Boumi",
+   "couleur": "#ff6b4a",
+   "animations": {
+    "flotter": "bombe_flotter",
+    "activer": "bombe_activer",
+    "apparaitre": "bombe_apparaitre",
+    "attente2": "bombe_attente2",
+    "deplacer": "bombe_deplacer",
+    "content": "bombe_content",
+    "surpris": "bombe_surpris",
+    "obtention": "bombe_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.35,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2632,
+   "_role": "Explosifs",
+   "_description": "bombe ronde orange : bouchon noir, mèche recourbée qui crépite, reflet, petits pieds, éclats en orbite ; activer : elle gonfle en tremblant, prête à exploser",
+   "_morceaux": [
+    "bombe_etincelle",
+    "bombe_eclats"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_bombe"
+  },
+  {
+   "id": "mine",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_mine",
+   "nom": "Clac",
+   "couleur": "#c8ced8",
+   "animations": {
+    "flotter": "mine_flotter",
+    "activer": "mine_activer",
+    "apparaitre": "mine_apparaitre",
+    "attente2": "mine_attente2",
+    "deplacer": "mine_deplacer",
+    "content": "mine_content",
+    "surpris": "mine_surpris",
+    "obtention": "mine_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.29,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3056,
+   "_role": "Piège",
+   "_description": "piège à mâchoires : boule de métal entourée de deux cercles de dents blanches qui s'emboîtent, déclencheur à voyant lumineux sur la tête, petits rouages ; activer : les mâchoires s'ouvrent puis claquent",
+   "_morceaux": [
+    "mine_machoire_haut",
+    "mine_machoire_bas",
+    "mine_voyant",
+    "mine_rouages"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_mine"
+  },
+  {
+   "id": "reserve",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_reserve",
+   "nom": "Cartou",
+   "couleur": "#c9a36b",
+   "animations": {
+    "flotter": "reserve_flotter",
+    "activer": "reserve_activer",
+    "apparaitre": "reserve_apparaitre",
+    "attente2": "reserve_attente2",
+    "deplacer": "reserve_deplacer",
+    "content": "reserve_content",
+    "surpris": "reserve_surpris",
+    "obtention": "reserve_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.26,
+    "d": 0.44
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1856,
+   "_role": "Réserve",
+   "_description": "caisse en carton ouverte : ruban adhésif, poignées découpées, 4 rabats (ceux des côtés battent), objets lumineux qui dépassent, mini cartons en orbite ; activer : il saute et ses objets jaillissent",
+   "_morceaux": [
+    "reserve_rabat_g",
+    "reserve_rabat_d",
+    "reserve_tresor",
+    "reserve_cartons"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_reserve"
+  },
+  {
+   "id": "docteur",
+   "actif": false,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_docteur",
+   "nom": "Bobo",
+   "couleur": "#ff7a8a",
+   "animations": {
+    "flotter": "docteur_flotter",
+    "activer": "docteur_activer",
+    "apparaitre": "docteur_apparaitre",
+    "attente2": "docteur_attente2",
+    "deplacer": "docteur_deplacer",
+    "content": "docteur_content",
+    "surpris": "docteur_surpris",
+    "obtention": "docteur_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.26,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2804,
+   "_role": "Secours",
+   "_description": "pansement rose à bouts ronds : compresse claire au milieu avec le visage, petits trous, croix de secours lumineuse au-dessus de la tête, petits cœurs en orbite ; activer : il saute en tournant, la croix grandit",
+   "_morceaux": [
+    "docteur_croix",
+    "docteur_coeurs"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_docteur"
+  }
+ ]
+}

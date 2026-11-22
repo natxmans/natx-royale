@@ -149,6 +149,16 @@ CREATE TABLE IF NOT EXISTS robot_rapports (
 CREATE TABLE IF NOT EXISTS robot_recompenses (
   auteur_id TEXT NOT NULL, cible_id TEXT NOT NULL, cadeau_id INTEGER, pieces INTEGER NOT NULL, cree_le INTEGER NOT NULL,
   PRIMARY KEY (auteur_id, cible_id));
+CREATE TABLE IF NOT EXISTS eclats (
+  joueur_id TEXT PRIMARY KEY, solde INTEGER NOT NULL DEFAULT 0, gagnes INTEGER NOT NULL DEFAULT 0, depenses INTEGER NOT NULL DEFAULT 0,
+  maj_le INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS eclats_parties (
+  joueur_id TEXT NOT NULL, partie_id TEXT NOT NULL, gagnes INTEGER NOT NULL, cree_le INTEGER NOT NULL, maj_le INTEGER NOT NULL,
+  PRIMARY KEY (joueur_id, partie_id));
+CREATE INDEX IF NOT EXISTS eclats_parties_jour ON eclats_parties(joueur_id, cree_le);
+CREATE TABLE IF NOT EXISTS eclats_depenses (
+  joueur_id TEXT NOT NULL, demande TEXT NOT NULL, partie_id TEXT NOT NULL, type TEXT NOT NULL, niveau INTEGER NOT NULL,
+  rarete TEXT NOT NULL, prix INTEGER NOT NULL, cree_le INTEGER NOT NULL, PRIMARY KEY (joueur_id, demande));
 """
 CIBLES = {'tous', 'joueur', 'code'}
 STYLES_ANNONCE = {'info', 'evenement', 'alerte'}

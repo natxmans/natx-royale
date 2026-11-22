@@ -922,6 +922,12 @@
   "fichier": "decors_secrets_v001.glb",
   "fiche": "decors_secrets_v001.json"
  },
+ "_pieges_esprits_aide": "22 nov. 2026 : pièges posés par les pouvoirs des esprits (piege_oursin pour Récifa, piege_mine pour Clac). Racine au sol au centre ; animations <objet>_repos (boucle) et <objet>_apparaitre. Sans ce fichier, js/jeu.js les dessine en code.",
+ "pieges_esprits": {
+  "actif": true,
+  "fichier": "pieges_esprits_v001.glb",
+  "fiche": "pieges_esprits_v001.json"
+ },
  "armes": [
   {
    "id": "futuriste",
@@ -1482,6 +1488,2157 @@
    "_effets_caches": [
     "etoile_trainee"
    ]
+  },
+  {
+   "id": "lave",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_lave",
+   "nom": "Magmou",
+   "couleur": "#ff5a2a",
+   "animations": {
+    "flotter": "lave_flotter",
+    "activer": "lave_activer",
+    "apparaitre": "lave_apparaitre",
+    "attente2": "lave_attente2",
+    "deplacer": "lave_deplacer",
+    "content": "lave_content",
+    "surpris": "lave_surpris",
+    "obtention": "lave_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.38,
+    "d": 0.44
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2294,
+   "_role": "Lave",
+   "_description": "boule de roche noire fissurée, lave qui brille dans les fissures, mare de lave qui bout sur la tête, cailloux en orbite",
+   "_morceaux": [
+    "lave_bulles",
+    "lave_cailloux"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_lave"
+  },
+  {
+   "id": "cendre",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_cendre",
+   "nom": "Suie",
+   "couleur": "#9aa3ad",
+   "animations": {
+    "flotter": "cendre_flotter",
+    "activer": "cendre_activer",
+    "apparaitre": "cendre_apparaitre",
+    "attente2": "cendre_attente2",
+    "deplacer": "cendre_deplacer",
+    "content": "cendre_content",
+    "surpris": "cendre_surpris",
+    "obtention": "cendre_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.4,
+    "h": 0.51,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3088,
+   "_role": "Fumée",
+   "_description": "petit nuage de fumée grise en panache, volutes qui montent, braises en orbite",
+   "_morceaux": [
+    "cendre_volutes",
+    "cendre_braises"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_cendre"
+  },
+  {
+   "id": "comete",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_comete",
+   "nom": "Astro",
+   "couleur": "#ffb14d",
+   "animations": {
+    "flotter": "comete_flotter",
+    "activer": "comete_activer",
+    "apparaitre": "comete_apparaitre",
+    "attente2": "comete_attente2",
+    "deplacer": "comete_deplacer",
+    "content": "comete_content",
+    "surpris": "comete_surpris",
+    "obtention": "comete_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.42,
+    "h": 0.32,
+    "d": 0.56
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2158,
+   "_role": "Météore",
+   "_description": "caillou de l'espace à cratères, queue de comète lumineuse derrière lui, petites étoiles ; activer : il fonce droit devant",
+   "_morceaux": [
+    "comete_queue",
+    "comete_etoiles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_comete"
+  },
+  {
+   "id": "dragon",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_dragon",
+   "nom": "Dracot",
+   "couleur": "#e2463f",
+   "animations": {
+    "flotter": "dragon_flotter",
+    "activer": "dragon_activer",
+    "apparaitre": "dragon_apparaitre",
+    "attente2": "dragon_attente2",
+    "deplacer": "dragon_deplacer",
+    "content": "dragon_content",
+    "surpris": "dragon_surpris",
+    "obtention": "dragon_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.49,
+    "h": 0.32,
+    "d": 0.45
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2914,
+   "_role": "Dragon",
+   "_description": "bébé dragon rond : museau, cornes, crête, plastron, petites ailes qui battent, queue à flamme ; effet : souffle de feu",
+   "_morceaux": [
+    "dragon_aile_g",
+    "dragon_aile_d",
+    "dragon_queue"
+   ],
+   "_effets_caches": [
+    "dragon_souffle"
+   ],
+   "_materiau_lumiere": "lumiere_dragon"
+  },
+  {
+   "id": "volcan",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_volcan",
+   "nom": "Krakou",
+   "couleur": "#ff8a3d",
+   "animations": {
+    "flotter": "volcan_flotter",
+    "activer": "volcan_activer",
+    "apparaitre": "volcan_apparaitre",
+    "attente2": "volcan_attente2",
+    "deplacer": "volcan_deplacer",
+    "content": "volcan_content",
+    "surpris": "volcan_surpris",
+    "obtention": "volcan_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.33,
+    "h": 0.48,
+    "d": 0.32
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2522,
+   "_role": "Éruption",
+   "_description": "mini volcan : cratère qui rougeoie, coulées de lave, fumée qui monte ; effet : gerbe de lave",
+   "_morceaux": [
+    "volcan_fumee",
+    "volcan_bouillon"
+   ],
+   "_effets_caches": [
+    "volcan_eruption"
+   ],
+   "_materiau_lumiere": "lumiere_volcan"
+  },
+  {
+   "id": "cristal",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_cristal",
+   "nom": "Cristo",
+   "couleur": "#7ae0ff",
+   "animations": {
+    "flotter": "cristal_flotter",
+    "activer": "cristal_activer",
+    "apparaitre": "cristal_apparaitre",
+    "attente2": "cristal_attente2",
+    "deplacer": "cristal_deplacer",
+    "content": "cristal_content",
+    "surpris": "cristal_surpris",
+    "obtention": "cristal_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.35,
+    "h": 0.4,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1836,
+   "_role": "Cristal",
+   "_description": "gros cristal bleu à 6 facettes avec un visage, deux petits cristaux, éclats en orbite, anneau de lumière",
+   "_morceaux": [
+    "cristal_eclats",
+    "cristal_halo"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_cristal"
+  },
+  {
+   "id": "neige",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_neige",
+   "nom": "Boulou",
+   "couleur": "#cfeeff",
+   "animations": {
+    "flotter": "neige_flotter",
+    "activer": "neige_activer",
+    "apparaitre": "neige_apparaitre",
+    "attente2": "neige_attente2",
+    "deplacer": "neige_deplacer",
+    "content": "neige_content",
+    "surpris": "neige_surpris",
+    "obtention": "neige_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.51,
+    "h": 0.4,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2892,
+   "_role": "Neige",
+   "_description": "petit bonhomme de neige : deux boules, nez carotte, écharpe rouge dont un pan vole, bras en branches, flocons",
+   "_morceaux": [
+    "neige_pan",
+    "neige_bras_g",
+    "neige_bras_d",
+    "neige_flocons"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_neige"
+  },
+  {
+   "id": "banquise",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_banquise",
+   "nom": "Pingou",
+   "couleur": "#5aa8ff",
+   "animations": {
+    "flotter": "banquise_flotter",
+    "activer": "banquise_activer",
+    "apparaitre": "banquise_apparaitre",
+    "attente2": "banquise_attente2",
+    "deplacer": "banquise_deplacer",
+    "content": "banquise_content",
+    "surpris": "banquise_surpris",
+    "obtention": "banquise_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.42,
+    "h": 0.34,
+    "d": 0.41
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2818,
+   "_role": "Glisse",
+   "_description": "bébé pingouin bleu : ventre et masque blancs, bec et pattes orange, houppette, ailerons qui battent, glaçons ; activer : glissade sur le ventre",
+   "_morceaux": [
+    "banquise_aile_g",
+    "banquise_aile_d",
+    "banquise_glacons"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_banquise"
+  },
+  {
+   "id": "aurore",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_aurore",
+   "nom": "Boréa",
+   "couleur": "#8affc8",
+   "animations": {
+    "flotter": "aurore_flotter",
+    "activer": "aurore_activer",
+    "apparaitre": "aurore_apparaitre",
+    "attente2": "aurore_attente2",
+    "deplacer": "aurore_deplacer",
+    "content": "aurore_content",
+    "surpris": "aurore_surpris",
+    "obtention": "aurore_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.52,
+    "h": 0.3,
+    "d": 0.47
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2328,
+   "_role": "Aurore",
+   "_description": "petit cœur lumineux entouré de deux rideaux d'aurore boréale (vert et violet) qui ondulent, petites étoiles",
+   "_morceaux": [
+    "aurore_voile_a",
+    "aurore_voile_b",
+    "aurore_etoiles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_aurore"
+  },
+  {
+   "id": "orage",
+   "actif": true,
+   "fichier": "esprits_50_lot1_v001.glb",
+   "objet": "esprit_orage",
+   "nom": "Grondin",
+   "couleur": "#8f9bff",
+   "animations": {
+    "flotter": "orage_flotter",
+    "activer": "orage_activer",
+    "apparaitre": "orage_apparaitre",
+    "attente2": "orage_attente2",
+    "deplacer": "orage_deplacer",
+    "content": "orage_content",
+    "surpris": "orage_surpris",
+    "obtention": "orage_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.47,
+    "h": 0.42,
+    "d": 0.29
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3684,
+   "_role": "Orage",
+   "_description": "nuage sombre grognon : sourcils froncés, bouche à l'envers, deux petits éclairs, gouttes de pluie ; activer : il gronde et les éclairs claquent",
+   "_morceaux": [
+    "orage_eclair_g",
+    "orage_eclair_d",
+    "orage_pluie"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_orage"
+  },
+  {
+   "id": "pile",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_pile",
+   "nom": "Voltix",
+   "couleur": "#b6ff3d",
+   "animations": {
+    "flotter": "pile_flotter",
+    "activer": "pile_activer",
+    "apparaitre": "pile_apparaitre",
+    "attente2": "pile_attente2",
+    "deplacer": "pile_deplacer",
+    "content": "pile_content",
+    "surpris": "pile_surpris",
+    "obtention": "pile_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.39,
+    "d": 0.33
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2488,
+   "_role": "Énergie",
+   "_description": "petite pile verte à culot noir, éclair sur le ventre, borne en métal avec des arcs électriques, barres de charge dans le dos, étincelles",
+   "_morceaux": [
+    "pile_arcs",
+    "pile_etincelles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_pile"
+  },
+  {
+   "id": "aimant",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_aimant",
+   "nom": "Magno",
+   "couleur": "#ff4d6d",
+   "animations": {
+    "flotter": "aimant_flotter",
+    "activer": "aimant_activer",
+    "apparaitre": "aimant_apparaitre",
+    "attente2": "aimant_attente2",
+    "deplacer": "aimant_deplacer",
+    "content": "aimant_content",
+    "surpris": "aimant_surpris",
+    "obtention": "aimant_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.41,
+    "h": 0.42,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2568,
+   "_role": "Aimant",
+   "_description": "aimant en fer à cheval rouge, arche en haut avec le visage, deux bouts argentés, lignes du champ magnétique entre les bouts, écrous attirés en orbite",
+   "_morceaux": [
+    "aimant_champ",
+    "aimant_ecrous"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_aimant"
+  },
+  {
+   "id": "plasma",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_plasma",
+   "nom": "Néon",
+   "couleur": "#c44dff",
+   "animations": {
+    "flotter": "plasma_flotter",
+    "activer": "plasma_activer",
+    "apparaitre": "plasma_apparaitre",
+    "attente2": "plasma_attente2",
+    "deplacer": "plasma_deplacer",
+    "content": "plasma_content",
+    "surpris": "plasma_surpris",
+    "obtention": "plasma_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.29,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2868,
+   "_role": "Plasma",
+   "_description": "boule de plasma violette parcourue de filaments lumineux en zigzag, arcs qui jaillissent, billes en orbite",
+   "_morceaux": [
+    "plasma_arcs",
+    "plasma_billes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_plasma"
+  },
+  {
+   "id": "nimbus",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_nimbus",
+   "nom": "Nimbo",
+   "couleur": "#dfe9f5",
+   "animations": {
+    "flotter": "nimbus_flotter",
+    "activer": "nimbus_activer",
+    "apparaitre": "nimbus_apparaitre",
+    "attente2": "nimbus_attente2",
+    "deplacer": "nimbus_deplacer",
+    "content": "nimbus_content",
+    "surpris": "nimbus_surpris",
+    "obtention": "nimbus_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.54,
+    "h": 0.29,
+    "d": 0.48
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3832,
+   "_role": "Nuage",
+   "_description": "petit nuage blanc tout doux à grosses joues roses, dessous plat un peu bleuté, petites mains, deux bouffées qui respirent, trois bébés nuages en orbite",
+   "_morceaux": [
+    "nimbus_bouffee_g",
+    "nimbus_bouffee_d",
+    "nimbus_nuageons"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_nimbus"
+  },
+  {
+   "id": "tornade",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_tornade",
+   "nom": "Tourbi",
+   "couleur": "#7fd6c9",
+   "animations": {
+    "flotter": "tornade_flotter",
+    "activer": "tornade_activer",
+    "apparaitre": "tornade_apparaitre",
+    "attente2": "tornade_attente2",
+    "deplacer": "tornade_deplacer",
+    "content": "tornade_content",
+    "surpris": "tornade_surpris",
+    "obtention": "tornade_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.42,
+    "h": 0.35,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2312,
+   "_role": "Tornade",
+   "_description": "mini tornade en entonnoir à 4 étages qui se déhanchent, trait de vent en spirale, débris emportés (caisse, planche, caillou)",
+   "_morceaux": [
+    "tornade_spirale",
+    "tornade_debris"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_tornade"
+  },
+  {
+   "id": "plume",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_plume",
+   "nom": "Piaf",
+   "couleur": "#ffe9c2",
+   "animations": {
+    "flotter": "plume_flotter",
+    "activer": "plume_activer",
+    "apparaitre": "plume_apparaitre",
+    "attente2": "plume_attente2",
+    "deplacer": "plume_deplacer",
+    "content": "plume_content",
+    "surpris": "plume_surpris",
+    "obtention": "plume_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.32,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2832,
+   "_role": "Plume",
+   "_description": "petit oiseau rond couleur crème : bec ouvert, huppe de 3 plumes, ailes à 3 plumes qui battent, queue en éventail, duvet qui vole autour",
+   "_morceaux": [
+    "plume_aile_g",
+    "plume_aile_d",
+    "plume_queue",
+    "plume_duvet"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_plume"
+  },
+  {
+   "id": "echo",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_echo",
+   "nom": "Résono",
+   "couleur": "#ffd24d",
+   "animations": {
+    "flotter": "echo_flotter",
+    "activer": "echo_activer",
+    "apparaitre": "echo_apparaitre",
+    "attente2": "echo_attente2",
+    "deplacer": "echo_deplacer",
+    "content": "echo_content",
+    "surpris": "echo_surpris",
+    "obtention": "echo_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.54,
+    "h": 0.4,
+    "d": 0.32
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2832,
+   "_role": "Écho",
+   "_description": "petite cloche dorée : lèvre, anneau, battant qui se balance dessous, ondes sonores de chaque côté ; activer : elle sonne",
+   "_morceaux": [
+    "echo_battant",
+    "echo_ondes_g",
+    "echo_ondes_d"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_echo"
+  },
+  {
+   "id": "vague",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_vague",
+   "nom": "Houlou",
+   "couleur": "#2f9bff",
+   "animations": {
+    "flotter": "vague_flotter",
+    "activer": "vague_activer",
+    "apparaitre": "vague_apparaitre",
+    "attente2": "vague_attente2",
+    "deplacer": "vague_deplacer",
+    "content": "vague_content",
+    "surpris": "vague_surpris",
+    "obtention": "vague_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.35,
+    "d": 0.45
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2606,
+   "_role": "Vague",
+   "_description": "petite vague qui s'enroule (silhouette de face), crête d'écume, reflets clairs, gouttes ; activer : elle déferle vers l'avant",
+   "_morceaux": [
+    "vague_ecume",
+    "vague_gouttes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_vague"
+  },
+  {
+   "id": "pluie",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_pluie",
+   "nom": "Ondine",
+   "couleur": "#6fc3ff",
+   "animations": {
+    "flotter": "pluie_flotter",
+    "activer": "pluie_activer",
+    "apparaitre": "pluie_apparaitre",
+    "attente2": "pluie_attente2",
+    "deplacer": "pluie_deplacer",
+    "content": "pluie_content",
+    "surpris": "pluie_surpris",
+    "obtention": "pluie_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.31,
+    "h": 0.43,
+    "d": 0.32
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2342,
+   "_role": "Pluie",
+   "_description": "petit parapluie cloche bleu à 8 pans avec un visage, tige et poignée jaune en J, gouttes de pluie qui tombent du bord ; activer : il tournoie",
+   "_morceaux": [
+    "pluie_gouttes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_pluie"
+  },
+  {
+   "id": "corail",
+   "actif": true,
+   "fichier": "esprits_50_lot2_v001.glb",
+   "objet": "esprit_corail",
+   "nom": "Récifa",
+   "couleur": "#ff8fa3",
+   "animations": {
+    "flotter": "corail_flotter",
+    "activer": "corail_activer",
+    "apparaitre": "corail_apparaitre",
+    "attente2": "corail_attente2",
+    "deplacer": "corail_deplacer",
+    "content": "corail_content",
+    "surpris": "corail_surpris",
+    "obtention": "corail_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.39,
+    "h": 0.38,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3076,
+   "_role": "Corail",
+   "_description": "coquillage rose à côtes en éventail, trois branches de corail sur le dessus aux bouts lumineux, bulles en orbite",
+   "_morceaux": [
+    "corail_branches",
+    "corail_bulles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_corail"
+  },
+  {
+   "id": "poulpe",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_poulpe",
+   "nom": "Tentac",
+   "couleur": "#7b5cff",
+   "animations": {
+    "flotter": "poulpe_flotter",
+    "activer": "poulpe_activer",
+    "apparaitre": "poulpe_apparaitre",
+    "attente2": "poulpe_attente2",
+    "deplacer": "poulpe_deplacer",
+    "content": "poulpe_content",
+    "surpris": "poulpe_surpris",
+    "obtention": "poulpe_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.32,
+    "d": 0.47
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3828,
+   "_role": "Encre",
+   "_description": "bébé poulpe violet : grosse tête à anneaux lumineux, 4 tentacules à ventouses qui ondulent, gouttes d'encre en orbite ; activer : il se propulse vers le haut, tentacules écartés",
+   "_morceaux": [
+    "poulpe_tentacule_1",
+    "poulpe_tentacule_2",
+    "poulpe_tentacule_3",
+    "poulpe_tentacule_4",
+    "poulpe_encre"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_poulpe"
+  },
+  {
+   "id": "fleur",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_fleur",
+   "nom": "Pétalia",
+   "couleur": "#ff9ed8",
+   "animations": {
+    "flotter": "fleur_flotter",
+    "activer": "fleur_activer",
+    "apparaitre": "fleur_apparaitre",
+    "attente2": "fleur_attente2",
+    "deplacer": "fleur_deplacer",
+    "content": "fleur_content",
+    "surpris": "fleur_surpris",
+    "obtention": "fleur_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.38,
+    "h": 0.42,
+    "d": 0.36
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3652,
+   "_role": "Fleur",
+   "_description": "fleur rose : cœur jaune avec le visage, 6 gros pétales et 6 petits plus clairs, tige à deux feuilles qui se balance, grains de pollen ; activer : les pétales font un tour",
+   "_morceaux": [
+    "fleur_petales",
+    "fleur_tige",
+    "fleur_pollen"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_fleur"
+  },
+  {
+   "id": "spore",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_spore",
+   "nom": "Sporo",
+   "couleur": "#9be04a",
+   "animations": {
+    "flotter": "spore_flotter",
+    "activer": "spore_activer",
+    "apparaitre": "spore_apparaitre",
+    "attente2": "spore_attente2",
+    "deplacer": "spore_deplacer",
+    "content": "spore_content",
+    "surpris": "spore_surpris",
+    "obtention": "spore_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.36,
+    "h": 0.32,
+    "d": 0.36
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3852,
+   "_role": "Poison",
+   "_description": "boule verte couverte de pustules à bout lumineux, 3 cheminées qui crachent des bouffées de spores, spores en orbite ; activer : elle gonfle en tremblant",
+   "_morceaux": [
+    "spore_bouffees",
+    "spore_spores"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_spore"
+  },
+  {
+   "id": "cactus",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_cactus",
+   "nom": "Piko",
+   "couleur": "#5fcf6b",
+   "animations": {
+    "flotter": "cactus_flotter",
+    "activer": "cactus_activer",
+    "apparaitre": "cactus_apparaitre",
+    "attente2": "cactus_attente2",
+    "deplacer": "cactus_deplacer",
+    "content": "cactus_content",
+    "surpris": "cactus_surpris",
+    "obtention": "cactus_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.38,
+    "h": 0.32,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3848,
+   "_role": "Épines",
+   "_description": "cactus rond à 10 côtes garnies d'épines claires, deux petits bras, fleur rose sur la tête, épines en orbite ; activer : il se hérisse (il gonfle en tremblant, la fleur tourne)",
+   "_morceaux": [
+    "cactus_fleur",
+    "cactus_epines"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_cactus"
+  },
+  {
+   "id": "chene",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_chene",
+   "nom": "Chênou",
+   "couleur": "#7bbf4a",
+   "animations": {
+    "flotter": "chene_flotter",
+    "activer": "chene_activer",
+    "apparaitre": "chene_apparaitre",
+    "attente2": "chene_attente2",
+    "deplacer": "chene_deplacer",
+    "content": "chene_content",
+    "surpris": "chene_surpris",
+    "obtention": "chene_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.43,
+    "h": 0.41,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3004,
+   "_role": "Forêt",
+   "_description": "gland vert à pointe, chapeau brun à écailles, queue avec une feuille de chêne qui remue, feuilles de chêne lumineuses en orbite ; activer : il saute en tournant",
+   "_morceaux": [
+    "chene_feuille",
+    "chene_feuilles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_chene"
+  },
+  {
+   "id": "abeille",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_abeille",
+   "nom": "Bzzou",
+   "couleur": "#ffcf33",
+   "animations": {
+    "flotter": "abeille_flotter",
+    "activer": "abeille_activer",
+    "apparaitre": "abeille_apparaitre",
+    "attente2": "abeille_attente2",
+    "deplacer": "abeille_deplacer",
+    "content": "abeille_content",
+    "surpris": "abeille_surpris",
+    "obtention": "abeille_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.31,
+    "d": 0.42
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2940,
+   "_role": "Essaim",
+   "_description": "abeille ronde à 3 raies sombres, antennes, dard, deux ailes lumineuses qui battent vite, trois mini abeilles en orbite ; activer : elle zigzague en bourdonnant",
+   "_morceaux": [
+    "abeille_aile_g",
+    "abeille_aile_d",
+    "abeille_essaim"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_abeille"
+  },
+  {
+   "id": "liane",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_liane",
+   "nom": "Liana",
+   "couleur": "#52c98a",
+   "animations": {
+    "flotter": "liane_flotter",
+    "activer": "liane_activer",
+    "apparaitre": "liane_apparaitre",
+    "attente2": "liane_attente2",
+    "deplacer": "liane_deplacer",
+    "content": "liane_content",
+    "surpris": "liane_surpris",
+    "obtention": "liane_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.43,
+    "h": 0.42,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3740,
+   "_role": "Liane",
+   "_description": "pelote de liane : boule entourée de 7 tours de tige de deux verts, deux feuilles sur la tête, vrille en tire-bouchon à bourgeon lumineux, petites feuilles en orbite",
+   "_morceaux": [
+    "liane_feuilles",
+    "liane_vrille",
+    "liane_pousses"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_liane"
+  },
+  {
+   "id": "ours",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_ours",
+   "nom": "Grizou",
+   "couleur": "#b9824f",
+   "animations": {
+    "flotter": "ours_flotter",
+    "activer": "ours_activer",
+    "apparaitre": "ours_apparaitre",
+    "attente2": "ours_attente2",
+    "deplacer": "ours_deplacer",
+    "content": "ours_content",
+    "surpris": "ours_surpris",
+    "obtention": "ours_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.48,
+    "h": 0.28,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3500,
+   "_role": "Force",
+   "_description": "tête d'ourson brun : museau clair, truffe, oreilles rondes qui remuent, deux pattes à coussinets, étoiles en orbite ; activer : deux coups de patte, gauche puis droite",
+   "_morceaux": [
+    "ours_oreille_g",
+    "ours_oreille_d",
+    "ours_patte_g",
+    "ours_patte_d",
+    "ours_etoiles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_ours"
+  },
+  {
+   "id": "loup",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_loup",
+   "nom": "Crocs",
+   "couleur": "#aab4c8",
+   "animations": {
+    "flotter": "loup_flotter",
+    "activer": "loup_activer",
+    "apparaitre": "loup_apparaitre",
+    "attente2": "loup_attente2",
+    "deplacer": "loup_deplacer",
+    "content": "loup_content",
+    "surpris": "loup_surpris",
+    "obtention": "loup_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.31,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2876,
+   "_role": "Chasse",
+   "_description": "tête de louveteau gris : museau clair, truffe, deux petits crocs, sourcils décidés, oreilles pointues, touffes de poils aux joues, empreintes de patte lumineuses ; activer : il bondit en avant",
+   "_morceaux": [
+    "loup_oreille_g",
+    "loup_oreille_d",
+    "loup_empreintes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_loup"
+  },
+  {
+   "id": "hibou",
+   "actif": true,
+   "fichier": "esprits_50_lot3_v001.glb",
+   "objet": "esprit_hibou",
+   "nom": "Houhou",
+   "couleur": "#b08cff",
+   "animations": {
+    "flotter": "hibou_flotter",
+    "activer": "hibou_activer",
+    "apparaitre": "hibou_apparaitre",
+    "attente2": "hibou_attente2",
+    "deplacer": "hibou_deplacer",
+    "content": "hibou_content",
+    "surpris": "hibou_surpris",
+    "obtention": "hibou_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.4,
+    "h": 0.31,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3392,
+   "_role": "Nuit",
+   "_description": "petit hibou violet : deux grands yeux dorés dans des disques clairs, bec orange, aigrettes, ventre à chevrons, ailes qui battent, étoiles en orbite ; activer : il fait un tour complet",
+   "_morceaux": [
+    "hibou_aile_g",
+    "hibou_aile_d",
+    "hibou_etoiles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_hibou"
+  },
+  {
+   "id": "tortue",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_tortue",
+   "nom": "Carapou",
+   "couleur": "#4fbf8f",
+   "animations": {
+    "flotter": "tortue_flotter",
+    "activer": "tortue_activer",
+    "apparaitre": "tortue_apparaitre",
+    "attente2": "tortue_attente2",
+    "deplacer": "tortue_deplacer",
+    "content": "tortue_content",
+    "surpris": "tortue_surpris",
+    "obtention": "tortue_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.49,
+    "h": 0.19,
+    "d": 0.48
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3390,
+   "_role": "Carapace",
+   "_description": "petite tortue : carapace bombée à 7 plaques, bord clair, grosse tête ronde en avant, 4 pattes en palettes qui nagent, petite queue, bulles ; activer : elle rentre les pattes et tourne comme une toupie",
+   "_morceaux": [
+    "tortue_patte_1",
+    "tortue_patte_2",
+    "tortue_patte_3",
+    "tortue_patte_4",
+    "tortue_bulles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_tortue"
+  },
+  {
+   "id": "vampire",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_vampire",
+   "nom": "Morsi",
+   "couleur": "#d1456f",
+   "animations": {
+    "flotter": "vampire_flotter",
+    "activer": "vampire_activer",
+    "apparaitre": "vampire_apparaitre",
+    "attente2": "vampire_attente2",
+    "deplacer": "vampire_deplacer",
+    "content": "vampire_content",
+    "surpris": "vampire_surpris",
+    "obtention": "vampire_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.49,
+    "h": 0.32,
+    "d": 0.42
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2482,
+   "_role": "Vampire",
+   "_description": "petite chauve-souris vampire toute ronde : cheveux noirs en pointe sur le front, deux crocs, grandes oreilles pointues, ailes sombres qui battent, gouttes lumineuses ; activer : elle prend son élan et mord",
+   "_morceaux": [
+    "vampire_oreille_g",
+    "vampire_aile_g",
+    "vampire_oreille_d",
+    "vampire_aile_d",
+    "vampire_gouttes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_vampire"
+  },
+  {
+   "id": "fantome",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_fantome",
+   "nom": "Bouh",
+   "couleur": "#e8e6ff",
+   "animations": {
+    "flotter": "fantome_flotter",
+    "activer": "fantome_activer",
+    "apparaitre": "fantome_apparaitre",
+    "attente2": "fantome_attente2",
+    "deplacer": "fantome_deplacer",
+    "content": "fantome_content",
+    "surpris": "fantome_surpris",
+    "obtention": "fantome_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.33,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2892,
+   "_role": "Fantôme",
+   "_description": "petit fantôme en drap blanc : bas du drap en vagues, bouche en « o », deux petits bras, feux follets en orbite ; activer : « bouh ! » (il grossit, avance et lève les bras)",
+   "_morceaux": [
+    "fantome_bras_g",
+    "fantome_bras_d",
+    "fantome_follets"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_fantome"
+  },
+  {
+   "id": "miroir",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_miroir",
+   "nom": "Reflex",
+   "couleur": "#9fe8ff",
+   "animations": {
+    "flotter": "miroir_flotter",
+    "activer": "miroir_activer",
+    "apparaitre": "miroir_apparaitre",
+    "attente2": "miroir_attente2",
+    "deplacer": "miroir_deplacer",
+    "content": "miroir_content",
+    "surpris": "miroir_surpris",
+    "obtention": "miroir_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.43,
+    "h": 0.39,
+    "d": 0.35
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1704,
+   "_role": "Miroir",
+   "_description": "miroir en losange : cadre argenté, verre bleu clair avec le visage, reflets, pierres lumineuses aux 4 pointes, éclat qui scintille, éclats de miroir en orbite ; activer : il se retourne (un tour)",
+   "_morceaux": [
+    "miroir_etincelle",
+    "miroir_eclats"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_miroir"
+  },
+  {
+   "id": "sablier",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_sablier",
+   "nom": "Sablo",
+   "couleur": "#e8c48a",
+   "animations": {
+    "flotter": "sablier_flotter",
+    "activer": "sablier_activer",
+    "apparaitre": "sablier_apparaitre",
+    "attente2": "sablier_attente2",
+    "deplacer": "sablier_deplacer",
+    "content": "sablier_content",
+    "surpris": "sablier_surpris",
+    "obtention": "sablier_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.43,
+    "h": 0.38,
+    "d": 0.34
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2480,
+   "_role": "Sablier",
+   "_description": "sablier : deux bulbes de verre avec du sable, plateaux et colonnes en bois, visage sur le bulbe du haut, grains de sable autour du col, éclats ; activer : il se retourne (un tour complet)",
+   "_morceaux": [
+    "sablier_grains",
+    "sablier_eclats"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_sablier"
+  },
+  {
+   "id": "sable",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_sable",
+   "nom": "Dunou",
+   "couleur": "#e0a95a",
+   "animations": {
+    "flotter": "sable_flotter",
+    "activer": "sable_activer",
+    "apparaitre": "sable_apparaitre",
+    "attente2": "sable_attente2",
+    "deplacer": "sable_deplacer",
+    "content": "sable_content",
+    "surpris": "sable_surpris",
+    "obtention": "sable_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.48,
+    "h": 0.31,
+    "d": 0.46
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3500,
+   "_role": "Désert",
+   "_description": "scorpion rond couleur sable : deux pinces qui claquent, 6 petites pattes, plaques sur le dos, queue recourbée au-dessus de la tête avec un dard lumineux, grains de sable en orbite ; activer : la queue pique vers l'avant",
+   "_morceaux": [
+    "sable_pince_g",
+    "sable_pince_d",
+    "sable_queue",
+    "sable_grains"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_sable"
+  },
+  {
+   "id": "bombe",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_bombe",
+   "nom": "Boumi",
+   "couleur": "#ff6b4a",
+   "animations": {
+    "flotter": "bombe_flotter",
+    "activer": "bombe_activer",
+    "apparaitre": "bombe_apparaitre",
+    "attente2": "bombe_attente2",
+    "deplacer": "bombe_deplacer",
+    "content": "bombe_content",
+    "surpris": "bombe_surpris",
+    "obtention": "bombe_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.35,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2632,
+   "_role": "Explosifs",
+   "_description": "bombe ronde orange : bouchon noir, mèche recourbée qui crépite, reflet, petits pieds, éclats en orbite ; activer : elle gonfle en tremblant, prête à exploser",
+   "_morceaux": [
+    "bombe_etincelle",
+    "bombe_eclats"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_bombe"
+  },
+  {
+   "id": "mine",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_mine",
+   "nom": "Clac",
+   "couleur": "#c8ced8",
+   "animations": {
+    "flotter": "mine_flotter",
+    "activer": "mine_activer",
+    "apparaitre": "mine_apparaitre",
+    "attente2": "mine_attente2",
+    "deplacer": "mine_deplacer",
+    "content": "mine_content",
+    "surpris": "mine_surpris",
+    "obtention": "mine_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.29,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3056,
+   "_role": "Piège",
+   "_description": "piège à mâchoires : boule de métal entourée de deux cercles de dents blanches qui s'emboîtent, déclencheur à voyant lumineux sur la tête, petits rouages ; activer : les mâchoires s'ouvrent puis claquent",
+   "_morceaux": [
+    "mine_machoire_haut",
+    "mine_machoire_bas",
+    "mine_voyant",
+    "mine_rouages"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_mine"
+  },
+  {
+   "id": "reserve",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_reserve",
+   "nom": "Cartou",
+   "couleur": "#c9a36b",
+   "animations": {
+    "flotter": "reserve_flotter",
+    "activer": "reserve_activer",
+    "apparaitre": "reserve_apparaitre",
+    "attente2": "reserve_attente2",
+    "deplacer": "reserve_deplacer",
+    "content": "reserve_content",
+    "surpris": "reserve_surpris",
+    "obtention": "reserve_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.26,
+    "d": 0.44
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1856,
+   "_role": "Réserve",
+   "_description": "caisse en carton ouverte : ruban adhésif, poignées découpées, 4 rabats (ceux des côtés battent), objets lumineux qui dépassent, mini cartons en orbite ; activer : il saute et ses objets jaillissent",
+   "_morceaux": [
+    "reserve_rabat_g",
+    "reserve_rabat_d",
+    "reserve_tresor",
+    "reserve_cartons"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_reserve"
+  },
+  {
+   "id": "docteur",
+   "actif": true,
+   "fichier": "esprits_50_lot4_v001.glb",
+   "objet": "esprit_docteur",
+   "nom": "Bobo",
+   "couleur": "#ff7a8a",
+   "animations": {
+    "flotter": "docteur_flotter",
+    "activer": "docteur_activer",
+    "apparaitre": "docteur_apparaitre",
+    "attente2": "docteur_attente2",
+    "deplacer": "docteur_deplacer",
+    "content": "docteur_content",
+    "surpris": "docteur_surpris",
+    "obtention": "docteur_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.45,
+    "h": 0.26,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2804,
+   "_role": "Secours",
+   "_description": "pansement rose à bouts ronds : compresse claire au milieu avec le visage, petits trous, croix de secours lumineuse au-dessus de la tête, petits cœurs en orbite ; activer : il saute en tournant, la croix grandit",
+   "_morceaux": [
+    "docteur_croix",
+    "docteur_coeurs"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_docteur"
+  },
+  {
+   "id": "forge",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_forge",
+   "nom": "Enclumo",
+   "couleur": "#ff9d3d",
+   "animations": {
+    "flotter": "forge_flotter",
+    "activer": "forge_activer",
+    "apparaitre": "forge_apparaitre",
+    "attente2": "forge_attente2",
+    "deplacer": "forge_deplacer",
+    "content": "forge_content",
+    "surpris": "forge_surpris",
+    "obtention": "forge_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.52,
+    "h": 0.42,
+    "d": 0.38
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1692,
+   "_role": "Forge",
+   "_description": "enclume orange à bec, socle sombre, lingot brûlant posé dessus, marteau qui flotte à côté, étincelles en orbite ; activer : le marteau frappe deux fois le lingot",
+   "_morceaux": [
+    "forge_lingot",
+    "forge_marteau",
+    "forge_etincelles"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_forge"
+  },
+  {
+   "id": "egide",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_egide",
+   "nom": "Égide",
+   "couleur": "#5ad1a4",
+   "animations": {
+    "flotter": "egide_flotter",
+    "activer": "egide_activer",
+    "apparaitre": "egide_apparaitre",
+    "attente2": "egide_attente2",
+    "deplacer": "egide_deplacer",
+    "content": "egide_content",
+    "surpris": "egide_surpris",
+    "obtention": "egide_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.48,
+    "h": 0.45,
+    "d": 0.4
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2768,
+   "_role": "Rempart",
+   "_description": "bouclier vert en écu, bombé, haut en créneaux comme un rempart, bord clair, chevron et pierre lumineux, petit étendard sur le dessus, pierres en orbite ; activer : il grandit ; effet : un mur de briques lumineuses sort du sol devant lui",
+   "_morceaux": [
+    "egide_drapeau",
+    "egide_pierres"
+   ],
+   "_effets_caches": [
+    "egide_mur"
+   ],
+   "_materiau_lumiere": "lumiere_egide"
+  },
+  {
+   "id": "rage",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_rage",
+   "nom": "Furio",
+   "couleur": "#ff3d3d",
+   "animations": {
+    "flotter": "rage_flotter",
+    "activer": "rage_activer",
+    "apparaitre": "rage_apparaitre",
+    "attente2": "rage_attente2",
+    "deplacer": "rage_deplacer",
+    "content": "rage_content",
+    "surpris": "rage_surpris",
+    "obtention": "rage_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.29,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2656,
+   "_role": "Rage",
+   "_description": "boule rouge très en colère : sourcils froncés, dents serrées, signe de colère qui bat sur la tête, vapeur qui lui sort des deux côtés, petites flammes en orbite ; activer : il tremble de rage et gonfle",
+   "_morceaux": [
+    "rage_colere",
+    "rage_vapeur_g",
+    "rage_vapeur_d",
+    "rage_flammes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_rage"
+  },
+  {
+   "id": "ninja",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_ninja",
+   "nom": "Shino",
+   "couleur": "#6b7280",
+   "animations": {
+    "flotter": "ninja_flotter",
+    "activer": "ninja_activer",
+    "apparaitre": "ninja_apparaitre",
+    "attente2": "ninja_attente2",
+    "deplacer": "ninja_deplacer",
+    "content": "ninja_content",
+    "surpris": "ninja_surpris",
+    "obtention": "ninja_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.48,
+    "h": 0.25,
+    "d": 0.37
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3396,
+   "_role": "Ninja",
+   "_description": "boule grise à bandeau de ninja : plaque de métal avec un shuriken, nœud et deux pans qui flottent derrière, shurikens en orbite ; activer : il fonce en tournant ; effet : nuage de fumée",
+   "_morceaux": [
+    "ninja_rubans",
+    "ninja_shurikens"
+   ],
+   "_effets_caches": [
+    "ninja_fumee"
+   ],
+   "_materiau_lumiere": "lumiere_ninja"
+  },
+  {
+   "id": "robot",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_robot",
+   "nom": "Bipbop",
+   "couleur": "#8fd3e8",
+   "animations": {
+    "flotter": "robot_flotter",
+    "activer": "robot_activer",
+    "apparaitre": "robot_apparaitre",
+    "attente2": "robot_attente2",
+    "deplacer": "robot_deplacer",
+    "content": "robot_content",
+    "surpris": "robot_surpris",
+    "obtention": "robot_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.38,
+    "h": 0.33,
+    "d": 0.36
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3188,
+   "_role": "Robot",
+   "_description": "robot rond bleu clair : visière sombre où brillent les yeux, antenne à boule lumineuse, oreilles-boulons, rivets, petits bras, pixels lumineux en orbite ; activer : il saute en tournant, lève les bras et son antenne clignote",
+   "_morceaux": [
+    "robot_antenne",
+    "robot_bras_g",
+    "robot_bras_d",
+    "robot_pixels"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_robot"
+  },
+  {
+   "id": "ange",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_ange",
+   "nom": "Séraph",
+   "couleur": "#fff3b0",
+   "animations": {
+    "flotter": "ange_flotter",
+    "activer": "ange_activer",
+    "apparaitre": "ange_apparaitre",
+    "attente2": "ange_attente2",
+    "deplacer": "ange_deplacer",
+    "content": "ange_content",
+    "surpris": "ange_surpris",
+    "obtention": "ange_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.44,
+    "h": 0.3,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2860,
+   "_role": "Ange",
+   "_description": "boule dorée avec une petite mèche, auréole lumineuse (ange_aureole, à cacher par le code), deux ailes blanches à 4 plumes qui battent, plumes et étoiles en orbite ; activer : il s'envole en battant des ailes",
+   "_morceaux": [
+    "ange_aureole",
+    "ange_aile_g",
+    "ange_aile_d",
+    "ange_plumes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_ange"
+  },
+  {
+   "id": "perroquet",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_perroquet",
+   "nom": "Coco",
+   "couleur": "#3ddc84",
+   "animations": {
+    "flotter": "perroquet_flotter",
+    "activer": "perroquet_activer",
+    "apparaitre": "perroquet_apparaitre",
+    "attente2": "perroquet_attente2",
+    "deplacer": "perroquet_deplacer",
+    "content": "perroquet_content",
+    "surpris": "perroquet_surpris",
+    "obtention": "perroquet_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.46,
+    "h": 0.36,
+    "d": 0.39
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3858,
+   "_role": "Pirate",
+   "_description": "perroquet vert tout rond : ventre jaune, bec crochu orange, tricorne de pirate à tête de mort, ailes vertes à bouts rouges et bleus, longue queue, pièces d'or en orbite ; activer : il saute en tournant, le chapeau s'envole un instant",
+   "_morceaux": [
+    "perroquet_chapeau",
+    "perroquet_aile_g",
+    "perroquet_aile_d",
+    "perroquet_queue",
+    "perroquet_pieces"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_perroquet"
+  },
+  {
+   "id": "soleil",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_soleil",
+   "nom": "Solaro",
+   "couleur": "#ffd84d",
+   "animations": {
+    "flotter": "soleil_flotter",
+    "activer": "soleil_activer",
+    "apparaitre": "soleil_apparaitre",
+    "attente2": "soleil_attente2",
+    "deplacer": "soleil_deplacer",
+    "content": "soleil_content",
+    "surpris": "soleil_surpris",
+    "obtention": "soleil_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.52,
+    "h": 0.36,
+    "d": 0.43
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 2640,
+   "_role": "Soleil",
+   "_description": "petit soleil qui brille : 12 rayons longs et courts autour du visage, cercle de lumière, mini soleils en orbite ; activer : il gonfle et ses rayons font un tour",
+   "_morceaux": [
+    "soleil_rayons",
+    "soleil_soleils"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_soleil"
+  },
+  {
+   "id": "galaxie",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_galaxie",
+   "nom": "Nébula",
+   "couleur": "#7a6bff",
+   "animations": {
+    "flotter": "galaxie_flotter",
+    "activer": "galaxie_activer",
+    "apparaitre": "galaxie_apparaitre",
+    "attente2": "galaxie_attente2",
+    "deplacer": "galaxie_deplacer",
+    "content": "galaxie_content",
+    "surpris": "galaxie_surpris",
+    "obtention": "galaxie_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.47,
+    "h": 0.26,
+    "d": 0.47
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 3340,
+   "_role": "Cosmos",
+   "_description": "boule violette semée de petites étoiles, galaxie en spirale (disque et 3 bras lumineux) qui tourne à plat sous le visage, planètes en orbite ; activer : la galaxie tourne vite",
+   "_morceaux": [
+    "galaxie_bras",
+    "galaxie_planetes"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_galaxie"
+  },
+  {
+   "id": "prisme",
+   "actif": true,
+   "fichier": "esprits_50_lot5_v001.glb",
+   "objet": "esprit_prisme",
+   "nom": "Prisma",
+   "couleur": "#ff8af0",
+   "animations": {
+    "flotter": "prisme_flotter",
+    "activer": "prisme_activer",
+    "apparaitre": "prisme_apparaitre",
+    "attente2": "prisme_attente2",
+    "deplacer": "prisme_deplacer",
+    "content": "prisme_content",
+    "surpris": "prisme_surpris",
+    "obtention": "prisme_obtention"
+   },
+   "durees": {
+    "flotter": 2.0,
+    "activer": 1.2,
+    "apparaitre": 0.8
+   },
+   "taille": {
+    "w": 0.5,
+    "h": 0.29,
+    "d": 0.44
+   },
+   "placement": [
+    -0.55,
+    1.85,
+    0.15
+   ],
+   "triangles": 1708,
+   "_role": "Lumière",
+   "_description": "prisme de verre rose à arêtes blanches, rayon blanc qui entre d'un côté, arc-en-ciel en éventail qui sort de l'autre, éclats colorés en orbite ; activer : il saute en tournant et l'arc-en-ciel s'élargit",
+   "_morceaux": [
+    "prisme_arcenciel",
+    "prisme_eclats"
+   ],
+   "_effets_caches": [],
+   "_materiau_lumiere": "lumiere_prisme"
   }
  ],
  "socles": [
@@ -1873,5 +4030,6 @@
    "fichier": "transporteur_v001.glb",
    "objet": "transporteur"
   }
- ]
+ ],
+ "_esprits_50": "22 nov. 2026 : les 50 esprits ajoutés viennent des fichiers esprits_50_lot<N>_v001.glb (10 esprits par lot, même convention qu'esprits_plus_v001.glb). Lots branchés : 1, 2, 3, 4, 5. Un esprit sans modèle garde sa forme de secours faite en code (js/esprits.js). Leurs pouvoirs sont des réglages dans js/esprits.js."
 }

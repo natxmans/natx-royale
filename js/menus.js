@@ -2,7 +2,7 @@
 import { CATALOGUE, CATEGORIES, RARETES_COSM, COLLAB, objet, prixDe, possede, acheter, sauverProfil, boutiqueDuJour, cleObjet,
   defisDuJour, texteDefi, xpPourNiveau, lookPossedeAuHasard, nettoyerLook, RECOMPENSE_DEFI,
   COLLECTIONS_250, collectionDe, collectionsVisibles, estDeBase, desequiper, LOOK_DEFAUT, promoDe, prixNormal, enVente } from './boutique.js';
-import { ESPRITS, TYPES_ESPRITS, PERSONNALITES, RARETES_ESPRIT, ORDRE_RARETES, meilleuresRaretes, replique } from './esprits.js';
+import { ESPRITS, TYPES_ESPRITS, PERSONNALITES, RARETES_ESPRIT, ORDRE_RARETES, meilleuresRaretes, replique, sonEsprit, PRIX_ECLATS } from './esprits.js';
 import { descriptionEsprit } from './cadeaux.js';
 import { chargerCosmetiques, cosmetiquePret } from './modeles.js';
 import { vignette } from './icones.js';
@@ -247,7 +247,7 @@ export class Menus {
       b.className = 'carte-esprit-jeu' + (miens.length ? '' : ' inconnu') + (t === this.espritChoisi ? ' choisie' : '');
       b.style.setProperty('--couleur-esprit', d.couleur);
       if (meilleures[t]) b.style.setProperty('--couleur-rarete', RARETES_ESPRIT[meilleures[t]].couleur);
-      // vignette livrée de l'esprit (rendu du vrai modèle) ; son émoji si l'image manque
+      // vignette livrée de l'esprit (rendu du vrai modèle, les 65 sont livrées) ; son émoji si l'image manque
       b.innerHTML = `<span class="ico"><img src="modeles/admin/vignettes/esprit/${t}.webp?v=1" alt="" loading="lazy"></span><b>${echapper(d.nom)}</b><small>${echapper(d.role)}</small><span class="raretes">${ORDRE_RARETES.map(r => {
         const e = miens.find(x => x.rarete === r);
         return `<i class="r-${r}${e ? ' a' : ''}" title="${RARETES_ESPRIT[r].nom}${e ? ' × ' + e.n : ' (pas encore)'}"></i>`;
@@ -271,11 +271,12 @@ export class Menus {
       <h2>${d.icone} ${echapper(d.nom)}</h2><p class="petit-texte">Esprit de ${echapper(d.role.toLowerCase())} · <i>${echapper(perso)}</i></p>
       <p class="bulle-esprit" id="bulleEsprit">« ${echapper(replique(t, 'repos'))} »</p>
       <p><b>Passif :</b> ${echapper(d.passif)}</p><p><b>Pouvoir « ${echapper(d.pouvoir)} » :</b> ${echapper(d.descPouvoir)} <small>(recharge ${d.recharge} s)</small></p>
+      <p class="petit-texte">⬆️ Pendant la partie, améliore-le sur un autel avec tes éclats d'esprit 💠 : ★★ ${PRIX_ECLATS[meilleure || 'commun'][0]} 💠 puis ★★★ ${PRIX_ECLATS[meilleure || 'commun'][1]} 💠 (prix ${meilleure ? 'd\'un esprit ' + RARETES_ESPRIT[meilleure].nom.toLowerCase() : 'd\'un esprit commun'} : plus il est rare, plus c'est cher). Ses bonus et son pouvoir deviennent plus forts, et son pouvoir recharge plus vite. Les éclats se trouvent dans les coffres et sur les joueurs éliminés, et tu les gardes d'une partie à l'autre.</p>
       <p class="petit-texte">${miens.length ? 'Dans ta collection : ' + miens.map(e => `${RARETES_ESPRIT[e.rarete].nom} × ${e.n}`).join(' · ') : 'Capture-le sur un autel pendant une partie, puis exporte-le sur un AUTRE autel (ou gagne la partie) : il arrive dans ta boîte 🎁 avec sa rareté. Les cargaisons en donnent aussi, souvent plus rares.'}</p>
       <div class="boutons-esprit"><button class="petit" data-a="obtention">🎉 Arrivée</button><button class="petit" data-a="content">😊 Caresser</button><button class="petit" data-a="activer">✨ Pouvoir</button><button class="petit" data-a="surpris">😮 Surprise</button></div>`;
     for (const b of el.querySelectorAll('[data-a]')) b.onclick = () => {
       this.apercu.animerEspritApercu(b.dataset.a);
-      this.son('esprit_' + t);
+      this.son(sonEsprit(t));
       if (b.dataset.a !== 'surpris' && meilleure && meilleure !== 'commun') setTimeout(() => this.son('esprit_rare'), 250);
       $('#bulleEsprit').textContent = '« ' + replique(t, b.dataset.a === 'activer' ? 'pouvoir' : b.dataset.a === 'content' || b.dataset.a === 'obtention' ? 'capture' : 'repos') + ' »';
     };

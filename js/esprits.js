@@ -72,8 +72,331 @@ export const ESPRITS = {
     nom: 'Lumi', role: 'Étoile', icone: '🌟', couleur: '#fff27a', clair: '#ffffff',
     passif: 'Une fois par partie, elle te sauve d’un coup mortel (il te reste 40 PV)', pouvoir: 'Étoile filante', descPouvoir: 'Tu fonces tout droit sur 14 m et tu fais 20 dégâts à ceux que tu traverses', recharge: 18,
   },
+  // ----- les 50 esprits ajoutés le 22 nov. 2026 -----
+  // Leurs bonus (p) et leur pouvoir (a) sont des RÉGLAGES lus par un code commun (hote.js : pouvoirGenerique ; jeu.js : effetGenerique).
+  // p : degats, tete, degatsBas [PV, ×], explosion, resiste, zone, volVie, epines, killPv, killBouclier, killMats, gelTouche [s, ×],
+  //     poisonTouche [s, dégâts/s], regenPv [max, pas], regenBouclier [max, pas], sauve, vitesse, saut, doubleSaut, chute, nage, planeur,
+  //     recharge, recolte, construit, conso, carteEnnemis, carteCoffres, mats, munitions, aimant, precision, pioche.
+  // a.t : boule, frappe, nuage, onde, chaine, soin, buff, dash, bond, teleport, echange, piege, objet, murs, vision, clone.
+  lave: {
+    nom: 'Magmou', role: 'Lave', icone: '🌋', couleur: '#ff5a2a', clair: '#ffd0a8',
+    passif: 'Tu reçois 10 % de dégâts en moins', pouvoir: 'Flaque de lave', descPouvoir: 'Une flaque brûlante là où tu vises (25 m) : 9 dégâts par seconde pendant 6 s', recharge: 26,
+    p: { resiste: 0.9 }, a: { t: 'nuage', portee: 25, rayon: 4.5, duree: 6, dps: 9 },
+  },
+  cendre: {
+    nom: 'Suie', role: 'Fumée', icone: '💨', couleur: '#9aa3ad', clair: '#e3e8ee',
+    passif: 'La zone te fait 2 fois moins mal', pouvoir: 'Rideau de fumée', descPouvoir: 'Tu deviens invisible 5 s (faire des dégâts te fait réapparaître)', recharge: 28,
+    p: { zone: 0.5 }, a: { t: 'buff', duree: 5, invisible: true },
+  },
+  comete: {
+    nom: 'Astro', role: 'Météore', icone: '☄️', couleur: '#ffb14d', clair: '#fff0c9',
+    passif: '+20 % de dégâts quand tu touches la tête', pouvoir: 'Météore', descPouvoir: 'Un météore tombe là où tu vises (45 m) : jusqu’à 45 dégâts', recharge: 30,
+    p: { tete: 1.2 }, a: { t: 'frappe', portee: 45, delai: 1.2, rayon: 5, degats: 45 },
+  },
+  dragon: {
+    nom: 'Dracot', role: 'Dragon', icone: '🐉', couleur: '#e2463f', clair: '#ffd2a1',
+    passif: '+25 % de dégâts quand il te reste moins de 40 PV', pouvoir: 'Souffle brûlant', descPouvoir: 'Un souffle court (16 m) mais très large : 30 dégâts et repousse', recharge: 22,
+    p: { degatsBas: [40, 1.25] }, a: { t: 'boule', portee: 16, vitesse: 45, rayon: 6, degats: 30, pousse: 9 },
+  },
+  volcan: {
+    nom: 'Krakou', role: 'Éruption', icone: '🧨', couleur: '#ff8a3d', clair: '#ffe0a8',
+    passif: 'Chaque élimination te donne 50 matériaux', pouvoir: 'Éruption', descPouvoir: '4 rochers en feu tombent autour du point visé (35 m) : 22 dégâts chacun', recharge: 32,
+    p: { killMats: 50 }, a: { t: 'frappe', portee: 35, delai: 1, rayon: 3.5, degats: 22, n: 4, ecart: 6 },
+  },
+  cristal: {
+    nom: 'Cristo', role: 'Cristal', icone: '💎', couleur: '#7ae0ff', clair: '#e6fbff',
+    passif: 'Ton bouclier remonte tout seul jusqu’à 25 et tu reçois 5 % de dégâts en moins', pouvoir: 'Igloo', descPouvoir: '4 murs et un toit autour de toi, gratuits', recharge: 30,
+    p: { regenBouclier: [25, 2], resiste: 0.95 }, a: { t: 'murs', forme: 'bunker' },
+  },
+  neige: {
+    nom: 'Boulou', role: 'Neige', icone: '☃️', couleur: '#cfeeff', clair: '#ffffff',
+    passif: 'Tu sautes plus haut et tomber ne te fait pas mal', pouvoir: 'Boule de neige géante', descPouvoir: 'Explose à l’arrivée (40 m) : 20 dégâts et gèle 3 s', recharge: 22,
+    p: { saut: 10.6, chute: true }, a: { t: 'boule', portee: 40, vitesse: 30, rayon: 4, degats: 20, gel: [3, 0.4] },
+  },
+  banquise: {
+    nom: 'Pingou', role: 'Glisse', icone: '🐧', couleur: '#5aa8ff', clair: '#e0f0ff',
+    passif: '+10 % de vitesse, et tu nages aussi vite que tu cours', pouvoir: 'Glissade', descPouvoir: 'Tu glisses tout droit sur 18 m : 15 dégâts à ceux que tu traverses', recharge: 14,
+    p: { vitesse: 1.1, nage: true }, a: { t: 'dash', distance: 18, degats: 15, duree: 0.45 },
+  },
+  aurore: {
+    nom: 'Boréa', role: 'Aurore', icone: '🌈', couleur: '#8affc8', clair: '#f0e0ff',
+    passif: 'Ta vie remonte jusqu’à 50 et ton bouclier jusqu’à 25', pouvoir: 'Lueur boréale', descPouvoir: '+25 PV et +25 de bouclier pour toi et tes coéquipiers proches (10 m)', recharge: 32,
+    p: { regenPv: [50, 1], regenBouclier: [25, 1] }, a: { t: 'soin', pv: 25, bouclier: 25, rayon: 10 },
+  },
+  orage: {
+    nom: 'Grondin', role: 'Orage', icone: '⛈️', couleur: '#8f9bff', clair: '#fff7a8',
+    passif: '+6 % de dégâts et +5 % de vitesse', pouvoir: 'Nuage d’orage', descPouvoir: 'Un nuage là où tu vises (30 m) : 7 dégâts par seconde et ralentit, pendant 5 s', recharge: 28,
+    p: { degats: 1.06, vitesse: 1.05 }, a: { t: 'nuage', portee: 30, rayon: 6, duree: 5, dps: 7, gel: 0.75 },
+  },
+  pile: {
+    nom: 'Voltix', role: 'Énergie', icone: '🔋', couleur: '#b6ff3d', clair: '#f2ffd0',
+    passif: 'Tu recharges 25 % plus vite et tu te soignes 30 % plus vite', pouvoir: 'Survolté', descPouvoir: '+35 % de vitesse pendant 6 s', recharge: 22,
+    p: { recharge: 0.75, conso: 0.7 }, a: { t: 'buff', duree: 6, vitesse: 1.35 },
+  },
+  aimant: {
+    nom: 'Magno', role: 'Aimant', icone: '🧲', couleur: '#ff4d6d', clair: '#cfd8ff',
+    passif: 'Tu ramasses les munitions et les matériaux à 6 m', pouvoir: 'Attraction', descPouvoir: 'Attire vers toi les ennemis à 12 m', recharge: 24,
+    p: { aimant: 6 }, a: { t: 'onde', rayon: 12, pousse: [-13, 4] },
+  },
+  plasma: {
+    nom: 'Néon', role: 'Plasma', icone: '🟣', couleur: '#c44dff', clair: '#f3d6ff',
+    passif: 'Tes tirs sont 40 % plus précis', pouvoir: 'Arc plasma', descPouvoir: '22 dégâts à l’ennemi le plus proche (30 m), puis à 3 autres', recharge: 30,
+    p: { precision: 0.6 }, a: { t: 'chaine', portee: 30, saut: 12, degats: [22, 22, 22, 22] },
+  },
+  nimbus: {
+    nom: 'Nimbo', role: 'Nuage', icone: '🌥️', couleur: '#dfe9f5', clair: '#ffffff',
+    passif: 'En l’air à plus de 5 m, Espace rouvre ton deltaplane', pouvoir: 'Ascenseur', descPouvoir: 'Tu montes tout droit, très haut', recharge: 16,
+    p: { planeur: true, chute: true }, a: { t: 'bond', haut: 22, avant: 5 },
+  },
+  tornade: {
+    nom: 'Tourbi', role: 'Tornade', icone: '🌀', couleur: '#7fd6c9', clair: '#e0fff8',
+    passif: '+8 % de vitesse et tu récoltes 50 % de plus', pouvoir: 'Tornade', descPouvoir: 'Projette en l’air les ennemis à 9 m (10 dégâts, plus la chute)', recharge: 24,
+    p: { vitesse: 1.08, recolte: 1.5 }, a: { t: 'onde', rayon: 9, degats: 10, pousse: [5, 15] },
+  },
+  plume: {
+    nom: 'Piaf', role: 'Plume', icone: '🕊️', couleur: '#ffe9c2', clair: '#ffffff',
+    passif: 'Tomber ne te fait pas mal et +6 % de vitesse', pouvoir: 'Coup d’aile', descPouvoir: 'Tu te téléportes là où tu vises (22 m)', recharge: 18,
+    p: { chute: true, vitesse: 1.06 }, a: { t: 'teleport', portee: 22 },
+  },
+  echo: {
+    nom: 'Résono', role: 'Écho', icone: '🔔', couleur: '#ffd24d', clair: '#fff6cf',
+    passif: 'Les ennemis proches (30 m) sont sur ta mini-carte', pouvoir: 'Cri strident', descPouvoir: 'Les ennemis à 10 m sont bloqués sur place pendant 2,5 s', recharge: 30,
+    p: { carteEnnemis: 30 }, a: { t: 'onde', rayon: 10, gel: [2.5, 0.05] },
+  },
+  vague: {
+    nom: 'Houlou', role: 'Vague', icone: '🌊', couleur: '#2f9bff', clair: '#c9ecff',
+    passif: 'Tu nages vite et ta vie remonte jusqu’à 60', pouvoir: 'Déferlante', descPouvoir: 'Une vague explose à l’arrivée (30 m) : 18 dégâts et repousse fort', recharge: 20,
+    p: { nage: true, regenPv: [60, 1] }, a: { t: 'boule', portee: 30, vitesse: 26, rayon: 5, degats: 18, pousse: 16 },
+  },
+  pluie: {
+    nom: 'Ondine', role: 'Pluie', icone: '☔', couleur: '#6fc3ff', clair: '#e3f4ff',
+    passif: 'Tu te soignes 40 % plus vite', pouvoir: 'Pluie douce', descPouvoir: 'Une zone de soin autour de toi pendant 6 s : +7 PV par seconde pour toi et ton équipe', recharge: 30,
+    p: { conso: 0.6 }, a: { t: 'nuage', portee: 0, rayon: 7, duree: 6, soin: 7 },
+  },
+  corail: {
+    nom: 'Récifa', role: 'Corail', icone: '🐚', couleur: '#ff8fa3', clair: '#ffe3e8',
+    passif: 'Tu renvoies 20 % des dégâts à celui qui te tire dessus', pouvoir: 'Oursin', descPouvoir: 'Pose un piège (3 au plus) : 30 dégâts et ralentit celui qui marche dessus', recharge: 18,
+    p: { epines: 0.2 }, a: { t: 'piege', rayon: 1.6, degats: 30, gel: [1.5, 0.3], vie: 60, max: 3 },
+  },
+  poulpe: {
+    nom: 'Tentac', role: 'Encre', icone: '🐙', couleur: '#7b5cff', clair: '#d9d0ff',
+    passif: 'Tu reçois 8 % de dégâts en moins et tu nages vite', pouvoir: 'Jet d’encre', descPouvoir: 'Un nuage noir là où tu vises (25 m) : ralentit de plus de moitié pendant 6 s', recharge: 24,
+    p: { resiste: 0.92, nage: true }, a: { t: 'nuage', portee: 25, rayon: 5.5, duree: 6, dps: 3, gel: 0.45 },
+  },
+  fleur: {
+    nom: 'Pétalia', role: 'Fleur', icone: '🌸', couleur: '#ff9ed8', clair: '#ffe6f5',
+    passif: 'Ta vie remonte lentement jusqu’à 100', pouvoir: 'Floraison', descPouvoir: '+60 PV pour toi', recharge: 35,
+    p: { regenPv: [100, 1] }, a: { t: 'soin', pv: 60, rayon: 0 },
+  },
+  spore: {
+    nom: 'Sporo', role: 'Poison', icone: '🦠', couleur: '#9be04a', clair: '#e6ffc2',
+    passif: 'Tes tirs empoisonnent : 3 dégâts par seconde pendant 3 s', pouvoir: 'Nuage toxique', descPouvoir: 'Un nuage là où tu vises (25 m) : 6 dégâts par seconde pendant 7 s', recharge: 26,
+    p: { poisonTouche: [3, 3] }, a: { t: 'nuage', portee: 25, rayon: 5, duree: 7, dps: 6 },
+  },
+  cactus: {
+    nom: 'Piko', role: 'Épines', icone: '🌵', couleur: '#5fcf6b', clair: '#d6ffd9',
+    passif: 'Chaque élimination te rend 30 PV', pouvoir: 'Explosion d’épines', descPouvoir: '28 dégâts à tous les ennemis à 6,5 m', recharge: 18,
+    p: { killPv: 30 }, a: { t: 'onde', rayon: 6.5, degats: 28 },
+  },
+  chene: {
+    nom: 'Chênou', role: 'Forêt', icone: '🌳', couleur: '#7bbf4a', clair: '#e3f7c9',
+    passif: 'Tu gagnes 2 matériaux par seconde', pouvoir: 'Rempart', descPouvoir: '3 murs devant toi, gratuits', recharge: 22,
+    p: { mats: 2 }, a: { t: 'murs', forme: 'rempart' },
+  },
+  abeille: {
+    nom: 'Bzzou', role: 'Essaim', icone: '🐝', couleur: '#ffcf33', clair: '#fff3c2',
+    passif: '+7 % de vitesse et tu sautes plus haut', pouvoir: 'Essaim', descPouvoir: '12 dégâts à l’ennemi le plus proche (22 m), puis à 4 autres', recharge: 22,
+    p: { vitesse: 1.07, saut: 10.4 }, a: { t: 'chaine', portee: 22, saut: 10, degats: [12, 12, 12, 12, 12] },
+  },
+  liane: {
+    nom: 'Liana', role: 'Liane', icone: '🌿', couleur: '#52c98a', clair: '#d6ffe9',
+    passif: 'Construire coûte 6 matériaux au lieu de 10 et tu récoltes 50 % de plus', pouvoir: 'Liane', descPouvoir: 'Tu te hisses d’un coup jusqu’au point visé (30 m)', recharge: 20,
+    p: { construit: 6, recolte: 1.5 }, a: { t: 'teleport', portee: 30 },
+  },
+  ours: {
+    nom: 'Grizou', role: 'Force', icone: '🐻', couleur: '#b9824f', clair: '#f3dcc2',
+    passif: 'Tu reçois 12 % de dégâts en moins', pouvoir: 'Coup de patte', descPouvoir: '20 dégâts aux ennemis à 7 m, et ils sont repoussés', recharge: 20,
+    p: { resiste: 0.88 }, a: { t: 'onde', rayon: 7, degats: 20, pousse: [12, 6] },
+  },
+  loup: {
+    nom: 'Crocs', role: 'Chasse', icone: '🐺', couleur: '#aab4c8', clair: '#eef2fa',
+    passif: '+8 % de dégâts avec tes armes', pouvoir: 'Traque', descPouvoir: '+25 % de vitesse et +15 % de dégâts pendant 5 s', recharge: 26,
+    p: { degats: 1.08 }, a: { t: 'buff', duree: 5, vitesse: 1.25, degats: 1.15 },
+  },
+  hibou: {
+    nom: 'Houhou', role: 'Nuit', icone: '🦉', couleur: '#b08cff', clair: '#ece0ff',
+    passif: 'Les coffres fermés à 60 m sont sur ta mini-carte', pouvoir: 'Vue de nuit', descPouvoir: 'Montre les ennemis à 90 m à travers les murs pendant 8 s', recharge: 28,
+    p: { carteCoffres: 60 }, a: { t: 'vision', rayon: 90, duree: 8 },
+  },
+  tortue: {
+    nom: 'Carapou', role: 'Carapace', icone: '🐢', couleur: '#4fbf8f', clair: '#d3ffea',
+    passif: 'Tu reçois 15 % de dégâts en moins, mais tu es 6 % plus lent', pouvoir: 'Carapace', descPouvoir: 'Pendant 4 s, tu reçois 80 % de dégâts en moins', recharge: 28,
+    p: { resiste: 0.85, vitesse: 0.94 }, a: { t: 'buff', duree: 4, resiste: 0.2 },
+  },
+  vampire: {
+    nom: 'Morsi', role: 'Vampire', icone: '🦇', couleur: '#d1456f', clair: '#ffd6e2',
+    passif: '15 % des dégâts de tes armes te soignent', pouvoir: 'Morsure', descPouvoir: '35 dégâts à l’ennemi le plus proche (20 m), et tu récupères autant de PV', recharge: 26,
+    p: { volVie: 0.15 }, a: { t: 'chaine', portee: 20, saut: 0, degats: [35], vol: 1 },
+  },
+  fantome: {
+    nom: 'Bouh', role: 'Fantôme', icone: '👻', couleur: '#e8e6ff', clair: '#ffffff',
+    passif: 'Tu reçois 7 % de dégâts en moins et +5 % de vitesse', pouvoir: 'Frousse', descPouvoir: 'Repousse et ralentit pendant 2 s les ennemis à 9 m', recharge: 22,
+    p: { resiste: 0.93, vitesse: 1.05 }, a: { t: 'onde', rayon: 9, gel: [2, 0.4], pousse: [15, 5] },
+  },
+  miroir: {
+    nom: 'Reflex', role: 'Miroir', icone: '💠', couleur: '#9fe8ff', clair: '#ffffff',
+    passif: '+15 % de dégâts dans la tête et 5 % de dégâts reçus en moins', pouvoir: 'Reflet', descPouvoir: 'Un faux toi part en courant et les bots te perdent de vue', recharge: 26,
+    p: { tete: 1.15, resiste: 0.95 }, a: { t: 'clone' },
+  },
+  sablier: {
+    nom: 'Sablo', role: 'Sablier', icone: '⏳', couleur: '#e8c48a', clair: '#fff1d6',
+    passif: 'Ta vie remonte jusqu’à 40 et +5 % de vitesse', pouvoir: 'Ralenti', descPouvoir: 'Les ennemis à 15 m avancent 2 fois moins vite pendant 4 s', recharge: 30,
+    p: { regenPv: [40, 1], vitesse: 1.05 }, a: { t: 'onde', rayon: 15, gel: [4, 0.5] },
+  },
+  sable: {
+    nom: 'Dunou', role: 'Désert', icone: '🏜️', couleur: '#e0a95a', clair: '#ffe7bd',
+    passif: 'Tu récoltes 50 % de plus et chaque élimination te donne 30 matériaux', pouvoir: 'Tempête de sable', descPouvoir: 'Un nuage autour de toi pendant 6 s : les ennemis y sont ralentis de moitié et perdent 4 PV par seconde', recharge: 26,
+    p: { recolte: 1.5, killMats: 30 }, a: { t: 'nuage', portee: 0, rayon: 6, duree: 6, dps: 4, gel: 0.5 },
+  },
+  bombe: {
+    nom: 'Boumi', role: 'Explosifs', icone: '💣', couleur: '#ff6b4a', clair: '#ffd9cf',
+    passif: 'Tes roquettes et tes grenades font 30 % de dégâts en plus', pouvoir: 'Sac à malice', descPouvoir: '3 grenades tombent devant toi', recharge: 35,
+    p: { explosion: 1.3 }, a: { t: 'objet', objets: [{ objet: 'grenade', rarete: 1, qte: 3 }] },
+  },
+  mine: {
+    nom: 'Clac', role: 'Piège', icone: '🔩', couleur: '#c8ced8', clair: '#ffffff',
+    passif: 'Les ennemis proches (25 m) sont sur ta mini-carte', pouvoir: 'Mine', descPouvoir: 'Pose une mine (2 au plus) : elle explose quand un ennemi marche dessus (45 dégâts)', recharge: 22,
+    p: { carteEnnemis: 25 }, a: { t: 'piege', rayon: 2, degats: 45, explose: 4.5, vie: 90, max: 2 },
+  },
+  reserve: {
+    nom: 'Cartou', role: 'Réserve', icone: '🎒', couleur: '#c9a36b', clair: '#f5e6cf',
+    passif: 'Tes munitions reviennent toutes seules (+1 par seconde)', pouvoir: 'Ravitaillement', descPouvoir: '90 munitions et 60 matériaux tombent devant toi', recharge: 30,
+    p: { munitions: 1 }, a: { t: 'objet', objets: [{ objet: 'munitions', qte: 90 }, { objet: 'materiaux', qte: 60 }] },
+  },
+  docteur: {
+    nom: 'Bobo', role: 'Secours', icone: '🩹', couleur: '#ff7a8a', clair: '#ffe0e4',
+    passif: 'Tu te soignes 2 fois plus vite', pouvoir: 'Trousse', descPouvoir: 'Une trousse de soin et 3 pansements tombent devant toi', recharge: 40,
+    p: { conso: 0.5 }, a: { t: 'objet', objets: [{ objet: 'soin', rarete: 1, qte: 1 }, { objet: 'pansements', qte: 3 }] },
+  },
+  forge: {
+    nom: 'Enclumo', role: 'Forge', icone: '⚒️', couleur: '#ff9d3d', clair: '#ffe6c2',
+    passif: 'Tes coups de pioche font 2 fois plus mal et tu récoltes 50 % de plus', pouvoir: 'Lingots', descPouvoir: '120 matériaux tombent devant toi', recharge: 30,
+    p: { pioche: 2, recolte: 1.5 }, a: { t: 'objet', objets: [{ objet: 'materiaux', qte: 60 }, { objet: 'materiaux', qte: 60 }] },
+  },
+  egide: {
+    nom: 'Égide', role: 'Rempart', icone: '🔰', couleur: '#5ad1a4', clair: '#dafff0',
+    passif: 'Ton bouclier remonte tout seul jusqu’à 35', pouvoir: 'Égide', descPouvoir: '+40 de bouclier pour toi et tes coéquipiers proches (12 m)', recharge: 30,
+    p: { regenBouclier: [35, 2] }, a: { t: 'soin', pv: 0, bouclier: 40, rayon: 12 },
+  },
+  rage: {
+    nom: 'Furio', role: 'Rage', icone: '😤', couleur: '#ff3d3d', clair: '#ffc9c9',
+    passif: 'Chaque élimination te rend 15 PV et 15 de bouclier', pouvoir: 'Furie', descPouvoir: 'Pendant 7 s : +25 % de dégâts et +15 % de vitesse, mais tu reçois 15 % de dégâts en plus', recharge: 28,
+    p: { killPv: 15, killBouclier: 15 }, a: { t: 'buff', duree: 7, degats: 1.25, vitesse: 1.15, resiste: 1.15 },
+  },
+  ninja: {
+    nom: 'Shino', role: 'Ninja', icone: '🗡️', couleur: '#6b7280', clair: '#d5dae3',
+    passif: '+10 % de vitesse et tomber ne te fait pas mal', pouvoir: 'Furtif', descPouvoir: 'Invisible et +30 % de vitesse pendant 3,5 s (faire des dégâts te fait réapparaître)', recharge: 22,
+    p: { vitesse: 1.1, chute: true }, a: { t: 'buff', duree: 3.5, invisible: true, vitesse: 1.3 },
+  },
+  robot: {
+    nom: 'Bipbop', role: 'Robot', icone: '🤖', couleur: '#8fd3e8', clair: '#e3f8ff',
+    passif: 'Tu reçois 7 % de dégâts en moins et tu recharges 15 % plus vite', pouvoir: 'Tir orbital', descPouvoir: 'Un tir très précis tombe là où tu vises (60 m) : jusqu’à 55 dégâts sur 3 m', recharge: 26,
+    p: { resiste: 0.93, recharge: 0.85 }, a: { t: 'frappe', portee: 60, delai: 0.8, rayon: 3, degats: 55 },
+  },
+  ange: {
+    nom: 'Séraph', role: 'Ange', icone: '😇', couleur: '#fff3b0', clair: '#ffffff',
+    passif: 'Une fois par partie, il te sauve d’un coup mortel (il te reste 30 PV)', pouvoir: 'Auréole', descPouvoir: '+12 PV par seconde pendant 5 s', recharge: 30,
+    p: { sauve: 30 }, a: { t: 'buff', duree: 5, regen: 12 },
+  },
+  perroquet: {
+    nom: 'Coco', role: 'Pirate', icone: '🦜', couleur: '#3ddc84', clair: '#fff27a',
+    passif: 'Les coffres fermés à 70 m sont sur ta mini-carte', pouvoir: 'Butin du pirate', descPouvoir: 'Une gourde bouclier et 2 mini-gourdes tombent devant toi', recharge: 38,
+    p: { carteCoffres: 70 }, a: { t: 'objet', objets: [{ objet: 'bouclier', rarete: 2, qte: 1 }, { objet: 'minigourde', rarete: 2, qte: 2 }] },
+  },
+  soleil: {
+    nom: 'Solaro', role: 'Soleil', icone: '☀️', couleur: '#ffd84d', clair: '#fff7cf',
+    passif: 'Ta vie remonte jusqu’à 65', pouvoir: 'Éclat solaire', descPouvoir: '22 dégâts aux ennemis à 10 m, éblouis (ralentis) pendant 1,5 s', recharge: 22,
+    p: { regenPv: [65, 2] }, a: { t: 'onde', rayon: 10, degats: 22, gel: [1.5, 0.5] },
+  },
+  galaxie: {
+    nom: 'Nébula', role: 'Cosmos', icone: '🌌', couleur: '#7a6bff', clair: '#ffc9f5',
+    passif: 'Un peu de tout : +5 % de vitesse, +5 % de dégâts, 5 % de dégâts reçus en moins', pouvoir: 'Passe-passe', descPouvoir: 'Tu échanges ta place avec l’ennemi le plus proche que tu vois (35 m)', recharge: 24,
+    p: { vitesse: 1.05, degats: 1.05, resiste: 0.95 }, a: { t: 'echange', portee: 35 },
+  },
+  prisme: {
+    nom: 'Prisma', role: 'Lumière', icone: '🔮', couleur: '#ff8af0', clair: '#fff0fd',
+    passif: '+15 % de dégâts dans la tête et tes tirs sont 20 % plus précis', pouvoir: 'Trait de lumière', descPouvoir: 'Un trait très rapide et très long (70 m) : jusqu’à 40 dégâts', recharge: 18,
+    p: { tete: 1.15, precision: 0.8 }, a: { t: 'boule', portee: 70, vitesse: 80, rayon: 2.5, degats: 40 },
+  },
 };
 export const TYPES_ESPRITS = Object.keys(ESPRITS);
+// ---------- Amélioration des esprits pendant la partie (comme les établis d'amélioration de Fortnite) ----------
+// Sur n'importe quel vrai autel, on paie des matériaux pour faire monter son esprit d'un niveau (★ → ★★ → ★★★).
+// force : ce que deviennent ses bonus et la force de son pouvoir (dégâts, soins, bouclier) ; recharge : temps de recharge du pouvoir.
+// Un esprit tombé (joueur éliminé) garde son niveau : celui qui le ramasse en profite.
+// Le prix se paie en ÉCLATS D'ESPRIT 💠, une monnaie qui ne sert qu'à ça. Ils sont GARDÉS d'une partie à l'autre : le solde est
+// sur le serveur (serveur/gestion.py, mêmes prix), qui encaisse avant que l'hôte n'améliore l'esprit. L'amélioration, elle,
+// ne dure que la partie (comme les établis de Fortnite).
+export const NIVEAUX = { max: 3, force: [1, 1, 1.35, 1.7], recharge: [1, 1, 0.85, 0.7], etoiles: ['', '★', '★★', '★★★'] };
+// Le prix dépend de la rareté de cet esprit dans la collection du joueur (un esprit qu'il n'a pas encore : prix « commun »)
+export const PRIX_ECLATS = { commun: [50, 120], rare: [80, 200], epique: [120, 300], legendaire: [200, 500] }; // [★★, ★★★]
+export const prixAmelioration = (rarete, nivCible) => (PRIX_ECLATS[rarete] || PRIX_ECLATS.commun)[Math.max(2, Math.min(3, nivCible)) - 2];
+// Où trouver des éclats : coffre, coffre doré, ravitaillement, petits tas sur l'île (part des points de butin), joueur éliminé,
+// victoire. Le serveur en accepte 150 par partie et 600 par jour au plus. Les bots n'ont pas de compte : ils paient moins cher
+// avec ce qu'ils ramassent pendant la partie.
+export const ECLATS = { coffre: 3, coffreDore: 10, ravito: 10, sol: 0.12, tas: 2, elimination: 5, eliminationMelee: 1, victoire: 25,
+  coutBots: [0, 0, 12, 30], icone: '💠', nom: 'éclats d\'esprit' };
+export const niveauDe = esprit => Math.max(1, Math.min(NIVEAUX.max, (esprit && esprit.niv) | 0 || 1));
+export const forceEsprit = esprit => NIVEAUX.force[niveauDe(esprit)];
+export const rechargeEsprit = esprit => (ESPRITS[esprit && esprit.type] ? ESPRITS[esprit.type].recharge : 30) * NIVEAUX.recharge[niveauDe(esprit)];
+// Un bonus « plus fort » : un multiplicateur s'éloigne de 1, une quantité grandit
+export const plusFort = (base, v, f) => base + (v - base) * f;
+// Comment chaque bonus des 50 esprits « à réglages » grandit avec le niveau
+// (le poison et les épines ne grandissent pas ici : ce sont des dégâts d'esprit, l'hôte les multiplie déjà)
+const PLUS = new Set(['degats', 'tete', 'explosion', 'recolte', 'pioche']);
+const MOINS = new Set(['resiste', 'zone', 'recharge', 'conso', 'precision']);
+const QUANTITES = new Set(['killPv', 'killBouclier', 'killMats', 'mats', 'munitions', 'carteEnnemis', 'carteCoffres', 'aimant']);
+function monter(cle, v, f) {
+  if (f === 1 || typeof v === 'boolean') return v;
+  if (PLUS.has(cle)) return plusFort(1, v, f);
+  if (MOINS.has(cle)) return Math.max(0.1, plusFort(1, v, f));
+  if (QUANTITES.has(cle)) return Math.round(v * f);
+  switch (cle) {
+    case 'vitesse': return v > 1 ? plusFort(1, v, f) : v; // le malus de Carapou ne grandit pas
+    case 'saut': return plusFort(9.2, v, f);
+    case 'construit': return Math.max(2, Math.round(plusFort(10, v, f)));
+    case 'sauve': return Math.min(60, Math.round(v * f));
+    case 'volVie': return v * f;
+    case 'degatsBas': return [v[0], plusFort(1, v[1], f)];
+    case 'gelTouche': return [v[0] * f, v[1]];
+    case 'regenPv': case 'regenBouclier': return [Math.min(100, Math.round(v[0] * (1 + (f - 1) * 0.6))), Math.round(v[1] * f)];
+  }
+  return v;
+}
+// Bonus passif d'un esprit « à réglages » (les 50 ajoutés) : don(joueur.esprit, 'degats', 1) → 1.08, ou la valeur par défaut.
+// Il tient compte du niveau de l'esprit.
+export const don = (esprit, cle, defaut = null) => {
+  const p = esprit && ESPRITS[esprit.type] && ESPRITS[esprit.type].p;
+  return p && p[cle] !== undefined ? monter(cle, p[cle], forceEsprit(esprit)) : defaut;
+};
+// Le pouvoir d'un esprit « à réglages » à un niveau donné : soins, bouclier, objets et durées grandissent
+// (les dégâts, eux, sont multipliés par l'hôte au moment du coup, pour tous les esprits)
+export function pouvoirAuNiveau(A, niv) {
+  const f = NIVEAUX.force[Math.max(1, Math.min(NIVEAUX.max, niv | 0 || 1))];
+  if (!A || f === 1) return A;
+  const g = 1 + (f - 1) * 0.5, a = { ...A };
+  for (const c of ['pv', 'bouclier', 'soin', 'regen']) if (a[c]) a[c] = Math.round(a[c] * f);
+  if (a.duree && (a.t === 'buff' || a.t === 'nuage' || a.t === 'vision')) a.duree = +(a.duree * g).toFixed(2);
+  if (a.gel) a.gel = [+(a.gel[0] * g).toFixed(2), a.gel[1]];
+  if (a.objets) a.objets = a.objets.map(o => ({ ...o, qte: Math.max(1, Math.round((o.qte || 1) * f)) }));
+  return a;
+}
+// Les réglages du pouvoir d'un esprit « à réglages » (null pour les 15 premiers, qui ont leur propre code)
+export const pouvoirDe = type => (ESPRITS[type] && ESPRITS[type].a) || null;
+// Le son d'un esprit : les 15 premiers ont le leur ; les 50 suivants prennent celui qui va avec leur sorte de pouvoir
+const SONS_POUVOIRS = { boule: 'feu', frappe: 'feu', nuage: 'vent', onde: 'vent', chaine: 'foudre', soin: 'soin', buff: 'protection', dash: 'etoile', bond: 'mobilite',
+  teleport: 'temps', echange: 'temps', piege: 'nature', objet: 'chance', murs: 'batisseur', vision: 'vision', clone: 'ombre' };
+export const sonEsprit = type => 'esprit_' + ((pouvoirDe(type) && SONS_POUVOIRS[pouvoirDe(type).t]) || type);
 
 // Personnalités : quelques répliques (bulles et fil d'infos) ; elles ne changent rien aux pouvoirs
 export const PERSONNALITES = {
@@ -138,6 +461,60 @@ export const PERSONNALITES = {
     pouvoir: ['Étoile filante !', 'Fiouuu !', 'Plus vite que la lumière !'],
     repos: ['Tu as vu comme je brille ?', 'J’ai compté les autres étoiles.', 'Je ne te lâche pas.'] },
 };
+// Les 50 esprits ajoutés : un trait de caractère et trois répliques chacun (capture, pouvoir, repos)
+const PERSO_PLUS = {
+  lave: ['Petite boule de lave qui boude dès qu’il fait frais.', 'Attention, je coule !', 'Flaque de lave !', 'Qui a éteint le chauffage ?'],
+  cendre: ['Nuage de fumée discret, toujours un peu dans le brouillard.', 'Pfff… me voilà.', 'Rideau de fumée !', 'Tu me vois ? Moi non plus.'],
+  comete: ['Petit caillou de l’espace très fier de sa traînée.', 'Je tombe à pic !', 'Météore !', 'J’ai fait trois fois le tour de la Lune.'],
+  dragon: ['Bébé dragon qui éternue des flammèches.', 'Grrr ! Enfin… miaou ?', 'Souffle brûlant !', 'Atchoum ! Oups, pardon pour l’herbe.'],
+  volcan: ['Petit volcan soupe au lait : il explose pour un rien.', 'Ça va péter !', 'Éruption !', 'Je bous, je bous…'],
+  cristal: ['Cristal coquet qui adore qu’on le regarde briller.', 'Je brille, non ?', 'Igloo !', 'Ne me raye pas, s’il te plaît.'],
+  neige: ['Bonhomme de neige rondouillard, jamais pressé.', 'Bien au frais !', 'Boule de neige géante !', 'J’ai perdu ma carotte.'],
+  banquise: ['Manchot glisseur qui ne marche jamais quand il peut glisser.', 'Sur le ventre, c’est plus rapide !', 'Glissade !', 'Tu as du poisson ?'],
+  aurore: ['Ruban de lumière doux et rêveur.', 'Regarde le ciel…', 'Lueur boréale !', 'Les couleurs, ça repose.'],
+  orage: ['Gros nuage grognon qui gronde pour se faire entendre.', 'GRRROUM.', 'Nuage d’orage !', 'Il va pleuvoir. Je le sens.'],
+  pile: ['Petite pile survoltée qui parle trop vite.', 'Chargé à bloc !', 'Survolté !', 'Tu-crois-qu’on-part-bientôt ?'],
+  aimant: ['Aimant collant qui s’attache à tout le monde.', 'Je ne te lâche plus !', 'Attraction !', 'J’ai encore attrapé une cuillère.'],
+  plasma: ['Boule de néon branchée, très à la mode.', 'Trop stylé, non ?', 'Arc plasma !', 'Bzzz… je clignote.'],
+  nimbus: ['Petit nuage moelleux qui adore faire la sieste en hauteur.', 'On monte ?', 'Ascenseur !', 'Zzz… hein ? Je ne dormais pas.'],
+  tornade: ['Tourbillon étourdi qui a toujours le tournis.', 'Ça tourne !', 'Tornade !', 'Où est le haut, déjà ?'],
+  plume: ['Oiseau léger comme tout, toujours ailleurs.', 'Cui cui, on file !', 'Coup d’aile !', 'J’étais là-bas il y a une seconde.'],
+  echo: ['Petite cloche bavarde qui répète tout… tout… tout.', 'Ding ! Ding !', 'Cri strident !', 'Tu m’entends… tends… tends ?'],
+  vague: ['Vague joueuse qui éclabousse tout le monde.', 'Splash !', 'Déferlante !', 'La marée monte, non ?'],
+  pluie: ['Petite pluie gentille qui fait pousser les fleurs.', 'Une averse, ça fait du bien.', 'Pluie douce !', 'Plic… ploc… plic…'],
+  corail: ['Coquillage piquant mais au grand cœur.', 'Je pique un peu, désolée.', 'Oursin !', 'On entend la mer, là-dedans.'],
+  poulpe: ['Poulpe farceur qui a toujours de l’encre plein les bras.', 'Huit bras pour t’aider !', 'Jet d’encre !', 'J’ai encore taché le tapis.'],
+  fleur: ['Fleur délicate qui sent bon le printemps.', 'Sens comme ça sent bon !', 'Floraison !', 'Une abeille m’a dit bonjour.'],
+  spore: ['Microbe rigolo qui adore tout ce qui est gluant.', 'Beurk, génial !', 'Nuage toxique !', 'Ne te lave pas les mains, s’il te plaît.'],
+  cactus: ['Cactus câlin… mais personne ne veut de câlin.', 'Un câlin ? Non ? Dommage.', 'Explosion d’épines !', 'J’ai soif. Une fois par an.'],
+  chene: ['Vieux chêne costaud et rassurant.', 'Solide comme un tronc !', 'Rempart !', 'J’ai 300 ans. Enfin, je crois.'],
+  abeille: ['Abeille travailleuse qui bourdonne sans arrêt.', 'Bzz ! Au boulot !', 'Essaim !', 'Tu as vu une fleur ?'],
+  liane: ['Liane acrobate qui se balance partout.', 'Accroche-toi !', 'Liane !', 'Je me suis encore emmêlée.'],
+  ours: ['Gros ours gentil qui ne connaît pas sa force.', 'Un gros câlin ?', 'Coup de patte !', 'Tu as du miel ?'],
+  loup: ['Jeune loup fier qui flaire tout.', 'J’ai une piste !', 'Traque !', 'Aouuuh… pardon, l’habitude.'],
+  hibou: ['Hibou savant qui ne dort que le jour.', 'Hou hou, je vois tout.', 'Vue de nuit !', 'À cette heure-ci, je devrais dormir.'],
+  tortue: ['Tortue prudente : lentement mais sûrement.', 'Doucement… on arrive.', 'Carapace !', 'Je réfléchis. Ça prend du temps.'],
+  vampire: ['Chauve-souris gourmande qui dort la tête en bas.', 'J’ai un petit creux.', 'Morsure !', 'Il fait trop jour, ici.'],
+  fantome: ['Petit fantôme qui a peur de tout, surtout de lui.', 'B… bouh ?', 'Frousse !', 'Tu as entendu ce bruit ?'],
+  miroir: ['Éclat de miroir qui se trouve très beau.', 'Regarde-moi ! Enfin, regarde-toi.', 'Reflet !', 'Miroir, mon beau miroir…'],
+  sablier: ['Sablier patient qui prend tout son temps.', 'Rien ne presse.', 'Ralenti !', 'Grain… après… grain.'],
+  sable: ['Petite dune voyageuse, toujours du sable dans les yeux.', 'Ça gratte un peu.', 'Tempête de sable !', 'J’ai vu un chameau, une fois.'],
+  bombe: ['Bombinette rigolarde qui adore les feux d’artifice.', 'Boum ? Boum !', 'Sac à malice !', 'Tic… tic… je plaisante.'],
+  mine: ['Petit ressort malin qui adore faire des surprises.', 'Clic !', 'Mine !', 'Ne marche pas là. Ni là.'],
+  reserve: ['Sac à dos prévoyant : il a toujours ce qu’il faut.', 'J’ai tout prévu !', 'Ravitaillement !', 'J’ai même pris un goûter.'],
+  docteur: ['Pansement dévoué qui soigne tous les bobos.', 'Où est-ce que ça fait mal ?', 'Trousse !', 'Tu as mis ton manteau ?'],
+  forge: ['Petit marteau costaud qui tape plus vite que son ombre.', 'On forge !', 'Lingots !', 'Cling ! Cling ! Cling !'],
+  egide: ['Blason loyal, toujours devant ses amis.', 'Derrière moi, tout le monde !', 'Égide !', 'Je monte la garde.'],
+  rage: ['Petite boule de nerfs qui s’énerve pour un rien.', 'Grrr ! Qui a commencé ?', 'Furie !', 'Je suis calme. JE SUIS CALME.'],
+  ninja: ['Petite lame silencieuse : personne ne l’entend arriver.', '…', 'Furtif !', 'Tu ne m’as pas vu. Normal.'],
+  robot: ['Petit robot précis qui calcule tout.', 'Bip. Cible acquise.', 'Tir orbital !', 'Bip bop. Mise à jour en cours.'],
+  ange: ['Petit ange un peu maladroit avec son auréole.', 'Je veille sur toi.', 'Auréole !', 'Elle est où, mon auréole ?'],
+  perroquet: ['Perroquet pirate qui répète « trésor ! » toute la journée.', 'Trésor ! Trésor !', 'Butin du pirate !', 'Coco veut un biscuit.'],
+  soleil: ['Petit soleil souriant, toujours de bonne humeur.', 'Quelle belle journée !', 'Éclat solaire !', 'Tu as mis de la crème ?'],
+  galaxie: ['Bout de galaxie rêveur, la tête dans les étoiles.', 'L’univers est grand…', 'Passe-passe !', 'J’ai compté les étoiles. Presque toutes.'],
+  prisme: ['Boule de cristal qui prétend lire l’avenir.', 'Je vois… une victoire !', 'Trait de lumière !', 'Je vois… que tu as faim.'],
+};
+for (const [id, [trait, capture, pouvoir, repos]] of Object.entries(PERSO_PLUS)) PERSONNALITES[id] = { trait, capture: [capture], pouvoir: [pouvoir], repos: [repos] };
 export const replique = (type, quand) => { const l = PERSONNALITES[type]?.[quand] || ['…']; return l[Math.floor(Math.random() * l.length)]; };
 
 // Raretés de collection (gagnées dans les cargaisons) : SEULEMENT l'aspect (aura, étincelles, son) — les pouvoirs restent les mêmes
@@ -185,6 +562,8 @@ export const ECHELLE_AUTEL = 1.6;           // l'autel livré fait 0,94 m : un p
 // Sur la terre ferme, à plat, à ciel ouvert (pas dans une maison ni sous un arbre), loin les uns des autres.
 let disponibles = null; // null = tous (pas de réglage reçu du serveur)
 export function reglerEspritsDisponibles(liste) { disponibles = Array.isArray(liste) && liste.length ? liste.filter(t => ESPRITS[t]) : null; }
+// Un esprit au hasard parmi ceux que l'admin a laissés allumés (pour un autel qui se recharge)
+export const espritAuHasard = (r = Math.random) => { const choix = disponibles && disponibles.length ? disponibles : TYPES_ESPRITS; return choix[Math.floor(r() * choix.length)]; };
 export function placerSanctuaires(monde, r, n, centre = null) {
   const liste = [];
   const types = [];
@@ -224,6 +603,18 @@ const GEO = {
   cube: new THREE.BoxGeometry(0.13, 0.13, 0.13), grosOeil: new THREE.SphereGeometry(0.13, 14, 10),
 };
 
+// Les 50 esprits du 22 nov. : une petite forme chacun en attendant leur vrai modèle (commandé à la session modélisation)
+const FORME_SECOURS = {};
+for (const [forme, liste] of Object.entries({
+  oreilles: 'dragon banquise ours loup hibou tortue vampire abeille perroquet poulpe ninja fantome',
+  flammes: 'lave cendre comete volcan bombe rage soleil forge',
+  anneaux: 'orage nimbus tornade echo vague pluie sable sablier galaxie aimant',
+  aureole: 'ange aurore docteur egide prisme miroir',
+  feuilles: 'fleur spore cactus chene liane corail plume',
+  cubes: 'mine reserve robot cristal pile plasma neige',
+})) for (const t of liste.split(' ')) FORME_SECOURS[t] = forme;
+const NB_FORME = { oreilles: 2, flammes: 4, anneaux: 2, aureole: 1, feuilles: 5, cubes: 4 };
+
 function espritDeSecours(type, d) {
   const g = new THREE.Group();
   const coeur = new THREE.Mesh(GEO.coeur, lumineux(d.couleur));
@@ -234,7 +625,8 @@ function espritDeSecours(type, d) {
   const accents = new THREE.Group();
   // (les 10 esprits ajoutés ont chacun leur petite forme en attendant leur vrai modèle)
   const NB = { mobilite: 2, batisseur: 3, protection: 3, feu: 4, glace: 6, foudre: 3, vent: 3, nature: 3, ombre: 2, temps: 2, eau: 4, chance: 4, etoile: 5 };
-  const n = NB[type] || 5;
+  const forme = FORME_SECOURS[type];
+  const n = NB[type] || NB_FORME[forme] || 5;
   for (let i = 0; i < n; i++) {
     const a = i / n * Math.PI * 2;
     let m;
@@ -252,6 +644,12 @@ function espritDeSecours(type, d) {
     else if (type === 'eau') { m = new THREE.Mesh(GEO.grosOeil, lumineux(d.clair, 1.3)); m.position.set(Math.cos(a) * 0.44, Math.sin(i * 2.1) * 0.12, Math.sin(a) * 0.44); m.scale.setScalar(0.45); }
     else if (type === 'chance') { m = new THREE.Mesh(GEO.cristal, lumineux(i % 2 ? '#7bd65a' : d.couleur, 1.5)); m.position.set(Math.cos(a) * 0.44, 0, Math.sin(a) * 0.44); m.scale.set(1, 1, 0.3); }
     else if (type === 'etoile') { m = new THREE.Mesh(GEO.feuille, lumineux(d.couleur, 1.9)); const b = a + Math.PI / 2; m.position.set(Math.cos(b) * 0.33, Math.sin(b) * 0.33, 0); m.rotation.z = b - Math.PI / 2; }
+    else if (forme === 'oreilles') { m = new THREE.Mesh(GEO.feuille, lumineux(d.couleur, 1.3)); m.position.set((i ? 1 : -1) * 0.17, 0.3, 0.02); m.rotation.z = (i ? -1 : 1) * 0.35; m.scale.set(1.3, 0.8, 1.3); }
+    else if (forme === 'flammes') { m = new THREE.Mesh(GEO.feuille, lumineux(i % 2 ? d.clair : d.couleur, 1.8)); m.position.set(Math.cos(a) * 0.14, 0.3 + (i % 2) * 0.06, Math.sin(a) * 0.14); }
+    else if (forme === 'anneaux') { m = new THREE.Mesh(GEO.anneau, lumineux(i ? d.clair : d.couleur, 1.5)); m.rotation.set(Math.PI / 2 + (i ? 0.5 : -0.3), 0, i ? 0.4 : 0); m.scale.setScalar(i ? 0.8 : 1); }
+    else if (forme === 'aureole') { m = new THREE.Mesh(GEO.anneau, lumineux(d.clair, 1.9)); m.rotation.x = Math.PI / 2; m.position.y = 0.42; m.scale.setScalar(0.5); }
+    else if (forme === 'feuilles') { m = new THREE.Mesh(GEO.feuille, lumineux(i % 2 ? d.clair : d.couleur, 1.4)); m.position.set(Math.cos(a) * 0.2, 0.28, Math.sin(a) * 0.2); m.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5); }
+    else if (forme === 'cubes') { m = new THREE.Mesh(GEO.cube, lumineux(i % 2 ? d.clair : d.couleur, 1.3)); m.position.set(Math.cos(a) * 0.44, Math.sin(i * 1.9) * 0.1, Math.sin(a) * 0.44); m.rotation.set(a, a * 0.7, 0); }
     else { m = new THREE.Mesh(GEO.cristal, lumineux(d.couleur, 1.4)); m.position.set(Math.cos(a) * 0.42, Math.sin(i * 1.7) * 0.08, Math.sin(a) * 0.42); }
     accents.add(m);
   }

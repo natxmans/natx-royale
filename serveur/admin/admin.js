@@ -388,6 +388,7 @@ async function vueFicheJoueur(code) {
   blocs.push(el('div', { class: 'cartes-stats' },
     carteStat('Arrivé le', jour(d.cree_le)), carteStat('Vu le', date(d.vu_le)), carteStat('Niveau', p ? p.niveau : '—', 'jaune'),
     carteStat('Pièces (déclarées)', p ? nombre(p.pieces) : '—', 'jaune'), carteStat('Objets', p ? p.possedes.length : '—', 'cyan'),
+    carteStat('Éclats d\'esprit 💠', d.eclats ? `${nombre(d.eclats.solde)} (gagnés ${nombre(d.eclats.gagnes)}, dépensés ${nombre(d.eclats.depenses)})` : '—', 'cyan'),
     carteStat('Parties', p?.stats?.parties ?? d.parties.length, ''), carteStat('Avis envoyés', d.retours, ''),
     carteStat('Sanctions en cours', d.sanctions_actives.length ? d.sanctions_actives.map(s => NOMS_SANCTIONS[s] || s).join(', ') : 'aucune', d.sanctions_actives.length ? 'rouge' : 'vert')));
   const actions = el('div', { class: 'actions' });
@@ -950,7 +951,7 @@ async function vueEsprits() {
     const b = modif ? el('button', { class: 'bouton' }, 'Enregistrer') : null;
     if (b) b.onclick = async () => { if (await action(b, () => api('POST', '/esprits', { type: e.type, actif: actif.checked, poids: +poids.value, description: desc.value }), 'Esprit modifié.')) recharger(); };
     const icone = el('div', { class: 'icone-esprit' }, e.icone); icone.style.background = e.couleur;
-    if (VISUELS.ok) { // vignette livrée de l'esprit (son émoji revient si l'image manque)
+    if (VISUELS.ok) { // vignette livrée de l'esprit, les 65 sont livrées (son émoji revient si l'image manque)
       const img = el('img', { class: 'vig-esprit', src: `${VISUELS.dossier}vignettes/esprit/${e.type}.webp?v=14`, alt: '', loading: 'lazy', width: 256, height: 256 });
       img.addEventListener('error', () => img.remove());
       img.addEventListener('load', () => { icone.replaceChildren(img); icone.classList.add('avec-image'); });

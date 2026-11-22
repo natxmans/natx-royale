@@ -122,6 +122,10 @@ export const demanderCargaison = d => avecJeton(jeton => appel('POST', '/cargais
 export const reclamerCargaison = d => avecJeton(jeton => appel('POST', '/cargaison/reclamer', { jeton, ...d }));
 // Esprit exporté sur un autel : le serveur tire la rareté et le met dans la boîte du joueur
 export const exporterEsprit = d => avecJeton(jeton => appel('POST', '/esprit/exporter', { jeton, ...d }));
+// Éclats d'esprit : le solde est gardé sur le serveur ; le jeu annonce ce qu'il a gagné dans la partie et paie les améliorations
+export const soldeEclats = () => avecJeton(jeton => appel('POST', '/eclats', { jeton }));
+export const gagnerEclats = d => avecJeton(jeton => appel('POST', '/eclats/gagner', { jeton, ...d }));
+export const depenserEclats = d => avecJeton(jeton => appel('POST', '/eclats/depenser', { jeton, ...d }));
 export const utiliserCodeCadeau = code => avecJeton(jeton => appel('POST', '/cadeaux/code', { jeton, code }));
 // Compte : sauvegarde en ligne du profil, code de sauvegarde, récupération sur un autre appareil
 export const chargerCompte = () => avecJeton(jeton => appel('POST', '/compte/charger', { jeton }));

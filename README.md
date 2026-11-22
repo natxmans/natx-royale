@@ -22,11 +22,16 @@ Une bataille royale cartoon à jouer entre potes, directement dans le navigateur
 - **Une île avec ses secrets** : 9 lieux (Arène 2K27, Cité Turbo, Fort Bancal, Port Moussaillon…), des
   **passages secrets** (des trappes cachées dans les buissons qui mènent à l'autre bout de l'île), des **salles
   au trésor** dont certaines n'ont aucune porte, des tours de guet, des ruines et des campements.
-- **15 esprits** : de petits compagnons flottent sur des autels. Capture-en un : il te suit, te donne un bonus
-  et un pouvoir (🌱 Pousse, ☁️ Filou, 🛡️ Gardien, 👁️ Zyeuto, 🔨 Briquet, Braise, Givrette, Zap, Zephyr, Racine,
-  Minuit, Tic-Tac, Goutte, Pépite, Lumi). Un joueur éliminé laisse son esprit sur place : le premier qui passe le prend.
+- **65 esprits** : de petits compagnons flottent sur des autels. Capture-en un : il te suit, te donne un bonus
+  et un pouvoir. Il y en a pour tous les goûts : attaque (météore d'Astro, souffle de Dracot, tir orbital de Bipbop),
+  nuages au sol (lave, poison, orage, encre), soin et bouclier pour l'équipe, téléportation, invisibilité, échange de
+  place avec un ennemi, pièges (oursin, mine), objets qui tombent du ciel… Les bots s'en servent aussi.
+  Un joueur éliminé laisse son esprit sur place : le premier qui passe le prend.
   Pour **garder** un esprit dans ta collection, exporte-le sur un autre autel (ou gagne la partie avec) : il arrive
-  dans ta boîte avec sa rareté.
+  dans ta boîte avec sa rareté. Pendant la partie, tu peux aussi **l'améliorer** sur un autel avec des **éclats d'esprit 💠**
+  (★★ puis ★★★) : son pouvoir devient plus fort et recharge plus vite. Le prix dépend de la rareté de l'esprit dans ta
+  collection (de 50 à 500 💠). Les éclats se trouvent dans les coffres, les ravitaillements, sur l'île et sur les joueurs
+  éliminés ; ils ne servent qu'à ça et tu les gardes d'une partie à l'autre (ils sont enregistrés sur le serveur).
 - **Ton personnage** : couleur, peau, coiffure et couleur des cheveux, plus 250 cosmétiques (tenues, chapeaux,
   sacs, pioches, deltaplanes, emotes, traînées) et des skins d'armes. Tout se gagne en jouant, avec les pièces
   du jeu.
@@ -51,6 +56,7 @@ La liste complète des nouveautés est dans le jeu, onglet 📰 Nouveautés.
 |---|---|
 | `index.html`, `style.css`, `js/` | le jeu (three.js + PeerJS, aucun outil de construction) |
 | `modeles/` | modèles 3D (`.glb`) ; `integration.json` dit lesquels sont activés et comment les placer |
+| `sons/` | les bruitages du jeu (`.mp3`) et leurs crédits |
 | `serveur/` | serveur des avis, votes, cadeaux, modération et espace admin (Python + SQLite), hébergé à part — voir `serveur/LISEZMOI.md` |
 | `outils/` | `versionner.py` : à lancer avant chaque mise à jour, pour que tous les fichiers du jeu aient le même numéro de version ; `veille_a_etudier.py` : remonte les avis passés « À étudier » dans l'espace admin |
 | `docs/` | étude « Battle Royale à 100 joueurs » et rapports de mise à jour |
@@ -67,7 +73,10 @@ admin aussi.
   sous la même licence CC BY-NC-SA (pas d'usage commercial).
 - **Maison « cottage »** (`modeles/house_cottage_v001.glb`, pas encore utilisée dans le jeu) : d'après
   « Free GameReady Cottage » de **Gerhald3D** (TurboSquid) ; l'auteur autorise tout usage sauf la revente.
+- **Bruitages** (`sons/`) : 48 sons de [Pixabay](https://pixabay.com/sound-effects/), sous la
+  [licence de contenu Pixabay](https://pixabay.com/service/license-summary/). La liste des sons et de leurs auteurs est dans
+  [`sons/CREDITS.md`](sons/CREDITS.md). Ils ne doivent pas être réutilisés seuls, hors du jeu.
 - [three.js](https://threejs.org/) et [PeerJS](https://peerjs.com/) : licence MIT.
-- Tout le reste (code, personnages, esprits, décors, objets, cosmétiques) : créé pour NATX ROYALE.
+- Tout le reste (code, personnages, esprits, décors, objets, cosmétiques, musiques) : créé pour NATX ROYALE.
 
 NATX ROYALE est un jeu gratuit, sans publicité ni achat.

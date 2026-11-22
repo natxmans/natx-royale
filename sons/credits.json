@@ -1,0 +1,389 @@
+{
+ "_aide": "Bruitages du jeu, téléchargés sur pixabay.com (Pixabay Content License). cle = nom du fichier dans sons/ ; pixabay = numéro du son sur le site.",
+ "sons": [
+  {
+   "cle": "pistolet",
+   "fichier": "pistolet.mp3",
+   "titre": "Pistol shot",
+   "auteur": "mrfriends",
+   "pixabay": 233473,
+   "octets": 55170
+  },
+  {
+   "cle": "smg",
+   "fichier": "smg.mp3",
+   "titre": "Gunshot",
+   "auteur": "Universfield",
+   "pixabay": 352466,
+   "octets": 33792
+  },
+  {
+   "cle": "fusil",
+   "fichier": "fusil.mp3",
+   "titre": "Rifle gunshot",
+   "auteur": "freesound_community",
+   "pixabay": 99749,
+   "octets": 37440
+  },
+  {
+   "cle": "pompe",
+   "fichier": "pompe.mp3",
+   "titre": "Shotgun blast",
+   "auteur": "Universfield",
+   "pixabay": 352038,
+   "octets": 95232
+  },
+  {
+   "cle": "sniper",
+   "fichier": "sniper.mp3",
+   "titre": "Sniper rifle",
+   "auteur": "freesound_community",
+   "pixabay": 5989,
+   "octets": 52320
+  },
+  {
+   "cle": "roquette",
+   "fichier": "roquette.mp3",
+   "titre": "Rocket launcher",
+   "auteur": "Pixabay (49053354)",
+   "pixabay": 307512,
+   "octets": 11520
+  },
+  {
+   "cle": "explosion",
+   "fichier": "explosion.mp3",
+   "titre": "Medium explosion",
+   "auteur": "freesound_community",
+   "pixabay": 40472,
+   "octets": 43200
+  },
+  {
+   "cle": "recharge",
+   "fichier": "recharge.mp3",
+   "titre": "1911 reload",
+   "auteur": "freesound_community",
+   "pixabay": 6248,
+   "octets": 21120
+  },
+  {
+   "cle": "vide",
+   "fichier": "vide.mp3",
+   "titre": "Pistol cock",
+   "auteur": "freesound_community",
+   "pixabay": 6014,
+   "octets": 16800
+  },
+  {
+   "cle": "souffle",
+   "fichier": "souffle.mp3",
+   "titre": "Whoosh effect",
+   "auteur": "DRAGON-STUDIO",
+   "pixabay": 382717,
+   "octets": 18390
+  },
+  {
+   "cle": "elan",
+   "fichier": "elan.mp3",
+   "titre": "Dramatic whoosh swing",
+   "auteur": "DRAGON-STUDIO",
+   "pixabay": 487667,
+   "octets": 61440
+  },
+  {
+   "cle": "bois",
+   "fichier": "bois.mp3",
+   "titre": "Giant axe strike hitting solid wood 3",
+   "auteur": "yodguard",
+   "pixabay": 450247,
+   "octets": 33024
+  },
+  {
+   "cle": "pierre",
+   "fichier": "pierre.mp3",
+   "titre": "Pickaxe blow",
+   "auteur": "creatorshome",
+   "pixabay": 333695,
+   "octets": 37632
+  },
+  {
+   "cle": "arbre",
+   "fichier": "arbre.mp3",
+   "titre": "Old tree falls",
+   "auteur": "nematoki",
+   "pixabay": 493329,
+   "octets": 83712
+  },
+  {
+   "cle": "construire",
+   "fichier": "construire.mp3",
+   "titre": "Wooden thud mono",
+   "auteur": "freesound_community",
+   "pixabay": 6244,
+   "octets": 11520
+  },
+  {
+   "cle": "casse",
+   "fichier": "casse.mp3",
+   "titre": "Wood crate destory 2",
+   "auteur": "freesound_community",
+   "pixabay": 97263,
+   "octets": 37920
+  },
+  {
+   "cle": "touche",
+   "fichier": "touche.mp3",
+   "titre": "Classic punch impact",
+   "auteur": "Universfield",
+   "pixabay": 352711,
+   "octets": 23040
+  },
+  {
+   "cle": "tete",
+   "fichier": "tete.mp3",
+   "titre": "Ding",
+   "auteur": "u_31vnwfmzt6",
+   "pixabay": 126626,
+   "octets": 36096
+  },
+  {
+   "cle": "aie",
+   "fichier": "aie.mp3",
+   "titre": "Punch",
+   "auteur": "Universfield",
+   "pixabay": 140236,
+   "octets": 48483
+  },
+  {
+   "cle": "verre",
+   "fichier": "verre.mp3",
+   "titre": "Glass bottle smash",
+   "auteur": "Universfield",
+   "pixabay": 277554,
+   "octets": 69120
+  },
+  {
+   "cle": "mort",
+   "fichier": "mort.mp3",
+   "titre": "Marimba game over",
+   "auteur": "Universfield",
+   "pixabay": 250960,
+   "octets": 90624
+  },
+  {
+   "cle": "niveau",
+   "fichier": "niveau.mp3",
+   "titre": "Level up",
+   "auteur": "Universfield",
+   "pixabay": 191997,
+   "octets": 58514
+  },
+  {
+   "cle": "elimination",
+   "fichier": "elimination.mp3",
+   "titre": "Video game bonus",
+   "auteur": "Universfield",
+   "pixabay": 323603,
+   "octets": 47616
+  },
+  {
+   "cle": "victoire",
+   "fichier": "victoire.mp3",
+   "titre": "Success fanfare trumpets",
+   "auteur": "freesound_community",
+   "pixabay": 6185,
+   "octets": 78240
+  },
+  {
+   "cle": "ramasser",
+   "fichier": "ramasser.mp3",
+   "titre": "Item pickup",
+   "auteur": "freesound_community",
+   "pixabay": 37089,
+   "octets": 10560
+  },
+  {
+   "cle": "coffre",
+   "fichier": "coffre.mp3",
+   "titre": "Material chest open",
+   "auteur": "freesound_gamestudio",
+   "pixabay": 394472,
+   "octets": 20898
+  },
+  {
+   "cle": "magie",
+   "fichier": "magie.mp3",
+   "titre": "Magic spell 02",
+   "auteur": "Universfield",
+   "pixabay": 250240,
+   "octets": 98304
+  },
+  {
+   "cle": "scintille",
+   "fichier": "scintille.mp3",
+   "titre": "Magic twinkle",
+   "auteur": "Universfield",
+   "pixabay": 244951,
+   "octets": 90624
+  },
+  {
+   "cle": "soin",
+   "fichier": "soin.mp3",
+   "titre": "Health pickup",
+   "auteur": "freesound_community",
+   "pixabay": 6860,
+   "octets": 22569
+  },
+  {
+   "cle": "rebond",
+   "fichier": "rebond.mp3",
+   "titre": "Spring boing",
+   "auteur": "Universfield",
+   "pixabay": 229170,
+   "octets": 60672
+  },
+  {
+   "cle": "pasHerbe1",
+   "fichier": "pasHerbe1.mp3",
+   "titre": "Walk on grass 1",
+   "auteur": "JoeNTNT",
+   "pixabay": 291984,
+   "octets": 15046
+  },
+  {
+   "cle": "pasHerbe2",
+   "fichier": "pasHerbe2.mp3",
+   "titre": "Walk on grass 2",
+   "auteur": "JoeNTNT",
+   "pixabay": 291985,
+   "octets": 10867
+  },
+  {
+   "cle": "pasHerbe3",
+   "fichier": "pasHerbe3.mp3",
+   "titre": "Walk on grass 3",
+   "auteur": "JoeNTNT",
+   "pixabay": 291986,
+   "octets": 15882
+  },
+  {
+   "cle": "pasBois",
+   "fichier": "pasBois.mp3",
+   "titre": "Wood step sample 1",
+   "auteur": "freesound_community",
+   "pixabay": 47664,
+   "octets": 12480
+  },
+  {
+   "cle": "pasNeige",
+   "fichier": "pasNeige.mp3",
+   "titre": "Footstep in the snow 03 raw",
+   "auteur": "freesound_community",
+   "pixabay": 101949,
+   "octets": 32640
+  },
+  {
+   "cle": "pasSable",
+   "fichier": "pasSable.mp3",
+   "titre": "Running on sand",
+   "auteur": "bubu07audio",
+   "pixabay": 357373,
+   "octets": 96768
+  },
+  {
+   "cle": "eau",
+   "fichier": "eau.mp3",
+   "titre": "Water splash",
+   "auteur": "freesound_community",
+   "pixabay": 46402,
+   "octets": 18720
+  },
+  {
+   "cle": "clic",
+   "fichier": "clic.mp3",
+   "titre": "Click button",
+   "auteur": "Universfield",
+   "pixabay": 140881,
+   "octets": 15882
+  },
+  {
+   "cle": "arrivee",
+   "fichier": "arrivee.mp3",
+   "titre": "New notification 010",
+   "auteur": "Universfield",
+   "pixabay": 352755,
+   "octets": 40704
+  },
+  {
+   "cle": "message",
+   "fichier": "message.mp3",
+   "titre": "New notification 3",
+   "auteur": "DRAGON-STUDIO",
+   "pixabay": 398649,
+   "octets": 16128
+  },
+  {
+   "cle": "zone",
+   "fichier": "zone.mp3",
+   "titre": "Beep warning",
+   "auteur": "freesound_community",
+   "pixabay": 6387,
+   "octets": 56006
+  },
+  {
+   "cle": "coeur",
+   "fichier": "coeur.mp3",
+   "titre": "Heartbeat single",
+   "auteur": "Universfield",
+   "pixabay": 383748,
+   "octets": 36096
+  },
+  {
+   "cle": "teleport",
+   "fichier": "teleport.mp3",
+   "titre": "Teleport",
+   "auteur": "freesound_community",
+   "pixabay": 90137,
+   "octets": 24960
+  },
+  {
+   "cle": "chute",
+   "fichier": "chute.mp3",
+   "titre": "Impact thud",
+   "auteur": "Universfield",
+   "pixabay": 291047,
+   "octets": 46080
+  },
+  {
+   "cle": "feu",
+   "fichier": "feu.mp3",
+   "titre": "Fireball whoosh 1",
+   "auteur": "floraphonic",
+   "pixabay": 179125,
+   "octets": 49152
+  },
+  {
+   "cle": "foudre",
+   "fichier": "foudre.mp3",
+   "titre": "Electric zap 001",
+   "auteur": "freesound_community",
+   "pixabay": 6374,
+   "octets": 25077
+  },
+  {
+   "cle": "glace",
+   "fichier": "glace.mp3",
+   "titre": "Ice freezing",
+   "auteur": "tanweraman",
+   "pixabay": 445024,
+   "octets": 54720
+  },
+  {
+   "cle": "bouclier",
+   "fichier": "bouclier.mp3",
+   "titre": "Sci-fi energy shield activation",
+   "auteur": "Vadim_Makes_Sound",
+   "pixabay": 566095,
+   "octets": 64365
+  }
+ ]
+}
