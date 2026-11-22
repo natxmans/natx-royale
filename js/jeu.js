@@ -8,11 +8,11 @@ import { Monde, DEMI, rayonBoite, CASE } from './monde.js';
 import { OBJETS, RARETES, modeleObjet, modelesPrets, remplacerModeleArme } from './armes.js';
 import { creerPersonnage, tenirObjet, animerPersonnage, creerEtiquette, corpsPret, coiffureParDefaut, cheveuxParDefaut, CHAUVE } from './personnage.js';
 import { modelesDecorPrets, modeleGlb, INTEGRATION, preparerArme, inspecterModele, clipAnimation, prechargerCosmetiques, chargerCosmetiques, cosmetiquePret, ficheEmote, ficheTrainee, QUALITE_TENUES } from './modeles.js';
-import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, exporterEsprit, signalerJoueur, URL_API, soldeEclats, gagnerEclats, depenserEclats } from './retours.js';
+import { signalerPartie, VERSION_JEU, demanderCargaison, reclamerCargaison, exporterEsprit, signalerJoueur, URL_API, soldeEclats, gagnerEclats, depenserEclats, perdreEsprit, recupererEsprit } from './retours.js';
 import { initAvis, preparerAvis } from './avis.js';
 import { initCadeaux, bonusActif, texteMultiplicateur, synchroniserProfil, etatBoite, verifierBoite, evenementEnCours } from './cadeaux.js';
 import { initCompte } from './compte.js';
-import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, EXPORT, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, FEU, GLACE, NATURE, VENT, TEMPS, EAU, CHANCE, ETOILE, OMBRE, replique, RARETES_ESPRIT, meilleuresRaretes, don, pouvoirDe, sonEsprit, NIVEAUX, ECLATS, PRIX_ECLATS, prixAmelioration, niveauDe, forceEsprit, rechargeEsprit, plusFort, pouvoirAuNiveau } from './esprits.js';
+import { ESPRITS, creerEsprit, animerEsprit, jouerEsprit, boucleEsprit, creerSanctuaire, colorerSanctuaire, PORTEE_CAPTURE, EXPORT, VITESSE_MOBILITE, ENVOL, VISION, BOURGEON, COUT_BATISSEUR, FEU, GLACE, NATURE, VENT, TEMPS, EAU, CHANCE, ETOILE, OMBRE, replique, RARETES_ESPRIT, meilleuresRaretes, don, pouvoirDe, sonEsprit, NIVEAUX, ECLATS, PRIX_ECLATS, PRIX_RECUPERATION, prixAmelioration, niveauDe, forceEsprit, rechargeEsprit, plusFort, pouvoirAuNiveau } from './esprits.js';
 const TAILLE_NIVEAU = [1, 1, 1.14, 1.28]; // un esprit amélioré est un peu plus gros
 import { Reseau } from './reseau.js';
 import { Hote } from './hote.js';
@@ -693,7 +693,8 @@ function majHudEsprit() {
       const d = ESPRITS[e.type];
       el.style.setProperty('--couleur-esprit', d.couleur);
       el.querySelector('.esprit-ico').textContent = d.icone;
-      el.querySelector('b').textContent = d.nom + ' ' + NIVEAUX.etoiles[niveauDe(e)] + ' (' + d.role + ') · ' + d.pouvoir;
+      // sur téléphone, juste le nom et les étoiles : le cadre est petit pour ne pas cacher le perso
+      el.querySelector('b').textContent = d.nom + ' ' + NIVEAUX.etoiles[niveauDe(e)] + (tactile ? '' : ' (' + d.role + ') · ' + d.pouvoir);
       el.querySelector('small').textContent = d.passif;
       $('#tPouvoir').firstChild.textContent = d.icone;
     }
@@ -1301,7 +1302,17 @@ function recevoir(m) {
       const rar = RARETES_ESPRIT[m.rar] ? m.rar : null;
       const niv = Math.max(1, Math.min(NIVEAUX.max, m.niv | 0 || 1));
       donnerEsprit(m.par, m.type, rar, niv);
+      if (moi && m.par === moi.id && m.choisi) { // mon esprit de départ, choisi dans l'accueil
+        moi.esprit = { type: m.type, pret: +m.pret || etat.temps + 3, autel: -1, niv, choisi: true };
+        etat.departActif = etat.options.entrainement ? null : { type: m.type };
+        setTimeout(() => {
+          banniere(`🎒 TU PARS AVEC ${d.nom.toUpperCase()} ${NIVEAUX.etoiles[niv]}`, etat.options.entrainement ? 'Entraînement : tu ne peux pas le perdre ici' : 'Si tu meurs avec lui, tu le perds : il faudra payer des éclats pour le récupérer');
+          ajouterFil(`🎒 <b style="color:${d.couleur}">${d.icone} ${d.nom}</b> part avec toi${etat.options.entrainement ? '' : ' : protège-le, tu le perds si tu meurs'}`, true);
+        }, 600);
+        break;
+      }
       if (moi && m.par === moi.id) {
+        etat.departActif = null; // un autre esprit capturé : celui de départ est rentré à la maison, il ne risque plus rien
         moi.esprit = { type: m.type, pret: +m.pret || etat.temps + 3, autel: m.s, niv };
         etat.visionJusqua = 0; // un pouvoir de vision s'arrête quand on change d'esprit
         son('niveau'); son(sonEsprit(m.type), 0.7);
@@ -1310,8 +1321,8 @@ function recevoir(m) {
         banniere(`${d.icone} ${d.nom.toUpperCase()} · ${d.role.toUpperCase()}`, `${d.passif} · Pouvoir (${tactile ? '✨' : L('KeyQ')}) : ${d.pouvoir}`);
         ajouterFil(`${d.icone} Tu as capturé <b style="color:${d.couleur}">${d.nom}</b>, l'esprit de ${d.role.toLowerCase()}`, true);
         // la première fois de la partie : comment le garder pour de bon
-        if (niv > 1) setTimeout(() => ajouterFil(`⬆️ Il était déjà amélioré : <b style="color:#ffd23f">${NIVEAUX.etoiles[niv]}</b>`, true), 1800);
-        if (!etat.amelioDit && niv < NIVEAUX.max) { etat.amelioDit = true; setTimeout(() => { const p = PRIX_ECLATS[rareteDe(m.type)]; ajouterFil(`⬆️ Améliore-le sur un autel avec tes <b style="color:#8fe3ff">éclats d'esprit 💠</b> (${tactile ? 'bouton ⬆️' : L('KeyU')}) : ${p[0]} 💠 pour ★★, puis ${p[1]} 💠 pour ★★★. Tu en trouves dans les coffres et sur les joueurs éliminés, et tu les gardes d'une partie à l'autre`, true); }, 5200); }
+        if (niv > 1) setTimeout(() => ajouterFil(`⬆️ ${d.nom} est <b style="color:#ffd23f">${NIVEAUX.etoiles[niv]}</b> : pouvoir et bonus plus forts`, true), 1800);
+        if (!etat.amelioDit && niv < NIVEAUX.max) { etat.amelioDit = true; setTimeout(() => ajouterFil('⬆️ Les éclats d\'esprit 💠 que tu ramasses servent à améliorer tes esprits dans l\'accueil (page ✨ Esprits)', true), 5200); }
         if (!etat.options.entrainement && !etat.exportDit) { etat.exportDit = true; setTimeout(() => ajouterFil('✨ Pour le garder dans ta <b>collection</b> : exporte-le sur un <b>autre autel</b>, ou gagne la partie', true), 2600); }
       } else if (sa && distCam(sa.x, sa.y, sa.z) < 90) ajouterFil(`${d.icone} <b>${echapper(nomDe(m.par))}</b> a capturé ${d.nom}`);
       break;
@@ -1341,9 +1352,10 @@ function recevoir(m) {
       if (sa && sa.tombe) { if (sa.dispo) etincellesEsprit(sa.x, sa.y + 1, sa.z, sa.type, 16, 3); retirerSanctuaire(sa); }
       break;
     }
-    case 'espritNiv': { // un esprit vient d'être amélioré sur un autel
+    case 'espritNiv': { // l'hôte remet un esprit au niveau que le serveur connaît (amélioré depuis l'accueil)
       const niv = Math.max(1, Math.min(NIVEAUX.max, m.niv | 0 || 1));
       const o = etat.orbes.get(m.id), sa = etat.sanctuaires.get(m.s);
+      if (m.s === undefined) { if (o) { o.niv = niv; o.mesh.scale.setScalar(0.9 * TAILLE_NIVEAU[niv]); } if (moi && m.id === moi.id && moi.esprit) moi.esprit.niv = niv; break; }
       if (o) {
         o.niv = niv; o.mesh.scale.setScalar(0.9 * TAILLE_NIVEAU[niv]);
         if (!jouerEsprit(o.mesh, 'content')) jouerEsprit(o.mesh, 'activer');
@@ -1368,7 +1380,11 @@ function recevoir(m) {
       const o = etat.orbes.get(m.id);
       if (o && o.mesh.visible) { const q = o.mesh.position; etincellesEsprit(q.x, q.y, q.z, o.type, 24, 5); }
       retirerEsprit(m.id);
-      if (moi && m.id === moi.id) { moi.esprit = null; etat.visionJusqua = 0; }
+      if (moi && m.id === moi.id) {
+        moi.esprit = null; etat.visionJusqua = 0;
+        if (m.retire) { etat.departActif = null; toast('💀 Cet esprit est perdu : récupère-le dans l\'accueil (✨ Esprits) avant de repartir avec lui', 5000); }
+        else if (etat.departActif) espritDepartPerdu(etat.departActif.type);
+      }
       break;
     }
     case 'pouvoir': effetPouvoir(m); break;
@@ -1482,7 +1498,7 @@ function debutPartie(m) {
   etat.options = m.options || {};
   envoyerGainsEclats(true); // les éclats de la partie d'avant qui ne sont pas encore partis (avant de changer de partie)
   etat.partieId = typeof m.partieId === 'string' ? m.partieId : null;
-  etat.eclatsGagnes = 0; etat.eclatsCredites = 0; etat.eclatsPlafondDit = false; chargerSoldeEclats();
+  etat.eclatsGagnes = 0; etat.eclatsCredites = 0; etat.eclatsPlafondDit = false; etat.departActif = null; chargerSoldeEclats();
   // Cargaison : l'hôte demande au serveur s'il y a un événement en cours (le serveur choisit l'esprit et la récompense)
   if (reseau.estHote && hote && etat.partieId && !etat.options.entrainement) {
     const humains = (m.joueurs || []).filter(j => !j.bot && !j.mannequin).length;
@@ -1682,7 +1698,7 @@ function recevoirFin(m) {
   }
   // Mêlée : la place = le rang au nombre d’éliminations
   const placeMelee = m.melee && moi ? 1 + [...etat.kills].filter(([id, n]) => id !== moi.id && n > moi.kills).length : 0;
-  if (gagne && moi.esprit && !etat.options.entrainement && !moi.exportVictoire && (moi.exports | 0) < EXPORT.parPartie) { moi.exportVictoire = true; envoyerExport(moi.esprit.type, true); }
+  if (gagne && moi.esprit && !moi.esprit.choisi && !etat.options.entrainement && !moi.exportVictoire && (moi.exports | 0) < EXPORT.parPartie) { moi.exportVictoire = true; envoyerExport(moi.esprit.type, true); }
   const gainHtml = moi && !moi.recompense ? donnerRecompense(gagne ? 1 : placeMelee || moi.place || etat.vivants, gagne) : (moi && moi.gainHtml) || '';
   setTimeout(() => {
     document.exitPointerLock?.();
@@ -1961,7 +1977,6 @@ function aideHTML() {
   <tr><td><kbd>1</kbd>…<kbd>6</kbd> / molette</td><td>Changer d'objet (1 = pioche)</td></tr>
   <tr><td>${k('KeyF')} ${k('KeyC')} ${k('KeyV')}</td><td>Construire un <b>mur</b>, une <b>rampe</b>, un <b>sol</b> (10 🪵)</td></tr>
   <tr><td>${k('KeyE')}</td><td>Ramasser · ouvrir un coffre · capturer un esprit</td></tr>
-  <tr><td>${k('KeyU')}</td><td>Améliorer ton esprit sur un autel avec tes éclats 💠 (★★ de ${PRIX_ECLATS.commun[0]} à ${PRIX_ECLATS.legendaire[0]} 💠, ★★★ de ${PRIX_ECLATS.commun[1]} à ${PRIX_ECLATS.legendaire[1]} 💠, selon la rareté de l'esprit dans ta collection)</td></tr>
   <tr><td>${k('KeyQ')}</td><td>Pouvoir de ton esprit élémentaire (sanctuaires ◆ sur la carte)</td></tr>
   <tr><td>${k('KeyR')} · ${k('KeyG')}</td><td>Recharger · jeter l'objet</td></tr>
   <tr><td>${k('KeyB')} · ${k('KeyX')}</td><td>Émote (danse) 💃 · s'accroupir</td></tr>
@@ -2010,7 +2025,6 @@ function actionTouche(c, e = { key: '', preventDefault() {} }) {
   else if (c === 'KeyR') recharger();
   else if (c === 'KeyE') interagir();
   else if (c === 'KeyQ') utiliserPouvoir();
-  else if (c === 'KeyU') ameliorerEsprit();
   else if (c === 'KeyG') { if (moi.ph === 'sol') jeterSlot(moi.slot); }
   else if (c === 'KeyM' || (!touchesPerso().carte && c === e.code && (e.key === 'm' || e.key === 'M'))) {
     etat.grandeCarte = !etat.grandeCarte;
@@ -2748,7 +2762,7 @@ function chercherInteraction() {
     const d = Math.hypot(cg.x - moi.x, cg.sol - moi.y, cg.z - moi.z);
     if (d < CARGO.portee && d < bd + 0.6) { bd = d; best = { type: 'cargo', c: cg }; }
   }
-  const peutExporter = moi.esprit && !etat.options.entrainement && (moi.exports | 0) < EXPORT.parPartie;
+  const peutExporter = moi.esprit && !moi.esprit.choisi && !etat.options.entrainement && (moi.exports | 0) < EXPORT.parPartie; // pas son esprit de départ (il est déjà à lui)
   for (const sa of etat.sanctuaires.values()) {
     const d = Math.hypot(sa.x - moi.x, sa.z - moi.z);
     if (!(d < PORTEE_CAPTURE && Math.abs(sa.y - moi.y) < 3 && d < bd + 0.6)) continue;
@@ -2762,13 +2776,6 @@ function chercherInteraction() {
     if (p.vers >= 0 && d < 2.1 && d < bd + 0.3) { bd = d; best = { type: 'passage', p }; }
   }
   etat.interaction = best;
-  // améliorer son esprit : sur n'importe quel vrai autel (pas sur un esprit tombé), à côté du reste (autre touche)
-  etat.amelioration = null;
-  if (moi.esprit && niveauDe(moi.esprit) < NIVEAUX.max) for (const sa of etat.sanctuaires.values()) {
-    if (sa.tombe || Math.hypot(sa.x - moi.x, sa.z - moi.z) >= PORTEE_CAPTURE || Math.abs(sa.y - moi.y) >= 3) continue;
-    etat.amelioration = { s: sa };
-    break;
-  }
 }
 // ---------- Éclats d'esprit : gardés sur le serveur d'une partie à l'autre ----------
 // etat.eclatsSolde = solde du serveur ; etat.eclatsGagnes = gagnés dans cette partie (dit par l'hôte) ;
@@ -2777,11 +2784,11 @@ const rareteDe = type => meilleuresRaretes(profil.collectionEsprits)[type] || 'c
 const eclatsAffiches = () => (etat.eclatsSolde | 0) + Math.max(0, (etat.eclatsGagnes | 0) - (etat.eclatsCredites | 0));
 function chargerSoldeEclats() {
   if (!URL_API) return;
-  soldeEclats().then(d => { etat.eclatsSolde = d.solde | 0; majSoldeMenu(); }).catch(() => { /* pas de serveur : on garde ce qu'on sait */ });
+  soldeEclats().then(d => { etat.eclatsSolde = d.solde | 0; etat.niveauxEsprits = d.niveaux && typeof d.niveaux === 'object' ? d.niveaux : {}; etat.espritsPerdus = Array.isArray(d.perdus) ? d.perdus : []; majSoldeMenu(); majBoutonDepart(); menus.rafraichirEsprits(); }).catch(() => { /* pas de serveur : on garde ce qu'on sait */ });
 }
 function majSoldeMenu() {
   const el = $('#soldeEclatsMenu');
-  if (el) el.textContent = etat.eclatsSolde === undefined || etat.eclatsSolde === null ? '' : `💠 Tu as ${etat.eclatsSolde} éclats d'esprit (gardés d'une partie à l'autre) pour améliorer tes esprits pendant les parties.`;
+  if (el) el.textContent = etat.eclatsSolde === undefined || etat.eclatsSolde === null ? '' : `💠 Tu as ${etat.eclatsSolde} éclats d'esprit : choisis un esprit de ta collection et améliore-le (⬆️). Tu en gagnes en partie (coffres, éliminations, victoire).`;
 }
 // Annonce au serveur ce que j'ai gagné dans la partie (le total : il n'ajoute que ce qui manque). Regroupé toutes les 2,5 s.
 let minuteurEclats = null;
@@ -2801,34 +2808,71 @@ function envoyerGainsEclats(vite = false) {
     majSoldeMenu();
   }).catch(() => { if (etat.partieId === partie) minuteurEclats = setTimeout(() => envoyerGainsEclats(true), 10000); });
 }
-// Améliorer mon esprit : je paie au serveur (il calcule le prix selon la rareté), puis je demande à l'hôte.
-// En Entraînement c'est gratuit (rien n'est payé).
-async function ameliorerEsprit() {
-  const moi = etat.moi, am = etat.amelioration;
-  if (!moi || moi.ph !== 'sol' || !moi.esprit) return;
-  if (!am) { annonceObjet('⬆️ Va sur un autel pour améliorer ton esprit'); return; }
-  const niv = niveauDe(moi.esprit);
-  if (niv >= NIVEAUX.max) { annonceObjet(`✨ Ton esprit est déjà au niveau maximum ${NIVEAUX.etoiles[NIVEAUX.max]}`); return; }
-  const demander = prix => reseau.versHote({ t: 'ameliorer', id: am.s.id, x: arrondi(moi.x), y: arrondi(moi.y), z: arrondi(moi.z), paye: !!prix, prix: prix | 0 });
-  if (etat.options.entrainement) {
-    if (performance.now() - (moi.amelioDemande || 0) < 1000) return;
-    moi.amelioDemande = performance.now(); demander(0); return;
-  }
-  if (moi.amelioEnCours) return;
-  const type = moi.esprit.type, rar = rareteDe(type), prix = prixAmelioration(rar, niv + 1);
-  if (!URL_API || !etat.partieId) { annonceObjet('💠 Le serveur des éclats n\'est pas joignable : amélioration impossible pour l\'instant'); return; }
-  if (eclatsAffiches() < prix) { annonceObjet(`💠 Il te faut ${prix} éclats d'esprit (tu en as ${eclatsAffiches()}) : ouvre des coffres, élimine des adversaires`); son('vide', 0.6); return; }
-  const demande = [...crypto.getRandomValues(new Uint8Array(12))].map(o => o.toString(16).padStart(2, '0')).join('');
-  moi.amelioEnCours = true;
-  annonceObjet('💠 Paiement…');
+// ---------- Esprit de départ : choisi dans l'accueil, on part avec ; mort avec lui = perdu, à racheter ----------
+const espritDepartValide = () => {
+  const t = reglages.espritDepart;
+  return t && ESPRITS[t] && meilleuresRaretes(profil.collectionEsprits)[t] && !(etat.espritsPerdus || []).includes(t) ? t : null;
+};
+function choisirEspritDepart(t) {
+  reglages.espritDepart = t && ESPRITS[t] ? t : null;
+  sauverReglages(); majBoutonDepart(); menus.surLook(); son('clic');
+}
+function majBoutonDepart() {
+  const b = $('#btnEspritDepart');
+  if (!b) return;
+  const t = reglages.espritDepart, d = ESPRITS[t], possedes = meilleuresRaretes(profil.collectionEsprits);
+  b.classList.toggle('perdu', !!(t && d && possedes[t] && (etat.espritsPerdus || []).includes(t)));
+  if (t && d && possedes[t] && (etat.espritsPerdus || []).includes(t)) b.innerHTML = `💀 ${d.icone} <b>${echapper(d.nom)}</b> est perdu : le récupérer`;
+  else if (t && d && possedes[t]) b.innerHTML = `🎒 Esprit de départ : ${d.icone} <b>${echapper(d.nom)}</b> ${NIVEAUX.etoiles[(etat.niveauxEsprits || {})[t] || 1]}`;
+  else b.innerHTML = Object.keys(possedes).length ? '🎒 Choisis un esprit de départ' : '🎒 Esprit de départ : exporte d\'abord un esprit';
+}
+// Je suis mort avec mon esprit de départ : il est perdu (le serveur le note)
+function espritDepartPerdu(type) {
+  const d = ESPRITS[type];
+  etat.departActif = null;
+  etat.espritsPerdus = [...new Set([...(etat.espritsPerdus || []), type])];
+  const prix = PRIX_RECUPERATION[rareteDe(type)];
+  if (d) { annonce(`💀 Tu as perdu ${d.nom} !`, 3, '#ff9a9a'); ajouterFil(`💀 <b style="color:${d.couleur}">${d.icone} ${d.nom}</b> est perdu : récupère-le dans l'accueil (✨ Esprits) pour ${prix} 💠`, true); }
+  if (URL_API && etat.partieId) perdreEsprit({ partie_id: etat.partieId, type }).then(r => { if (Array.isArray(r.perdus)) etat.espritsPerdus = r.perdus; majBoutonDepart(); }).catch(() => {});
+  majBoutonDepart();
+}
+// Racheter un esprit perdu avec des éclats (depuis la page Esprits)
+let recuperationEnCours = false;
+async function recupererEspritPerdu(type) {
+  if (recuperationEnCours || !ESPRITS[type]) return null;
+  recuperationEnCours = true;
   try {
-    await envoyerGainsEclats(true); // d'abord les éclats de cette partie que le serveur n'a pas encore
-    const d = await depenserEclats({ partie_id: etat.partieId, demande, type, niveau: niv + 1, rarete: rar });
-    etat.eclatsSolde = d.solde | 0; majSoldeMenu();
-    if (!d.ok) { annonceObjet(`💠 Il te faut ${d.prix} éclats d'esprit pour cet esprit ${(RARETES_ESPRIT[d.rarete] || {}).nom || ''} (tu en as ${d.solde})`); son('vide', 0.6); return; }
-    if (etat.moi === moi && moi.esprit && moi.esprit.type === type) demander(d.prix);
-  } catch (e) { annonceObjet('💠 ' + e.message); }
-  finally { moi.amelioEnCours = false; }
+    const demande = [...crypto.getRandomValues(new Uint8Array(12))].map(o => o.toString(16).padStart(2, '0')).join('');
+    const d = await recupererEsprit({ demande, type, rarete: rareteDe(type) });
+    etat.eclatsSolde = d.solde | 0;
+    if (Array.isArray(d.perdus)) etat.espritsPerdus = d.perdus;
+    const e = ESPRITS[type];
+    if (!d.ok) { son('vide', 0.6); toast(`💠 Il te faut ${d.prix} éclats pour récupérer ${e.nom} (tu en as ${d.solde})`, 4000); }
+    else { son('niveau'); toast(`${e.icone} ${e.nom} est de retour ! Tu peux repartir avec lui.`, 4000); menus.surLook(); }
+    return d;
+  } catch (er) { toast('💠 ' + er.message, 4000); return null; }
+  finally { recuperationEnCours = false; majSoldeMenu(); majBoutonDepart(); menus.rafraichirEsprits(); }
+}
+
+// Améliorer un esprit de ma collection DEPUIS L'ACCUEIL (page ✨ Esprits) : je paie au serveur, qui calcule le prix selon la
+// rareté et garde le nouveau niveau. En partie, l'esprit capturé aura ce niveau.
+let ameliorationEnCours = false;
+async function ameliorerDepuisAccueil(type) {
+  const niv = (etat.niveauxEsprits && etat.niveauxEsprits[type]) || 1;
+  if (ameliorationEnCours || niv >= NIVEAUX.max || !ESPRITS[type]) return null;
+  if (!meilleuresRaretes(profil.collectionEsprits)[type]) { toast('Cet esprit n\'est pas encore dans ta collection', 3000); return null; }
+  ameliorationEnCours = true;
+  try {
+    const demande = [...crypto.getRandomValues(new Uint8Array(12))].map(o => o.toString(16).padStart(2, '0')).join('');
+    const d = await depenserEclats({ demande, type, niveau: niv + 1, rarete: rareteDe(type) });
+    etat.eclatsSolde = d.solde | 0;
+    if (d.niveau) etat.niveauxEsprits = { ...etat.niveauxEsprits, [type]: d.niveau };
+    const e = ESPRITS[type];
+    if (!d.ok) { son('vide', 0.6); toast(`💠 Il te faut ${d.prix} éclats d'esprit pour améliorer ${e.nom} (tu en as ${d.solde})`, 4000); }
+    else { son('ameliorer'); toast(`⬆️ ${e.icone} ${e.nom} passe ${NIVEAUX.etoiles[d.niveau || niv + 1]} ! Il sera comme ça dans toutes tes parties.`, 4500); menus.surLook(); }
+    return d;
+  } catch (er) { toast('💠 ' + er.message, 4000); return null; }
+  finally { ameliorationEnCours = false; majSoldeMenu(); menus.rafraichirEsprits(); }
 }
 
 // ---------- Les autres joueurs ----------
@@ -3283,16 +3327,6 @@ function majHUD(dt) {
       inv.innerHTML = `${kE} Ramasser <span style="color:${r.couleur}">${def.nom}${def.type === 'arme' ? ' (' + r.nom + ')' : ''}${ia.b.qte > 1 ? ' ×' + ia.b.qte : ''}</span>`;
     }
   } else inv.style.display = 'none';
-  // Invitation (U) : améliorer son esprit sur un autel
-  const inv2 = $('#invite2'), am = moi.ph === 'sol' && !moi.export && moi.esprit ? etat.amelioration : null;
-  if (am) {
-    const niv = niveauDe(moi.esprit), d = ESPRITS[moi.esprit.type], rar = rareteDe(moi.esprit.type), r = RARETES_ESPRIT[rar];
-    const gratuit = !!etat.options.entrainement, cout = prixAmelioration(rar, niv + 1), ok = gratuit || eclatsAffiches() >= cout;
-    const html = `${tactile ? '⬆️' : `<kbd>${L('KeyU')}</kbd>`} Améliorer <b style="color:${d.couleur}">${d.icone} ${d.nom}</b>${r ? ` <small style="color:${r.couleur}">${r.nom}</small>` : ''} → <b class="etoiles">${NIVEAUX.etoiles[niv + 1]}</b> <span class="prix">${gratuit ? 'gratuit ici' : cout + ' 💠'}</span>`;
-    if (inv2.dataset.html !== html) { inv2.innerHTML = html; inv2.dataset.html = html; }
-    inv2.classList.toggle('pas-assez', !ok);
-    inv2.style.display = 'block';
-  } else inv2.style.display = 'none';
   // Dirigeable
   const id = $('#infoDirigeable');
   if (moi.ph === 'dirigeable') {
@@ -4256,7 +4290,7 @@ function demarrerHote() {
   appliquerMode(reglages.mode);
   lireOptionsSalon();
   reseau.surMessageClient = recevoir;
-  reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: monLook(), esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
+  reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: monLook(), esp: meilleuresRaretes(profil.collectionEsprits), niv: etat.niveauxEsprits || {}, depart: espritDepartValide(), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
 }
 
 function lirePseudo() {
@@ -4398,7 +4432,7 @@ function initMenu() {
     reseau.surPerteHote = () => { if (!etat.exclu) location.href = location.pathname + '?erreur=hote'; };
     try {
       await reseau.rejoindre(code);
-      reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: monLook(), esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
+      reseau.versHote({ t: 'bonjour', nom: reglages.pseudo, couleur: reglages.couleur, look: monLook(), esp: meilleuresRaretes(profil.collectionEsprits), niv: etat.niveauxEsprits || {}, depart: espritDepartValide(), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null });
     } catch (err) {
       reseau.fermer();
       afficherEcran('menu');
@@ -4474,8 +4508,15 @@ function initMenu() {
   $('#fermerCarte').onclick = () => { if (enJeu() && etat.grandeCarte) actionTouche('KeyM'); };
   // le texte « Ramasser / Ouvrir » se touche du doigt
   $('#invite').addEventListener('pointerdown', e => { e.stopPropagation(); if (enJeu()) interagir(); });
-  $('#invite2').addEventListener('pointerdown', e => { e.stopPropagation(); if (enJeu()) ameliorerEsprit(); });
   $('[data-page="esprits"]')?.addEventListener('click', chargerSoldeEclats); // le solde d'éclats sur la page Esprits
+  $('#btnEspritDepart')?.addEventListener('click', () => { // vers la page Esprits, sur l'esprit de départ
+    const t = reglages.espritDepart && ESPRITS[reglages.espritDepart] ? reglages.espritDepart : Object.keys(meilleuresRaretes(profil.collectionEsprits))[0];
+    if (t) menus.espritChoisi = t;
+    menus.son('clic'); menus.montrerPage('esprits'); chargerSoldeEclats();
+    // sur téléphone, la page est petite : on fait défiler jusqu'au bouton « Partir avec lui » / « Récupérer »
+    setTimeout(() => $('#ficheEsprit .depart-esprit')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 120);
+  });
+  majBoutonDepart();
   chargerSoldeEclats();
   initTactile();
   cvGrande.addEventListener('contextmenu', e => e.preventDefault());
@@ -4517,7 +4558,10 @@ for (const a of INTEGRATION.armes) {
 const apercu = new Apercu();
 const menus = new Menus({
   apercu, profil, reglages, son: n => { initSons(); son(n); },
-  surLook: () => { if (etat.ecran === 'salon') reseau.versHote({ t: 'look', look: monLook(), couleur: reglages.couleur, esp: meilleuresRaretes(profil.collectionEsprits), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null }); },
+  esprits: { niveaux: () => etat.niveauxEsprits || {}, solde: () => (etat.eclatsSolde === undefined ? null : etat.eclatsSolde), ameliorer: t => ameliorerDepuisAccueil(t),
+    depart: () => reglages.espritDepart || null, choisirDepart: t => choisirEspritDepart(t), perdus: () => etat.espritsPerdus || [],
+    prixRecup: r => PRIX_RECUPERATION[r] || PRIX_RECUPERATION.commun, recuperer: t => recupererEspritPerdu(t) },
+  surLook: () => { if (etat.ecran === 'salon') reseau.versHote({ t: 'look', look: monLook(), couleur: reglages.couleur, esp: meilleuresRaretes(profil.collectionEsprits), niv: etat.niveauxEsprits || {}, depart: espritDepartValide(), ref: etatBoite().ref, staff: etatBoite().staff?.badge || null }); },
 });
 initMenu();
 afficherEcran('menu');

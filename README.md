@@ -28,10 +28,12 @@ Une bataille royale cartoon à jouer entre potes, directement dans le navigateur
   place avec un ennemi, pièges (oursin, mine), objets qui tombent du ciel… Les bots s'en servent aussi.
   Un joueur éliminé laisse son esprit sur place : le premier qui passe le prend.
   Pour **garder** un esprit dans ta collection, exporte-le sur un autre autel (ou gagne la partie avec) : il arrive
-  dans ta boîte avec sa rareté. Pendant la partie, tu peux aussi **l'améliorer** sur un autel avec des **éclats d'esprit 💠**
-  (★★ puis ★★★) : son pouvoir devient plus fort et recharge plus vite. Le prix dépend de la rareté de l'esprit dans ta
-  collection (de 50 à 500 💠). Les éclats se trouvent dans les coffres, les ravitaillements, sur l'île et sur les joueurs
-  éliminés ; ils ne servent qu'à ça et tu les gardes d'une partie à l'autre (ils sont enregistrés sur le serveur).
+  dans ta boîte avec sa rareté. Depuis l'accueil, tu peux **améliorer** les esprits de ta collection (★★ puis ★★★) avec des
+  **éclats d'esprit 💠** : en partie, l'esprit capturé a ce niveau, avec un pouvoir plus fort qui recharge plus vite. Le prix
+  dépend de la rareté de l'esprit dans ta collection (de 50 à 500 💠). Les éclats se gagnent en partie (coffres, ravitaillements,
+  île, joueurs éliminés, victoire) ; ils ne servent qu'à ça et sont gardés sur le serveur, comme le niveau de tes esprits.
+  Tu peux aussi **partir avec un esprit** de ta collection dès le début de la partie : si tu meurs avec lui, tu le perds, et il
+  faut payer des éclats pour le récupérer (de 25 à 100 💠 selon sa rareté).
 - **Ton personnage** : couleur, peau, coiffure et couleur des cheveux, plus 250 cosmétiques (tenues, chapeaux,
   sacs, pioches, deltaplanes, emotes, traînées) et des skins d'armes. Tout se gagne en jouant, avec les pièces
   du jeu.

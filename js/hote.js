@@ -5,7 +5,7 @@ import { OBJETS, RARETES, tirerButin, LISTE_ARMES, butinRavitaillement } from '.
 import { rayonBoite, DEMI, CASE } from './monde.js';
 import { creerPlanZone, etatZone, creerDirigeable, posDirigeable, cibleConstruction, PV_CONSTR, memeEquipe, posRavito, MODES, modeValide, VITESSES_ZONE, DEFIS_ENTRAINEMENT, posCargaison, CARGO } from './partage.js';
 import { nettoyerLook, lookAuHasard, LOOK_DEFAUT, lookAStaff, retirerStaffDuLook } from './boutique.js';
-import { URL_API, verifierStaff } from './retours.js';
+import { URL_API, verifierStaff, niveauxEsprits } from './retours.js';
 // rareté de collection de chaque esprit (aspect seulement) et référence publique (signalements) : vérifiées ici
 const RARETES_OK = new Set(['commun', 'rare', 'epique', 'legendaire']);
 function nettoyerEsp(e) {
@@ -14,6 +14,14 @@ function nettoyerEsp(e) {
   return r;
 }
 const nettoyerRef = r => (typeof r === 'string' && /^[0-9a-f]{12}$/.test(r) ? r : null);
+// esprit de départ : un esprit de sa collection (annoncée), choisi dans l'accueil
+const nettoyerDepart = (t, esp) => (typeof t === 'string' && ESPRITS[t] && esp && esp[t] ? t : null);
+// niveau de chaque esprit (améliorés depuis l'accueil) : { type: 2 ou 3 } ; l'hôte les revérifie auprès du serveur au début de la partie
+function nettoyerNiv(n) {
+  const r = {};
+  if (n && typeof n === 'object') for (const [t, v] of Object.entries(n).slice(0, 80)) if (typeof t === 'string' && t.length < 16 && (v === 2 || v === 3)) r[t] = v;
+  return r;
+}
 const nettoyerBadge = b => (typeof b === 'string' && /^[0-9a-f]{32}$/.test(b) ? b : null);
 import { ESPRITS, espritAuHasard, placerSanctuaires, RECHARGE_SANCTUAIRE, DUREE_ESPRIT_TOMBE, EXPORT, PORTEE_CAPTURE, CARAPACE, REGEN, BOURGEON, VITESSE_MOBILITE,
   FEU, GLACE, FOUDRE, VENT, NATURE, OMBRE, ETOILE, don, pouvoirDe, NIVEAUX, ECLATS, niveauDe, forceEsprit, rechargeEsprit, plusFort, pouvoirAuNiveau } from './esprits.js';
@@ -88,7 +96,8 @@ export class Hote {
       const pris = new Set([...this.salon.values()].filter(p => p.id !== de).map(p => p.nom));
       if (pris.has(nom)) { let k = 2; while (pris.has(nom.slice(0, 13) + ' ' + k)) k++; nom = nom.slice(0, 13) + ' ' + k; }
       this.salon.set(de, { id: de, nom, couleur: /^#[0-9a-f]{6}$/i.test(m.couleur) ? m.couleur : '#3498db', hote: de === this.reseau.monId, look: nettoyerLook(m.look),
-        esp: nettoyerEsp(m.esp), ref: nettoyerRef(m.ref), badge: nettoyerBadge(m.staff) });
+        esp: nettoyerEsp(m.esp), niv: nettoyerNiv(m.niv), ref: nettoyerRef(m.ref), badge: nettoyerBadge(m.staff) });
+      this.salon.get(de).depart = nettoyerDepart(m.depart, this.salon.get(de).esp);
       this.controlerStaff(de);
       this.reseau.envoyerA(de, { t: 'bienvenue', id: de, enCours: this.enCours });
       this.diffuserSalon();
@@ -97,7 +106,7 @@ export class Hote {
     if (m.t === 'look') {
       const p = this.salon.get(de);
       if (p) {
-        p.look = nettoyerLook(m.look); p.esp = nettoyerEsp(m.esp); if (/^#[0-9a-f]{6}$/i.test(m.couleur)) p.couleur = m.couleur;
+        p.look = nettoyerLook(m.look); p.esp = nettoyerEsp(m.esp); p.niv = nettoyerNiv(m.niv); p.depart = nettoyerDepart(m.depart, p.esp); if (/^#[0-9a-f]{6}$/i.test(m.couleur)) p.couleur = m.couleur;
         if (!p.ref) p.ref = nettoyerRef(m.ref);
         p.badge = nettoyerBadge(m.staff) || p.badge;
         this.controlerStaff(de);
@@ -185,20 +194,10 @@ export class Hote {
         if (b.objet === 'eclats' && !this.options.entrainement) this.donnerEclats(j, (j.eclats | 0) + Math.max(1, b.qte | 0), Math.max(1, b.qte | 0));
         break;
       }
-      case 'ameliorer': {
-        // Amélioration de l'esprit sur un vrai autel. Un joueur a déjà payé ses éclats au serveur (paye) ; en Entraînement c'est gratuit.
-        const sa = this.sanctuaires && this.sanctuaires[m.id | 0];
-        if (!j || !j.vivant || !j.esprit || !sa || sa.tombe) break;
-        const pres = (x, y, z) => Math.hypot(sa.x - x, sa.z - z) <= PORTEE_CAPTURE + 1.5 && Math.abs(sa.y - y) <= 3;
-        const mx = +m.x, my = +m.y, mz = +m.z;
-        const credible = Number.isFinite(mx) && Number.isFinite(mz) && Math.hypot(mx - j.x, mz - j.z) <= 6 && Math.abs(my - j.y) <= 4;
-        if (pres(j.x, j.y, j.z) || (credible && pres(mx, my, mz))) this.ameliorer(j, sa, m.paye === true || this.options.entrainement, borner(+m.prix || 0, 0, 1000));
-        break;
-      }
       case 'exporter': {
         // Export d'un esprit vers la collection : sur un vrai autel, différent de celui où il a été pris, 3 par partie au plus
         const sa = this.sanctuaires && this.sanctuaires[m.id | 0];
-        if (!j || !j.vivant || !j.esprit || !sa || sa.tombe || this.options.entrainement) break;
+        if (!j || !j.vivant || !j.esprit || j.esprit.choisi || !sa || sa.tombe || this.options.entrainement) break;
         if (sa.id === j.esprit.autel || (j.exports | 0) >= EXPORT.parPartie) break;
         const pres = (x, y, z) => Math.hypot(sa.x - x, sa.z - z) <= PORTEE_CAPTURE + 1.5 && Math.abs(sa.y - y) <= 3;
         const mx = +m.x, my = +m.y, mz = +m.z;
@@ -254,7 +253,7 @@ export class Hote {
     // équipes : les joueurs du salon d'abord (les potes ensemble), puis les bots complètent
     const equipeDe = k => (taille > 1 ? 1 + Math.floor(k / taille) : 0);
     for (const p of this.salon.values()) {
-      const j = this.nouveauJoueur(p.id, p.nom, p.couleur, false, n); j.look = p.look; j.esp = p.esp || {}; j.ref = p.ref || null; j.equipe = equipeDe(n); n++; this.joueurs.set(p.id, j);
+      const j = this.nouveauJoueur(p.id, p.nom, p.couleur, false, n); j.look = p.look; j.esp = p.esp || {}; j.nivEsp = p.niv || {}; j.depart = p.depart || null; j.ref = p.ref || null; j.equipe = equipeDe(n); n++; this.joueurs.set(p.id, j);
     }
     const noms = NOMS_BOTS.slice().sort(() => Math.random() - 0.5);
     for (let k = 0; k < this.options.bots; k++) {
@@ -329,6 +328,8 @@ export class Hote {
       butins: listeButins,
       esprits: this.sanctuaires.map(sa => ({ id: sa.id, x: sa.x, y: sa.y, z: sa.z, type: sa.type, dispo: true })),
     });
+    this.verifierNiveaux();
+    this.donnerEspritsDepart();
     // Entraînement : les défis de chaque joueur
     this.defis = new Map();
     if (this.options.entrainement) {
@@ -847,10 +848,6 @@ export class Hote {
       for (const sa of this.sanctuaires) if (sa.dispo && Math.hypot(sa.x - b.x, sa.z - b.z) < PORTEE_CAPTURE && Math.abs(sa.y - b.y) < 3) { this.capturer(b, sa); return; }
       return;
     }
-    if (niveauDe(b.esprit) < NIVEAUX.max && (b.eclats | 0) >= ECLATS.coutBots[niveauDe(b.esprit) + 1] && !(b.cible && b.voit)) {
-      const sa = this.sanctuaires.find(s => !s.tombe && Math.hypot(s.x - b.x, s.z - b.z) < PORTEE_CAPTURE + 1 && Math.abs(s.y - b.y) < 3);
-      if (sa) this.ameliorer(b, sa);
-    }
     if (this.temps < b.esprit.pret) return;
     const t = b.cible ? this.joueurs.get(b.cible) : null;
     const d = t ? Math.hypot(t.x - b.x, t.z - b.z) : Infinity;
@@ -900,14 +897,6 @@ export class Hote {
         if (sa.dispo && d < bd && Math.hypot(sa.x - z.x, sa.z - z.z) < z.r - 5) { bd = d; best = { sanctuaire: sa.id, x: sa.x, z: sa.z }; }
       }
     }
-    // un autel pour améliorer son esprit (s'il a assez d'éclats)
-    if (!best && b.esprit && !b.mannequin && this.sanctuaires && niveauDe(b.esprit) < NIVEAUX.max && (b.eclats | 0) >= ECLATS.coutBots[niveauDe(b.esprit) + 1]) {
-      bd = 60;
-      for (const sa of this.sanctuaires) {
-        const d = Math.hypot(sa.x - b.x, sa.z - b.z);
-        if (!sa.tombe && d < bd && Math.hypot(sa.x - z.x, sa.z - z.z) < z.r - 5) { bd = d; best = { autel: sa.id, x: sa.x, z: sa.z }; }
-      }
-    }
     if (!best) {
       bd = 28;
       for (const it of this.butins.values()) {
@@ -927,7 +916,6 @@ export class Hote {
     const o = b.objectif;
     if (o.ravito) { this.ouvrirRavito(b.id, o.ravito); return; }
     if (o.sanctuaire !== undefined) { const sa = this.sanctuaires[o.sanctuaire]; if (sa && sa.dispo) this.capturer(b, sa); return; }
-    if (o.autel !== undefined) { const sa = this.sanctuaires[o.autel]; if (sa) this.ameliorer(b, sa); return; }
     const it = this.butins.get(o.butin);
     if (!it) return;
     this.butins.delete(it.id);
@@ -1061,22 +1049,43 @@ export class Hote {
     for (const j of liste) if (j && !j.bot) this.donnerEclats(j, (j.eclats | 0) + ECLATS.victoire, ECLATS.victoire, true);
   }
 
-  // Monter l'esprit d'un joueur d'un niveau (sur un vrai autel). Un joueur a payé ses éclats au serveur avant de demander
-  // (paye), ou c'est l'Entraînement ; un bot paie avec ce qu'il a ramassé pendant la partie.
-  ameliorer(j, sa, paye = false, prix = 0) {
-    if (!j || !j.vivant || !j.esprit || !sa || sa.tombe) return false;
-    const niv = niveauDe(j.esprit);
-    if (niv >= NIVEAUX.max || this.temps - (j.amelioT ?? -9) < 0.6) return false;
-    let cout = prix | 0;
-    if (j.bot) { cout = ECLATS.coutBots[niv + 1]; if ((j.eclats | 0) < cout) return false; j.eclats -= cout; }
-    else if (!paye) return false;
-    j.amelioT = this.temps;
-    j.esprit.niv = niv + 1;
-    // la recharge en cours raccourcit aussi
-    const reste = j.esprit.pret - this.temps;
-    if (reste > 0) j.esprit.pret = this.temps + reste * NIVEAUX.recharge[niv + 1] / NIVEAUX.recharge[niv];
-    this.reseau.diffuser({ t: 'espritNiv', id: j.id, niv: niv + 1, cout, s: sa.id, pret: arrondi(j.esprit.pret) });
-    return true;
+  // Le niveau des esprits de chaque joueur (améliorés depuis l'accueil) : chacun l'annonce en arrivant dans le salon,
+  // et l'hôte le revérifie auprès du serveur (qui le garde) : ce que le serveur répond remplace ce qui a été annoncé.
+  verifierNiveaux() {
+    const humains = [...this.joueurs.values()].filter(j => !j.bot && j.ref);
+    if (!URL_API || !humains.length) return;
+    niveauxEsprits(humains.map(j => j.ref)).then(d => {
+      const n = (d && d.niveaux) || {}, perdus = (d && d.perdus) || {};
+      for (const j of humains) {
+        j.nivEsp = nettoyerNiv(n[j.ref] || {});
+        // un esprit de départ que le serveur sait perdu (mort avec lui) : il n'a pas le droit de partir avec
+        if (j.esprit && j.esprit.choisi && (perdus[j.ref] || []).includes(j.esprit.type)) {
+          j.esprit = null; j.depart = null;
+          this.reseau.diffuser({ t: 'espritLibre', id: j.id, retire: true });
+          continue;
+        }
+        // un esprit déjà capturé avant la réponse : remis au bon niveau
+        if (j.vivant && j.esprit && !j.esprit.tombe) {
+          const bon = Math.max(j.esprit.nivTombe || 1, j.nivEsp[j.esprit.type] || 1);
+          if (bon !== niveauDe(j.esprit)) { j.esprit.niv = bon; this.reseau.diffuser({ t: 'espritNiv', id: j.id, niv: bon }); }
+        }
+      }
+    }).catch(() => { /* serveur injoignable : on garde ce que les joueurs ont annoncé */ });
+  }
+  // Esprit de départ : chaque joueur qui en a choisi un part avec lui (au niveau qu'il lui a donné) dès le dirigeable.
+  // S'il meurt avec, il le perd : son jeu le dit au serveur (il faudra payer des éclats pour le récupérer).
+  donnerEspritsDepart() {
+    for (const j of this.joueurs.values()) {
+      if (j.bot || !j.depart || !ESPRITS[j.depart]) continue;
+      const niv = Math.max(1, Math.min(NIVEAUX.max, (j.nivEsp && j.nivEsp[j.depart]) || 1));
+      j.esprit = { type: j.depart, pret: this.temps + 3, autel: -1, niv, nivTombe: 1, choisi: true };
+      this.reseau.diffuser({ t: 'esprit', s: -1, par: j.id, type: j.depart, pret: arrondi(j.esprit.pret), rar: (j.esp && j.esp[j.depart]) || null, niv, choisi: true });
+    }
+  }
+  // Niveau d'un esprit pour un bot : plus il est difficile, plus ses esprits sont souvent améliorés
+  niveauBot() {
+    const r = Math.random(), d = this.options.difficulte | 0;
+    return d === 2 ? (r < 0.1 ? 3 : r < 0.35 ? 2 : 1) : d === 1 ? (r < 0.15 ? 2 : 1) : 1;
   }
 
   capturer(j, sa) {
@@ -1084,8 +1093,12 @@ export class Hote {
     sa.dispo = false;
     sa.retour = sa.tombe ? Infinity : this.temps + RECHARGE_SANCTUAIRE; // un esprit tombé ne revient pas : ce n'est pas un autel
     // un seul esprit à la fois : l'ancien repart
-    const niv = Math.max(1, Math.min(NIVEAUX.max, sa.niv | 0 || 1)); // un esprit tombé garde son niveau ; un autel en donne un de niveau 1
-    j.esprit = { type: sa.type, pret: this.temps + 3, autel: sa.id, niv }; // autel = où il a été pris (pour l'export, il en faut un autre)
+    // le niveau : celui que le joueur a donné à cet esprit depuis l'accueil (un bot : au hasard selon la difficulté) ;
+    // un esprit tombé garde le sien s'il est plus haut
+    const tombe = sa.tombe ? Math.max(1, Math.min(NIVEAUX.max, sa.niv | 0 || 1)) : 1;
+    const propre = j.bot ? (j.mannequin ? 1 : this.niveauBot()) : (j.nivEsp && j.nivEsp[sa.type]) || 1;
+    const niv = Math.max(tombe, propre);
+    j.esprit = { type: sa.type, pret: this.temps + 3, autel: sa.id, niv, nivTombe: tombe }; // autel = où il a été pris (pour l'export, il en faut un autre)
     this.reseau.diffuser({ t: 'esprit', s: sa.id, par: j.id, type: sa.type, pret: arrondi(j.esprit.pret), rar: (j.esp && j.esp[sa.type]) || null, niv });
     this.avancerDefi(j.id, 'esprit');
     return true;
@@ -1537,6 +1550,12 @@ export class Hote {
     const dist = k ? Math.round(Math.hypot(k.x - j.x, k.y - j.y, k.z - j.z)) : 0;
     this.reseau.diffuser({ t: 'frag', v: j.id, k: k ? k.id : null, a: arme || '', kills: k ? k.kills : 0, dist, x: arrondi(j.x), y: arrondi(j.y), z: arrondi(j.z) });
     this.lacherEclats(j);
+    if (j.esprit && j.esprit.choisi) {
+      const type = j.esprit.type, niv = niveauDe(j.esprit);
+      j.esprit = null;
+      this.reseau.diffuser({ t: 'espritLibre', id: j.id });
+      this.lacherEsprit(type, j.x, j.y, j.z, niv);
+    }
     this.reapparaitre(j, null);
     j.ph = 'sol'; // même s'il tombait encore du dirigeable
     if (j.bot) { j.cible = null; j.voit = false; j.agresseur = null; j.objectif = null; j.dest = { x: j.x, z: j.z }; j.destT = 0; j.soinT = 0; j.mun = OBJETS[j.arme.objet].chargeur; j.rechargeT = 0; }

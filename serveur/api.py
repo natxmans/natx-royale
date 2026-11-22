@@ -156,6 +156,10 @@ CREATE TABLE IF NOT EXISTS eclats_parties (
   joueur_id TEXT NOT NULL, partie_id TEXT NOT NULL, gagnes INTEGER NOT NULL, cree_le INTEGER NOT NULL, maj_le INTEGER NOT NULL,
   PRIMARY KEY (joueur_id, partie_id));
 CREATE INDEX IF NOT EXISTS eclats_parties_jour ON eclats_parties(joueur_id, cree_le);
+CREATE TABLE IF NOT EXISTS esprits_perdus (
+  joueur_id TEXT NOT NULL, type TEXT NOT NULL, partie_id TEXT NOT NULL, perdu_le INTEGER NOT NULL, PRIMARY KEY (joueur_id, type));
+CREATE TABLE IF NOT EXISTS esprits_niveaux (
+  joueur_id TEXT NOT NULL, type TEXT NOT NULL, niveau INTEGER NOT NULL, maj_le INTEGER NOT NULL, PRIMARY KEY (joueur_id, type));
 CREATE TABLE IF NOT EXISTS eclats_depenses (
   joueur_id TEXT NOT NULL, demande TEXT NOT NULL, partie_id TEXT NOT NULL, type TEXT NOT NULL, niveau INTEGER NOT NULL,
   rarete TEXT NOT NULL, prix INTEGER NOT NULL, cree_le INTEGER NOT NULL, PRIMARY KEY (joueur_id, demande));

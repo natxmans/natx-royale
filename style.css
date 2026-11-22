@@ -79,6 +79,10 @@ button:disabled { opacity: .6; cursor: default; }
 button.petit { padding: 9px 15px; border-radius: 12px; background: rgba(255, 255, 255, .14); font-weight: 800; margin-top: 12px; transition: background .12s; }
 button.petit:hover { background: rgba(255, 255, 255, .24); }
 button.petit.rouge { background: rgba(217, 69, 69, .85); }
+/* les petits boutons verts et jaunes gardent leur couleur (sinon « button.petit » les rendait gris) */
+button.petit.vert { background: linear-gradient(#4fe06f, #22a043); }
+button.petit.jaune { background: linear-gradient(#ffd75a, #f39a12); }
+button.petit.vert:hover, button.petit.jaune:hover { filter: brightness(1.08); }
 .rejoindre { display: flex; gap: 8px; }
 .rejoindre input { width: 116px; margin: 0; text-transform: uppercase; text-align: center; letter-spacing: 5px; }
 .erreur { color: #ff8a8a; min-height: 1.2em; margin: 10px 0 0; font-weight: 800; }
@@ -190,11 +194,24 @@ button.petit.rouge { background: rgba(217, 69, 69, .85); }
 #banniere.vue { opacity: 1; transform: translateX(-50%) scale(1); }
 #banniere small { display: block; font-family: 'Nunito'; font-size: 14px; text-align: center; opacity: .9; }
 #invite { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); background: rgba(8, 14, 32, .65); padding: 9px 16px; border-radius: 14px; font-size: 17px; display: none; border: 2px solid rgba(255, 255, 255, .15); }
-/* améliorer son esprit sur un autel (sous l'invitation E) */
-#invite2 { position: absolute; left: 50%; top: calc(62% + 50px); transform: translateX(-50%); background: rgba(40, 28, 0, .7); padding: 8px 16px; border-radius: 14px; font-size: 16px; display: none; border: 2px solid rgba(255, 210, 63, .6); white-space: nowrap; }
-#invite2 .etoiles { color: #ffd23f; }
-#invite2 .prix { background: rgba(255, 255, 255, .12); border-radius: 8px; padding: 1px 7px; margin-left: 4px; }
-#invite2.pas-assez .prix { color: #ff8a8a; text-decoration: line-through; }
+/* esprit de départ : bouton de l'accueil, bloc de la fiche, badges des cartes */
+.esprit-depart { width: 100%; text-align: left; font-size: 14px; padding: 7px 12px; margin: 2px 0 8px; border: 2px solid rgba(255, 210, 63, .35); background: rgba(255, 210, 63, .08); }
+.esprit-depart.perdu { border-color: rgba(255, 110, 110, .6); background: rgba(255, 80, 80, .12); }
+.depart-esprit { display: grid; gap: 6px; padding: 10px 12px; border-radius: 14px; background: rgba(120, 200, 255, .07); border: 2px solid rgba(120, 200, 255, .3); }
+.depart-esprit.choisi { border-color: #4fe06f; background: rgba(79, 224, 111, .1); }
+.depart-esprit.perdu { border-color: rgba(255, 110, 110, .6); background: rgba(255, 80, 80, .1); }
+.depart-esprit button { justify-self: start; }
+.depart-esprit button:disabled { opacity: .55; cursor: default; }
+.carte-esprit-jeu .badge-depart { position: absolute; top: 5px; left: 8px; font-size: 15px; }
+.carte-esprit-jeu.perdu { filter: grayscale(.9) brightness(.65); }
+/* amélioration d'un esprit (page Esprits de l'accueil) */
+.amelio-esprit { display: grid; gap: 6px; padding: 10px 12px; border-radius: 14px; background: rgba(255, 210, 63, .08); border: 2px solid rgba(255, 210, 63, .35); }
+.amelio-esprit .etoiles { color: #ffd23f; font-size: 1.15em; letter-spacing: 2px; }
+.amelio-esprit .etoiles .vide { color: rgba(255, 255, 255, .22); }
+.amelio-esprit button { justify-self: start; }
+.amelio-esprit button:disabled { opacity: .55; cursor: default; }
+.carte-esprit-jeu .niv-esprit { position: absolute; top: 6px; right: 8px; color: #ffd23f; font-size: 13px; letter-spacing: 1px; text-shadow: 0 1px 2px #000; }
+.carte-esprit-jeu { position: relative; }
 #progression { position: absolute; left: 50%; top: 68%; transform: translateX(-50%); width: 240px; height: 16px; background: rgba(0, 0, 0, .55); border-radius: 10px; overflow: hidden; display: none; border: 2px solid rgba(255, 255, 255, .2); }
 #progression div { height: 100%; width: 0; background: linear-gradient(90deg, #4fd1ff, #3ccf5e); }
 #progression span { position: absolute; inset: 0; font-size: 11px; text-align: center; line-height: 13px; }
@@ -450,8 +467,6 @@ body.tactile #annonce { font-size: 24px; top: 20%; }
 body.tactile #banniere { font-size: 18px; bottom: 96px; padding: 6px 40px; }
 body.tactile #invite { pointer-events: auto; top: 58%; font-size: 15px; padding: 13px 22px; min-width: 190px; text-align: center; border-color: rgba(255, 210, 63, .75); background: rgba(8, 14, 32, .86); animation: invite-pulse 1.3s ease-in-out infinite; cursor: pointer; }
 body.tactile #invite:active { background: rgba(255, 210, 63, .35); }
-body.tactile #invite2 { pointer-events: auto; top: calc(58% + 62px); font-size: 14px; padding: 11px 18px; z-index: 4; cursor: pointer; }
-body.tactile #invite2:active { background: rgba(255, 210, 63, .4); }
 @keyframes invite-pulse { 50% { box-shadow: 0 0 0 6px rgba(255, 210, 63, .18); } }
 /* Téléphone : ce qu'on touche du doigt passe AU-DESSUS des zones invisibles du joystick (gauche) et de la caméra (droite),
    sinon le doigt bouge la caméra au lieu de ramasser ou de changer d'objet */
@@ -537,7 +552,7 @@ body.tactile #infoZone { position: absolute; right: 112px; top: 70px; width: 130
 body.tactile #coinCarte { width: 104px; }
 body.tactile .cadre-carte, body.tactile #carte { width: 104px; height: 104px; }
 body.tactile #compteurs { margin-top: 3px; }
-body.tactile #droite { top: auto; right: 196px; bottom: 96px; }
+body.tactile #droite { top: auto; right: 196px; bottom: 166px; } /* au-dessus du bouton du pouvoir, sous la zone */
 body.tactile #bas { left: 42%; }
 @media (max-width: 760px) {
   body.tactile .case { width: 38px; height: 38px; font-size: 17px; }
@@ -661,8 +676,9 @@ body.tb-grand .t-menu, body.tb-grand .t-constr { gap: 14px; }
 #tPouvoir .anneau-recharge { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(255, 255, 255, .55) calc(var(--recharge, 1) * 360deg), rgba(0, 0, 0, .55) 0); opacity: .45; pointer-events: none; }
 #tPouvoir.pret { border-color: #ffd23f; box-shadow: 0 0 14px rgba(255, 210, 63, .6); }
 #tPouvoir.pret .anneau-recharge { opacity: 0; }
-body.tactile #espritHud { left: 8px; bottom: 64px; padding: 4px 8px 4px 4px; max-width: 220px; }
-body.tactile #espritHud .esprit-ico { font-size: 20px; width: 30px; height: 30px; }
+body.tactile #espritHud { left: 184px; bottom: 66px; padding: 3px 9px 3px 3px; gap: 6px; max-width: 170px; border-radius: 12px; } /* petit, au-dessus des cases, à droite du joystick */
+body.tactile #espritHud b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+body.tactile #espritHud .esprit-ico { font-size: 17px; width: 26px; height: 26px; }
 body.tactile #espritHud small { display: none; }
 
 /* ---------- Modes de jeu ---------- */
@@ -836,7 +852,7 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
 .logo.logo-image { text-shadow: none; line-height: 0; margin-bottom: 8px; }
 .logo.logo-image img { width: min(100%, 300px); height: auto; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .45)); }
 /* bandeau de page : le titre à gauche, l'illustration qui s'efface à droite */
-.bandeau { position: relative; border-radius: 16px; padding: 14px 18px; min-height: 96px; margin-bottom: 12px; overflow: hidden;
+.bandeau { position: relative; border-radius: 16px; padding: 14px 18px; min-height: 96px; margin-bottom: 12px; overflow: hidden; flex-shrink: 0; /* jamais écrasé par une longue liste en dessous (65 esprits) */
   display: flex; flex-direction: column; justify-content: center; border: 2px solid rgba(255, 255, 255, .08);
   background: linear-gradient(90deg, #0b1430 0%, rgba(11, 20, 48, .92) 38%, rgba(11, 20, 48, .25) 78%, rgba(11, 20, 48, .05) 100%), var(--image) right center / auto 130% no-repeat, #0b1430; }
 .bandeau h2 { margin: 0; }
@@ -1016,4 +1032,15 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
   .menu:has(#pageJouer:not(.cache)) .annonce-jeu.seul-programme { justify-content: center; }
   .menu:has(#pageJouer:not(.cache)) .annonce-jeu.seul-programme .programme-jeu { max-width: 94vw; }
   #annonceJeu.seul-programme:not(.cache) ~ #pageJouer .bandeau-collab { top: 34px; }
+}
+
+/* téléphone en hauteur : les onglets ont leur propre ligne, en pleine largeur (sinon les boutons de droite les écrasent à 37 px) */
+@media (max-width: 600px) {
+  .droite-entete { order: 1; width: 100%; justify-content: flex-end; }
+  .onglets { order: 2; flex: 1 1 100%; -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); }
+  .onglets button { font-size: 14px; padding: 6px 9px; }
+  .entete { gap: 4px; padding-top: 5px; padding-bottom: 5px; }
+  .esprit-depart { margin: 2px 0 4px !important; padding: 5px 10px; font-size: 13px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .liens-bas { flex-wrap: nowrap; gap: 4px; }
+  .liens-bas .petit { padding: 5px 7px; font-size: 12px; white-space: nowrap; }
 }

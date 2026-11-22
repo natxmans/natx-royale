@@ -21,8 +21,9 @@ def copier():
         print('Pas de dossier modeles/admin : le panel garde ses émojis.')
         return 0
     if os.path.isdir(CIBLE):
-        shutil.rmtree(CIBLE)
-    os.makedirs(CIBLE)
+        # OneDrive refuse parfois de supprimer un dossier (vide) pendant sa synchro : on continue, tout est recopié juste après
+        shutil.rmtree(CIBLE, ignore_errors=True)
+    os.makedirs(CIBLE, exist_ok=True)
     n = 0
     for d in DOSSIERS:
         for racine, _, fichiers in os.walk(os.path.join(SOURCE, d)):

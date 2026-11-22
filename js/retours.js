@@ -126,6 +126,9 @@ export const exporterEsprit = d => avecJeton(jeton => appel('POST', '/esprit/exp
 export const soldeEclats = () => avecJeton(jeton => appel('POST', '/eclats', { jeton }));
 export const gagnerEclats = d => avecJeton(jeton => appel('POST', '/eclats/gagner', { jeton, ...d }));
 export const depenserEclats = d => avecJeton(jeton => appel('POST', '/eclats/depenser', { jeton, ...d }));
+export const perdreEsprit = d => avecJeton(jeton => appel('POST', '/esprit/perdre', { jeton, ...d }));       // mort avec son esprit de départ
+export const recupererEsprit = d => avecJeton(jeton => appel('POST', '/esprit/recuperer', { jeton, ...d })); // le racheter avec des éclats
+export const niveauxEsprits = refs => avecJeton(jeton => appel('POST', '/esprits/niveaux', { jeton, refs })); // l'hôte, au début d'une partie
 export const utiliserCodeCadeau = code => avecJeton(jeton => appel('POST', '/cadeaux/code', { jeton, code }));
 // Compte : sauvegarde en ligne du profil, code de sauvegarde, récupération sur un autre appareil
 export const chargerCompte = () => avecJeton(jeton => appel('POST', '/compte/charger', { jeton }));

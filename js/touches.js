@@ -18,7 +18,6 @@ export const ACTIONS = [
   { id: 'rampe', nom: 'Construire une rampe', base: 'KeyC' },
   { id: 'sol', nom: 'Construire un sol', base: 'KeyV' },
   { id: 'pouvoir', nom: "Pouvoir de l'esprit", base: 'KeyQ' },
-  { id: 'ameliorer', nom: "Améliorer l'esprit (sur un autel)", base: 'KeyU' },
   { id: 'emote', nom: 'Émote (danse)', base: 'KeyB' },
   { id: 'carte', nom: 'Grande carte', base: 'KeyM' },
   { id: 'chat', nom: 'Discuter', base: 'KeyT' },

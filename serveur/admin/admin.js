@@ -389,6 +389,8 @@ async function vueFicheJoueur(code) {
     carteStat('Arrivé le', jour(d.cree_le)), carteStat('Vu le', date(d.vu_le)), carteStat('Niveau', p ? p.niveau : '—', 'jaune'),
     carteStat('Pièces (déclarées)', p ? nombre(p.pieces) : '—', 'jaune'), carteStat('Objets', p ? p.possedes.length : '—', 'cyan'),
     carteStat('Éclats d\'esprit 💠', d.eclats ? `${nombre(d.eclats.solde)} (gagnés ${nombre(d.eclats.gagnes)}, dépensés ${nombre(d.eclats.depenses)})` : '—', 'cyan'),
+    carteStat('Esprits améliorés', d.niveaux_esprits && Object.keys(d.niveaux_esprits).length ? Object.entries(d.niveaux_esprits).map(([t, n]) => `${t} ${'★'.repeat(n)}`).join(', ') : 'aucun', 'jaune'),
+    carteStat('Esprits perdus', d.esprits_perdus && d.esprits_perdus.length ? d.esprits_perdus.join(', ') : 'aucun', 'rouge'),
     carteStat('Parties', p?.stats?.parties ?? d.parties.length, ''), carteStat('Avis envoyés', d.retours, ''),
     carteStat('Sanctions en cours', d.sanctions_actives.length ? d.sanctions_actives.map(s => NOMS_SANCTIONS[s] || s).join(', ') : 'aucune', d.sanctions_actives.length ? 'rouge' : 'vert')));
   const actions = el('div', { class: 'actions' });

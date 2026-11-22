@@ -2,7 +2,7 @@
 import { CATALOGUE, CATEGORIES, RARETES_COSM, COLLAB, objet, prixDe, possede, acheter, sauverProfil, boutiqueDuJour, cleObjet,
   defisDuJour, texteDefi, xpPourNiveau, lookPossedeAuHasard, nettoyerLook, RECOMPENSE_DEFI,
   COLLECTIONS_250, collectionDe, collectionsVisibles, estDeBase, desequiper, LOOK_DEFAUT, promoDe, prixNormal, enVente } from './boutique.js';
-import { ESPRITS, TYPES_ESPRITS, PERSONNALITES, RARETES_ESPRIT, ORDRE_RARETES, meilleuresRaretes, replique, sonEsprit, PRIX_ECLATS } from './esprits.js';
+import { ESPRITS, TYPES_ESPRITS, PERSONNALITES, RARETES_ESPRIT, ORDRE_RARETES, meilleuresRaretes, replique, sonEsprit, PRIX_ECLATS, NIVEAUX } from './esprits.js';
 import { descriptionEsprit } from './cadeaux.js';
 import { chargerCosmetiques, cosmetiquePret } from './modeles.js';
 import { vignette } from './icones.js';
@@ -39,8 +39,10 @@ function imageTrainee(id) {
 }
 
 export class Menus {
-  constructor({ apercu, profil, reglages, surLook, son }) {
+  constructor({ apercu, profil, reglages, surLook, son, esprits }) {
     this.apercu = apercu; this.profil = profil; this.reglages = reglages;
+    // niveaux des esprits et solde d'éclats (gardés sur le serveur) ; ameliorer(type) paie et renvoie la réponse du serveur
+    this.esprits = esprits || { niveaux: () => ({}), solde: () => null, ameliorer: async () => null };
     this.surLook = surLook || (() => {}); this.son = son || (() => {});
     this.page = 'jouer';
     this.categorie = 'tenue';
@@ -248,7 +250,9 @@ export class Menus {
       b.style.setProperty('--couleur-esprit', d.couleur);
       if (meilleures[t]) b.style.setProperty('--couleur-rarete', RARETES_ESPRIT[meilleures[t]].couleur);
       // vignette livrée de l'esprit (rendu du vrai modèle, les 65 sont livrées) ; son émoji si l'image manque
-      b.innerHTML = `<span class="ico"><img src="modeles/admin/vignettes/esprit/${t}.webp?v=1" alt="" loading="lazy"></span><b>${echapper(d.nom)}</b><small>${echapper(d.role)}</small><span class="raretes">${ORDRE_RARETES.map(r => {
+      const niv = this.esprits.niveaux()[t] | 0, perdu = miens.length && this.esprits.perdus().includes(t), depart = miens.length && this.esprits.depart() === t;
+      if (perdu) b.classList.add('perdu');
+      b.innerHTML = `${perdu ? '<span class="badge-depart" title="Perdu dans une partie">💀</span>' : depart ? '<span class="badge-depart" title="Esprit de départ">🎒</span>' : ''}${niv > 1 ? `<span class="niv-esprit" title="Amélioré">${NIVEAUX.etoiles[niv]}</span>` : ''}<span class="ico"><img src="modeles/admin/vignettes/esprit/${t}.webp?v=1" alt="" loading="lazy"></span><b>${echapper(d.nom)}</b><small>${echapper(d.role)}</small><span class="raretes">${ORDRE_RARETES.map(r => {
         const e = miens.find(x => x.rarete === r);
         return `<i class="r-${r}${e ? ' a' : ''}" title="${RARETES_ESPRIT[r].nom}${e ? ' × ' + e.n : ' (pas encore)'}"></i>`;
       }).join('')}</span>`;
@@ -271,9 +275,20 @@ export class Menus {
       <h2>${d.icone} ${echapper(d.nom)}</h2><p class="petit-texte">Esprit de ${echapper(d.role.toLowerCase())} · <i>${echapper(perso)}</i></p>
       <p class="bulle-esprit" id="bulleEsprit">« ${echapper(replique(t, 'repos'))} »</p>
       <p><b>Passif :</b> ${echapper(d.passif)}</p><p><b>Pouvoir « ${echapper(d.pouvoir)} » :</b> ${echapper(d.descPouvoir)} <small>(recharge ${d.recharge} s)</small></p>
-      <p class="petit-texte">⬆️ Pendant la partie, améliore-le sur un autel avec tes éclats d'esprit 💠 : ★★ ${PRIX_ECLATS[meilleure || 'commun'][0]} 💠 puis ★★★ ${PRIX_ECLATS[meilleure || 'commun'][1]} 💠 (prix ${meilleure ? 'd\'un esprit ' + RARETES_ESPRIT[meilleure].nom.toLowerCase() : 'd\'un esprit commun'} : plus il est rare, plus c'est cher). Ses bonus et son pouvoir deviennent plus forts, et son pouvoir recharge plus vite. Les éclats se trouvent dans les coffres et sur les joueurs éliminés, et tu les gardes d'une partie à l'autre.</p>
+      ${this.blocDepart(t, meilleure)}
+      ${this.blocAmelioration(t, meilleure)}
       <p class="petit-texte">${miens.length ? 'Dans ta collection : ' + miens.map(e => `${RARETES_ESPRIT[e.rarete].nom} × ${e.n}`).join(' · ') : 'Capture-le sur un autel pendant une partie, puis exporte-le sur un AUTRE autel (ou gagne la partie) : il arrive dans ta boîte 🎁 avec sa rareté. Les cargaisons en donnent aussi, souvent plus rares.'}</p>
       <div class="boutons-esprit"><button class="petit" data-a="obtention">🎉 Arrivée</button><button class="petit" data-a="content">😊 Caresser</button><button class="petit" data-a="activer">✨ Pouvoir</button><button class="petit" data-a="surpris">😮 Surprise</button></div>`;
+    const bd = el.querySelector('#btnDepartEsprit');
+    if (bd) bd.onclick = () => { this.esprits.choisirDepart(this.esprits.depart() === t ? null : t); this.dessinerEsprits(); };
+    const br = el.querySelector('#btnRecupererEsprit');
+    if (br) br.onclick = async () => { br.disabled = true; br.textContent = '💠 Paiement…'; await this.esprits.recuperer(t); };
+    const bt = el.querySelector('#btnAmeliorerEsprit');
+    if (bt) bt.onclick = async () => {
+      bt.disabled = true; bt.textContent = '💠 Paiement…';
+      const d = await this.esprits.ameliorer(t);
+      if (d && d.ok) { this.apercu.animerEspritApercu('obtention'); $('#bulleEsprit') && ($('#bulleEsprit').textContent = '« ' + replique(t, 'capture') + ' »'); }
+    };
     for (const b of el.querySelectorAll('[data-a]')) b.onclick = () => {
       this.apercu.animerEspritApercu(b.dataset.a);
       this.son(sonEsprit(t));
@@ -281,6 +296,41 @@ export class Menus {
       $('#bulleEsprit').textContent = '« ' + replique(t, b.dataset.a === 'activer' ? 'pouvoir' : b.dataset.a === 'content' || b.dataset.a === 'obtention' ? 'capture' : 'repos') + ' »';
     };
   }
+
+  // Esprit de départ : on part avec lui dans chaque partie ; mort avec lui = perdu, à racheter avec des éclats
+  blocDepart(t, meilleure) {
+    if (!meilleure) return '';
+    const E = this.esprits;
+    if (E.perdus().includes(t)) {
+      const prix = E.prixRecup(meilleure), solde = E.solde(), manque = solde === null ? null : prix - solde;
+      const texte = solde === null ? 'Serveur injoignable' : manque > 0 ? `Récupérer : il te manque ${manque} 💠` : `💠 Récupérer (${prix} 💠)`;
+      return `<div class="depart-esprit perdu"><div><b>💀 Perdu dans une partie</b> <small>· tu es mort avec lui</small></div>
+        <button class="petit jaune" id="btnRecupererEsprit"${solde === null || manque > 0 ? ' disabled' : ''}>${texte}</button></div>`;
+    }
+    const choisi = E.depart() === t;
+    return `<div class="depart-esprit${choisi ? ' choisi' : ''}"><div><b>🎒 Esprit de départ</b> <small>· ${choisi ? 'tu pars avec lui dans chaque partie' : 'pars avec lui dès le début de la partie'}</small></div>
+      <button class="petit${choisi ? '' : ' vert'}" id="btnDepartEsprit">${choisi ? '✖ Ne plus partir avec lui' : '🎒 Partir avec lui'}</button>
+      <p class="petit-texte">⚠️ Si tu meurs avec lui, tu le perds : il faudra payer ${E.prixRecup(meilleure)} 💠 pour le récupérer.</p></div>`;
+  }
+  // Amélioration d'un esprit de ma collection (★ → ★★ → ★★★), payée en éclats d'esprit 💠 ; le prix dépend de sa rareté
+  blocAmelioration(t, meilleure) {
+    const niv = Math.max(1, this.esprits.niveaux()[t] | 0), solde = this.esprits.solde();
+    const etoiles = n => '★'.repeat(n) + `<span class="vide">${'★'.repeat(NIVEAUX.max - n)}</span>`;
+    const pourcent = k => Math.round((k - 1) * 100);
+    const effet = n => `pouvoir et bonus +${pourcent(NIVEAUX.force[n])} %, recharge −${pourcent(2 - NIVEAUX.recharge[n])} %`;
+    let action;
+    if (niv >= NIVEAUX.max) action = `<p class="petit-texte">✨ Niveau maximum : ${effet(niv)}.</p>`;
+    else if (!meilleure) action = `<p class="petit-texte">Capture-le et exporte-le d'abord : on ne peut améliorer que les esprits de sa collection.</p>`;
+    else {
+      const prix = PRIX_ECLATS[meilleure][niv - 1], manque = solde === null ? null : prix - solde;
+      const texte = solde === null ? 'Serveur injoignable' : manque > 0 ? `Il te manque ${manque} 💠` : `⬆️ Améliorer → ${NIVEAUX.etoiles[niv + 1]} (${prix} 💠)`;
+      action = `<button class="petit vert" id="btnAmeliorerEsprit"${solde === null || manque > 0 ? ' disabled' : ''}>${texte}</button>
+        <p class="petit-texte">${NIVEAUX.etoiles[niv + 1]} : ${effet(niv + 1)}. Prix d'un esprit ${RARETES_ESPRIT[meilleure].nom.toLowerCase()} : ${PRIX_ECLATS[meilleure].join(' puis ')} 💠 (plus il est rare, plus c'est cher).</p>`;
+    }
+    return `<div class="amelio-esprit"><div><b>Niveau</b> <span class="etoiles">${etoiles(niv)}</span>${solde !== null ? ` <small>· tu as ${solde} 💠</small>` : ''}</div>${action}</div>`;
+  }
+  // Le solde ou les niveaux ont changé : on redessine la page Esprits si elle est ouverte
+  rafraichirEsprits() { if (this.page === 'esprits') this.dessinerEsprits(); }
 
   // ---------- Filtres (catalogue de la Boutique et Casier) ----------
   initFiltres() {

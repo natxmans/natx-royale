@@ -334,18 +334,20 @@ export const TYPES_ESPRITS = Object.keys(ESPRITS);
 // Sur n'importe quel vrai autel, on paie des matériaux pour faire monter son esprit d'un niveau (★ → ★★ → ★★★).
 // force : ce que deviennent ses bonus et la force de son pouvoir (dégâts, soins, bouclier) ; recharge : temps de recharge du pouvoir.
 // Un esprit tombé (joueur éliminé) garde son niveau : celui qui le ramasse en profite.
-// Le prix se paie en ÉCLATS D'ESPRIT 💠, une monnaie qui ne sert qu'à ça. Ils sont GARDÉS d'une partie à l'autre : le solde est
-// sur le serveur (serveur/gestion.py, mêmes prix), qui encaisse avant que l'hôte n'améliore l'esprit. L'amélioration, elle,
-// ne dure que la partie (comme les établis de Fortnite).
+// On améliore ses esprits DEPUIS L'ACCUEIL (page ✨ Esprits), avec des ÉCLATS D'ESPRIT 💠 gagnés en partie (monnaie qui ne sert qu'à
+// ça). Le solde et le niveau de chaque esprit sont gardés sur le serveur (serveur/gestion.py, mêmes prix) ; en partie, l'esprit
+// capturé a le niveau que son joueur lui a donné.
 export const NIVEAUX = { max: 3, force: [1, 1, 1.35, 1.7], recharge: [1, 1, 0.85, 0.7], etoiles: ['', '★', '★★', '★★★'] };
 // Le prix dépend de la rareté de cet esprit dans la collection du joueur (un esprit qu'il n'a pas encore : prix « commun »)
 export const PRIX_ECLATS = { commun: [50, 120], rare: [80, 200], epique: [120, 300], legendaire: [200, 500] }; // [★★, ★★★]
+// Esprit de départ perdu (mort avec lui) : prix pour le récupérer, selon sa rareté (mêmes prix sur le serveur)
+export const PRIX_RECUPERATION = { commun: 25, rare: 40, epique: 60, legendaire: 100 };
 export const prixAmelioration = (rarete, nivCible) => (PRIX_ECLATS[rarete] || PRIX_ECLATS.commun)[Math.max(2, Math.min(3, nivCible)) - 2];
 // Où trouver des éclats : coffre, coffre doré, ravitaillement, petits tas sur l'île (part des points de butin), joueur éliminé,
-// victoire. Le serveur en accepte 150 par partie et 600 par jour au plus. Les bots n'ont pas de compte : ils paient moins cher
-// avec ce qu'ils ramassent pendant la partie.
+// victoire. Le serveur en accepte 150 par partie et 600 par jour au plus. Les bots ramassent aussi des éclats (ils les lâchent
+// quand ils sont éliminés) ; leurs esprits sont parfois améliorés selon la difficulté.
 export const ECLATS = { coffre: 3, coffreDore: 10, ravito: 10, sol: 0.12, tas: 2, elimination: 5, eliminationMelee: 1, victoire: 25,
-  coutBots: [0, 0, 12, 30], icone: '💠', nom: 'éclats d\'esprit' };
+  icone: '💠', nom: 'éclats d\'esprit' };
 export const niveauDe = esprit => Math.max(1, Math.min(NIVEAUX.max, (esprit && esprit.niv) | 0 || 1));
 export const forceEsprit = esprit => NIVEAUX.force[niveauDe(esprit)];
 export const rechargeEsprit = esprit => (ESPRITS[esprit && esprit.type] ? ESPRITS[esprit.type].recharge : 30) * NIVEAUX.recharge[niveauDe(esprit)];
