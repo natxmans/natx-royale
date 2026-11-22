@@ -1044,3 +1044,11 @@ button.rouge { background: linear-gradient(#ff5d7a, #d3264a); color: #fff; }
   .liens-bas { flex-wrap: nowrap; gap: 4px; }
   .liens-bas .petit { padding: 5px 7px; font-size: 12px; white-space: nowrap; }
 }
+
+/* Fiche d'un esprit sur ordinateur : l'aperçu 3D reste en haut et le texte défile dessous
+   (sinon « Esprit de départ » et « Améliorer » sortaient de la fiche, sous le bord de l'écran) */
+@media (min-width: 821px) and (min-height: 521px) {
+  #pageEsprits .fiche { min-height: 0; }
+  #pageEsprits .fiche .scene3d { flex: 1 0 clamp(200px, 30vh, 320px); min-height: 200px; }
+  #pageEsprits #ficheEsprit { flex: 0 1 auto; min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .35) transparent; }
+}
