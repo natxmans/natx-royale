@@ -86,5 +86,90 @@ export const LIVRAISONS_JOUR = [
     "fichier": "jour/2026-11-22_deltaplane.glb"
    }
   ]
+ },
+ {
+  "date": "2026-11-24",
+  "objets": [
+   {
+    "cat": "chapeau",
+    "id": "seau_de_pop_corn",
+    "nom": "Seau de Pop-corn",
+    "rarete": "commun",
+    "desc": "Un seau rayé rempli de pop-corn tout chaud. Attention aux miettes !",
+    "fichier": "jour/2026-11-24_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "toit_de_carrousel",
+    "nom": "Toit de Carrousel",
+    "rarete": "rare",
+    "desc": "Le toit d'un manège avec ses fanions. On tourne, on tourne…",
+    "fichier": "jour/2026-11-24_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "barbe_a_papa",
+    "nom": "Barbe à Papa",
+    "rarete": "epique",
+    "desc": "Un gros nuage de sucre rose posé sur la tête. Ça colle aux cheveux.",
+    "fichier": "jour/2026-11-24_chapeau.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "nounours_de_foire",
+    "nom": "Nounours de Foire",
+    "rarete": "commun",
+    "desc": "Gagné au chamboule-tout ! Il fait le voyage sur ton dos.",
+    "fichier": "jour/2026-11-24_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "rouleau_de_tickets",
+    "nom": "Rouleau de Tickets",
+    "rarete": "rare",
+    "desc": "Assez de tickets pour faire tous les manèges. Deux fois.",
+    "fichier": "jour/2026-11-24_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "mini_grande_roue",
+    "nom": "Mini Grande Roue",
+    "rarete": "epique",
+    "desc": "Une grande roue miniature avec ses cabines de couleur. Les ampoules brillent.",
+    "fichier": "jour/2026-11-24_dos.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "pomme_d_amour",
+    "nom": "Pomme d'Amour",
+    "rarete": "commun",
+    "desc": "Une pomme rouge et brillante en bout de bâton. Croquante et collante.",
+    "fichier": "jour/2026-11-24_pioche.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "maillet_de_force",
+    "nom": "Maillet de Force",
+    "rarete": "rare",
+    "desc": "Le gros maillet du jeu de force. Fais sonner la cloche tout en haut !",
+    "fichier": "jour/2026-11-24_pioche.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "chapiteau_volant",
+    "nom": "Chapiteau Volant",
+    "rarete": "rare",
+    "desc": "Une toile rayée rouge et blanc avec ses fanions. Le spectacle continue en l'air.",
+    "fichier": "jour/2026-11-24_deltaplane.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "nuit_de_foire",
+    "nom": "Nuit de Foire",
+    "rarete": "legendaire",
+    "desc": "Une voile bleu nuit couverte de guirlandes d'ampoules qui s'allument comme à la fête.",
+    "fichier": "jour/2026-11-24_deltaplane.glb"
+   }
+  ]
  }
 ];
