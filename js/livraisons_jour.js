@@ -171,5 +171,90 @@ export const LIVRAISONS_JOUR = [
     "fichier": "jour/2026-11-24_deltaplane.glb"
    }
   ]
+ },
+ {
+  "date": "2026-11-25",
+  "objets": [
+   {
+    "cat": "chapeau",
+    "id": "citrouille_douillette",
+    "nom": "Citrouille Douillette",
+    "rarete": "commun",
+    "desc": "Une demi-citrouille bien orange avec sa tige. Parfait pour l'automne.",
+    "fichier": "jour/2026-11-25_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "paille_du_potager",
+    "nom": "Paille du Potager",
+    "rarete": "rare",
+    "desc": "Le chapeau de paille du jardinier, avec une carotte et un radis glissés dans le ruban.",
+    "fichier": "jour/2026-11-25_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "bonnet_radis",
+    "nom": "Bonnet Radis",
+    "rarete": "epique",
+    "desc": "Un bonnet rose en forme de radis, avec ses grandes feuilles qui gigotent.",
+    "fichier": "jour/2026-11-25_chapeau.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "carotte_geante",
+    "nom": "Carotte Géante",
+    "rarete": "commun",
+    "desc": "Une carotte si grosse qu'il faut la porter sur le dos. Les lapins sont jaloux.",
+    "fichier": "jour/2026-11-25_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "cagette_de_legumes",
+    "nom": "Cagette de Légumes",
+    "rarete": "rare",
+    "desc": "Une cagette en bois pleine de tomates, de choux et de carottes du jour.",
+    "fichier": "jour/2026-11-25_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "arrosoir_voyageur",
+    "nom": "Arrosoir Voyageur",
+    "rarete": "epique",
+    "desc": "Un arrosoir vert qui part avec toi en balade. Les plantes te disent merci.",
+    "fichier": "jour/2026-11-25_dos.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "rateau_potager",
+    "nom": "Râteau Potager",
+    "rarete": "commun",
+    "desc": "Un râteau en bois pour ratisser les feuilles… et la victoire.",
+    "fichier": "jour/2026-11-25_pioche.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "poireau_geant",
+    "nom": "Poireau Géant",
+    "rarete": "rare",
+    "desc": "Un poireau énorme, blanc et vert. Il sent un peu la soupe.",
+    "fichier": "jour/2026-11-25_pioche.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "feuille_de_chou",
+    "nom": "Feuille de Chou",
+    "rarete": "rare",
+    "desc": "Une grande feuille de chou bien verte et nervurée pour planer en douceur.",
+    "fichier": "jour/2026-11-25_deltaplane.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "tournesol_solaire",
+    "nom": "Tournesol Solaire",
+    "rarete": "legendaire",
+    "desc": "Un tournesol géant aux pétales qui brillent comme le soleil. Il suit la lumière !",
+    "fichier": "jour/2026-11-25_deltaplane.glb"
+   }
+  ]
  }
 ];
