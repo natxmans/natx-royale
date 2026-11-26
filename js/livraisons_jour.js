@@ -256,5 +256,90 @@ export const LIVRAISONS_JOUR = [
     "fichier": "jour/2026-11-25_deltaplane.glb"
    }
   ]
+ },
+ {
+  "date": "2026-11-26",
+  "objets": [
+   {
+    "cat": "chapeau",
+    "id": "seau_de_plage",
+    "nom": "Seau de Plage",
+    "rarete": "commun",
+    "desc": "Un seau rouge retourné sur la tête, avec une étoile de mer collée devant.",
+    "fichier": "jour/2026-11-26_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "chapeau_parasol",
+    "nom": "Chapeau Parasol",
+    "rarete": "rare",
+    "desc": "Ton ombre portative ! Un petit parasol rayé planté sur une casquette.",
+    "fichier": "jour/2026-11-26_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "chateau_de_sable",
+    "nom": "Château de Sable",
+    "rarete": "epique",
+    "desc": "Quatre tours, un donjon et un drapeau. Attention à la marée haute !",
+    "fichier": "jour/2026-11-26_chapeau.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "bouee_canard",
+    "nom": "Bouée Canard",
+    "rarete": "commun",
+    "desc": "Une bouée jaune avec une tête de canard. Coin coin, on y va !",
+    "fichier": "jour/2026-11-26_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "planche_de_surf",
+    "nom": "Planche de Surf",
+    "rarete": "rare",
+    "desc": "Une planche turquoise à bandes et à fleur, prête pour la prochaine vague.",
+    "fichier": "jour/2026-11-26_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "glaciere_a_glaces",
+    "nom": "Glacière à Glaces",
+    "rarete": "epique",
+    "desc": "Le couvercle s'ouvre tout seul : trois glaces à l'eau te disent bonjour.",
+    "fichier": "jour/2026-11-26_dos.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "pelle_de_plage",
+    "nom": "Pelle de Plage",
+    "rarete": "commun",
+    "desc": "La pelle en plastique des grands bâtisseurs de châteaux de sable.",
+    "fichier": "jour/2026-11-26_pioche.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "maillet_pasteque",
+    "nom": "Maillet Pastèque",
+    "rarete": "rare",
+    "desc": "Une pastèque bien rayée au bout d'un bâton. Juteux à chaque coup !",
+    "fichier": "jour/2026-11-26_pioche.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "serviette_de_plage",
+    "nom": "Serviette de Plage",
+    "rarete": "rare",
+    "desc": "Une grande serviette à rayures avec des franges. Elle sèche en volant.",
+    "fichier": "jour/2026-11-26_deltaplane.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "coquillage_nacre",
+    "nom": "Coquillage Nacré",
+    "rarete": "legendaire",
+    "desc": "Un coquillage géant aux rayons roses qui brillent, avec sa perle magique.",
+    "fichier": "jour/2026-11-26_deltaplane.glb"
+   }
+  ]
  }
 ];
