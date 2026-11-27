@@ -341,5 +341,90 @@ export const LIVRAISONS_JOUR = [
     "fichier": "jour/2026-11-26_deltaplane.glb"
    }
   ]
+ },
+ {
+  "date": "2026-11-27",
+  "objets": [
+   {
+    "cat": "chapeau",
+    "id": "toupie_coiffee",
+    "nom": "Toupie Coiffée",
+    "rarete": "commun",
+    "desc": "Une toupie à rayures posée sur la tête. Évite de tourner trop vite !",
+    "fichier": "jour/2026-11-27_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "bateau_en_papier",
+    "nom": "Bateau en Papier",
+    "rarete": "rare",
+    "desc": "Plié dans une grande feuille, il flotte sur ta tête comme sur l'eau.",
+    "fichier": "jour/2026-11-27_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "couronne_de_cubes",
+    "nom": "Couronne de Cubes",
+    "rarete": "epique",
+    "desc": "Huit cubes de couleur en couronne et une tour d'anneaux tout en haut.",
+    "fichier": "jour/2026-11-27_chapeau.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "tambour_jouet",
+    "nom": "Tambour Jouet",
+    "rarete": "commun",
+    "desc": "Un petit tambour rouge et ses deux baguettes. Boum boum, j'arrive !",
+    "fichier": "jour/2026-11-27_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "cle_de_remontage",
+    "nom": "Clé de Remontage",
+    "rarete": "rare",
+    "desc": "Une grosse clé dorée dans le dos. Trois tours et tu repars à fond !",
+    "fichier": "jour/2026-11-27_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "boite_a_surprise",
+    "nom": "Boîte à Surprise",
+    "rarete": "epique",
+    "desc": "Le couvercle s'ouvre et hop, une tête rigolote sort sur son ressort !",
+    "fichier": "jour/2026-11-27_dos.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "hochet_arc_en_ciel",
+    "nom": "Hochet Arc-en-ciel",
+    "rarete": "commun",
+    "desc": "Un hochet géant plein d'anneaux de couleur. Gling gling à chaque coup !",
+    "fichier": "jour/2026-11-27_pioche.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "marteau_couineur",
+    "nom": "Marteau Couineur",
+    "rarete": "rare",
+    "desc": "Le marteau en plastique qui fait « pouic » à chaque coup.",
+    "fichier": "jour/2026-11-27_pioche.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "avion_en_papier",
+    "nom": "Grand Avion Plié",
+    "rarete": "rare",
+    "desc": "Le plus beau pliage de la classe, en version géante. Lancé, il plane !",
+    "fichier": "jour/2026-11-27_deltaplane.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "toupie_planante",
+    "nom": "Toupie Planante",
+    "rarete": "legendaire",
+    "desc": "Une toupie arc-en-ciel géante aux anneaux qui brillent. Elle plane en tournant !",
+    "fichier": "jour/2026-11-27_deltaplane.glb"
+   }
+  ]
  }
 ];
