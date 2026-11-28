@@ -426,5 +426,90 @@ export const LIVRAISONS_JOUR = [
     "fichier": "jour/2026-11-27_deltaplane.glb"
    }
   ]
+ },
+ {
+  "date": "2026-11-28",
+  "objets": [
+   {
+    "cat": "chapeau",
+    "id": "chapeau_crayon",
+    "nom": "Chapeau Crayon",
+    "rarete": "commun",
+    "desc": "Un gros crayon jaune bien taillé. Attention, ça donne des idées !",
+    "fichier": "jour/2026-11-28_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "livre_ouvert",
+    "nom": "Livre Ouvert",
+    "rarete": "rare",
+    "desc": "Posé à l'envers sur la tête, comme un petit toit. Le savoir, ça protège !",
+    "fichier": "jour/2026-11-28_chapeau.glb"
+   },
+   {
+    "cat": "chapeau",
+    "id": "globe_de_classe",
+    "nom": "Globe de la Classe",
+    "rarete": "epique",
+    "desc": "Le globe de la salle de géo en équilibre sur ta tête. Le monde t'appartient !",
+    "fichier": "jour/2026-11-28_chapeau.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "cartable_ecolier",
+    "nom": "Cartable d'Écolier",
+    "rarete": "commun",
+    "desc": "Le bon vieux cartable rouge à boucles. Il manque juste les devoirs.",
+    "fichier": "jour/2026-11-28_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "trousse_geante",
+    "nom": "Trousse Géante",
+    "rarete": "rare",
+    "desc": "Une trousse énorme d'où dépassent trois crayons. Plus jamais sans stylo !",
+    "fichier": "jour/2026-11-28_dos.glb"
+   },
+   {
+    "cat": "dos",
+    "id": "tableau_noir",
+    "nom": "Tableau Noir",
+    "rarete": "epique",
+    "desc": "Un tableau avec ses craies et son éponge. Interro surprise pour les autres !",
+    "fichier": "jour/2026-11-28_dos.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "regle_geante",
+    "nom": "Règle Géante",
+    "rarete": "commun",
+    "desc": "Une règle jaune d'un mètre. Pour mesurer tout ce que tu casses.",
+    "fichier": "jour/2026-11-28_pioche.glb"
+   },
+   {
+    "cat": "pioche",
+    "id": "ciseaux_ronds",
+    "nom": "Ciseaux à Bouts Ronds",
+    "rarete": "rare",
+    "desc": "Des ciseaux géants à bouts ronds. Clic clac, ça découpe tout !",
+    "fichier": "jour/2026-11-28_pioche.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "page_de_cahier",
+    "nom": "Page de Cahier",
+    "rarete": "rare",
+    "desc": "Une feuille à grandes lignes arrachée du cahier. Elle plane super bien !",
+    "fichier": "jour/2026-11-28_deltaplane.glb"
+   },
+   {
+    "cat": "deltaplane",
+    "id": "aile_de_crayons",
+    "nom": "Aile de Crayons",
+    "rarete": "legendaire",
+    "desc": "Neuf crayons de couleur géants en flèche, avec des mines qui brillent dans le ciel.",
+    "fichier": "jour/2026-11-28_deltaplane.glb"
+   }
+  ]
  }
 ];
